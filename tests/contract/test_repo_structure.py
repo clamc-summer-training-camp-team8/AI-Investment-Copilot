@@ -46,6 +46,7 @@ REQUIRED_TOP_LEVEL = [
     "docs/architecture/README.md",
     "docs/architecture/layering.md",
     "docs/collaboration/README.md",
+    "docs/collaboration/远端接入手册.md",
     "docs/adr/README.md",
     # 被 Makefile 与 deploy/README.md 直接引用，缺失会让 make seed / 起环境静默失败
     "scripts/seed_sample_pack.py",
@@ -100,6 +101,27 @@ PATHS_REQUIRING_REVIEW = [
 def test_不可逆路径仍要求评审(path: str) -> None:
     codeowners = (PROJECT_ROOT / ".github/CODEOWNERS").read_text(encoding="utf-8")
     assert path in codeowners, f"CODEOWNERS 未覆盖不可逆路径 {path}"
+
+
+def test_codeowners_自身有_owner() -> None:
+    """否则任何人都能在自合的 PR 里悄悄删掉上面那些保护。"""
+    codeowners = (PROJECT_ROOT / ".github/CODEOWNERS").read_text(encoding="utf-8")
+    assert "/.github/CODEOWNERS" in codeowners
+
+
+def test_codeowners_每条规则至少两个_owner() -> None:
+    """单 owner 会死锁：作者不能 approve 自己的 PR，该 owner 改该路径时永远凑不出批准。
+
+    用 team 时这条由 team 成员数保证，测试只能查规则里至少写了一个 owner
+    引用；真正的两人要求写在 docs/collaboration/远端接入手册.md 第 1 节。
+    """
+    codeowners = (PROJECT_ROOT / ".github/CODEOWNERS").read_text(encoding="utf-8")
+    for line in codeowners.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        owners = [token for token in stripped.split()[1:] if token.startswith("@")]
+        assert owners, f"CODEOWNERS 规则缺少 owner: {stripped!r}"
 
 
 def test_分层契约覆盖每个后端模块() -> None:

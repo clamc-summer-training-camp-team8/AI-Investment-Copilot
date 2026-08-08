@@ -108,6 +108,8 @@ PR 小一点评审快一点，但没有行数上限。
 
 ## 8. 远端仓库配置
 
+> **第一次接入远端请直接看 [`远端接入手册.md`](远端接入手册.md)**，那是逐步操作清单（建组织、推送、配保护、验证、拉人），本节只是配置要点的速查。
+
 本地仓库已初始化，默认分支为 `main`，历史从架构基线提交开始。接到私有远端后：
 
 ```bash
@@ -122,9 +124,11 @@ git push -u origin main
 | Require a pull request before merging | 开 | 唯一的硬要求 |
 | Require approvals | **0** | 默认自合，不等人 |
 | Require review from Code Owners | 开 | 只对 CODEOWNERS 里那四类路径生效 |
-| Require status checks to pass | `lint`、`arch`、`test` | 机器门禁不放过 |
+| Require status checks to pass | `格式与静态检查`、`分层依赖契约`、`测试` | 机器门禁不放过 |
+| Require branches to be up to date | 开 | 防两个 PR 分别绿、合起来红 |
 | 禁止 force push / 删除分支 | 开 | 保护历史 |
 | Allow auto-merge | 开 | CI 绿了自动合，不用回来点 |
+| 合并方式 | 只留 squash | 主干历史干净 |
 
 `Require approvals = 0` 配合 `Require review from Code Owners` 是关键组合：普通改动零 approve 自合，只有 `contracts/`、`alembic/versions/`、`.importlinter`、`docs/product|data/` 会因为 code owner 规则要求评审。
 
@@ -135,11 +139,15 @@ git push -u origin main
 
 **分支保护开启前不要开始并行开发。** 没有保护的 `main` 加上多人分工，会在几天内退化成各写各的。
 
-成员权限：开发者 `write`，仓库管理 `admin` 限一到两人。
+成员权限：开发者 `write`，仓库管理 `admin` 限一到两人。**code owner 的 team 必须有 `write`**——只有 `read` 的成员点不了 Approve，PR 会一直等一个永远不会来的批准。
 
-接入远端第一件事是把 `.github/CODEOWNERS` 里的 `@arch-owner`、`@engine-owner`、`@product-owner` 换成实际账号。占位符状态下 code owner 评审不生效——此时全仓都是自合，这四类不可逆路径就失去保护了。
+接入远端第一件事是把 `.github/CODEOWNERS` 里的 `@your-org/maintainers`、`@your-org/product` 换成实际组织名。占位符状态下 code owner 评审不生效，且 GitHub 不报错、只静默忽略——此时全仓都是自合，四类不可逆路径失去保护。改完打开该文件的 GitHub 页面确认顶部没有黄色警告条。
+
+用 team 而不是个人用户名有两个原因：人员变动时不用改文件；team 里任何一人可批准，避免「作者不能 approve 自己的 PR」造成的死锁。**每个 team 至少两人。**
 
 ## 9. 新成员上手
+
+完整步骤见 [`远端接入手册.md`](远端接入手册.md) 第 9 节。摘要：
 
 1. 读根 `README.md` 的产品边界表。这六条是唯一会让改动被驳回的原因。
 2. 跑 `make install && make hooks && make check`。

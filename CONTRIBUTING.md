@@ -1,6 +1,6 @@
 # 贡献指南
 
-完整协作规范见 [`docs/collaboration/README.md`](docs/collaboration/README.md)。本文是日常操作的速查表。
+本文是日常操作的速查表。完整协作规范见 [`docs/collaboration/README.md`](docs/collaboration/README.md)；第一次 clone 仓库配环境，或要接入远端，看 [`docs/collaboration/远端接入手册.md`](docs/collaboration/远端接入手册.md)。
 
 ## 环境
 

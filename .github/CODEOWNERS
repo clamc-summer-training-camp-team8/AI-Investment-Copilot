@@ -4,20 +4,36 @@
 # 不是质量。模块边界由 .importlinter 在 CI 里机器检查，比人肉评审更可靠也更快。
 # 团队规模超过 5-6 人时再把模块负责人加回来（协作规范第 1 节有还原方式）。
 #
-# 占位符说明：把 @arch-owner 等替换为实际 Git 账号或团队名（如 @org/backend）。
+# ── 填写前必读 ───────────────────────────────────────────────────────
+#
+# 1. 用 team 而不是个人用户名。团队成员变动时不用改这个文件，且 team 里
+#    任何一人批准即可通过。写个人名字时若某路径只有一个 owner，这个人改该
+#    路径时会死锁——作者不能 approve 自己的 PR，永远凑不出批准。
+#
+# 2. team 必须对仓库有 write 权限。只有 read 权限的成员无法 approve，
+#    GitHub 不会报错，只会一直显示待评审。
+#
+# 3. team 至少两人。单人 team 会遇到第 1 条的死锁问题。
+#
+# 4. 替换 @your-org 为实际组织名。占位符状态下 code owner 评审不生效，
+#    这四类路径等于没有保护。详见 docs/collaboration/远端接入手册.md。
+#
 # 后匹配的规则覆盖先匹配的，因此越具体的路径放在越下面。
 
-# 需求基线：改动意味着验收口径变了，需产品负责人确认版本号变化
-/docs/product/                  @product-owner
-/docs/data/                     @product-owner
+# 需求基线：改动意味着验收口径变了，需确认版本号变化
+/docs/product/                  @your-org/product
+/docs/data/                     @your-org/product
 
 # 跨模块契约：改动的代价由消费方承担，所以消费方要有话语权（ADR-0004）
-/contracts/                     @arch-owner
+/contracts/                     @your-org/maintainers
 
 # 迁移：线上数据改错无法靠回滚代码挽回
-/alembic/versions/              @engine-owner
+/alembic/versions/              @your-org/maintainers
 
 # 分层依赖契约本身：放宽约束等于放宽全仓边界
-/.importlinter                  @arch-owner
+/.importlinter                  @your-org/maintainers
+
+# CODEOWNERS 自己也要有 owner，否则任何人都能悄悄把上面的保护删掉
+/.github/CODEOWNERS             @your-org/maintainers
 
 # 其余路径无强制 owner。想让人看时在 PR 里 @ 对方，或走 draft PR 讨论。

@@ -80,7 +80,11 @@ make check      # 格式 + 静态检查 + 分层契约 + 类型 + 测试，约 1
 - 分支命名、PR 大小、`Refs:` 编号都是建议，不作为驳回理由。
 - 不开长期并行的功能大分支。未完成能力用配置开关藏在主干里。
 
-会被驳回的只有上面那张产品边界表里的六条。完整规范见 [`docs/collaboration/README.md`](docs/collaboration/README.md)，日常操作见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
+会被驳回的只有上面那张产品边界表里的六条。
+
+- 日常操作：[`CONTRIBUTING.md`](CONTRIBUTING.md)
+- 完整规范：[`docs/collaboration/README.md`](docs/collaboration/README.md)
+- **接入远端 / 新成员配环境**：[`docs/collaboration/远端接入手册.md`](docs/collaboration/远端接入手册.md)
 
 ## 免责声明
 
