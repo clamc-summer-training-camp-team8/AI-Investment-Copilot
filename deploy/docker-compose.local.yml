@@ -1,0 +1,46 @@
+# 本地开发依赖。仅供 local 环境，不用于试点或生产（PRD 12.2 要求环境隔离）。
+# 起环境：docker compose -f deploy/docker-compose.local.yml up -d
+#
+# 端口映射到 127.0.0.1，避免开发机把数据库暴露到局域网。
+
+name: copilot-local
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: copilot-postgres
+    environment:
+      POSTGRES_USER: copilot
+      POSTGRES_PASSWORD: copilot
+      POSTGRES_DB: copilot
+      # 中文内容排序与比较依赖，建库时固定，避免不同开发机行为不一致
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U copilot -d copilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: copilot-redis
+    # arq 的任务队列。appendonly 保证重启后未消费任务不丢。
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:
