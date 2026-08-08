@@ -32,9 +32,9 @@ deploy/       本地与试点环境编排
 scripts/      开发与运维脚本
 ```
 
-## 模块与负责人
+## 模块
 
-每个模块一个 README，写清职责、边界、对外接口和验收要点。负责人在 `.github/CODEOWNERS` 里生效，PR 需对应模块负责人评审。
+每个模块一个 README，写清职责、边界、对外接口和验收要点。模块边界由 `.importlinter` 在 CI 中机器检查，不依赖人肉评审。
 
 | 模块 | 职责 | 对应 PRD 层级 | README |
 | --- | --- | --- | --- |
@@ -64,22 +64,23 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env
 
-make check      # 格式 + 静态检查 + 分层契约 + 测试，提交前必须通过
-make test
+make hooks      # 提交时自动跑门禁，省掉「CI 红了再推一次」
+make check      # 格式 + 静态检查 + 分层契约 + 类型 + 测试，约 1 秒
 ```
 
 未接数据库也能跑：`make check` 中的单元测试只依赖纯函数模块，不需要 PostgreSQL。集成测试需要本地库，见 [`deploy/README.md`](deploy/README.md)。
 
 ## 协作方式
 
-私有仓库 + 主干开发 + 模块负责人评审。要点：
+私有仓库 + 主干开发。流程按「机器能查的绝不让人重复勾选」设计：
 
-- `main` 是唯一集成分支，受保护，只能通过 PR 合入。
-- 短生命周期特性分支，命名 `<type>/<module>-<slug>`，建议 3 天内合回主干。
-- PR 需通过 CI 并获得对应模块负责人 approve；跨模块或改 `contracts/` 需双方 approve。
-- 不允许长期并行的功能大分支。未完成能力用配置开关藏在主干里。
+- `main` 是唯一集成分支，受保护，只能通过 PR 合入。**这是唯一的硬要求。**
+- **默认不需要 approve**，CI 绿了自己合。只有 `contracts/`、`alembic/versions/`、`.importlinter`、`docs/product|data/` 这四类改错难回退的路径需要 1 个 approve。
+- 格式、分层依赖、类型、迁移 head 数量由 `make check` 与 CI 检查，约 1 秒。装了 `make hooks` 后提交时自动跑。
+- 分支命名、PR 大小、`Refs:` 编号都是建议，不作为驳回理由。
+- 不开长期并行的功能大分支。未完成能力用配置开关藏在主干里。
 
-完整规范见 [`docs/collaboration/README.md`](docs/collaboration/README.md)，贡献流程见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
+会被驳回的只有上面那张产品边界表里的六条。完整规范见 [`docs/collaboration/README.md`](docs/collaboration/README.md)，日常操作见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
 ## 免责声明
 

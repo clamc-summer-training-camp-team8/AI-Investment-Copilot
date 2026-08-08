@@ -1,6 +1,6 @@
 # app/api — HTTP 接口层
 
-负责人：应用接口负责人
+主要维护：应用接口方向（问谁，不是评审权限）
 PRD 层级：用户交互层
 
 ## 职责
@@ -67,7 +67,7 @@ def get_theses(q: ThesisQuery, actor: Actor = Depends(current_actor), ...):
 
 ## 接口契约
 
-变更接口先改 `contracts/api/`，前端依此开发。破坏性变更需前端负责人 approve，规则见 [ADR-0004](../../docs/adr/0004-契约优先的跨模块协作.md)。
+变更接口先改 `contracts/api/`，前端依此开发。契约改动需 1 个 approve，规则见 [ADR-0004](../../docs/adr/0004-契约优先的跨模块协作.md)；只改本模块实现不需要。
 
 ## 认证
 

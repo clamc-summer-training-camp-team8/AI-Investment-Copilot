@@ -85,10 +85,21 @@ def test_样例包位置未变() -> None:
     assert (sample_pack / "样例指标历史数据.csv").is_file()
 
 
-def test_codeowners_覆盖每个模块() -> None:
+# 强制评审只覆盖「改错了很难回退」的四类路径，其余改动 CI 绿即可自合。
+# 团队规模扩大后可加回模块负责人，但这四类不允许减（协作规范第 4 节）。
+PATHS_REQUIRING_REVIEW = [
+    "/docs/product/",
+    "/docs/data/",
+    "/contracts/",
+    "/alembic/versions/",
+    "/.importlinter",
+]
+
+
+@pytest.mark.parametrize("path", PATHS_REQUIRING_REVIEW)
+def test_不可逆路径仍要求评审(path: str) -> None:
     codeowners = (PROJECT_ROOT / ".github/CODEOWNERS").read_text(encoding="utf-8")
-    for module in MODULES_REQUIRING_README:
-        assert f"/{module}/" in codeowners, f"CODEOWNERS 未配置 {module} 的负责人"
+    assert path in codeowners, f"CODEOWNERS 未覆盖不可逆路径 {path}"
 
 
 def test_分层契约覆盖每个后端模块() -> None:

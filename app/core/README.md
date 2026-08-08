@@ -1,6 +1,6 @@
 # app/core — 全仓公共约定
 
-负责人：规则计算负责人（见 `.github/CODEOWNERS`）
+主要维护：规则计算方向（问谁，不是评审权限）
 PRD 层级：横切
 
 ## 职责
@@ -27,8 +27,9 @@ PRD 层级：横切
 
 1. 确认对应 PRD / 数据分析说明书的口径表是否已更新。
 2. 评估历史数据是否需要迁移，以及旧值如何映射。
-3. 同步 `contracts/ai/` 中相关 Schema 的 enum 列表。
-4. PR 需规则计算负责人 + AI 能力负责人 approve。
+3. 同步 `contracts/ai/` 中相关 Schema 的 enum 列表——这一步会触发 `contracts/` 的 approve 要求。
+
+改 `enums.py` 本身不强制评审，但几乎总要连带改 `contracts/`，届时那个 PR 需要 1 个 approve。想让人看时在 PR 里说明旧值映射方案。
 
 `RuleThresholds` 的阈值变更需记版本（`version` 字段），历史结论不得被新阈值覆盖。改阈值同时要说明是否需要重算已有的状态建议。
 

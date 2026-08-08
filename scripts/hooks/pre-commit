@@ -1,0 +1,18 @@
+#!/bin/sh
+# 提交前自动跑门禁，把「CI 红了再推一次」的往返砍掉。
+# 安装：make hooks
+#
+# 跳过：git commit --no-verify
+# 允许跳过是刻意的——WIP 提交、只改文档、或者门禁本身坏了的时候需要能过去。
+# 真正的防线是 CI，hook 只是让你早 3 分钟知道。
+
+set -e
+
+# 只在改了 Python 文件时跑完整门禁；纯文档改动不值得等 1 秒
+if git diff --cached --name-only --diff-filter=ACM | grep -q '\.py$'; then
+    echo "pre-commit: 运行 make check"
+    make check
+else
+    echo "pre-commit: 无 Python 改动，只查仓库结构"
+    python3 -m pytest tests/contract -q
+fi

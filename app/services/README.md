@@ -1,6 +1,6 @@
 # app/services — Investment Thesis Engine
 
-负责人：逻辑引擎负责人
+主要维护：逻辑引擎方向（问谁，不是评审权限）
 PRD 层级：Investment Thesis Engine（PRD 8.2 核心层）
 
 ## 职责

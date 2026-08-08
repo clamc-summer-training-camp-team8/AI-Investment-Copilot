@@ -1,76 +1,23 @@
-# 模块所有权。PR 触及某路径时，对应负责人会被自动请求评审。
-# 远端仓库需开启分支保护的 "Require review from Code Owners" 才会生效。
+# 强制评审只覆盖「改错了很难回退」的四类路径。其余改动 CI 绿即可自合。
 #
-# 占位符说明：把 @arch-owner 等替换为实际的 Git 账号或团队名（如 @org/backend）。
-# 一个模块必须有主负责人；备份负责人可选，写在同一行。
+# 为什么不给每个模块都配负责人：2-3 人团队里，逐模块强制评审的主要产出是等待，
+# 不是质量。模块边界由 .importlinter 在 CI 里机器检查，比人肉评审更可靠也更快。
+# 团队规模超过 5-6 人时再把模块负责人加回来（协作规范第 1 节有还原方式）。
+#
+# 占位符说明：把 @arch-owner 等替换为实际 Git 账号或团队名（如 @org/backend）。
 # 后匹配的规则覆盖先匹配的，因此越具体的路径放在越下面。
-#
-# 角色与职责见 docs/collaboration/README.md 第 1 节。
 
-# 默认兜底：架构负责人
-*                               @arch-owner
-
-# 需求基线，只由产品负责人更新
+# 需求基线：改动意味着验收口径变了，需产品负责人确认版本号变化
 /docs/product/                  @product-owner
 /docs/data/                     @product-owner
 
-# 架构与工程门禁
-/docs/architecture/             @arch-owner
-/docs/adr/                      @arch-owner
-/.importlinter                  @arch-owner
-/pyproject.toml                 @arch-owner
-/Makefile                       @arch-owner
-/.github/                       @arch-owner
-/deploy/                        @arch-owner
-/scripts/                       @arch-owner
-/requirements.txt               @arch-owner
-/requirements-dev.txt           @arch-owner
-
-# 协作规范：架构 + 产品共同维护
-/docs/collaboration/            @arch-owner @product-owner
-/CONTRIBUTING.md                @arch-owner @product-owner
-
-# 横切公共约定。改动影响全仓，规则与 AI 双签
-/app/core/                      @calc-owner @ai-owner
-
-# 逻辑引擎与数据层
-/app/services/                  @engine-owner
-/app/db/                        @engine-owner
-/alembic/                       @engine-owner
-
-# 确定性计算与规则
-/app/calc/                      @calc-owner
-
-# AI 能力
-/app/ai/                        @ai-owner
-
-# 数据管道与离线分析
-/app/ingest/                    @data-owner
-/analytics/                     @data-owner
-
-# 应用接口层
-/app/api/                       @api-owner
-/app/schemas/                   @api-owner
-/app/workers/                   @api-owner
-
-# 前端
-/web/                           @web-owner
-
-# 跨模块契约：生产方 + 消费方双签（ADR-0004）
+# 跨模块契约：改动的代价由消费方承担，所以消费方要有话语权（ADR-0004）
 /contracts/                     @arch-owner
-/contracts/ai/                  @ai-owner @engine-owner
-/contracts/api/                 @api-owner @web-owner
-/contracts/events/              @data-owner @engine-owner
 
-# 测试按模块归属
-/tests/unit/calc/               @calc-owner
-/tests/unit/core/               @calc-owner
-/tests/unit/ai/                 @ai-owner
-/tests/unit/ingest/             @data-owner
-/tests/unit/services/           @engine-owner
-/tests/unit/db/                 @engine-owner
-/tests/unit/api/                @api-owner
-/tests/unit/schemas/            @api-owner
-/tests/unit/workers/            @api-owner
-/tests/integration/             @engine-owner
-/tests/contract/                @arch-owner
+# 迁移：线上数据改错无法靠回滚代码挽回
+/alembic/versions/              @engine-owner
+
+# 分层依赖契约本身：放宽约束等于放宽全仓边界
+/.importlinter                  @arch-owner
+
+# 其余路径无强制 owner。想让人看时在 PR 里 @ 对方，或走 draft PR 讨论。

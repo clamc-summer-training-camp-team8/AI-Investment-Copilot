@@ -1,10 +1,11 @@
-.PHONY: help install fmt lint lint-arch lint-contracts type test test-integration check migrate revision seed clean
+.PHONY: help install hooks fmt lint lint-arch lint-contracts type test test-integration check migrate revision seed clean
 .DEFAULT_GOAL := help
 
 PY := python3
 
 help:
 	@echo "install           安装开发依赖"
+	@echo "hooks             安装 pre-commit hook（提交前自动跑 check）"
 	@echo "fmt               自动修复格式"
 	@echo "lint              ruff 检查"
 	@echo "lint-arch         分层依赖契约检查"
@@ -19,6 +20,13 @@ help:
 
 install:
 	$(PY) -m pip install -r requirements-dev.txt
+
+# 用 core.hooksPath 而不是拷进 .git/hooks，这样 hook 本身受版本控制，
+# 改了对所有人生效，不需要每人重装。
+hooks:
+	git config core.hooksPath scripts/hooks
+	chmod +x scripts/hooks/*
+	@echo "已启用。跳过单次检查：git commit --no-verify"
 
 fmt:
 	ruff check --fix app analytics scripts tests

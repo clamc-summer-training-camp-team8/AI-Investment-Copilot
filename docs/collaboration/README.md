@@ -4,85 +4,92 @@
 
 核心原则：不同成员负责不同模块，但所有代码通过同一个受保护的 `main` 集成。不存在长期并行的功能分支。
 
-## 1. 角色与模块所有权
+## 0. 这套流程的成本预算
 
-所有权在 `.github/CODEOWNERS` 中生效。一个模块必须有且仅有一个主负责人（决策与评审责任），可以有备份负责人。
+当前团队 2-3 人。规则按一条原则设计：**机器能查的绝不写进清单让人重复勾选。**
 
-| 角色 | 主要模块 | 职责 |
+| 环节 | 谁来做 | 耗时 |
 | --- | --- | --- |
-| 架构负责人 | `docs/architecture`、`contracts`、`.importlinter`、CI | 分层依赖、跨模块契约、工程门禁 |
-| 逻辑引擎负责人 | `app/services`、`app/db`、`alembic` | 核心对象、状态机、版本、审计、迁移 |
-| 规则计算负责人 | `app/calc`、`app/core` | 确定性计算、阈值规则、时间语义 |
-| AI 能力负责人 | `app/ai`、`contracts/ai` | 抽取、影响分析、提示词与模型版本、降级 |
-| 数据管道负责人 | `app/ingest`、`analytics` | 解析、切片、去重、指标管道、评测与实验 |
-| 应用接口负责人 | `app/api`、`app/schemas`、`app/workers`、`contracts/api` | 接口、权限过滤、异步任务 |
-| 前端负责人 | `web` | 工作台、卡片、变化雷达、复核中心 |
-| 产品负责人 | `docs/product`、`docs/data` | 需求基线、验收口径、数据缺口关闭 |
+| 格式、分层依赖、类型、README 齐备、迁移单 head | CI 与 pre-commit hook | 约 1 秒 |
+| 产品红线、业务正确性 | 人（只在有风险时） | 按需 |
+| 强制 approve | 只有四类不可逆路径 | 其余为零 |
 
-一人可兼多角色。填写实际人员时改 `CODEOWNERS`，本表同步更新。
+单模块改动的完整流程是：切分支 → 改 → 提交（hook 自动跑门禁）→ 推 → CI 绿 → 自己合。**不需要等任何人。**
+
+下面每条约束都说明了「不遵守会发生什么」。凡是后果只是「风格不统一」的，都是建议而非要求。
+
+## 1. 职责分工
+
+分工用于知道「这块问谁」，不构成评审权限。除下表的强制评审路径外，任何人可以改任何模块。
+
+| 方向 | 主要范围 |
+| --- | --- |
+| 架构与工程 | `docs/architecture`、`contracts`、`.importlinter`、CI |
+| 逻辑引擎与数据 | `app/services`、`app/db`、`alembic` |
+| 规则计算 | `app/calc`、`app/core` |
+| AI 能力 | `app/ai` |
+| 数据管道与离线分析 | `app/ingest`、`analytics` |
+| 接口与前端 | `app/api`、`app/schemas`、`app/workers`、`web` |
+| 产品 | `docs/product`、`docs/data` |
+
+一人可兼多个方向。`.github/CODEOWNERS` 里只登记强制评审路径，不逐模块登记负责人——2-3 人团队里逐模块强制评审的主要产出是等待，模块边界由 `.importlinter` 在 CI 里机器检查，比人肉评审更可靠也更快。
+
+**团队涨到 5-6 人时把模块负责人加回来。** 做法：在 `CODEOWNERS` 中按模块补 `/app/calc/ @calc-owner` 这类条目，并在远端打开 "Require review from Code Owners"。届时改动量集中在少数模块、并行冲突变多，评审的收益才会超过等待成本。
 
 ## 2. 分支
 
 | 分支 | 说明 |
 | --- | --- |
 | `main` | 唯一集成分支。受保护，禁止直接推送与 force push，始终可运行 |
-| `<type>/<module>-<slug>` | 特性分支，短生命周期，建议 3 天内合回 |
+| 特性分支 | 短生命周期，自己起名 |
 
-`type` 取值：`feat`、`fix`、`refactor`、`docs`、`test`、`chore`、`perf`。
-`module` 用模块短名：`core`、`db`、`calc`、`ingest`、`ai`、`services`、`api`、`workers`、`analytics`、`web`、`contracts`、`infra`。
+**这一条是硬要求**：`main` 受保护、改动走 PR。放开它等于回到各自维护互不兼容版本的状态，是这套协作模式存在的唯一理由。
 
-示例：`feat/calc-invalidation-window`、`fix/ingest-pdf-locator`、`docs/arch-layering`。
-
-分支超过一周未合并，需在 PR 里说明原因或拆小。长期分支是这套协作模式要防的主要失败模式。
+**其余都是建议**：分支名推荐 `<type>/<module>-<slug>`（如 `feat/calc-invalidation-window`），因为好认；起了别的名字不会被驳回。建议 3 天内合回主干，理由是接口变化早暴露比晚暴露便宜，不是考核指标。
 
 ## 3. 提交信息
 
-Conventional Commits：
+推荐 Conventional Commits，`<type>(<module>): <简述>`。正文写为什么这么改，比写改了什么有用。
 
-```
-<type>(<module>): <简述>
-
-<可选正文：为什么这么改，而不是改了什么>
-
-Refs: FR-V-001, DQ-003
-```
-
-正文关联需求编号（`FR-*`、`DQ-*`、`GAP-*`、`DA-AC-*`）便于追溯验收项。
+关联需求编号（`Refs: FR-V-001`）在改动涉及验收项时很有价值，其他时候不必强求。**没有编号不影响合并。**
 
 ## 4. PR 流程
 
-1. 从最新 `main` 切分支。
-2. 本地跑 `make check`，通过后再推。
-3. 开 PR，填模板。标题同提交信息格式。
-4. CI 通过 + CODEOWNERS 指定的负责人 approve。
-5. squash merge 进 `main`，删除远端分支。
+```bash
+git switch -c feat/calc-invalidation-window
+# 改代码，写测试
+git commit -am "feat(calc): 按建立日裁剪失效判定窗口"   # hook 自动跑门禁
+git push -u origin HEAD
+# 开 PR → CI 绿 → 自己合
+```
 
-评审要求：
+**默认不需要 approve。** CI 通过即可自行 squash merge。远端开 auto-merge 后可以在推完 PR 时就点上，CI 绿了自动合，不用回来盯。
 
-| 改动范围 | 需要的 approve |
+只有这四类路径需要 1 个 approve，因为改错了很难回退：
+
+| 路径 | 为什么不能自合 |
 | --- | --- |
-| 单模块内部 | 该模块负责人 |
-| 跨模块 | 涉及的每个模块负责人 |
-| `contracts/` | 生产方 + 消费方负责人 |
-| `docs/architecture/`、`.importlinter` | 架构负责人 |
-| `alembic/versions/` | 逻辑引擎负责人 |
-| `docs/product/`、`docs/data/` 基线文档 | 产品负责人 |
+| `contracts/` | 改动的代价由消费方承担，消费方要有话语权 |
+| `alembic/versions/` | 线上数据改错无法靠回滚代码挽回 |
+| `.importlinter` | 放宽约束等于放宽全仓边界 |
+| `docs/product/`、`docs/data/` | 验收口径变化，需确认版本号 |
 
-PR 保持小。超过约 400 行改动（不含生成文件与文档）建议拆分。评审者对读不完的 PR 有权要求拆分。
+其余情况想让人看时，在 PR 里 @ 对方，或开 draft PR 讨论。这是主动求助，不是流程义务。
 
-紧急修复可以先合再补 approve，但必须在 24 小时内取得评审记录，并在 PR 里说明原因。
+PR 小一点评审快一点，但没有行数上限。
 
 ## 5. 评审关注点
 
-按优先级：
+评审存在的意义是查机器查不了的东西。CI 已经在管格式、分层依赖、类型、README 齐备、迁移 head 数量——**这些不用人再看一遍**。
 
-1. **产品红线**。是否绕过人工闸门？是否让 AI 产出关键数值？是否引入未来信息？是否覆盖历史版本？这四类问题一律阻断合并。
-2. **模块边界**。是否引入反向依赖？是否绕过 services 直连数据库？是否在 `analytics` 里另写一套计算口径？
-3. **可追溯性**。正式结论是否带原文定位、数据版本、模型版本、提示词版本？状态变更是否留审计？
-4. **测试**。阈值类逻辑是否覆盖达到 / 接近 / 未达到 / 数据缺失四种情形？
-5. 可读性与命名。
+人只看两类：
 
-评论用途分级：`must` 阻断合并，`should` 建议修改，`nit` 可忽略。写清哪一类，避免评审者与作者对严重程度理解不一致。
+1. **产品红线**。是否绕过人工闸门？是否让 AI 产出关键数值？是否引入未来信息？是否覆盖历史版本？这四类会造成数据返工或合规问题，发现了就说，不管 PR 是谁的。
+2. **业务正确性**。阈值逻辑覆盖了达到 / 接近 / 未达到 / 数据缺失吗？口径对不对？
+
+评论标 `must` / `nit` 两级就够。`nit` 默认不必改。
+
+自合的改动没有评审者，所以第 1 条靠作者自己在 PR 模板里过一遍——模板只留了这五个问题，且只要求回答有风险的那几条。
 
 ## 6. 数据库迁移
 
@@ -93,9 +100,11 @@ PR 保持小。超过约 400 行改动（不含生成文件与文档）建议拆
 
 ## 7. 需求基线与文档
 
-`docs/product/` 与 `docs/data/` 是需求基线，只由产品负责人更新，改动需说明版本号变化。工程侧的理解和补充写在 `docs/architecture/` 或模块 README 里，不改基线文档。
+`docs/product/` 与 `docs/data/` 是需求基线，改动需产品负责人 approve 并说明版本号变化。工程侧的理解和补充写在 `docs/architecture/` 或模块 README 里。
 
-模块职责变化时，同步改该模块 README 与根 README 的模块表。README 与代码不一致视为缺陷。
+模块职责变化时同步改该模块 README。README 齐备由 `tests/contract/test_repo_structure.py` 检查，内容准不准靠自觉。
+
+**ADR 不阻塞合并。** 涉及分层依赖、模块边界、跨模块契约的决策该记下来，但先合代码、一周内补 ADR 即可。ADR 的价值在半年后被人读到，不在于合并前写完。
 
 ## 8. 远端仓库配置
 
@@ -106,26 +115,48 @@ git remote add origin <私有仓库地址>
 git push -u origin main
 ```
 
-然后在远端配置 `main` 的分支保护（以下为 GitHub 术语，GitLab/Gitea 对应设置项类似）：
+然后配置 `main` 的分支保护。**按 2-3 人团队的最小集**（GitHub 术语，GitLab/Gitea 对应项类似）：
 
-- Require a pull request before merging
-- Require approvals：1（跨模块改动依赖 CODEOWNERS 自动补充评审人）
-- Require review from Code Owners
-- Require status checks to pass：CI 的 `lint`、`arch`、`test` 三个 job
-- Require linear history
-- 禁止 force push、禁止删除分支
-- 管理员同样受限（Do not allow bypassing）
+| 设置 | 值 | 理由 |
+| --- | --- | --- |
+| Require a pull request before merging | 开 | 唯一的硬要求 |
+| Require approvals | **0** | 默认自合，不等人 |
+| Require review from Code Owners | 开 | 只对 CODEOWNERS 里那四类路径生效 |
+| Require status checks to pass | `lint`、`arch`、`test` | 机器门禁不放过 |
+| 禁止 force push / 删除分支 | 开 | 保护历史 |
+| Allow auto-merge | 开 | CI 绿了自动合，不用回来点 |
 
-**分支保护开启前不要开始并行开发。** 没有保护的 `main` 加上多人分工，会在几天内退化成各写各的，正是这套模型要防的失败模式。
+`Require approvals = 0` 配合 `Require review from Code Owners` 是关键组合：普通改动零 approve 自合，只有 `contracts/`、`alembic/versions/`、`.importlinter`、`docs/product|data/` 会因为 code owner 规则要求评审。
 
-私有仓库的成员权限建议：负责人 `write`，仅需查看的角色 `read`，仓库管理 `admin` 限一到两人。
+刻意**不开**的两项：
 
-第一件事是把 `.github/CODEOWNERS` 里的 `@arch-owner` 等占位符替换成实际账号或团队名，并同步更新本文第 1 节的角色表。占位符状态下 code owner 评审无法生效。
+- **Require linear history**：会强制作者处理 rebase 冲突，squash merge 本身已经产生线性历史。
+- **Do not allow bypassing（管理员受限）**：2-3 人团队需要有人能在 CI 卡死时救场。
+
+**分支保护开启前不要开始并行开发。** 没有保护的 `main` 加上多人分工，会在几天内退化成各写各的。
+
+成员权限：开发者 `write`，仓库管理 `admin` 限一到两人。
+
+接入远端第一件事是把 `.github/CODEOWNERS` 里的 `@arch-owner`、`@engine-owner`、`@product-owner` 换成实际账号。占位符状态下 code owner 评审不生效——此时全仓都是自合，这四类不可逆路径就失去保护了。
 
 ## 9. 新成员上手
 
-1. 读根 `README.md` 的产品边界表。这六条决定了什么代码会被驳回。
-2. 读 `docs/architecture/README.md` 与 `layering.md`。
-3. 读自己模块的 README。
-4. 装环境跑 `make check`，确认门禁在本地能通过。
-5. 从一个 `docs` 或 `test` 类型的小 PR 开始，先把流程走通。
+1. 读根 `README.md` 的产品边界表。这六条是唯一会让改动被驳回的原因。
+2. 跑 `make install && make hooks && make check`。
+3. 读自己要动的模块的 README。
+4. 直接开始写。第一个 PR 不用找人评审，CI 绿了自己合。
+
+架构全貌（`docs/architecture/README.md`）和分层规则（`layering.md`）值得读，但不必在写第一行代码前读完——违反分层的话 `make check` 会在 1 秒内告诉你，比读文档快。
+
+## 10. 什么时候该把约束加回来
+
+这套流程是按 2-3 人调的。出现以下信号时，加回对应约束比继续省流程更划算：
+
+| 信号 | 加回什么 |
+| --- | --- |
+| 团队到 5-6 人 | `CODEOWNERS` 补模块负责人条目 |
+| 同一模块反复被不熟悉它的人改坏 | 该模块加 code owner |
+| `main` 上出现过一次需要 revert 的产品红线问题 | `Require approvals` 提到 1 |
+| 合并冲突开始频繁 | 引入 merge queue，而不是限制分支数 |
+
+反过来，**不要因为「感觉不规范」而加约束**。每条约束都要能说出不遵守会发生什么。
