@@ -23,6 +23,8 @@ alembic heads                             # 检查 head 数量，应为 1
 
 **审查自动生成的内容。** `--autogenerate` 会漏 JSONB 默认值、`CheckConstraint`、`comment`，也可能把手写索引判为多余而删除。生成后逐行看，不要直接提交。
 
+**时间列一律 timestamptz。** `app/db/base.py` 的 `type_annotation_map` 已把 `datetime` 全局映射为 `DateTime(timezone=True)`，新增列自动继承，不要在模型里手写 `DateTime()`。曾经因为漏配这个映射，9 个列静默退化成 `timestamp without time zone`，其中包括 `published_at`、`disclosure_time`、`available_at`、`generated_at`——四类时间语义全中，DQ-003 的泄露判定会失效。`tests/unit/db/test_column_types.py` 现在守着这条。
+
 ## 命名
 
 自动生成的 revision id 保留，`message` 用中文描述业务意图：

@@ -26,6 +26,16 @@ NAMING_CONVENTION = {
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
+    # 把 datetime 全局映射为 timestamptz。
+    #
+    # 不靠每个模型显式写 DateTime(timezone=True)：漏写一处不会报错，只会静默
+    # 退化成 timestamp without time zone，读回来的值丢时区，跨来源比较退回
+    # naive 混算，DQ-003 的泄露判定随之失效。这类错误在开发期几乎看不出来。
+    # 放在这里，新增列自动继承，漏不掉。
+    type_annotation_map = {  # noqa: RUF012
+        datetime: DateTime(timezone=True),
+    }
+
 
 BizId = Annotated[str, mapped_column(String(64))]
 ShortText = Annotated[str, mapped_column(String(255))]

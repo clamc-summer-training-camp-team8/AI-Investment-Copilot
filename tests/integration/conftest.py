@@ -50,5 +50,8 @@ def session(engine: Engine) -> Iterator[Session]:
         yield sess
     finally:
         sess.close()
-        transaction.rollback()
+        # 断言约束的测试里 flush 会失败，PostgreSQL 中止事务后 SQLAlchemy 已经
+        # 把它与连接解绑。此时再 rollback 会报 SAWarning，所以先查状态。
+        if transaction.is_active:
+            transaction.rollback()
         connection.close()
