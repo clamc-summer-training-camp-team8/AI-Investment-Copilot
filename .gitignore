@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+storage/
+*.sqlite3
+.DS_Store
+
+# 前端
+web/node_modules/
+web/dist/
+web/.vite/
+
+# 离线分析：只提交版本描述文件，数据本体走外部存储
+analytics/datasets/**/data/
+analytics/**/*.parquet
+analytics/**/*.pkl
+.ipynb_checkpoints/
+
+# 真实投研资料不进仓库。样例数据仅限 docs/data/数据分析交付包/业务样例包/
+/uploads/
+/real_data/

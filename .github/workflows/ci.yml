@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  lint:
+    name: 格式与静态检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: ruff check
+        run: ruff check app analytics scripts tests
+      - name: ruff format
+        run: ruff format --check app analytics scripts tests
+      - name: mypy
+        run: mypy app
+
+  arch:
+    name: 分层依赖契约
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: import-linter
+        run: lint-imports
+
+      - name: 跨模块契约 Schema 合法性
+        run: python -m scripts.check_contracts
+
+  test:
+    name: 测试
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: copilot
+          POSTGRES_PASSWORD: copilot
+          POSTGRES_DB: copilot_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://copilot:copilot@localhost:5432/copilot_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+
+      # 两个 PR 同时加迁移会产生分叉，后合并者需 rebase 重新生成 revision 链
+      - name: 迁移只允许一个 head
+        run: |
+          heads=$(alembic heads | grep -c '(head)' || true)
+          if [ "$heads" -gt 1 ]; then
+            echo "检测到 $heads 个 alembic head，请 rebase 后重新生成 revision 链"
+            alembic heads
+            exit 1
+          fi
+
+      - name: 迁移往返
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+
+      - name: 单元与契约测试
+        run: pytest tests/unit tests/contract -q
+
+      # CI=true 时 tests/integration/conftest.py 不允许因缺库而跳过，
+      # 否则数据库连不上会伪装成"通过"。
+      - name: 集成测试
+        run: pytest tests/integration -q -rs

@@ -1,0 +1,75 @@
+; 分层依赖契约。说明见 docs/architecture/layering.md
+; 本地执行：make lint-arch    CI 中作为独立 job 强制执行
+;
+; 新增模块时必须同步更新这里，否则新模块处于无约束状态（ADR-0001 已声明的代价）。
+
+[importlinter]
+root_packages =
+    app
+    analytics
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = 后端分层：上层可依赖下层，反向禁止
+type = layers
+layers =
+    app.api
+    app.workers
+    app.services
+    app.ai | app.ingest | app.calc
+    app.db
+    app.core
+
+[importlinter:contract:calc-purity]
+name = app.calc 必须是纯函数模块（DA-AC-04 可复算要求）
+type = forbidden
+source_modules =
+    app.calc
+forbidden_modules =
+    app.ai
+    app.db
+    app.services
+    app.api
+    app.workers
+    app.ingest
+    app.schemas
+
+[importlinter:contract:core-purity]
+name = app.core 不得依赖任何兄弟模块
+type = forbidden
+source_modules =
+    app.core
+forbidden_modules =
+    app.ai
+    app.api
+    app.calc
+    app.db
+    app.ingest
+    app.schemas
+    app.services
+    app.workers
+
+[importlinter:contract:api-not-touch-db]
+name = app.api 不得直连数据层（会绕过权限过滤与审计留痕）
+type = forbidden
+source_modules =
+    app.api
+    app.schemas
+forbidden_modules =
+    app.db
+
+[importlinter:contract:ingest-no-model]
+name = app.ingest 不得在解析阶段调用模型
+type = forbidden
+source_modules =
+    app.ingest
+forbidden_modules =
+    app.ai
+
+[importlinter:contract:online-not-depend-offline]
+name = 线上代码不得依赖离线分析代码
+type = forbidden
+source_modules =
+    app
+forbidden_modules =
+    analytics
