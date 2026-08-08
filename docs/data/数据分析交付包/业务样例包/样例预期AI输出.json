@@ -1,0 +1,28 @@
+{
+  "disclaimer": "全部字段和数据均为虚构演示，不对应真实证券。",
+  "document_id": "DOC-DEMO-002",
+  "security_id": "DEMO001",
+  "thesis_id": "THS-DEMO-001",
+  "hypothesis_id": "HYP-DEMO-002",
+  "event": {
+    "event_id": "EVT-DEMO-001",
+    "event_type": "订单",
+    "event_time": "2026-02-10",
+    "disclosure_time": "2026-02-10T18:00:00+08:00",
+    "fact": "新签海外大型储能订单金额同比增长约25%",
+    "evidence_locator": "DOC-DEMO-002#paragraph-1"
+  },
+  "signal": {
+    "direction": "正向",
+    "strength": 0.78,
+    "confidence": 0.86,
+    "horizon": "中期",
+    "rationale": "订单增长支持订单兑现假设，但收入确认仍受验收和交付进度影响。",
+    "requires_human_review": true
+  },
+  "model_metadata": {
+    "model_version": "demo-model-v1",
+    "prompt_version": "event-impact-v1",
+    "generated_at": "2026-02-10T18:05:00+08:00"
+  }
+}

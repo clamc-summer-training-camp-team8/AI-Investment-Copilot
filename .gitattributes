@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+# 需求基线是二进制文档，不做行尾转换也不参与文本 diff
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.pdf  binary
+
+*.py   text diff=python
+*.md   text
+*.json text
+*.yaml text
+*.yml  text

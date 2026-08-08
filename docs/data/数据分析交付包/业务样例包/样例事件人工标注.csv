@@ -1,0 +1,5 @@
+﻿event_id,document_id,security_id,event_type,event_time,disclosure_time,hypothesis_id,direction,strength,horizon,evidence,review_status,is_illustrative
+EVT-DEMO-001,DOC-DEMO-002,DEMO001,订单,2026-02-10,2026-02-10 18:00,HYP-DEMO-002,支持,0.78,中期,新签海外订单金额同比增长约25%,通过,TRUE
+EVT-DEMO-002,DOC-DEMO-003,DEMO001,政策,2026-03-05,2026-03-05 08:30,HYP-DEMO-001,削弱,0.66,长期,拟下调补贴比例并提高本地化采购要求,通过,TRUE
+EVT-DEMO-003,DOC-DEMO-004,DEMO001,管理层表述,2026-04-20,2026-04-20 16:00,HYP-DEMO-002,削弱,0.58,中期,订单展望由快速增长调整为保持稳定增长,修改,TRUE
+EVT-DEMO-004,DOC-DEMO-005,DEMO001,业绩,2026-04-30,2026-04-30 19:00,HYP-DEMO-003,削弱,0.82,中期,海外项目毛利率17%，低于18%观察阈值,通过,TRUE
