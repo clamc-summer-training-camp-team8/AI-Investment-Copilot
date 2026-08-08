@@ -123,8 +123,22 @@ class Thesis(Base):
 
     owner: Mapped[str] = mapped_column(String(64), nullable=False)
     visibility: Mapped[str] = mapped_column(String(16), nullable=False, default="团队")
+    team: Mapped[str | None] = mapped_column(
+        String(64),
+        comment="归属团队；visibility=团队 时的可见范围判断依据，缺失则同组也看不到",
+    )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="草稿")
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    invalidation_require_all: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment=(
+            "thesis 级失效条件是「全部满足」还是「任一满足」。"
+            "默认 AND：把 AND 当 OR 会让单指标不达标就判失效，误报比漏报更伤信任"
+        ),
+    )
 
     source_document_id: Mapped[str | None] = mapped_column(ForeignKey("document.document_id"))
     is_illustrative: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
