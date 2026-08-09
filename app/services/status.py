@@ -105,6 +105,11 @@ def compute_suggestion(
                     metric_version=o.metric_version,
                 )
                 for o in uow.observations.list_for_metric(thesis.security_id, mapping.metric_id)
+                # 上界裁剪：`today` 之后才可得的观察值不能参与本次判断。
+                # `check_invalidation` 只裁剪逻辑成立日之前的数据（下界），没有上界；
+                # 少了这一句，用历史时点复算状态时会看到未来的财报（DQ-003 未来信息
+                # 泄露）。回溯与复算都依赖这个裁剪，线上按当天跑不受影响。
+                if today is None or o.observation_date <= today
             ]
             if not observations:
                 continue
