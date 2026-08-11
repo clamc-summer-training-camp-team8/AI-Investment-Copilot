@@ -109,6 +109,63 @@ class EvidenceRecord:
     review_note: str | None = None
     # 来源文档的权限标签，随证据走。确认时用于校验「证据可见性不得高于来源文档」。
     source_visibility_label: str = "内部"
+    # 详情字段必须随证据持久化，不能由前端拼接或依赖易变的外部页面。
+    security_id: str | None = None
+    fact_excerpt: str | None = None
+    source_document_id: str | None = None
+    source_document_title: str | None = None
+    disclosed_at: datetime | None = None
+    occurred_at: date | None = None
+    source_url: str | None = None
+
+
+@dataclass
+class EvidenceRelationRecord:
+    """独立关联值对象；状态只作用于本条逻辑—假设关系。"""
+
+    relation_id: str
+    evidence_id: str
+    thesis_id: str
+    hypothesis_id: str
+    direction: ImpactDirection
+    strength: str | None
+    status: ConfirmationStatus
+    created_by: str
+    reason: str | None = None
+    reviewed_by: str | None = None
+    reviewed_at: datetime | None = None
+    deactivated_by: str | None = None
+    deactivated_at: datetime | None = None
+
+
+@dataclass
+class EvidenceFeedRecord:
+    """面向研究员列表的可读证据聚合，不作为新的持久化实体。"""
+
+    evidence_id: str
+    relation_id: str
+    security_id: str
+    security_name: str
+    thesis_id: str
+    thesis_title: str
+    thesis_owner: str
+    thesis_status: ThesisStatus
+    thesis_established_on: date
+    thesis_horizon_end_on: date | None
+    hypothesis_id: str
+    hypothesis_statement: str
+    hypothesis_importance: Importance
+    source_document_id: str | None
+    source_document_title: str | None
+    fact_excerpt: str | None
+    disclosed_at: datetime | None
+    occurred_at: date | None
+    source_url: str | None
+    direction: ImpactDirection
+    strength: str | None
+    ai_confidence: Decimal | None
+    confirmation_status: ConfirmationStatus
+    priority: str
 
 
 @dataclass
@@ -211,6 +268,27 @@ class EvidenceRepo(Protocol):
     def list_for_thesis(self, thesis_id: str) -> list[EvidenceRecord]: ...
 
 
+class EvidenceRelationRepo(Protocol):
+    def get(self, relation_id: str) -> EvidenceRelationRecord | None: ...
+    def list_for_evidence(self, evidence_id: str) -> list[EvidenceRelationRecord]: ...
+    def list_for_thesis(self, thesis_id: str) -> list[EvidenceRelationRecord]: ...
+    def add(self, record: EvidenceRelationRecord) -> None: ...
+    def update(self, record: EvidenceRelationRecord) -> None: ...
+
+
+class EvidenceFeedRepo(Protocol):
+    def search(
+        self,
+        *,
+        thesis_ids: tuple[str, ...],
+        statuses: tuple[ConfirmationStatus, ...] = (),
+        direction: ImpactDirection | None = None,
+        priorities: tuple[str, ...] = (),
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[EvidenceFeedRecord], int]: ...
+
+
 class ObservationRepo(Protocol):
     def list_for_metric(self, security_id: str, metric_id: str) -> list[ObservationRecord]: ...
     def add(self, record: ObservationRecord) -> None: ...
@@ -247,6 +325,8 @@ class UnitOfWork:
 
     thesis: ThesisRepo
     evidence: EvidenceRepo
+    relations: EvidenceRelationRepo
+    feed: EvidenceFeedRepo
     observations: ObservationRepo
     suggestions: SuggestionRepo
     versions: VersionRepo

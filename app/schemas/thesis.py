@@ -115,13 +115,84 @@ class EvidenceOut(Base):
         return None if value is None else str(value)
 
 
+class EvidenceDetailOut(Base):
+    """证据本体详情；关联对象由独立关联接口返回。"""
+
+    evidence_id: str
+    security_id: str
+    evidence_type: str
+    direction: str
+    evidence_locator: str
+    confirmation_status: str
+    ai_status: str | None = None
+    model_version: str | None = None
+    prompt_version: str | None = None
+    strength: str | None = None
+    strength_score: Decimal | None = None
+    ai_confidence: Decimal | None = None
+    confirmed_by: str | None = None
+    confirmed_at: datetime | None = None
+    fact_excerpt: str
+    source_document_id: str
+    source_document_title: str
+    disclosed_at: datetime
+    occurred_at: date | None = None
+    source_url: str
+
+    @field_serializer("strength_score", "ai_confidence")
+    def _decimal_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+
+class EvidenceRelationOut(Base):
+    """当前单关联模型的只读兼容输出，为多关联表迁移预留 response 形状。"""
+
+    relation_id: str
+    thesis_id: str
+    hypothesis_id: str
+    direction: str
+    strength: str | None = None
+    status: str
+    reason: str | None = None
+    created_by: str
+    reviewed_by: str | None = None
+    reviewed_at: datetime | None = None
+    deactivated_by: str | None = None
+    deactivated_at: datetime | None = None
+    can_manage: bool
+
+
+class EvidenceRelationIn(Base):
+    thesis_id: Annotated[str, Field(min_length=1)]
+    hypothesis_id: Annotated[str, Field(min_length=1)]
+    direction: Annotated[str, Field(pattern="^(支持|冲突|中性)$")]
+    strength: str | None = None
+    reason: Annotated[str, Field(min_length=1, max_length=1000)]
+
+
+class EvidenceRelationReviewIn(Base):
+    action: Annotated[str, Field(pattern="^(确认|驳回|暂不判断)$")]
+    reason: str | None = Field(default=None, max_length=1000)
+
+
+class EvidenceRelationDeactivateIn(Base):
+    """解除关系只需记录原因，不混用审核动作字段。"""
+
+    reason: Annotated[str, Field(min_length=1, max_length=1000)]
+
+
+class EvidenceRelationMutationOut(Base):
+    relation: EvidenceRelationOut
+    affected_thesis_ids: list[str]
+
+
 class SuggestionOut(Base):
     """状态建议。
 
     `requires_human_confirmation` 恒为真（除已关闭），界面据此渲染确认入口。
     """
 
-    suggestion_id: int | None = None
+    suggestion_id: int
     thesis_id: str
     current_status: str
     suggested_status: str
@@ -139,6 +210,47 @@ class PageMeta(Base):
     total: int
     limit: int
     offset: int
+
+
+class ValidationItemOut(Base):
+    code: str
+    label: str
+    status: Annotated[str, Field(pattern="^(passed|warning|failed)$")]
+    message: str
+
+
+class EvidenceFeedItemOut(Base):
+    """研究员可直接阅读的证据摘要，内部 ID 只承担跳转与追溯。"""
+
+    evidence_id: str
+    relation_id: str
+    security_id: str
+    security_name: str
+    thesis_id: str
+    thesis_title: str
+    hypothesis_id: str
+    hypothesis_statement: str
+    source_document_title: str
+    fact_excerpt: str
+    disclosed_at: datetime
+    occurred_at: date | None = None
+    source_url: str
+    direction: str
+    strength: str | None = None
+    ai_confidence: Decimal | None = None
+    confirmation_status: str
+    priority: Annotated[str, Field(pattern="^(high|medium|low)$")]
+    can_manage: bool
+    validation_items: list[ValidationItemOut]
+
+    @field_serializer("ai_confidence")
+    def _confidence_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+
+class EvidenceFeedPage(Base):
+    items: list[EvidenceFeedItemOut]
+    page: PageMeta
 
 
 class ThesisPage(Base):

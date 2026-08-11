@@ -102,6 +102,7 @@ class ConfirmationStatus(StrEnum):
     PENDING = "待确认"
     CONFIRMED = "已确认"
     REJECTED = "已驳回"
+    DEACTIVATED = "已解除"
 
 
 class ReviewStatus(StrEnum):

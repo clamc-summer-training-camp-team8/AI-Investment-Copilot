@@ -17,12 +17,20 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.api.deps import ActorDep, SettingsDep, UowDep
+from app.api.feed_presenter import to_feed_item
 from app.core.domain import ThesisQuery, ThesisRecord, UnitOfWork
-from app.core.enums import ImpactDirection, ThesisStatus
+from app.core.enums import ConfirmationStatus, ImpactDirection, ThesisStatus
 from app.schemas.thesis import (
     AuditOut,
     AuditPage,
     EvidenceActionIn,
+    EvidenceDetailOut,
+    EvidenceFeedPage,
+    EvidenceRelationOut,
+    EvidenceRelationDeactivateIn,
+    EvidenceRelationIn,
+    EvidenceRelationMutationOut,
+    EvidenceRelationReviewIn,
     EvidenceOut,
     HypothesisOut,
     HypothesisTrendOut,
@@ -37,6 +45,7 @@ from app.schemas.thesis import (
 )
 from app.services import audit, permission
 from app.services import evidence as evidence_service
+from app.services import relation as relation_service
 from app.services import query as query_service
 from app.services import status as status_service
 from app.services import thesis as thesis_service
@@ -49,7 +58,7 @@ from app.services.errors import (
 )
 from app.services.permission import Actor
 
-E = TypeVar("E", ThesisStatus, ImpactDirection)
+E = TypeVar("E", ThesisStatus, ImpactDirection, ConfirmationStatus)
 
 router = APIRouter(tags=["thesis"])
 
@@ -158,6 +167,7 @@ def list_theses(
     keyword: Annotated[
         str | None, Query(max_length=100, description="标题与核心观点模糊匹配")
     ] = None,
+    manageable: Annotated[bool, Query(description="仅返回当前用户可管理的逻辑")] = False,
     limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ThesisPage:
@@ -173,7 +183,9 @@ def list_theses(
         ThesisQuery(
             statuses=statuses,
             securities=tuple(security_id or []),
-            owner=owner,
+            # 关联目标选择只交给负责人。由服务端将可管理条件转为负责人过滤，
+            # 页面无需、也不得下载可见但不可修改的逻辑后再自行筛选。
+            owner=actor.user_id if manageable else owner,
             keyword=keyword,
             limit=limit,
             offset=offset,
@@ -252,6 +264,208 @@ def list_evidence(thesis_id: str, actor: ActorDep, uow: UowDep) -> list[Evidence
     ]
 
 
+@router.get("/theses/{thesis_id}/evidence-feed", response_model=EvidenceFeedPage)
+def list_readable_evidence(
+    thesis_id: str,
+    actor: ActorDep,
+    uow: UowDep,
+    status: Annotated[list[str] | None, Query()] = None,
+    direction: Annotated[str | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> EvidenceFeedPage:
+    """返回逻辑下可直接阅读的证据摘要，不改变旧证据列表契约。"""
+    _require_visible(uow, actor, thesis_id)
+    statuses = tuple(
+        _parse_required_enum(ConfirmationStatus, item, "确认状态") for item in (status or [])
+    )
+    parsed_direction = (
+        _parse_required_enum(ImpactDirection, direction, "影响方向") if direction else None
+    )
+    records, total = uow.feed.search(
+        thesis_ids=(thesis_id,), statuses=statuses, direction=parsed_direction,
+        limit=limit, offset=offset,
+    )
+    return EvidenceFeedPage(
+        items=[to_feed_item(item, actor_id=actor.user_id) for item in records],
+        page=PageMeta(total=total, limit=limit, offset=offset),
+    )
+
+
+@router.get("/evidence/{evidence_id}", response_model=EvidenceDetailOut)
+def get_evidence_detail(
+    evidence_id: str, actor: ActorDep, uow: UowDep
+) -> EvidenceDetailOut:
+    """读取可核验的证据本体详情，不以单一逻辑关系作为详情字段。"""
+    record = uow.evidence.get(evidence_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    # 证据正文由可见的有效关联授权访问。原 Evidence.thesis_id 仅为旧模型兼容字段，
+    # 不应阻断后来新增到当前用户可见逻辑中的同一条证据。
+    relations = uow.relations.list_for_evidence(evidence_id)
+    if relations:
+        visible_relation = False
+        for relation in relations:
+            if relation.status.value == "已解除":
+                continue
+            try:
+                _require_visible(uow, actor, relation.thesis_id)
+                visible_relation = True
+                break
+            except HTTPException:
+                continue
+        if not visible_relation:
+            raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    else:
+        _require_visible(uow, actor, record.thesis_id)
+    if not permission.can_read_document(actor, visibility_label=record.source_visibility_label):
+        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    required = (
+        record.security_id,
+        record.fact_excerpt,
+        record.source_document_id,
+        record.source_document_title,
+        record.disclosed_at,
+        record.source_url,
+    )
+    if any(value is None for value in required):
+        raise HTTPException(status_code=422, detail="证据详情字段不完整，无法用于公开核验")
+    return EvidenceDetailOut(
+        evidence_id=record.evidence_id,
+        evidence_type=record.evidence_type,
+        direction=record.direction.value,
+        evidence_locator=record.evidence_locator,
+        confirmation_status=record.confirmation_status.value,
+        ai_status=record.ai_status,
+        model_version=record.model_version,
+        prompt_version=record.prompt_version,
+        strength=record.strength,
+        strength_score=record.strength_score,
+        ai_confidence=record.ai_confidence,
+        confirmed_by=record.confirmed_by,
+        confirmed_at=record.confirmed_at,
+        security_id=record.security_id,
+        fact_excerpt=record.fact_excerpt,
+        source_document_id=record.source_document_id,
+        source_document_title=record.source_document_title,
+        disclosed_at=record.disclosed_at,
+        occurred_at=record.occurred_at,
+        source_url=record.source_url,
+    )
+
+
+@router.get("/evidence/{evidence_id}/relations", response_model=list[EvidenceRelationOut])
+def list_evidence_relations(
+    evidence_id: str, actor: ActorDep, uow: UowDep
+) -> list[EvidenceRelationOut]:
+    """兼容输出当前单关联记录；多关联迁移后保持同一路径与响应形状。"""
+    record = uow.evidence.get(evidence_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    relations = uow.relations.list_for_evidence(evidence_id)
+    # 已完成迁移的数据库从关联表读取；空库/旧库保留一条兼容输出，便于增量升级。
+    if not relations:
+        thesis = _require_visible(uow, actor, record.thesis_id)
+        return [_relation_out(
+            relation_id=f"legacy-{record.evidence_id}", thesis_id=record.thesis_id,
+            hypothesis_id=record.hypothesis_id, direction=record.direction.value,
+            strength=record.strength, status=record.confirmation_status.value, reason=record.review_note,
+            created_by=record.confirmed_by or "系统迁移",
+            can_manage=thesis.owner == actor.user_id,
+        )]
+    result: list[EvidenceRelationOut] = []
+    for relation in relations:
+        thesis = uow.thesis.get(relation.thesis_id)
+        if thesis is None:
+            continue
+        try:
+            permission.ensure_thesis_visible(actor, thesis_id=thesis.thesis_id, owner=thesis.owner, visibility=thesis.visibility, team=thesis.team)
+        except NotVisible:
+            continue
+        result.append(_relation_out(
+            relation_id=relation.relation_id, thesis_id=relation.thesis_id,
+            hypothesis_id=relation.hypothesis_id, direction=relation.direction.value,
+            strength=relation.strength, status=relation.status.value, reason=relation.reason,
+            created_by=relation.created_by, reviewed_by=relation.reviewed_by,
+            reviewed_at=relation.reviewed_at, deactivated_by=relation.deactivated_by,
+            deactivated_at=relation.deactivated_at,
+            can_manage=thesis.owner == actor.user_id,
+        ))
+    return result
+
+
+def _relation_out(*, relation_id: str, thesis_id: str, hypothesis_id: str, direction: str, strength: str | None, status: str, reason: str | None, created_by: str, reviewed_by=None, reviewed_at=None, deactivated_by=None, deactivated_at=None, can_manage: bool) -> EvidenceRelationOut:
+    return EvidenceRelationOut(relation_id=relation_id, thesis_id=thesis_id, hypothesis_id=hypothesis_id, direction=direction, strength=strength, status=status, reason=reason, created_by=created_by, reviewed_by=reviewed_by, reviewed_at=reviewed_at, deactivated_by=deactivated_by, deactivated_at=deactivated_at, can_manage=can_manage)
+
+
+def _relation_mutation(record, actor: Actor, uow: UnitOfWork) -> EvidenceRelationMutationOut:
+    thesis = uow.thesis.get(record.thesis_id)
+    return EvidenceRelationMutationOut(
+        relation=_relation_out(relation_id=record.relation_id, thesis_id=record.thesis_id, hypothesis_id=record.hypothesis_id, direction=record.direction.value, strength=record.strength, status=record.status.value, reason=record.reason, created_by=record.created_by, reviewed_by=record.reviewed_by, reviewed_at=record.reviewed_at, deactivated_by=record.deactivated_by, deactivated_at=record.deactivated_at, can_manage=bool(thesis and thesis.owner == actor.user_id)),
+        affected_thesis_ids=[record.thesis_id],
+    )
+
+
+@router.post("/evidence/{evidence_id}/relations", response_model=EvidenceRelationMutationOut, status_code=201)
+def create_relation(evidence_id: str, payload: EvidenceRelationIn, actor: ActorDep, uow: UowDep) -> EvidenceRelationMutationOut:
+    evidence = uow.evidence.get(evidence_id)
+    if evidence is None:
+        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    _require_visible(uow, actor, evidence.thesis_id)
+    try:
+        relation = relation_service.create(uow, evidence_id=evidence_id, thesis_id=payload.thesis_id, hypothesis_id=payload.hypothesis_id, direction=_parse_required_enum(ImpactDirection, payload.direction, "影响方向"), strength=payload.strength, reason=payload.reason, actor=actor)
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _relation_mutation(relation, actor, uow)
+
+
+@router.patch("/evidence/{evidence_id}/relations/{relation_id}", response_model=EvidenceRelationMutationOut)
+def update_relation(evidence_id: str, relation_id: str, payload: EvidenceRelationIn, actor: ActorDep, uow: UowDep) -> EvidenceRelationMutationOut:
+    relation = uow.relations.get(relation_id)
+    if relation is None or relation.evidence_id != evidence_id:
+        raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
+    _require_visible(uow, actor, relation.thesis_id)
+    try:
+        updated = relation_service.update(uow, relation_id=relation_id, hypothesis_id=payload.hypothesis_id, direction=_parse_required_enum(ImpactDirection, payload.direction, "影响方向"), strength=payload.strength, reason=payload.reason, actor=actor)
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _relation_mutation(updated, actor, uow)
+
+
+@router.post("/evidence/{evidence_id}/relations/{relation_id}/deactivate", response_model=EvidenceRelationMutationOut)
+def deactivate_relation(evidence_id: str, relation_id: str, payload: EvidenceRelationDeactivateIn, actor: ActorDep, uow: UowDep) -> EvidenceRelationMutationOut:
+    relation = uow.relations.get(relation_id)
+    if relation is None or relation.evidence_id != evidence_id:
+        raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
+    _require_visible(uow, actor, relation.thesis_id)
+    try:
+        updated = relation_service.deactivate(uow, relation_id=relation_id, reason=payload.reason, actor=actor)
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _relation_mutation(updated, actor, uow)
+
+
+@router.post("/evidence/{evidence_id}/relations/{relation_id}/review", response_model=EvidenceRelationMutationOut)
+def review_relation(evidence_id: str, relation_id: str, payload: EvidenceRelationReviewIn, actor: ActorDep, uow: UowDep, conf: SettingsDep) -> EvidenceRelationMutationOut:
+    relation = uow.relations.get(relation_id)
+    if relation is None or relation.evidence_id != evidence_id:
+        raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
+    _require_visible(uow, actor, relation.thesis_id)
+    try:
+        updated, _ = relation_service.review(uow, relation_id=relation_id, action=payload.action, reason=payload.reason, actor=actor, thresholds=conf.rules)
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _relation_mutation(updated, actor, uow)
+
+
 @router.post("/evidence/{evidence_id}/actions", response_model=list[SuggestionOut])
 def act_on_evidence(
     evidence_id: str,
@@ -265,6 +479,31 @@ def act_on_evidence(
     if record is None:
         raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
     thesis_record = _require_visible(uow, actor, record.thesis_id)
+
+    # 迁移后的正式状态计算只读 EvidenceRelation。历史 actions 接口在恰有一条
+    # 有效关联时委托关联审核；多关联时拒绝，避免用户误以为处置了全部关系。
+    active_relations = [
+        relation
+        for relation in uow.relations.list_for_evidence(evidence_id)
+        if relation.status.value != "已解除"
+    ]
+    if active_relations and payload.action in {"确认", "驳回", "暂不判断"}:
+        if len(active_relations) != 1:
+            raise HTTPException(status_code=409, detail="EVIDENCE_MULTIPLE_RELATIONS")
+        try:
+            relation_service.review(
+                uow,
+                relation_id=active_relations[0].relation_id,
+                action=payload.action,
+                reason=payload.note,
+                actor=actor,
+                thresholds=conf.rules,
+            )
+        except HumanGateRequired as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except ValidationFailed as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return _suggestions(uow, active_relations[0].thesis_id)
 
     try:
         evidence_service.handle(

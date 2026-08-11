@@ -14,6 +14,8 @@ from dataclasses import replace
 from app.core.domain import (
     AuditRecord,
     EvidenceRecord,
+    EvidenceFeedRecord,
+    EvidenceRelationRecord,
     HypothesisRecord,
     MetricMappingRecord,
     ObservationRecord,
@@ -103,6 +105,48 @@ class FakeEvidenceRepo:
 
     def list_for_thesis(self, thesis_id: str) -> list[EvidenceRecord]:
         return [replace(e) for e in self.items.values() if e.thesis_id == thesis_id]
+
+
+class FakeEvidenceRelationRepo:
+    """关联状态独立存放，避免测试继续误用 Evidence 的历史单关联字段。"""
+
+    def __init__(self) -> None:
+        self.items: dict[str, EvidenceRelationRecord] = {}
+
+    def get(self, relation_id: str) -> EvidenceRelationRecord | None:
+        item = self.items.get(relation_id)
+        return replace(item) if item else None
+
+    def list_for_evidence(self, evidence_id: str) -> list[EvidenceRelationRecord]:
+        return [replace(item) for item in self.items.values() if item.evidence_id == evidence_id]
+
+    def list_for_thesis(self, thesis_id: str) -> list[EvidenceRelationRecord]:
+        return [replace(item) for item in self.items.values() if item.thesis_id == thesis_id]
+
+    def add(self, record: EvidenceRelationRecord) -> None:
+        self.items[record.relation_id] = replace(record)
+
+    def update(self, record: EvidenceRelationRecord) -> None:
+        if record.relation_id not in self.items:
+            raise LookupError(record.relation_id)
+        self.items[record.relation_id] = replace(record)
+
+
+class FakeEvidenceFeedRepo:
+    def __init__(self) -> None:
+        self.items: list[EvidenceFeedRecord] = []
+
+    def search(self, *, thesis_ids, statuses=(), direction=None, priorities=(), limit=20, offset=0):
+        rows = [item for item in self.items if item.thesis_id in thesis_ids]
+        if statuses:
+            rows = [item for item in rows if item.confirmation_status in statuses]
+        if direction is not None:
+            rows = [item for item in rows if item.direction is direction]
+        if priorities:
+            rows = [item for item in rows if item.priority in priorities]
+        rank = {"high": 0, "medium": 1, "low": 2}
+        rows.sort(key=lambda item: (rank[item.priority], -(item.disclosed_at.timestamp() if item.disclosed_at else 0)))
+        return [replace(item) for item in rows[offset : offset + limit]], len(rows)
 
 
 class FakeObservationRepo:
@@ -197,6 +241,8 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
     return UnitOfWork(
         thesis=FakeThesisRepo(),
         evidence=FakeEvidenceRepo(),
+        relations=FakeEvidenceRelationRepo(),
+        feed=FakeEvidenceFeedRepo(),
         observations=FakeObservationRepo(),
         suggestions=FakeSuggestionRepo(),
         versions=FakeVersionRepo(),

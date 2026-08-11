@@ -13,8 +13,12 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from app.api.deps import ActorDep, UowDep
-from app.schemas.thesis import PendingItemOut, WorkbenchOut
+from app.api.feed_presenter import to_feed_item
+from app.core.domain import ThesisQuery
+from app.core.enums import ConfirmationStatus
+from app.schemas.thesis import EvidenceFeedPage, PageMeta, PendingItemOut, WorkbenchOut
 from app.services import query as query_service
+from app.services.permission import can_view_thesis
 
 router = APIRouter(tags=["workbench"])
 
@@ -46,4 +50,36 @@ def get_workbench(
         pending_evidence=_to_items(view.pending_evidence),
         pending_suggestions=_to_items(view.pending_suggestions),
         review_due=_to_items(view.review_due),
+    )
+
+
+@router.get("/workbench/tasks", response_model=EvidenceFeedPage)
+def get_readable_evidence_tasks(
+    actor: ActorDep,
+    uow: UowDep,
+    priority: Annotated[list[str] | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> EvidenceFeedPage:
+    """返回可读的待确认证据任务，作为工作台主任务列表。"""
+    priorities = tuple(priority or ())
+    if any(item not in {"high", "medium", "low"} for item in priorities):
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=422, detail="优先级必须是 high、medium 或 low")
+    candidates, _ = uow.thesis.search(ThesisQuery(limit=query_service.MAX_LIMIT))
+    visible_ids = tuple(
+        item.thesis_id for item in candidates
+        if can_view_thesis(actor, owner=item.owner, visibility=item.visibility, team=item.team)
+    )
+    records, total = uow.feed.search(
+        thesis_ids=visible_ids,
+        statuses=(ConfirmationStatus.PENDING,),
+        priorities=priorities,
+        limit=limit,
+        offset=offset,
+    )
+    return EvidenceFeedPage(
+        items=[to_feed_item(item, actor_id=actor.user_id) for item in records],
+        page=PageMeta(total=total, limit=limit, offset=offset),
     )
