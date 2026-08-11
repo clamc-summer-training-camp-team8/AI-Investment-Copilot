@@ -57,3 +57,5 @@ def test_runtime_事件分析完成后进入人工复核状态() -> None:
     assert execution.task == "event_impact"
     assert execution.status == "needs_human_review"
     assert len(execution.evidence_checks) == 1
+    assert len(execution.evidence_grades) == 1
+    assert execution.evidence_grades[0].score >= 0

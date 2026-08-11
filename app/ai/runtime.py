@@ -18,6 +18,7 @@ from app.ai.agent import (
     AgentRunResult,
     CandidateHypothesis,
     EvidenceAgent,
+    EvidenceGrade,
     EvidenceValidation,
     ThesisDraftAgent,
     ThesisDraftRunResult,
@@ -48,6 +49,7 @@ class RuntimeExecution:
     finished_at: datetime | None = None
     result: Any = None
     evidence_checks: list[EvidenceValidation] = field(default_factory=list)
+    evidence_grades: list[EvidenceGrade] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
 
@@ -89,7 +91,8 @@ class InvestmentResearchAgent:
             execution.result = result
             execution.status = "verifying"
             execution.evidence_checks = EvidenceAgent.validate_run(result)
-            has_review = any(check.requires_human_review for check in execution.evidence_checks)
+            execution.evidence_grades = [EvidenceAgent.grade_impact(impact) for impact in result.impacts]
+            has_review = any(check.requires_human_review for check in execution.evidence_checks) or any(not grade.passed for grade in execution.evidence_grades)
             execution.status = "needs_human_review" if has_review else "completed"
         except Exception as exc:  # noqa: BLE001 - 运行时边界统一转换为失败状态
             execution.status = "failed"

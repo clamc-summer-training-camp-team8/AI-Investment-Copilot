@@ -254,3 +254,15 @@
 - 后续修改 AI/RAG 代码时必须同步维护文档的规则。
 
 该文档用于组会汇报和后续实现对照。
+
+### 阶段 13：将证据评分接入统一运行时
+
+状态：完成。
+
+主要内容：
+- `RuntimeExecution` 新增 `evidence_grades`。
+- `InvestmentResearchAgent.analyze_event()` 在引用校验后自动计算每个影响结果的 `EvidenceGrade`。
+- 任一引用校验或证据完整性评分未通过时，运行状态进入 `needs_human_review`。
+- 保持评分结果只作为候选分析和人工复核依据，不直接写数据库或改变正式 Thesis 状态。
+
+验证结果：AI 单元测试 11 passed。
