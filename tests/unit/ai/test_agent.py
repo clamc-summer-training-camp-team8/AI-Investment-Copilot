@@ -153,3 +153,41 @@ def test_evidence_agent_拒绝检索结果之外的引用() -> None:
     assert not check.valid
     assert check.missing_locators == ("unknown#paragraph-9",)
     assert check.requires_human_review
+
+def test_evidence_agent_计算引用完整性评分() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="历史公告显示收入增长。",
+                published_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+                source="cninfo",
+            )
+        ]
+    )
+    result = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    ).analyze(
+        AgentEvent(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            segment_locator="new-001#paragraph-1",
+            segment_text="收入增长。",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=timezone.utc),
+        ),
+        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+    )
+    impact = result.impacts[0]
+    impact.outcome.payload["citations"] = [{"locator": "history-001#paragraph-1"}]
+
+    grade = EvidenceAgent.grade_impact(impact)
+
+    assert grade.passed
+    assert grade.score == 0.6
+    assert grade.valid_cited_count == 1
+    assert grade.source_count == 1
