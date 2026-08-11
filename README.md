@@ -39,6 +39,9 @@ real_data/    真实公开披露数据与验证报告（公告清单、定期报
 
 最新验收结论见 [MVP 验收报告-三行业九公司](docs/data/MVP验收报告-三行业九公司.md)。
 
+完整的本地安装、PostgreSQL/Redis 启动、DeepSeek 配置、API 调用、前端联调和九公司
+实验复算步骤见 [使用手册](USAGE.md)。
+
 ## 模块
 
 每个模块一个 README，写清职责、边界、对外接口和验收要点。模块边界由 `.importlinter` 在 CI 中机器检查，不依赖人肉评审。
@@ -65,6 +68,9 @@ real_data/    真实公开披露数据与验证报告（公告清单、定期报
 架构全貌与分层依赖规则见 [`docs/architecture/README.md`](docs/architecture/README.md)。
 
 ## 快速开始
+
+下面是 macOS/Linux 的最短路径；Windows PowerShell 以及完整产品链路见
+[USAGE.md](USAGE.md)。
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
