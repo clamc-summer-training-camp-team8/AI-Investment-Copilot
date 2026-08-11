@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from pathlib import Path
 
 from pydantic import Field
@@ -60,6 +61,36 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     llm_model_version: str = "local-rule-v1"
     prompt_version: str = "prompts-v1"
+
+    llm_max_output_tokens: int = Field(default=4096, ge=256, le=65536)
+    llm_thinking_mode: str = Field(default='disabled', pattern='^(enabled|disabled)$')
+    llm_reasoning_effort: str = Field(default='low', pattern='^(low|high|max)$')
+    llm_input_cost_per_million: Decimal = Field(default=Decimal('0'), ge=0)
+    llm_output_cost_per_million: Decimal = Field(default=Decimal('0'), ge=0)
+
+    # RAG 向量由固定维度的数据库列承载。更换模型前必须先迁移列维度。
+    embedding_provider: str = Field(default='local', pattern='^(local|http)$')
+    embedding_endpoint: str | None = None
+    embedding_api_key: str | None = None
+    embedding_model_version: str = 'local-hash-v1'
+    embedding_dimensions: int = Field(default=384, ge=32, le=4096)
+    embedding_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
+
+    redis_url: str = 'redis://localhost:6379/0'
+    upload_max_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
+    runtime_max_attempts: int = Field(default=3, ge=1, le=10)
+
+    # 本地开发允许可信请求头；非本地环境必须使用 JWT。
+    auth_mode: str = Field(default='trusted_headers', pattern='^(trusted_headers|jwt)$')
+    auth_jwt_secret: str | None = None
+    auth_jwt_algorithm: str = Field(default='HS256', pattern='^HS(256|384|512)$')
+    auth_jwt_issuer: str = 'ai-investment-copilot'
+    auth_jwt_audience: str = 'ai-investment-copilot-api'
+    auth_jwt_leeway_seconds: int = Field(default=30, ge=0, le=300)
+    cors_origins: list[str] = ['http://localhost:5173']
+    rate_limit_enabled: bool = False
+    rate_limit_requests_per_minute: int = Field(default=60, ge=1, le=10000)
+    idempotency_ttl_seconds: int = Field(default=86400, ge=60, le=604800)
 
     rules: RuleThresholds = Field(default_factory=RuleThresholds)
 

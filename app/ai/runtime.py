@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
+from hashlib import sha256
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -27,7 +28,14 @@ from app.ai.agents import (
     ThesisDraftAgent,
     ThesisDraftRunResult,
 )
+from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
+from app.ai.observability import (
+    ModelCallUsage,
+    NullRuntimeRecorder,
+    RuntimeRecorder,
+    usage_from_payload,
+)
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument, Retriever
 from app.core.enums import AiStatus
 
@@ -47,6 +55,12 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+@dataclass(frozen=True)
+class RunTransition:
+    status: RunStatus
+    occurred_at: datetime
+
+
 @dataclass
 class RuntimeExecution:
     run_id: str
@@ -64,6 +78,11 @@ class RuntimeExecution:
     schema_name: str | None = None
     degraded_reason: str | None = None
     errors: list[str] = field(default_factory=list)
+    transitions: list[RunTransition] = field(default_factory=list)
+    model_calls: list[ModelCallUsage] = field(default_factory=list)
+    retryable: bool = False
+    idempotency_key: str | None = None
+    attempt: int = 1
 
 
 def _payload_versions(execution: RuntimeExecution, payloads: list[dict[str, Any]]) -> None:
@@ -83,17 +102,20 @@ class InvestmentResearchAgent:
         logic_change: InvestmentLogicChangeAgent,
         metric_explain: MetricExplainAgent | None = None,
         review: ReviewAgent | None = None,
+        recorder: RuntimeRecorder | None = None,
     ) -> None:
         self.thesis_draft = thesis_draft
         self.logic_change = logic_change
         self.metric_explain = metric_explain or MetricExplainAgent(gateway=thesis_draft.gateway)
         self.review = review or ReviewAgent(gateway=thesis_draft.gateway)
+        self.recorder = recorder or NullRuntimeRecorder()
 
     @classmethod
     def build(
         cls,
         gateway: Gateway,
         retriever: Retriever | None = None,
+        recorder: RuntimeRecorder | None = None,
     ) -> InvestmentResearchAgent:
         """从稳定的 Gateway 与 Retriever 接口构造完整编排器。"""
         active_retriever = retriever or KeywordRetriever()
@@ -103,7 +125,52 @@ class InvestmentResearchAgent:
                 gateway=gateway,
                 retriever=active_retriever,
             ),
+            recorder=recorder,
         )
+
+    def _new_execution(
+        self,
+        *,
+        task: str,
+        schema_name: str,
+        idempotency_key: str | None,
+        attempt: int,
+    ) -> RuntimeExecution:
+        run_id = (
+            f"run-{sha256(f'{task}:{idempotency_key}'.encode()).hexdigest()[:20]}"
+            if idempotency_key
+            else f"run-{uuid4().hex[:20]}"
+        )
+        execution = RuntimeExecution(
+            run_id=run_id,
+            task=task,
+            schema_name=schema_name,
+            idempotency_key=idempotency_key,
+            attempt=max(attempt, 1),
+        )
+        execution.transitions.append(RunTransition("created", execution.started_at))
+        self.recorder.started(execution)
+        return execution
+
+    def _transition(self, execution: RuntimeExecution, status: RunStatus) -> None:
+        execution.status = status
+        execution.transitions.append(RunTransition(status, _now()))
+        self.recorder.checkpoint(execution)
+
+    def _record_payloads(
+        self,
+        execution: RuntimeExecution,
+        payloads: list[dict[str, Any]],
+    ) -> None:
+        _payload_versions(execution, payloads)
+        execution.model_calls.extend(
+            usage_from_payload(payload, self.thesis_draft.gateway.settings)
+            for payload in payloads
+        )
+
+    def _finish(self, execution: RuntimeExecution) -> None:
+        execution.finished_at = _now()
+        self.recorder.finished(execution)
 
     def draft_thesis(
         self,
@@ -115,15 +182,18 @@ class InvestmentResearchAgent:
         as_of: datetime | None = None,
         allowed_visibility: frozenset[str] = frozenset({"公开"}),
         top_k: int = 8,
+        idempotency_key: str | None = None,
+        attempt: int = 1,
     ) -> RuntimeExecution:
-        execution = RuntimeExecution(
-            run_id=f"run-{uuid4().hex[:12]}",
+        execution = self._new_execution(
             task="thesis_draft",
             schema_name="thesis_draft",
+            idempotency_key=idempotency_key,
+            attempt=attempt,
         )
         try:
-            execution.status = "retrieving"
-            execution.status = "generating"
+            self._transition(execution, "retrieving")
+            self._transition(execution, "generating")
             result: ThesisDraftRunResult = self.thesis_draft.generate(
                 security_id=security_id,
                 view=view,
@@ -135,21 +205,28 @@ class InvestmentResearchAgent:
             )
             execution.result = result
             execution.retrieval_versions = (result.retrieval.retrieval_version,)
-            _payload_versions(execution, [result.outcome.payload])
+            self._record_payloads(execution, [result.outcome.payload])
             if result.outcome.errors:
                 execution.errors.extend(result.outcome.errors)
             if result.outcome.ai_status is AiStatus.PARSE_FAILED:
-                execution.status = "degraded"
+                execution.retryable = True
                 execution.degraded_reason = "provider_or_schema_failure"
+                self._transition(execution, "degraded")
             elif result.outcome.ai_status is AiStatus.LOW_CONFIDENCE:
-                execution.status = "needs_human_review"
+                self._transition(execution, "needs_human_review")
             else:
-                execution.status = "completed"
-        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
-            execution.status = "failed"
+                self._transition(execution, "completed")
+        except ModelUnavailable as exc:
+            execution.retryable = exc.retryable
+            execution.degraded_reason = "model_unavailable"
             execution.errors.append(str(exc))
+            self._transition(execution, "degraded")
+        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
+            execution.degraded_reason = "unexpected_runtime_failure"
+            execution.errors.append(str(exc))
+            self._transition(execution, "failed")
         finally:
-            execution.finished_at = _now()
+            self._finish(execution)
         return execution
 
     def analyze_event(
@@ -159,20 +236,23 @@ class InvestmentResearchAgent:
         *,
         allowed_visibility: frozenset[str] = frozenset({"公开"}),
         top_k: int = 3,
+        idempotency_key: str | None = None,
+        attempt: int = 1,
     ) -> RuntimeExecution:
-        execution = RuntimeExecution(
-            run_id=f"run-{uuid4().hex[:12]}",
+        execution = self._new_execution(
             task="event_impact",
             schema_name="event_impact",
+            idempotency_key=idempotency_key,
+            attempt=attempt,
         )
         try:
             if not candidates:
-                execution.status = "degraded"
                 execution.degraded_reason = "no_candidate_hypotheses"
                 execution.errors.append("没有可分析的候选假设，需先召回或人工选择假设")
+                self._transition(execution, "degraded")
                 return execution
-            execution.status = "retrieving"
-            execution.status = "generating"
+            self._transition(execution, "retrieving")
+            self._transition(execution, "generating")
             result: AgentRunResult = self.logic_change.analyze(
                 event,
                 candidates,
@@ -183,10 +263,13 @@ class InvestmentResearchAgent:
             execution.retrieval_versions = tuple(
                 sorted({impact.retrieval.retrieval_version for impact in result.impacts})
             )
-            _payload_versions(execution, [impact.outcome.payload for impact in result.impacts])
+            self._record_payloads(
+                execution,
+                [impact.outcome.payload for impact in result.impacts],
+            )
             for impact in result.impacts:
                 execution.errors.extend(impact.outcome.errors)
-            execution.status = "verifying"
+            self._transition(execution, "verifying")
             execution.evidence_checks = EvidenceAgent.validate_run(result)
             execution.evidence_grades = [EvidenceAgent.grade_impact(impact) for impact in result.impacts]
             execution.consistency_checks = [
@@ -195,8 +278,9 @@ class InvestmentResearchAgent:
             if any(
                 impact.outcome.ai_status is AiStatus.PARSE_FAILED for impact in result.impacts
             ):
-                execution.status = "degraded"
+                execution.retryable = True
                 execution.degraded_reason = "provider_or_schema_failure"
+                self._transition(execution, "degraded")
             else:
                 has_review = (
                     any(check.requires_human_review for check in execution.evidence_checks)
@@ -207,12 +291,21 @@ class InvestmentResearchAgent:
                         for impact in result.impacts
                     )
                 )
-                execution.status = "needs_human_review" if has_review else "completed"
-        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
-            execution.status = "failed"
+                self._transition(
+                    execution,
+                    "needs_human_review" if has_review else "completed",
+                )
+        except ModelUnavailable as exc:
+            execution.retryable = exc.retryable
+            execution.degraded_reason = "model_unavailable"
             execution.errors.append(str(exc))
+            self._transition(execution, "degraded")
+        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
+            execution.degraded_reason = "unexpected_runtime_failure"
+            execution.errors.append(str(exc))
+            self._transition(execution, "failed")
         finally:
-            execution.finished_at = _now()
+            self._finish(execution)
         return execution
 
     def explain_metric(
@@ -222,14 +315,17 @@ class InvestmentResearchAgent:
         hypothesis_id: str,
         hypothesis: str,
         calc_result: dict[str, object],
+        idempotency_key: str | None = None,
+        attempt: int = 1,
     ) -> RuntimeExecution:
-        execution = RuntimeExecution(
-            run_id=f"run-{uuid4().hex[:12]}",
+        execution = self._new_execution(
             task="metric_explain",
             schema_name="metric_explain",
+            idempotency_key=idempotency_key,
+            attempt=attempt,
         )
         try:
-            execution.status = "generating"
+            self._transition(execution, "generating")
             result: MetricExplainRunResult = self.metric_explain.explain(
                 security_id=security_id,
                 hypothesis_id=hypothesis_id,
@@ -237,20 +333,27 @@ class InvestmentResearchAgent:
                 calc_result=calc_result,
             )
             execution.result = result
-            _payload_versions(execution, [result.outcome.payload])
+            self._record_payloads(execution, [result.outcome.payload])
             execution.errors.extend(result.outcome.errors)
             if result.outcome.ai_status is AiStatus.PARSE_FAILED:
-                execution.status = "degraded"
+                execution.retryable = True
                 execution.degraded_reason = "provider_or_schema_failure"
+                self._transition(execution, "degraded")
             elif result.outcome.ai_status is AiStatus.LOW_CONFIDENCE:
-                execution.status = "needs_human_review"
+                self._transition(execution, "needs_human_review")
             else:
-                execution.status = "completed"
-        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
-            execution.status = "failed"
+                self._transition(execution, "completed")
+        except ModelUnavailable as exc:
+            execution.retryable = exc.retryable
+            execution.degraded_reason = "model_unavailable"
             execution.errors.append(str(exc))
+            self._transition(execution, "degraded")
+        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
+            execution.degraded_reason = "unexpected_runtime_failure"
+            execution.errors.append(str(exc))
+            self._transition(execution, "failed")
         finally:
-            execution.finished_at = _now()
+            self._finish(execution)
         return execution
 
     def draft_review(
@@ -261,14 +364,17 @@ class InvestmentResearchAgent:
         period_start: date,
         period_end: date,
         records: list[dict[str, object]],
+        idempotency_key: str | None = None,
+        attempt: int = 1,
     ) -> RuntimeExecution:
-        execution = RuntimeExecution(
-            run_id=f"run-{uuid4().hex[:12]}",
+        execution = self._new_execution(
             task="review_draft",
             schema_name="review_draft",
+            idempotency_key=idempotency_key,
+            attempt=attempt,
         )
         try:
-            execution.status = "generating"
+            self._transition(execution, "generating")
             result: ReviewDraftRunResult = self.review.generate(
                 security_id=security_id,
                 thesis_id=thesis_id,
@@ -277,16 +383,23 @@ class InvestmentResearchAgent:
                 records=records,
             )
             execution.result = result
-            _payload_versions(execution, [result.outcome.payload])
+            self._record_payloads(execution, [result.outcome.payload])
             execution.errors.extend(result.outcome.errors)
             if result.outcome.ai_status is AiStatus.PARSE_FAILED:
-                execution.status = "degraded"
+                execution.retryable = True
                 execution.degraded_reason = "provider_or_schema_failure"
+                self._transition(execution, "degraded")
             else:
-                execution.status = "needs_human_review"
-        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
-            execution.status = "failed"
+                self._transition(execution, "needs_human_review")
+        except ModelUnavailable as exc:
+            execution.retryable = exc.retryable
+            execution.degraded_reason = "model_unavailable"
             execution.errors.append(str(exc))
+            self._transition(execution, "degraded")
+        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
+            execution.degraded_reason = "unexpected_runtime_failure"
+            execution.errors.append(str(exc))
+            self._transition(execution, "failed")
         finally:
-            execution.finished_at = _now()
+            self._finish(execution)
         return execution

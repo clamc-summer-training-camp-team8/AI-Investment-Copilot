@@ -227,6 +227,7 @@ class HttpProvider:
                 )
 
         max_retries = int(self._settings.llm_max_retries)
+        started_at = time.perf_counter()
         for attempt in range(max_retries + 1):
             try:
                 response = self._client.post(
@@ -271,6 +272,8 @@ class HttpProvider:
                     "request_id": body.get("id"),
                     "usage": body.get("usage"),
                     "finish_reason": finish_reason,
+                    "latency_ms": int((time.perf_counter() - started_at) * 1000),
+                    "attempt_count": attempt + 1,
                 }.items()
                 if value is not None
             }

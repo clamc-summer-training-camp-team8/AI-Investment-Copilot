@@ -81,3 +81,29 @@ def test_runtime_no_candidates_returns_degraded_instead_of_completed() -> None:
     assert execution.status == "degraded"
     assert execution.degraded_reason == "no_candidate_hypotheses"
     assert execution.finished_at is not None
+
+
+def test_runtime_records_transitions_usage_and_stable_idempotent_run_id() -> None:
+    first = _runtime().draft_thesis(
+        security_id="000538.SZ",
+        view="收入增长",
+        idempotency_key="document-DOC-001",
+        attempt=2,
+    )
+    second = _runtime().draft_thesis(
+        security_id="000538.SZ",
+        view="收入增长",
+        idempotency_key="document-DOC-001",
+        attempt=2,
+    )
+
+    assert first.run_id == second.run_id
+    assert first.attempt == 2
+    assert [item.status for item in first.transitions] == [
+        "created",
+        "retrieving",
+        "generating",
+        "completed",
+    ]
+    assert len(first.model_calls) == 1
+    assert first.model_calls[0].provider == "mock"

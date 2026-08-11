@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Any
 
@@ -14,6 +15,8 @@ BACKEND_ENVELOPE_VERSION = "ai-runtime-envelope-v1"
 
 
 def _jsonable(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return str(value)
     if isinstance(value, (datetime, date)):
         return value.isoformat()
     if isinstance(value, Enum):
@@ -32,8 +35,15 @@ def to_backend_envelope(execution: RuntimeExecution) -> dict[str, Any]:
     schema_id = None
     if execution.schema_name:
         schema_id = load_schema(execution.schema_name).get("$id")
-    retryable = execution.degraded_reason == "provider_or_schema_failure"
+    retryable = (
+        execution.retryable
+        or execution.degraded_reason == "provider_or_schema_failure"
+    )
     return {
+        'idempotency_key': execution.idempotency_key,
+        'attempt': execution.attempt,
+        'transitions': _jsonable(execution.transitions),
+        'model_calls': _jsonable(execution.model_calls),
         "envelope_version": BACKEND_ENVELOPE_VERSION,
         "run_id": execution.run_id,
         "task": execution.task,
