@@ -44,6 +44,9 @@
 | `dataset/theses.json` | 45 条投资逻辑、135 条核心假设 | 是 |
 | `dataset/adjudication_queue.csv` | 待业务裁决的分歧样本 | 是 |
 | `dataset/manual_baseline.csv` | 人工基线耗时，**待录入** | 是 |
+| `dataset/mentor_blind_annotation.csv` | 59 条盲标（上一轮范围，项目侧试填，非金标） | 是 |
+| `dataset/mentor_blind_annotation_v2.csv` | 59 条盲标空白表，`blind-sample-v2-20260811` | 是 |
+| `dataset/blind_annotation_result/` | 独立金标回收结果与评测报告 | 是 |
 | `reports/` | 闭环、评测、效率三份报告 | 是 |
 | `raw/announcements/`、`raw/quotes/` | 采集分片缓存 | 否，中间产物可复原 |
 | `*.bak.json` | 上一轮范围的备份快照 | 否 |
