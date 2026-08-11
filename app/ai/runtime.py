@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -27,6 +27,8 @@ from app.ai.agents import (
     ThesisDraftAgent,
     ThesisDraftRunResult,
 )
+from app.ai.gateway import Gateway
+from app.ai.retrieval import KeywordRetriever, RetrievalDocument, Retriever
 from app.core.enums import AiStatus
 
 RunStatus = Literal[
@@ -87,7 +89,33 @@ class InvestmentResearchAgent:
         self.metric_explain = metric_explain or MetricExplainAgent(gateway=thesis_draft.gateway)
         self.review = review or ReviewAgent(gateway=thesis_draft.gateway)
 
-    def draft_thesis(self, **kwargs: Any) -> RuntimeExecution:
+    @classmethod
+    def build(
+        cls,
+        gateway: Gateway,
+        retriever: Retriever | None = None,
+    ) -> InvestmentResearchAgent:
+        """从稳定的 Gateway 与 Retriever 接口构造完整编排器。"""
+        active_retriever = retriever or KeywordRetriever()
+        return cls(
+            thesis_draft=ThesisDraftAgent(gateway=gateway, retriever=active_retriever),
+            logic_change=InvestmentLogicChangeAgent(
+                gateway=gateway,
+                retriever=active_retriever,
+            ),
+        )
+
+    def draft_thesis(
+        self,
+        *,
+        security_id: str,
+        view: str = "",
+        source_document_id: str | None = None,
+        source_segments: list[RetrievalDocument] | None = None,
+        as_of: datetime | None = None,
+        allowed_visibility: frozenset[str] = frozenset({"公开"}),
+        top_k: int = 8,
+    ) -> RuntimeExecution:
         execution = RuntimeExecution(
             run_id=f"run-{uuid4().hex[:12]}",
             task="thesis_draft",
@@ -96,7 +124,15 @@ class InvestmentResearchAgent:
         try:
             execution.status = "retrieving"
             execution.status = "generating"
-            result: ThesisDraftRunResult = self.thesis_draft.generate(**kwargs)
+            result: ThesisDraftRunResult = self.thesis_draft.generate(
+                security_id=security_id,
+                view=view,
+                source_document_id=source_document_id,
+                source_segments=source_segments,
+                as_of=as_of,
+                allowed_visibility=allowed_visibility,
+                top_k=top_k,
+            )
             execution.result = result
             execution.retrieval_versions = (result.retrieval.retrieval_version,)
             _payload_versions(execution, [result.outcome.payload])
@@ -120,7 +156,9 @@ class InvestmentResearchAgent:
         self,
         event: AgentEvent,
         candidates: list[CandidateHypothesis],
-        **kwargs: Any,
+        *,
+        allowed_visibility: frozenset[str] = frozenset({"公开"}),
+        top_k: int = 3,
     ) -> RuntimeExecution:
         execution = RuntimeExecution(
             run_id=f"run-{uuid4().hex[:12]}",
@@ -135,7 +173,12 @@ class InvestmentResearchAgent:
                 return execution
             execution.status = "retrieving"
             execution.status = "generating"
-            result: AgentRunResult = self.logic_change.analyze(event, candidates, **kwargs)
+            result: AgentRunResult = self.logic_change.analyze(
+                event,
+                candidates,
+                allowed_visibility=allowed_visibility,
+                top_k=top_k,
+            )
             execution.result = result
             execution.retrieval_versions = tuple(
                 sorted({impact.retrieval.retrieval_version for impact in result.impacts})
@@ -171,7 +214,15 @@ class InvestmentResearchAgent:
         finally:
             execution.finished_at = _now()
         return execution
-    def explain_metric(self, **kwargs: Any) -> RuntimeExecution:
+
+    def explain_metric(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, object],
+    ) -> RuntimeExecution:
         execution = RuntimeExecution(
             run_id=f"run-{uuid4().hex[:12]}",
             task="metric_explain",
@@ -179,7 +230,12 @@ class InvestmentResearchAgent:
         )
         try:
             execution.status = "generating"
-            result: MetricExplainRunResult = self.metric_explain.explain(**kwargs)
+            result: MetricExplainRunResult = self.metric_explain.explain(
+                security_id=security_id,
+                hypothesis_id=hypothesis_id,
+                hypothesis=hypothesis,
+                calc_result=calc_result,
+            )
             execution.result = result
             _payload_versions(execution, [result.outcome.payload])
             execution.errors.extend(result.outcome.errors)
@@ -197,7 +253,15 @@ class InvestmentResearchAgent:
             execution.finished_at = _now()
         return execution
 
-    def draft_review(self, **kwargs: Any) -> RuntimeExecution:
+    def draft_review(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: date,
+        period_end: date,
+        records: list[dict[str, object]],
+    ) -> RuntimeExecution:
         execution = RuntimeExecution(
             run_id=f"run-{uuid4().hex[:12]}",
             task="review_draft",
@@ -205,7 +269,13 @@ class InvestmentResearchAgent:
         )
         try:
             execution.status = "generating"
-            result: ReviewDraftRunResult = self.review.generate(**kwargs)
+            result: ReviewDraftRunResult = self.review.generate(
+                security_id=security_id,
+                thesis_id=thesis_id,
+                period_start=period_start,
+                period_end=period_end,
+                records=records,
+            )
             execution.result = result
             _payload_versions(execution, [result.outcome.payload])
             execution.errors.extend(result.outcome.errors)

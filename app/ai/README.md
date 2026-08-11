@@ -15,7 +15,7 @@ ai/
 ├── providers/   模型网关：local / mock / http
 ├── agent.py     旧导入路径的兼容出口
 ├── retrieval.py 当前 Retriever 接口与关键词/混合检索
-├── runtime.py   统一运行状态和能力编排
+├── runtime.py   统一运行状态、能力编排和类型化公共入口
 └── integration.py 后端 JSON Envelope
 ```
 
@@ -88,14 +88,20 @@ PRD 12.1：外部模型调用须遵循数据分类和脱敏要求，受限数据
 - `tests/contract/` 断言输出符合 `contracts/ai/` Schema。
 - 效果评测不在 `tests/`，在 `analytics/evaluation/`。CI 不跑效果评测，跑的是契约与降级逻辑。
 
-## 后端接入入口
+## 公共调用边界
 
-integrated 分支的 worker 可以继续使用 `Gateway.thesis_draft()` 和
-`Gateway.event_impact()`，也可以逐步切换到 `app.ai.backend_adapter`：
+`feat/react-frontend-mvp` 的建卡路由和变化 worker 依赖以下 Gateway 接口，参数保持向后兼容：
 
-- `build_runtime(gateway, retriever)` 构造统一 Runtime；
-- `analyze_backend_event(...)` 适配 `ExtractedEvent`/JSON 与候选假设；
-- `draft_backend_document(...)` 适配文档切片并保留 `document_id + locator + published_at`；
-- 返回 `RuntimeExecution`，再用 `to_backend_envelope()` 交给后端持久化。
+- `Gateway.thesis_draft(...)`：生成可由 `services.thesis.create_draft` 保存的草稿；
+- `Gateway.event_impact(...)`：生成可由变化 worker 转成候选证据的事件影响；
+- `Gateway.metric_explain(...)` 与 `Gateway.review_draft(...)`：提供后续指标解释和复盘能力。
 
-适配层只读取后端对象字段，不 import `app.db` 或 `app.services`，不会替代后端路由、队列和人工确认逻辑。
+需要 RAG、证据校验和统一运行状态时，调用
+`InvestmentResearchAgent.build(gateway, retriever)`，再使用四个显式类型方法：
+`draft_thesis`、`analyze_event`、`explain_metric`、`draft_review`。后端在自己的边界把
+`ExtractedEvent`、`HypothesisRecord` 和 `Segment` 映射成 `AgentEvent`、
+`CandidateHypothesis` 与 `RetrievalDocument`；AI 模块不猜测后端对象字段，也不依赖
+FastAPI、ORM、数据库或 `app.services`。
+
+Runtime 返回 `RuntimeExecution`，需要持久化时可用 `to_backend_envelope()` 转成稳定的
+`ai-runtime-envelope-v1` JSON 结构。
