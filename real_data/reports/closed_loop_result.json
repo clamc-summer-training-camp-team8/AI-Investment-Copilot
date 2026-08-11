@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-11T13:04:21.321265+08:00",
+  "generated_at": "2026-08-11T13:39:15.213417+08:00",
   "model_version": "local-rule-v1+candidate_v2",
   "data_version": "cninfo-announcement-v2/em-f10-gincome-v2/tencent-qfq-v1",
   "thesis_count": 45,
@@ -23,7 +23,7 @@
       "status_distribution": {
         "验证中": 15
       },
-      "breached_theses": 7
+      "breached_theses": 8
     },
     "医药": {
       "thesis_count": 15,
@@ -41,7 +41,7 @@
       "status_distribution": {
         "验证中": 15
       },
-      "breached_theses": 6
+      "breached_theses": 4
     }
   },
   "outcomes": [
@@ -105,9 +105,11 @@
       "quarter": "2026Q1",
       "final_status": "验证中",
       "evidence": 21,
-      "breached": [],
+      "breached": [
+        "THS-688981-2026Q1-H2-盈利质量"
+      ],
       "reasons": [
-        "未触发状态变更条件"
+        "THS-688981-2026Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
       ]
     },
     {
@@ -548,11 +550,9 @@
       "quarter": "2025Q1",
       "final_status": "验证中",
       "evidence": 7,
-      "breached": [
-        "THS-00175-2025Q1-H2-盈利质量"
-      ],
+      "breached": [],
       "reasons": [
-        "THS-00175-2025Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+        "未触发状态变更条件"
       ]
     },
     {
@@ -669,11 +669,9 @@
       "quarter": "2026Q1",
       "final_status": "验证中",
       "evidence": 5,
-      "breached": [
-        "THS-09868-2026Q1-H1-需求与出货"
-      ],
+      "breached": [],
       "reasons": [
-        "THS-09868-2026Q1-H1-需求与出货 接近失效阈值，建议提高关注但未达失效"
+        "未触发状态变更条件"
       ]
     }
   ]

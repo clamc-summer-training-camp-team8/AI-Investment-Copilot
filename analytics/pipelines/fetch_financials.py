@@ -60,6 +60,11 @@ class RawReport:
     report_type: str
     revenue_cumulative: str
     cost_cumulative: str
+    notice_date: str | None = None
+    """实际披露日（A 股来自接口 NOTICE_DATE）。
+
+    港股长表没有这个字段，只能留空并在下游退回保守估计。
+    """
 
 
 @dataclass
@@ -77,6 +82,12 @@ class QuarterMetric:
     cost: str
     gross_margin: str | None
     revenue_yoy: str | None
+    disclosure_date: str | None = None
+    """该单季度值实际可得的日期。
+
+    差分出来的季度以「较晚那期的披露日」为准：Q2 = H1 − Q1，要等 H1 发布才算得出来，
+    所以可得日是 H1 的披露日，不是 Q1 的。
+    """
 
 
 def _pages(params: dict[str, str], *, page_size: int = 500) -> list[dict[str, object]]:
@@ -101,7 +112,10 @@ def _fetch_a_share(company: Company) -> list[RawReport]:
     rows = _pages(
         {
             "reportName": "RPT_F10_FINANCE_GINCOME",
-            "columns": "SECUCODE,SECURITY_CODE,REPORT_DATE,REPORT_TYPE,OPERATE_INCOME,OPERATE_COST",
+            "columns": (
+                "SECUCODE,SECURITY_CODE,REPORT_DATE,REPORT_TYPE,"
+                "NOTICE_DATE,OPERATE_INCOME,OPERATE_COST"
+            ),
             "filter": f'(SECUCODE="{company.secucode}")',
             "sortTypes": "-1",
             "sortColumns": "REPORT_DATE",
@@ -117,6 +131,7 @@ def _fetch_a_share(company: Company) -> list[RawReport]:
         cost = row.get("OPERATE_COST")
         if income is None or cost is None:
             continue
+        notice = row.get("NOTICE_DATE")
         reports.append(
             RawReport(
                 security_id=company.security_id,
@@ -124,6 +139,7 @@ def _fetch_a_share(company: Company) -> list[RawReport]:
                 report_type=str(row.get("REPORT_TYPE")),
                 revenue_cumulative=str(income),
                 cost_cumulative=str(cost),
+                notice_date=str(notice)[:10] if notice else None,
             )
         )
     return reports
@@ -192,6 +208,7 @@ def to_single_quarter(reports: list[RawReport]) -> list[QuarterMetric]:
     不是披露值，会污染可复核性（DA-AC-04 要求可复核）。
     """
     cumulative: dict[tuple[str, int], tuple[Decimal, Decimal]] = {}
+    notices: dict[tuple[str, int], str | None] = {}
     for report in reports:
         quarter = _CUMULATIVE_QUARTERS.get(report.report_type)
         if quarter is None:
@@ -201,16 +218,22 @@ def to_single_quarter(reports: list[RawReport]) -> list[QuarterMetric]:
             Decimal(report.revenue_cumulative),
             Decimal(report.cost_cumulative),
         )
+        notices[(year, quarter)] = report.notice_date
 
     single: dict[str, tuple[Decimal, Decimal]] = {}
+    disclosed: dict[str, str | None] = {}
     for (year, quarter), (revenue, cost) in cumulative.items():
         if quarter == 1:
             single[f"{year}Q1"] = (revenue, cost)
+            disclosed[f"{year}Q1"] = notices.get((year, 1))
             continue
         previous = cumulative.get((year, quarter - 1))
         if previous is None:
             continue
-        single[f"{year}Q{quarter}"] = (revenue - previous[0], cost - previous[1])
+        period = f"{year}Q{quarter}"
+        single[period] = (revenue - previous[0], cost - previous[1])
+        # 差分值要等较晚那期发布才算得出来，可得日取当期披露日。
+        disclosed[period] = notices.get((year, quarter))
 
     metrics: list[QuarterMetric] = []
     security_id = reports[0].security_id if reports else ""
@@ -235,6 +258,7 @@ def to_single_quarter(reports: list[RawReport]) -> list[QuarterMetric]:
                 cost=str(cost),
                 gross_margin=margin,
                 revenue_yoy=yoy,
+                disclosure_date=disclosed.get(period),
             )
         )
     return metrics
