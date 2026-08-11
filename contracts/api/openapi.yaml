@@ -171,6 +171,212 @@ components:
       - action
       title: EvidenceActionIn
       type: object
+    EvidenceDetailOut:
+      description: 证据本体详情；关联对象由独立关联接口返回。
+      properties:
+        ai_confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ai Confidence
+        ai_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ai Status
+        confirmation_status:
+          title: Confirmation Status
+          type: string
+        confirmed_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Confirmed At
+        confirmed_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confirmed By
+        direction:
+          title: Direction
+          type: string
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        evidence_id:
+          title: Evidence Id
+          type: string
+        evidence_locator:
+          title: Evidence Locator
+          type: string
+        evidence_type:
+          title: Evidence Type
+          type: string
+        fact_excerpt:
+          title: Fact Excerpt
+          type: string
+        model_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Version
+        occurred_at:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Occurred At
+        prompt_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prompt Version
+        security_id:
+          title: Security Id
+          type: string
+        source_document_id:
+          title: Source Document Id
+          type: string
+        source_document_title:
+          title: Source Document Title
+          type: string
+        source_url:
+          title: Source Url
+          type: string
+        strength:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength
+        strength_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength Score
+      required:
+      - evidence_id
+      - security_id
+      - evidence_type
+      - direction
+      - evidence_locator
+      - confirmation_status
+      - fact_excerpt
+      - source_document_id
+      - source_document_title
+      - disclosed_at
+      - source_url
+      title: EvidenceDetailOut
+      type: object
+    EvidenceFeedItemOut:
+      description: 研究员可直接阅读的证据摘要，内部 ID 只承担跳转与追溯。
+      properties:
+        ai_confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ai Confidence
+        can_manage:
+          title: Can Manage
+          type: boolean
+        confirmation_status:
+          title: Confirmation Status
+          type: string
+        direction:
+          title: Direction
+          type: string
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        evidence_id:
+          title: Evidence Id
+          type: string
+        fact_excerpt:
+          title: Fact Excerpt
+          type: string
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        hypothesis_statement:
+          title: Hypothesis Statement
+          type: string
+        occurred_at:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Occurred At
+        priority:
+          pattern: ^(high|medium|low)$
+          title: Priority
+          type: string
+        relation_id:
+          title: Relation Id
+          type: string
+        security_id:
+          title: Security Id
+          type: string
+        security_name:
+          title: Security Name
+          type: string
+        source_document_title:
+          title: Source Document Title
+          type: string
+        source_url:
+          title: Source Url
+          type: string
+        strength:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength
+        thesis_id:
+          title: Thesis Id
+          type: string
+        thesis_title:
+          title: Thesis Title
+          type: string
+        validation_items:
+          items:
+            $ref: '#/components/schemas/ValidationItemOut'
+          title: Validation Items
+          type: array
+      required:
+      - evidence_id
+      - relation_id
+      - security_id
+      - security_name
+      - thesis_id
+      - thesis_title
+      - hypothesis_id
+      - hypothesis_statement
+      - source_document_title
+      - fact_excerpt
+      - disclosed_at
+      - source_url
+      - direction
+      - confirmation_status
+      - priority
+      - can_manage
+      - validation_items
+      title: EvidenceFeedItemOut
+      type: object
+    EvidenceFeedPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/EvidenceFeedItemOut'
+          title: Items
+          type: array
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - items
+      - page
+      title: EvidenceFeedPage
+      type: object
     EvidenceOut:
       properties:
         ai_confidence:
@@ -244,6 +450,145 @@ components:
       - evidence_locator
       - confirmation_status
       title: EvidenceOut
+      type: object
+    EvidenceRelationDeactivateIn:
+      description: 解除关系只需记录原因，不混用审核动作字段。
+      properties:
+        reason:
+          maxLength: 1000
+          minLength: 1
+          title: Reason
+          type: string
+      required:
+      - reason
+      title: EvidenceRelationDeactivateIn
+      type: object
+    EvidenceRelationIn:
+      properties:
+        direction:
+          pattern: ^(支持|冲突|中性)$
+          title: Direction
+          type: string
+        hypothesis_id:
+          minLength: 1
+          title: Hypothesis Id
+          type: string
+        reason:
+          maxLength: 1000
+          minLength: 1
+          title: Reason
+          type: string
+        strength:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength
+        thesis_id:
+          minLength: 1
+          title: Thesis Id
+          type: string
+      required:
+      - thesis_id
+      - hypothesis_id
+      - direction
+      - reason
+      title: EvidenceRelationIn
+      type: object
+    EvidenceRelationMutationOut:
+      properties:
+        affected_thesis_ids:
+          items:
+            type: string
+          title: Affected Thesis Ids
+          type: array
+        relation:
+          $ref: '#/components/schemas/EvidenceRelationOut'
+      required:
+      - relation
+      - affected_thesis_ids
+      title: EvidenceRelationMutationOut
+      type: object
+    EvidenceRelationOut:
+      description: 当前单关联模型的只读兼容输出，为多关联表迁移预留 response 形状。
+      properties:
+        can_manage:
+          title: Can Manage
+          type: boolean
+        created_by:
+          title: Created By
+          type: string
+        deactivated_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Deactivated At
+        deactivated_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deactivated By
+        direction:
+          title: Direction
+          type: string
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        relation_id:
+          title: Relation Id
+          type: string
+        reviewed_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Reviewed At
+        reviewed_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reviewed By
+        status:
+          title: Status
+          type: string
+        strength:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength
+        thesis_id:
+          title: Thesis Id
+          type: string
+      required:
+      - relation_id
+      - thesis_id
+      - hypothesis_id
+      - direction
+      - status
+      - created_by
+      - can_manage
+      title: EvidenceRelationOut
+      type: object
+    EvidenceRelationReviewIn:
+      properties:
+        action:
+          pattern: ^(确认|驳回|暂不判断)$
+          title: Action
+          type: string
+        reason:
+          anyOf:
+          - maxLength: 1000
+            type: string
+          - type: 'null'
+          title: Reason
+      required:
+      - action
+      title: EvidenceRelationReviewIn
       type: object
     HTTPValidationError:
       properties:
@@ -635,10 +980,8 @@ components:
           title: Suggested Status
           type: string
         suggestion_id:
-          anyOf:
-          - type: integer
-          - type: 'null'
           title: Suggestion Id
+          type: integer
         thesis_id:
           title: Thesis Id
           type: string
@@ -648,6 +991,7 @@ components:
           title: Triggered Hypotheses
           type: array
       required:
+      - suggestion_id
       - thesis_id
       - current_status
       - suggested_status
@@ -814,6 +1158,28 @@ components:
       - type
       title: ValidationError
       type: object
+    ValidationItemOut:
+      properties:
+        code:
+          title: Code
+          type: string
+        label:
+          title: Label
+          type: string
+        message:
+          title: Message
+          type: string
+        status:
+          pattern: ^(passed|warning|failed)$
+          title: Status
+          type: string
+      required:
+      - code
+      - label
+      - status
+      - message
+      title: ValidationItemOut
+      type: object
     WorkbenchOut:
       description: 工作台聚合。只含当前用户可见的卡片。
       properties:
@@ -845,6 +1211,57 @@ info:
   version: 0.1.0
 openapi: 3.1.0
 paths:
+  /api/evidence/{evidence_id}:
+    get:
+      description: 读取可核验的证据本体详情，不以单一逻辑关系作为详情字段。
+      operationId: get_evidence_detail_api_evidence__evidence_id__get
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceDetailOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Evidence Detail
+      tags:
+      - thesis
   /api/evidence/{evidence_id}/actions:
     post:
       description: 处置候选证据（FR-R-004）。确认后重算建议，但**不改状态**。
@@ -903,6 +1320,301 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Act On Evidence
+      tags:
+      - thesis
+  /api/evidence/{evidence_id}/relations:
+    get:
+      description: 兼容输出当前单关联记录；多关联迁移后保持同一路径与响应形状。
+      operationId: list_evidence_relations_api_evidence__evidence_id__relations_get
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EvidenceRelationOut'
+                title: Response List Evidence Relations Api Evidence  Evidence Id  Relations Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Evidence Relations
+      tags:
+      - thesis
+    post:
+      operationId: create_relation_api_evidence__evidence_id__relations_post
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRelationIn'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRelationMutationOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Relation
+      tags:
+      - thesis
+  /api/evidence/{evidence_id}/relations/{relation_id}:
+    patch:
+      operationId: update_relation_api_evidence__evidence_id__relations__relation_id__patch
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: path
+        name: relation_id
+        required: true
+        schema:
+          title: Relation Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRelationIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRelationMutationOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update Relation
+      tags:
+      - thesis
+  /api/evidence/{evidence_id}/relations/{relation_id}/deactivate:
+    post:
+      operationId: deactivate_relation_api_evidence__evidence_id__relations__relation_id__deactivate_post
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: path
+        name: relation_id
+        required: true
+        schema:
+          title: Relation Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRelationDeactivateIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRelationMutationOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Deactivate Relation
+      tags:
+      - thesis
+  /api/evidence/{evidence_id}/relations/{relation_id}/review:
+    post:
+      operationId: review_relation_api_evidence__evidence_id__relations__relation_id__review_post
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: path
+        name: relation_id
+        required: true
+        schema:
+          title: Relation Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRelationReviewIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRelationMutationOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Review Relation
       tags:
       - thesis
   /api/jobs/documents:
@@ -1005,6 +1717,92 @@ paths:
       summary: Get Job
       tags:
       - jobs
+  /api/radar/evidence:
+    get:
+      operationId: list_radar_evidence_api_radar_evidence_get
+      parameters:
+      - in: query
+        name: thesis_id
+        required: true
+        schema:
+          minLength: 1
+          title: Thesis Id
+          type: string
+      - in: query
+        name: status
+        required: false
+        schema:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Status
+      - in: query
+        name: direction
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Direction
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceFeedPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Radar Evidence
+      tags:
+      - radar
   /api/reviews:
     get:
       operationId: list_reviews_api_reviews_get
@@ -1366,6 +2164,15 @@ paths:
           - type: 'null'
           description: 标题与核心观点模糊匹配
           title: Keyword
+      - description: 仅返回当前用户可管理的逻辑
+        in: query
+        name: manageable
+        required: false
+        schema:
+          default: false
+          description: 仅返回当前用户可管理的逻辑
+          title: Manageable
+          type: boolean
       - in: query
         name: limit
         required: false
@@ -1643,6 +2450,92 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: List Evidence
+      tags:
+      - thesis
+  /api/theses/{thesis_id}/evidence-feed:
+    get:
+      description: 返回逻辑下可直接阅读的证据摘要，不改变旧证据列表契约。
+      operationId: list_readable_evidence_api_theses__thesis_id__evidence_feed_get
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: query
+        name: status
+        required: false
+        schema:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Status
+      - in: query
+        name: direction
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Direction
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceFeedPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Readable Evidence
       tags:
       - thesis
   /api/theses/{thesis_id}/publish:
@@ -1930,6 +2823,78 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Get Workbench
+      tags:
+      - workbench
+  /api/workbench/tasks:
+    get:
+      description: 返回可读的待确认证据任务，作为工作台主任务列表。
+      operationId: get_readable_evidence_tasks_api_workbench_tasks_get
+      parameters:
+      - in: query
+        name: priority
+        required: false
+        schema:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Priority
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceFeedPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Readable Evidence Tasks
       tags:
       - workbench
   /health:

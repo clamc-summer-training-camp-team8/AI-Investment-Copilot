@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from dataclasses import replace
+
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.core.domain import (
     AuditRecord,
+    EvidenceFeedRecord,
+    EvidenceRelationRecord,
     EvidenceRecord,
     ObservationRecord,
     SuggestionRecord,
@@ -15,10 +19,19 @@ from app.core.domain import (
 from app.core.enums import (
     ConfirmationStatus,
     ImpactDirection,
+    Importance,
     ReviewStatus,
     ThesisStatus,
 )
-from app.db.models.core import Document, Evidence, MetricObservation
+from app.db.models.core import (
+    Document,
+    Evidence,
+    EvidenceRelation,
+    Hypothesis,
+    MetricObservation,
+    Security,
+    Thesis,
+)
 from app.db.models.governance import AuditLog, StatusSuggestionLog, ThesisVersion
 
 
@@ -46,6 +59,13 @@ def _to_evidence(row: Evidence, *, label: str = "内部") -> EvidenceRecord:
         confirmed_at=row.confirmed_at,
         review_note=row.review_note,
         source_visibility_label=label,
+        security_id=row.security_id,
+        fact_excerpt=row.fact_excerpt,
+        source_document_id=row.source_document_id,
+        source_document_title=row.source_document_title,
+        disclosed_at=row.disclosed_at,
+        occurred_at=row.occurred_at,
+        source_url=row.source_url,
     )
 
 
@@ -63,6 +83,7 @@ class SqlEvidenceRepo:
         self._session.add(
             Evidence(
                 evidence_id=record.evidence_id,
+                security_id=record.security_id,
                 event_id=record.event_id,
                 thesis_id=record.thesis_id,
                 hypothesis_id=record.hypothesis_id,
@@ -72,6 +93,12 @@ class SqlEvidenceRepo:
                 strength_score=record.strength_score,
                 horizon=record.horizon,
                 evidence_locator=record.evidence_locator,
+                fact_excerpt=record.fact_excerpt,
+                source_document_id=record.source_document_id,
+                source_document_title=record.source_document_title,
+                disclosed_at=record.disclosed_at,
+                occurred_at=record.occurred_at,
+                source_url=record.source_url,
                 ai_status=record.ai_status,
                 ai_confidence=record.ai_confidence,
                 model_version=record.model_version,
@@ -99,10 +126,38 @@ class SqlEvidenceRepo:
         self._session.flush()
 
     def list_for_thesis(self, thesis_id: str) -> list[EvidenceRecord]:
+        # 关联表是当前关系的唯一事实来源。一个证据可关联多个逻辑，
+        # 因而不能继续只按 Evidence.thesis_id 读取，否则新增关联不会出现在目标逻辑中。
+        relation_rows = self._session.execute(
+            select(Evidence, EvidenceRelation)
+            .join(EvidenceRelation, EvidenceRelation.evidence_id == Evidence.evidence_id)
+            .where(
+                EvidenceRelation.thesis_id == thesis_id,
+                EvidenceRelation.status != ConfirmationStatus.DEACTIVATED.value,
+            )
+            .order_by(Evidence.evidence_id, EvidenceRelation.created_at)
+        ).all()
+        if relation_rows:
+            return [
+                replace(
+                    _to_evidence(evidence, label=self._document_label(evidence.evidence_locator)),
+                    thesis_id=relation.thesis_id,
+                    hypothesis_id=relation.hypothesis_id,
+                    direction=ImpactDirection(relation.direction),
+                    strength=relation.strength,
+                    confirmation_status=ConfirmationStatus(relation.status),
+                    review_note=relation.reason,
+                    confirmed_by=relation.reviewed_by,
+                    confirmed_at=relation.reviewed_at,
+                )
+                for evidence, relation in relation_rows
+            ]
+
+        # 尚未执行 0003 迁移的旧库保留原字段读取，确保平滑升级。
         rows = self._session.scalars(
             select(Evidence).where(Evidence.thesis_id == thesis_id).order_by(Evidence.evidence_id)
         ).all()
-        return [_to_evidence(r, label=self._document_label(r.evidence_locator)) for r in rows]
+        return [_to_evidence(row, label=self._document_label(row.evidence_locator)) for row in rows]
 
     def _document_label(self, locator: str) -> str:
         """取来源文档的权限标签，供「证据可见性不得高于来源文档」校验使用。
@@ -115,6 +170,178 @@ class SqlEvidenceRepo:
             select(Document.visibility_label).where(Document.document_id == document_id)
         ).first()
         return label or "机密"
+
+
+def _to_relation(row: EvidenceRelation) -> EvidenceRelationRecord:
+    return EvidenceRelationRecord(
+        relation_id=row.relation_id,
+        evidence_id=row.evidence_id,
+        thesis_id=row.thesis_id,
+        hypothesis_id=row.hypothesis_id,
+        direction=ImpactDirection(row.direction),
+        strength=row.strength,
+        status=ConfirmationStatus(row.status),
+        created_by=row.created_by,
+        reason=row.reason,
+        reviewed_by=row.reviewed_by,
+        reviewed_at=row.reviewed_at,
+        deactivated_by=row.deactivated_by,
+        deactivated_at=row.deactivated_at,
+    )
+
+
+class SqlEvidenceRelationRepo:
+    """证据关联仓储。旧 Evidence 上的关联字段仅保留给兼容接口读取。"""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, relation_id: str) -> EvidenceRelationRecord | None:
+        row = self._session.get(EvidenceRelation, relation_id)
+        return _to_relation(row) if row else None
+
+    def list_for_evidence(self, evidence_id: str) -> list[EvidenceRelationRecord]:
+        rows = self._session.scalars(
+            select(EvidenceRelation)
+            .where(EvidenceRelation.evidence_id == evidence_id)
+            .order_by(EvidenceRelation.created_at.desc())
+        ).all()
+        return [_to_relation(row) for row in rows]
+
+    def list_for_thesis(self, thesis_id: str) -> list[EvidenceRelationRecord]:
+        rows = self._session.scalars(
+            select(EvidenceRelation).where(EvidenceRelation.thesis_id == thesis_id)
+        ).all()
+        return [_to_relation(row) for row in rows]
+
+    def add(self, record: EvidenceRelationRecord) -> None:
+        self._session.add(
+            EvidenceRelation(
+                relation_id=record.relation_id,
+                evidence_id=record.evidence_id,
+                thesis_id=record.thesis_id,
+                hypothesis_id=record.hypothesis_id,
+                direction=record.direction.value,
+                strength=record.strength,
+                reason=record.reason,
+                status=record.status.value,
+                created_by=record.created_by,
+                reviewed_by=record.reviewed_by,
+                reviewed_at=record.reviewed_at,
+                deactivated_by=record.deactivated_by,
+                deactivated_at=record.deactivated_at,
+            )
+        )
+        self._session.flush()
+
+    def update(self, record: EvidenceRelationRecord) -> None:
+        row = self._session.get(EvidenceRelation, record.relation_id)
+        if row is None:
+            raise LookupError(f"relation {record.relation_id} 不存在")
+        row.hypothesis_id = record.hypothesis_id
+        row.direction = record.direction.value
+        row.strength = record.strength
+        row.reason = record.reason
+        row.status = record.status.value
+        row.reviewed_by = record.reviewed_by
+        row.reviewed_at = record.reviewed_at
+        row.deactivated_by = record.deactivated_by
+        row.deactivated_at = record.deactivated_at
+        self._session.flush()
+
+
+class SqlEvidenceFeedRepo:
+    """服务端聚合可读证据列表，避免前端按证据逐条补查标题和假设。"""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def search(
+        self,
+        *,
+        thesis_ids: tuple[str, ...],
+        statuses: tuple[ConfirmationStatus, ...] = (),
+        direction: ImpactDirection | None = None,
+        priorities: tuple[str, ...] = (),
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[EvidenceFeedRecord], int]:
+        if not thesis_ids:
+            return [], 0
+
+        conditions = [
+            EvidenceRelation.thesis_id.in_(thesis_ids),
+            EvidenceRelation.status != ConfirmationStatus.DEACTIVATED.value,
+        ]
+        if statuses:
+            conditions.append(EvidenceRelation.status.in_([item.value for item in statuses]))
+        if direction is not None:
+            conditions.append(EvidenceRelation.direction == direction.value)
+
+        priority_rank = case(
+            (
+                (EvidenceRelation.direction == ImpactDirection.CONFLICT.value)
+                & (EvidenceRelation.strength == "高"),
+                0,
+            ),
+            (Thesis.status == ThesisStatus.MAJOR_RISK.value, 0),
+            (
+                (EvidenceRelation.status == ConfirmationStatus.PENDING.value)
+                & (Hypothesis.importance == "核心"),
+                1,
+            ),
+            else_=2,
+        ).label("priority_rank")
+        if priorities:
+            ranks = {"high": 0, "medium": 1, "low": 2}
+            conditions.append(priority_rank.in_([ranks[item] for item in priorities]))
+
+        base = (
+            select(Evidence, EvidenceRelation, Thesis, Hypothesis, Security, priority_rank)
+            .join(EvidenceRelation, EvidenceRelation.evidence_id == Evidence.evidence_id)
+            .join(Thesis, Thesis.thesis_id == EvidenceRelation.thesis_id)
+            .join(Hypothesis, Hypothesis.hypothesis_id == EvidenceRelation.hypothesis_id)
+            .join(Security, Security.security_id == Evidence.security_id)
+            .where(*conditions)
+        )
+        total = self._session.scalar(
+            select(func.count()).select_from(base.order_by(None).subquery())
+        ) or 0
+        rows = self._session.execute(
+            base.order_by(priority_rank, Evidence.disclosed_at.desc(), Evidence.evidence_id)
+            .limit(limit)
+            .offset(offset)
+        ).all()
+        priority_labels = {0: "high", 1: "medium", 2: "low"}
+        return [
+            EvidenceFeedRecord(
+                evidence_id=evidence.evidence_id,
+                relation_id=relation.relation_id,
+                security_id=security.security_id,
+                security_name=security.name,
+                thesis_id=thesis.thesis_id,
+                thesis_title=thesis.title,
+                thesis_owner=thesis.owner,
+                thesis_status=ThesisStatus(thesis.status),
+                thesis_established_on=thesis.established_on,
+                thesis_horizon_end_on=thesis.horizon_end_on,
+                hypothesis_id=hypothesis.hypothesis_id,
+                hypothesis_statement=hypothesis.statement,
+                hypothesis_importance=Importance(hypothesis.importance),
+                source_document_id=evidence.source_document_id,
+                source_document_title=evidence.source_document_title,
+                fact_excerpt=evidence.fact_excerpt,
+                disclosed_at=evidence.disclosed_at,
+                occurred_at=evidence.occurred_at,
+                source_url=evidence.source_url,
+                direction=ImpactDirection(relation.direction),
+                strength=relation.strength,
+                ai_confidence=evidence.ai_confidence,
+                confirmation_status=ConfirmationStatus(relation.status),
+                priority=priority_labels[int(rank)],
+            )
+            for evidence, relation, thesis, hypothesis, security, rank in rows
+        ], int(total)
 
 
 class SqlObservationRepo:

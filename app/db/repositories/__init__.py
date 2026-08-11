@@ -13,6 +13,8 @@ from app.core.domain import UnitOfWork
 from app.db.repositories.evidence import (
     SqlAuditRepo,
     SqlEvidenceRepo,
+    SqlEvidenceFeedRepo,
+    SqlEvidenceRelationRepo,
     SqlObservationRepo,
     SqlSuggestionRepo,
     SqlVersionRepo,
@@ -23,6 +25,8 @@ from app.db.repositories.thesis import SqlThesisRepo
 __all__ = [
     "SqlAuditRepo",
     "SqlEvidenceRepo",
+    "SqlEvidenceFeedRepo",
+    "SqlEvidenceRelationRepo",
     "SqlObservationRepo",
     "SqlReviewTaskRepo",
     "SqlSuggestionRepo",
@@ -36,6 +40,8 @@ def build_uow(session: Session) -> UnitOfWork:
     return UnitOfWork(
         thesis=SqlThesisRepo(session),
         evidence=SqlEvidenceRepo(session),
+        relations=SqlEvidenceRelationRepo(session),
+        feed=SqlEvidenceFeedRepo(session),
         observations=SqlObservationRepo(session),
         suggestions=SqlSuggestionRepo(session),
         versions=SqlVersionRepo(session),

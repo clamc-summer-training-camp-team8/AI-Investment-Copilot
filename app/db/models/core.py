@@ -337,6 +337,7 @@ class Evidence(Base):
     __tablename__ = "evidence"
 
     evidence_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    security_id: Mapped[str | None] = mapped_column(String(64), index=True)
     event_id: Mapped[str | None] = mapped_column(ForeignKey("event.event_id"))
     thesis_id: Mapped[str] = mapped_column(
         ForeignKey("thesis.thesis_id", ondelete="CASCADE"), nullable=False
@@ -360,6 +361,12 @@ class Evidence(Base):
         comment="必须能打开原文，格式 {document_id}#paragraph-{n}",
     )
     transmission_path: Mapped[str | None] = mapped_column(Text)
+    fact_excerpt: Mapped[str | None] = mapped_column(Text)
+    source_document_id: Mapped[str | None] = mapped_column(String(64))
+    source_document_title: Mapped[str | None] = mapped_column(String(512))
+    disclosed_at: Mapped[datetime | None] = mapped_column()
+    occurred_at: Mapped[date | None] = mapped_column(Date)
+    source_url: Mapped[str | None] = mapped_column(String(2048))
 
     ai_status: Mapped[str | None] = mapped_column(String(16))
     ai_confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
@@ -376,6 +383,43 @@ class Evidence(Base):
     __table_args__ = (
         Index("ix_evidence_thesis", "thesis_id", "confirmation_status"),
         Index("ix_evidence_hypothesis", "hypothesis_id"),
+    )
+
+
+class EvidenceRelation(Base):
+    """证据与逻辑假设的独立关联。
+
+    Evidence 保存不可修改的来源事实；关联可在同一证券范围内扩展、审核和解除。
+    避免直接覆写 Evidence 上的旧单关联字段，保留历史兼容与审计可追溯性。
+    """
+
+    __tablename__ = "evidence_relation"
+
+    relation_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    evidence_id: Mapped[str] = mapped_column(
+        ForeignKey("evidence.evidence_id", ondelete="CASCADE"), nullable=False
+    )
+    thesis_id: Mapped[str] = mapped_column(
+        ForeignKey("thesis.thesis_id", ondelete="CASCADE"), nullable=False
+    )
+    hypothesis_id: Mapped[str] = mapped_column(
+        ForeignKey("hypothesis.hypothesis_id"), nullable=False
+    )
+    direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    strength: Mapped[str | None] = mapped_column(String(16))
+    reason: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="待确认")
+    created_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewed_by: Mapped[str | None] = mapped_column(String(64))
+    reviewed_at: Mapped[datetime | None] = mapped_column()
+    deactivated_by: Mapped[str | None] = mapped_column(String(64))
+    deactivated_at: Mapped[datetime | None] = mapped_column()
+    created_at: Mapped[datetime] = created_at_column()
+    updated_at: Mapped[datetime] = updated_at_column()
+
+    __table_args__ = (
+        Index("ix_evidence_relation_evidence", "evidence_id", "status"),
+        Index("ix_evidence_relation_thesis", "thesis_id", "status"),
     )
 
 
