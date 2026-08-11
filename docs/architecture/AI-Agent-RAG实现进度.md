@@ -215,3 +215,17 @@
 - 明确 P0-P4 实施顺序，以及当前支线不修改后端数据库/API/队列的边界。
 
 本阶段只更新规格和计划，没有宣称生产级能力已经完成。
+### 阶段 9：统一 Agent 编排入口与运行状态
+
+状态：AI 能力层实现完成，后端持久化待接入。
+
+主要内容：
+- 新增 `app/ai/runtime.py` 中的 `InvestmentResearchAgent`，统一调用 ThesisDraftAgent、InvestmentLogicChangeAgent 和 EvidenceAgent。
+- 新增 `RuntimeExecution`，记录 `run_id`、任务类型、开始/结束时间、结果、证据校验和错误信息。
+- 支持 `created`、`retrieving`、`generating`、`verifying`、`completed`、`needs_human_review`、`failed` 状态语义。
+- 低置信度、解析失败、引用校验异常不会伪装成完成结果。
+- 运行时只返回结构化执行结果，后端可在外层负责持久化、队列和状态变更。
+
+验证结果：AI 单元测试 10 passed。
+
+下一步：补充证据完整性评分和评测样例；待后端确定运行记录字段后，再由后端持久化 `RuntimeExecution`。
