@@ -1,0 +1,7 @@
+[
+  {"id": "support-001", "kind": "impact", "text": "公司收入增长，订单持续提升", "expected_impact": "support"},
+  {"id": "conflict-001", "kind": "impact", "text": "订单下降，经营压力增加", "expected_impact": "conflict"},
+  {"id": "uncertain-001", "kind": "impact", "text": "收入增长，但经营压力增加", "expected_impact": "neutral", "expected_signal": "uncertain"},
+  {"id": "neutral-001", "kind": "impact", "text": "公司完成年度股东大会召开", "expected_impact": "neutral", "expected_signal": "neutral"},
+  {"id": "insufficient-001", "kind": "evidence", "text": "", "expected_review_reason": "missing_source"}
+]
