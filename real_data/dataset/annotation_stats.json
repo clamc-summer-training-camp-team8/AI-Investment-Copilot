@@ -1,0 +1,100 @@
+{
+  "annotation_version": "pre-annotation-v2",
+  "total": 3784,
+  "split_date": "2025-10-01",
+  "in_sample": 2489,
+  "out_of_sample": 1295,
+  "thesis_relevant": 807,
+  "needs_adjudication": 471,
+  "direction_kappa": 0.6587,
+  "hypothesis_kappa": 1.0,
+  "direction_observed_agreement": 0.8755,
+  "category_counts": {
+    "治理": 1062,
+    "其他": 797,
+    "程式化披露": 600,
+    "股权激励": 261,
+    "药品研发进展": 245,
+    "回购与持股变动": 204,
+    "定期报告": 177,
+    "融资": 130,
+    "产销数据": 96,
+    "药品注册与上市": 71,
+    "担保与关联交易": 53,
+    "投资与产能": 39,
+    "风险与异动": 17,
+    "业绩预告": 15,
+    "订单与合同": 14,
+    "集采与准入": 2,
+    "药品质量与合规": 1
+  },
+  "imprecise_time_count": 3123,
+  "by_industry": {
+    "医药": {
+      "total": 1456,
+      "thesis_relevant": 392,
+      "in_sample": 987,
+      "out_of_sample": 469,
+      "needs_adjudication": 331,
+      "direction_kappa": 0.5006,
+      "imprecise_time_count": 1438
+    },
+    "新能源汽车": {
+      "total": 1026,
+      "thesis_relevant": 177,
+      "in_sample": 673,
+      "out_of_sample": 353,
+      "needs_adjudication": 11,
+      "direction_kappa": 0.9633,
+      "imprecise_time_count": 386
+    },
+    "芯片半导体": {
+      "total": 1302,
+      "thesis_relevant": 238,
+      "in_sample": 829,
+      "out_of_sample": 473,
+      "needs_adjudication": 129,
+      "direction_kappa": 0.691,
+      "imprecise_time_count": 1299
+    }
+  },
+  "by_company": {
+    "中芯国际": {
+      "total": 372,
+      "thesis_relevant": 98
+    },
+    "云南白药": {
+      "total": 236,
+      "thesis_relevant": 33
+    },
+    "兆易创新": {
+      "total": 514,
+      "thesis_relevant": 82
+    },
+    "北方华创": {
+      "total": 416,
+      "thesis_relevant": 58
+    },
+    "吉利汽车": {
+      "total": 451,
+      "thesis_relevant": 68
+    },
+    "小鹏汽车": {
+      "total": 184,
+      "thesis_relevant": 48
+    },
+    "恒瑞医药": {
+      "total": 694,
+      "thesis_relevant": 335
+    },
+    "比亚迪": {
+      "total": 391,
+      "thesis_relevant": 61
+    },
+    "药明康德": {
+      "total": 526,
+      "thesis_relevant": 24
+    }
+  },
+  "generated_at": "2026-08-11T13:04:20.872597+08:00"
+}
