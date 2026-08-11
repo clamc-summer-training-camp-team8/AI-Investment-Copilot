@@ -62,4 +62,7 @@ MVP 支持 PDF / DOCX / TXT（FR-T-001）。
 
 - `tests/unit/ingest/` 切片与指纹逻辑，用小样本文件。
 - `tests/integration/ingest/` 完整解析链路。
-- 夹具放 `tests/fixtures/`，只用 `docs/data/数据分析交付包/业务样例包/` 的派生数据，禁止提交真实投研资料。
+- 夹具放 `tests/fixtures/`，只用 `docs/data/数据分析交付包/业务样例包/` 的派生数据。
+- 真实公开披露数据（公告清单、定期报告、行情）放 `real_data/`，已纳入版本控制，
+  见 [ADR-0006](../../docs/adr/0006-公开披露数据纳入版本控制.md)。禁止提交的是非公开
+  信息、带授权限制的内容与个人信息，不是「真实数据」这个大类。

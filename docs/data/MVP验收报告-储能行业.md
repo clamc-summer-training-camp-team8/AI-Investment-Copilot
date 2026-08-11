@@ -175,4 +175,4 @@ python -m analytics.experiments.run_signal_experiment  # 候选信号实验
 PYTHONPATH=. python scripts/run_industry_case.py  # 行业级闭环
 ```
 
-数据落在 `real_data/`，不进版本控制。
+数据落在 `real_data/`。写这份报告时它不进版本控制；2026-08-11 起公开披露数据已纳入，见 [ADR-0006](../adr/0006-公开披露数据纳入版本控制.md)。

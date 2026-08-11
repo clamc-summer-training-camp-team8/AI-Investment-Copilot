@@ -11,3 +11,8 @@
 *.json text
 *.yaml text
 *.yml  text
+
+# 数据集 CSV 显式声明为 LF 文本。采集管道在 Windows 上写出的是 CRLF，
+# 不声明的话每次有人在不同平台重跑采集，整个文件都会显示为改动，
+# 真正的数据变化会被淹没在行尾差异里。
+*.csv  text eol=lf
