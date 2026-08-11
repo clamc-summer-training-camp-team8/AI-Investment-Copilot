@@ -68,7 +68,6 @@ def collect(book: QuoteBook) -> list[SignalRecord]:
                 book,
                 security_id=row["security_id"],
                 disclosure_time=row["disclosure_time"],
-                time_is_precise=row["disclosure_time_precise"] == "True",
             )
             records.append(
                 SignalRecord(
