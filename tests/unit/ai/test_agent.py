@@ -188,9 +188,12 @@ def test_evidence_agent_计算引用完整性评分() -> None:
     grade = EvidenceAgent.grade_impact(impact)
 
     assert grade.passed
-    assert grade.score == 0.9
+    assert grade.score == 0.917
     assert grade.valid_cited_count == 2
     assert grade.source_count == 1
+    assert grade.source_authority_score == 1.0
+    assert grade.claim_support_score == 1.0
+    assert grade.transmission_score == 0.667
 
 def test_evidence_agent_检查事实与引用一致性和实体匹配() -> None:
     retriever = KeywordRetriever()

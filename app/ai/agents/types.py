@@ -66,6 +66,12 @@ class EvidenceGrade:
     source_count: int
     stale_count: int
     missing: tuple[str, ...]
+    citation_score: float = 0.0
+    source_authority_score: float = 0.0
+    freshness_score: float = 0.0
+    claim_support_score: float = 0.0
+    corroboration_score: float = 0.0
+    transmission_score: float = 0.0
 
 
 @dataclass(frozen=True)
