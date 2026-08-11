@@ -141,9 +141,20 @@ def summarize(results: list[TaskResult]) -> EfficiencyMetrics:
 
 
 def ensure_baseline_template(results: list[TaskResult]) -> None:
-    """生成待填写的人工基线模板。已存在则不覆盖，避免冲掉研究员填的数据。"""
+    """生成待填写的人工基线模板。
+
+    已填过数据就绝不覆盖——研究员手工计时的数据丢了没法重来。
+    但如果模板还是空的而任务集合已经变了（比如研究范围从 3 家扩到 9 家），
+    就重新生成：留着一份任务对不上的空模板，只会让人照着填错的任务号。
+    """
     if BASELINE_FILE.exists():
-        return
+        existing = _load_manual_baseline()
+        if existing:
+            missing = {r.task_id for r in results} - set(existing)
+            if missing:
+                print(f"人工基线已有 {len(existing)} 条录入，另有 {len(missing)} 个新任务待补录")
+                print(f"  新任务需手工追加到 {BASELINE_FILE.name}，不自动覆盖已录入数据")
+            return
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
     with BASELINE_FILE.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.writer(fh)

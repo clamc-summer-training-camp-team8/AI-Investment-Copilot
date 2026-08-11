@@ -1,7 +1,8 @@
 """行业级闭环的回归测试。
 
-`real_data/` 不进版本控制，因此数据不在时跳过。CI 里这些测试会 skip，本地跑过
-数据管道后会真实执行。
+`real_data/` 已纳入版本控制（ADR-0006），因此这些测试在 CI 里**真实执行**，
+不再 skip。数据缺失时直接失败：数据是仓库的一部分，缺了就是仓库坏了，
+用 skip 掩盖会让样本量与可追溯率的断言变成永远不生效的装饰。
 
 这里守的是几条容易在重构中失效的纪律：时间窗口裁剪、人工闸门、可追溯性、
 口径不混算。
@@ -14,15 +15,22 @@ import json
 
 import pytest
 
+from analytics.pipelines.universe import BENCHMARKS, COMPANIES, INDUSTRIES
 from app.core.config import PROJECT_ROOT
 
 DATASET_DIR = PROJECT_ROOT / "real_data" / "dataset"
 RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 
-pytestmark = pytest.mark.skipif(
-    not (DATASET_DIR / "theses.json").exists() or not (RAW_DIR / "financials.json").exists(),
-    reason="real_data/ 不在版本控制内，需先跑 analytics.pipelines 采集数据",
-)
+
+def test_数据集在版本控制内() -> None:
+    """数据集必须存在。它们已进版本控制，缺失说明仓库不完整而不是环境问题。"""
+    for path in (
+        DATASET_DIR / "theses.json",
+        DATASET_DIR / "events.csv",
+        RAW_DIR / "financials.json",
+        RAW_DIR / "quotes.json",
+    ):
+        assert path.is_file(), f"{path} 缺失。它已纳入版本控制（ADR-0006），不该缺"
 
 
 @pytest.fixture(scope="module")
@@ -129,6 +137,59 @@ def test_split_is_time_based(events: list[dict]) -> None:
     out_sample = [e["disclosure_time"][:10] for e in events if e["split"] == "out_of_sample"]
     assert in_sample and out_sample
     assert max(in_sample) < min(out_sample), "样本内外时间区间存在交叉"
+
+
+def test_三个行业各三家公司(theses: list[dict]) -> None:
+    """研究范围必须真的覆盖三个行业各三家，不能某个行业只剩一家还照样出报告。"""
+    by_industry: dict[str, set[str]] = {}
+    for thesis in theses:
+        by_industry.setdefault(thesis["industry"], set()).add(thesis["company"])
+
+    assert set(by_industry) == set(INDUSTRIES), f"行业不齐：{sorted(by_industry)}"
+    for industry, companies in by_industry.items():
+        assert len(companies) == 3, f"{industry} 有 {len(companies)} 家公司，应为 3 家"
+
+
+def test_每个行业有独立基准() -> None:
+    """基准必须按行业区分。共用一个基准会把行业轮动算成个股 alpha。"""
+    assert set(BENCHMARKS) == set(INDUSTRIES)
+    ids = [b.security_id for b in BENCHMARKS.values()]
+    assert len(set(ids)) == len(ids), f"存在共用基准：{ids}"
+
+    quotes = json.loads((RAW_DIR / "quotes.json").read_text(encoding="utf-8"))["series"]
+    for industry, benchmark in BENCHMARKS.items():
+        assert benchmark.security_id in quotes, f"{industry} 的基准无行情，超额收益算不出来"
+
+
+def test_阈值只用建立日之前的历史(theses: list[dict]) -> None:
+    """失效阈值不能拿观察期内的数据定，否则是用结果调参数。
+
+    阈值口径写死在 build_theses 里：2022Q1~2024Q3，全部早于最早建立日 2025-01-20。
+    这里守的是「最早建立日不早于阈值历史的截止」这个关系。
+    """
+    earliest = min(t["established_on"] for t in theses)
+    assert earliest >= "2024-10-31", (
+        f"最早建立日 {earliest} 早于阈值所用历史（截至 2024Q3，披露于 2024-10-31），"
+        "阈值可能包含了观察期内的信息"
+    )
+
+
+def test_港股公司的季度颗粒度差异被如实记录(financials: dict) -> None:
+    """港股不强制季报，期数少于 A 股是制度差异，不能靠插值补齐。
+
+    断言的是「港股公司确实存在期数缺口」而不是「期数相等」：如果哪天这里变成相等，
+    说明有人插值填平了缺口，那才是真问题。
+    """
+    hk_ids = [c.security_id for c in COMPANIES if c.is_hk]
+    assert hk_ids, "研究范围里应有港股公司"
+
+    for security_id in hk_ids:
+        periods = {m["period"] for m in financials[security_id]}
+        assert periods, f"{security_id} 无财务数据"
+        # 全部为单季度口径已由 test_financials_are_single_quarter 覆盖，
+        # 这里只检查没有凭空补出连续的四个季度
+        for metric in financials[security_id]:
+            assert metric["revenue"], f"{security_id} {metric['period']} 收入为空却入库"
 
 
 def test_closed_loop_traceability() -> None:

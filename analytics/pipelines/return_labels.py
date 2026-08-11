@@ -9,7 +9,8 @@
 3. **披露时间无具体时刻的按盘后处理。** 巨潮有 66% 的公告时间是 00:00，无法区分
    盘前盘后。假设盘前（当日可交易）会高估可得性，因此一律当盘后 → 次日起算。
    这个选择使标签更保守，不会因为时点假设制造虚假超额。
-4. **基准事前确定。** 创业板指，选定后不换。
+4. **基准事前确定，且按行业取。** 三个行业各一个基准（见 universe.BENCHMARKS），
+   选定后不换。跨行业共用一个基准算出来的「超额」里混着行业轮动，不是个股 alpha。
 
 超额收益的算法委托给 `app.calc.deterministic.excess_return`，不在这里重写。离线与
 线上算出不同数字是最伤信任的问题（analytics/README.md）。
@@ -23,9 +24,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 
-from analytics.pipelines.universe import BENCHMARK
+from analytics.pipelines.universe import benchmark_for
 from app.calc.deterministic import excess_return
 from app.core.config import PROJECT_ROOT
+from app.core.enums import ImpactDirection
 
 RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 WINDOW_DAYS = 20
@@ -155,8 +157,11 @@ def build_label(
             f"窗口结束日 {window_end} 晚于数据截止 {reference}",
         )
 
+    # 基准按行业取。跨行业共用一个基准会把行业轮动算成个股 alpha，
+    # 三个行业的涨跌节奏差异远大于单只个股的事件效应。
+    benchmark = benchmark_for(security_id)
     security_ret = book.period_return(security_id, window_start, window_end)
-    benchmark_ret = book.period_return(BENCHMARK.security_id, window_start, window_end)
+    benchmark_ret = book.period_return(benchmark.security_id, window_start, window_end)
     if security_ret is None or benchmark_ret is None:
         return ReturnLabel(
             security_id,
@@ -187,11 +192,16 @@ def is_hit(direction: str, label: ReturnLabel) -> bool | None:
 
     返回 None 表示无法判定，不算命中也不算未命中——把无法判定的算作未命中会低估，
     算作命中会高估。
+
+    方向取值统一用 ``ImpactDirection`` 的枚举值。曾经这里写的是字面量「削弱」，
+    而枚举值是「冲突」：「削弱」只是 CSV 导入用的外部别名（见 app/ingest/events.py）。
+    结果是 candidate_v2 输出的 19 条冲突信号全部判为无法判定，25 条信号只剩 6 条，
+    实验样本量被静默砍掉四分之三，而报告把它归因成「设计使然」。
     """
     if label.excess_return is None:
         return None
-    if direction == "支持":
+    if direction == ImpactDirection.SUPPORT:
         return label.excess_return > 0
-    if direction == "削弱":
+    if direction == ImpactDirection.CONFLICT:
         return label.excess_return < 0
     return None

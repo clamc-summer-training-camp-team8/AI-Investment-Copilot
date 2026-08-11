@@ -1,0 +1,680 @@
+{
+  "generated_at": "2026-08-11T13:04:21.321265+08:00",
+  "model_version": "local-rule-v1+candidate_v2",
+  "data_version": "cninfo-announcement-v2/em-f10-gincome-v2/tencent-qfq-v1",
+  "thesis_count": 45,
+  "hypothesis_count": 135,
+  "event_pool": 3784,
+  "evidence_attached": 450,
+  "evidence_confirmed": 168,
+  "evidence_pending_human": 282,
+  "human_decisions": 0,
+  "traceable_evidence": 450,
+  "traceability_rate": 1.0,
+  "untraceable_samples": [],
+  "status_distribution": {
+    "验证中": 45
+  },
+  "by_industry": {
+    "芯片半导体": {
+      "thesis_count": 15,
+      "evidence_attached": 125,
+      "evidence_confirmed": 12,
+      "status_distribution": {
+        "验证中": 15
+      },
+      "breached_theses": 7
+    },
+    "医药": {
+      "thesis_count": 15,
+      "evidence_attached": 240,
+      "evidence_confirmed": 152,
+      "status_distribution": {
+        "验证中": 15
+      },
+      "breached_theses": 7
+    },
+    "新能源汽车": {
+      "thesis_count": 15,
+      "evidence_attached": 85,
+      "evidence_confirmed": 4,
+      "status_distribution": {
+        "验证中": 15
+      },
+      "breached_theses": 6
+    }
+  },
+  "outcomes": [
+    {
+      "thesis_id": "THS-688981-2025Q1",
+      "company": "中芯国际",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 7,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-688981-2025Q2",
+      "company": "中芯国际",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 2,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-688981-2025Q3",
+      "company": "中芯国际",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 10,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-688981-2025Q4",
+      "company": "中芯国际",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 13,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-688981-2026Q1",
+      "company": "中芯国际",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 21,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603986-2025Q1",
+      "company": "兆易创新",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 8,
+      "breached": [
+        "THS-603986-2025Q1-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-603986-2025Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-603986-2025Q2",
+      "company": "兆易创新",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 7,
+      "breached": [
+        "THS-603986-2025Q2-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-603986-2025Q2-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-603986-2025Q3",
+      "company": "兆易创新",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 8,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603986-2025Q4",
+      "company": "兆易创新",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 6,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603986-2026Q1",
+      "company": "兆易创新",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 13,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-002371-2025Q1",
+      "company": "北方华创",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 9,
+      "breached": [
+        "THS-002371-2025Q1-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-002371-2025Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-002371-2025Q2",
+      "company": "北方华创",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [
+        "THS-002371-2025Q2-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-002371-2025Q2-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-002371-2025Q3",
+      "company": "北方华创",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 7,
+      "breached": [
+        "THS-002371-2025Q3-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-002371-2025Q3-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-002371-2025Q4",
+      "company": "北方华创",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [
+        "THS-002371-2025Q4-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-002371-2025Q4-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-002371-2026Q1",
+      "company": "北方华创",
+      "industry": "芯片半导体",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 4,
+      "breached": [
+        "THS-002371-2026Q1-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-002371-2026Q1-H2-盈利质量 已连续 2 期突破阈值",
+        "但失效条件为「全部满足」，1/2 条成立；尚未成立：THS-002371-2026Q1-H1-需求与出货，按关注处理，不判定失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-600276-2025Q1",
+      "company": "恒瑞医药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 40,
+      "breached": [
+        "THS-600276-2025Q1-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-600276-2025Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-600276-2025Q2",
+      "company": "恒瑞医药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 33,
+      "breached": [
+        "THS-600276-2025Q2-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-600276-2025Q2-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-600276-2025Q3",
+      "company": "恒瑞医药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 45,
+      "breached": [
+        "THS-600276-2025Q3-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-600276-2025Q3-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-600276-2025Q4",
+      "company": "恒瑞医药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 49,
+      "breached": [
+        "THS-600276-2025Q4-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-600276-2025Q4-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-600276-2026Q1",
+      "company": "恒瑞医药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 39,
+      "breached": [
+        "THS-600276-2026Q1-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-600276-2026Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-603259-2025Q1",
+      "company": "药明康德",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 3,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603259-2025Q2",
+      "company": "药明康德",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 3,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603259-2025Q3",
+      "company": "药明康德",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 4,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603259-2025Q4",
+      "company": "药明康德",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 1,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-603259-2026Q1",
+      "company": "药明康德",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 4,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-000538-2025Q1",
+      "company": "云南白药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-000538-2025Q2",
+      "company": "云南白药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 3,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-000538-2025Q3",
+      "company": "云南白药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [
+        "THS-000538-2025Q3-H1-需求与出货",
+        "THS-000538-2025Q3-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-000538-2025Q3-H1-需求与出货 接近失效阈值，建议提高关注但未达失效",
+        "THS-000538-2025Q3-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-000538-2025Q4",
+      "company": "云南白药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 1,
+      "breached": [
+        "THS-000538-2025Q4-H1-需求与出货",
+        "THS-000538-2025Q4-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-000538-2025Q4-H1-需求与出货 接近失效阈值，建议提高关注但未达失效",
+        "THS-000538-2025Q4-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-000538-2026Q1",
+      "company": "云南白药",
+      "industry": "医药",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-002594-2025Q1",
+      "company": "比亚迪",
+      "industry": "新能源汽车",
+      "market": "A股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 9,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-002594-2025Q2",
+      "company": "比亚迪",
+      "industry": "新能源汽车",
+      "market": "A股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 4,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-002594-2025Q3",
+      "company": "比亚迪",
+      "industry": "新能源汽车",
+      "market": "A股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 7,
+      "breached": [
+        "THS-002594-2025Q3-H1-需求与出货"
+      ],
+      "reasons": [
+        "THS-002594-2025Q3-H1-需求与出货 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-002594-2025Q4",
+      "company": "比亚迪",
+      "industry": "新能源汽车",
+      "market": "A股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 4,
+      "breached": [
+        "THS-002594-2025Q4-H1-需求与出货"
+      ],
+      "reasons": [
+        "THS-002594-2025Q4-H1-需求与出货 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-002594-2026Q1",
+      "company": "比亚迪",
+      "industry": "新能源汽车",
+      "market": "A股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 8,
+      "breached": [
+        "THS-002594-2026Q1-H1-需求与出货"
+      ],
+      "reasons": [
+        "THS-002594-2026Q1-H1-需求与出货 已连续 2 期突破阈值",
+        "但失效条件为「全部满足」，1/2 条成立；尚未成立：THS-002594-2026Q1-H2-盈利质量，按关注处理，不判定失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-00175-2025Q1",
+      "company": "吉利汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 7,
+      "breached": [
+        "THS-00175-2025Q1-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-00175-2025Q1-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-00175-2025Q2",
+      "company": "吉利汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 7,
+      "breached": [
+        "THS-00175-2025Q2-H2-盈利质量"
+      ],
+      "reasons": [
+        "THS-00175-2025Q2-H2-盈利质量 接近失效阈值，建议提高关注但未达失效"
+      ]
+    },
+    {
+      "thesis_id": "THS-00175-2025Q3",
+      "company": "吉利汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 6,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-00175-2025Q4",
+      "company": "吉利汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-00175-2026Q1",
+      "company": "吉利汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 6,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-09868-2025Q1",
+      "company": "小鹏汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q1",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-09868-2025Q2",
+      "company": "小鹏汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q2",
+      "final_status": "验证中",
+      "evidence": 3,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-09868-2025Q3",
+      "company": "小鹏汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q3",
+      "final_status": "验证中",
+      "evidence": 6,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-09868-2025Q4",
+      "company": "小鹏汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2025Q4",
+      "final_status": "验证中",
+      "evidence": 3,
+      "breached": [],
+      "reasons": [
+        "未触发状态变更条件"
+      ]
+    },
+    {
+      "thesis_id": "THS-09868-2026Q1",
+      "company": "小鹏汽车",
+      "industry": "新能源汽车",
+      "market": "港股",
+      "quarter": "2026Q1",
+      "final_status": "验证中",
+      "evidence": 5,
+      "breached": [
+        "THS-09868-2026Q1-H1-需求与出货"
+      ],
+      "reasons": [
+        "THS-09868-2026Q1-H1-需求与出货 接近失效阈值，建议提高关注但未达失效"
+      ]
+    }
+  ]
+}

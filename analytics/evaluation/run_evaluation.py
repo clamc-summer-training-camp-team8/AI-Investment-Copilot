@@ -18,6 +18,8 @@ from datetime import datetime
 from analytics.evaluation.baseline import predict as baseline_predict
 from analytics.evaluation.candidate_v2 import predict as candidate_predict
 from analytics.evaluation.metrics import LinkMetrics, evaluate_links
+from analytics.pipelines.annotate_events import ANNOTATION_VERSION
+from analytics.pipelines.universe import INDUSTRIES
 from app.ai.providers.local import guess_hypothesis_type, judge_impact
 from app.core.config import PROJECT_ROOT, Settings
 from app.core.enums import ImpactDirection
@@ -30,6 +32,7 @@ REPORT_DIR = PROJECT_ROOT / "real_data" / "reports"
 class Row:
     event_id: str
     company: str
+    industry: str
     title: str
     category: str
     split: str
@@ -85,6 +88,7 @@ def load_gold() -> list[Row]:
                 Row(
                     event_id=record["event_id"],
                     company=record["company"],
+                    industry=record.get("industry", ""),
                     title=record["title"],
                     category=record["category"],
                     split=record["split"],
@@ -185,9 +189,10 @@ def main() -> None:
         "",
         f"生成时间: {datetime.now().astimezone().isoformat()}",
         f"模型版本: {settings.llm_model_version} (provider={settings.llm_provider})",
-        "标注版本: pre-annotation-v1",
-        "数据版本: cninfo-announcement-v1",
+        f"标注版本: {ANNOTATION_VERSION}",
+        "数据版本: cninfo-announcement-v2",
         "基线: 关键词法（analytics/evaluation/baseline.py）",
+        f"研究范围: {len(INDUSTRIES)} 个行业 × 3 家公司（{'、'.join(INDUSTRIES)}）",
         "",
         f"金标样本: {len(rows)} 条（全部样本，含裁决后的 {adjudicated} 条分歧样本）",
         f"其中影响核心假设: {linked} 条",
@@ -202,17 +207,33 @@ def main() -> None:
         "   其准确率有相当部分来自「规则复现规则」，**不能读作 AI 能力**。",
         "   要得到可信数字，必须有独立于抽取规则的人工金标。这是本轮最重要的结论。",
         "3. `ai_local_v1` 是 `app/ai/providers/local.py` 的现网规则，未做任何改动。",
-        "   它的词表按研报正文措辞写（装机/需求/毛利率），与公告标题措辞不匹配，",
-        "   在 1382 条标题上只触发 19 次且全部误报。这是真实能力缺口，不是实现缺陷。",
+        "   它的词表按储能行业研报正文措辞写（装机/需求/毛利率），既不匹配公告标题，",
+        "   也不覆盖半导体与医药的措辞，因此召回率极低。这是真实能力缺口，不是实现缺陷。",
         "4. `candidate_v2` 的词表**只用样本内数据构造**，定稿后未依据样本外结果调整。",
         "   样本外那一次即最终成绩（说明书 10.2 第 2、4 步）。",
         "5. 裁决规则系统性偏向中性，会压低方向一致率。",
+        "6. 跨行业后金标的方向一致性按行业差异很大（医药 kappa 0.50、半导体 0.69、",
+        "   汽车 0.96）。医药低是因为「拿到临床批件算不算支持需求」这类问题本身没有",
+        "   共识，需要业务裁决，不是标注者失误。",
         "",
     ]
 
     sections: list[str] = list(header)
     for label, subset in (("样本内", in_sample), ("样本外", out_sample), ("全样本", rows)):
         sections.extend(_report_block(label, evaluate(subset)))
+
+    # 分行业看样本外表现。总数会掩盖单行业失效：同一套规则在三个行业上的
+    # 召回与方向一致率差异很大，混在一起报只会得到一个没人能用的平均数。
+    sections.extend(["## 分行业（样本外）", ""])
+    for industry in INDUSTRIES:
+        subset = [r for r in out_sample if r.industry == industry]
+        if not subset:
+            sections.extend([f"### {industry}", "- 样本外无样本", ""])
+            continue
+        sections.append(f"### {industry}（{len(subset)} 条）")
+        for name, result in evaluate(subset).items():
+            sections.append(f"- **{name}**：" + "；".join(result.render()))
+        sections.append("")
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     target = REPORT_DIR / "evaluation_report.md"

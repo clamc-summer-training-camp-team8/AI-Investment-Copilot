@@ -25,6 +25,16 @@ analytics/**/*.parquet
 analytics/**/*.pkl
 .ipynb_checkpoints/
 
-# 真实投研资料不进仓库。样例数据仅限 docs/data/数据分析交付包/业务样例包/
+# 用户上传的原始文件不进仓库：来源不可控，可能含未公开材料或个人信息。
 /uploads/
-/real_data/
+
+# real_data/ 从 2026-08-11 起纳入版本控制（见 docs/adr/0006）。
+# 里面是九家上市公司的公开披露数据（巨潮公告清单、交易所财报、公开行情），
+# 提交它们是为了让团队成员能直接复算同一批数字，不必各自重跑采集。
+# 仍然排除两类：
+# - 采集分片缓存：中间产物，可由 announcements.json 复原，提交只会制造冲突
+# - 备份文件：上一轮范围的快照，留在本地对照即可
+/real_data/raw/announcements/
+/real_data/raw/quotes/
+/real_data/**/*.bak.json
+/real_data/**/*.v1.bak.json
