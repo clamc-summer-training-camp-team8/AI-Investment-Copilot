@@ -40,7 +40,11 @@ from app.core.enums import ImpactDirection
 RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 OUT_DIR = PROJECT_ROOT / "real_data" / "dataset"
 
-ANNOTATION_VERSION = "pre-annotation-v2"
+ANNOTATION_VERSION = "pre-annotation-v3"
+
+# 导师裁决版本。裁决书：docs/collaboration/20260811-导师裁决-事件方向标注规则.md
+# 口径变化时递增，不原地覆盖（协作规范第 6 节：涉及历史数据口径的改动新增版本）。
+RULING_VERSION = "mentor-ruling-v1-20260811"
 
 # 港交所与交易所要求的程式化公告。它们按月按次机械发布，不含经营信息。
 # 必须**最先**排除，原因有两个：
@@ -126,6 +130,110 @@ NON_THESIS_CATEGORIES = frozenset(
     {"股权激励", "回购与持股变动", "担保与关联交易", "治理", "程式化披露", "其他"}
 )
 
+# —— 导师裁决层 ——
+# 依据：docs/collaboration/20260811-导师裁决-事件方向标注规则.md（GAP-004 首次关闭）
+#
+# 这一层是**业务裁定**，对两名标注者共同生效，因此放在 A/B 各自规则之前。
+# 它不是第三个标注者：A 与 B 的分歧（471 条方向分歧）已由导师判定为「两人都不对」，
+# 裁决结论覆盖双方，不参与一致性比较。
+#
+# 裁决的三条判定原则（详见裁决书第 3 节）：
+# 1. 频率：一年发生 50 次以上的公告类型，单条不携带信息 → 无关。
+#    恒瑞 IND 批件 206 条落在 148 个日期，20 日窗口覆盖 97.7% 的交易日——
+#    一个 97.7% 时间都在亮的信号是常量，不是信号。
+# 2. 可观测性：证据必须能改变假设的度量指标。H1 的口径是营业收入同比，
+#    而 I 期临床距离收入 8 年、成功率约 10%，它影响远期期权价值而非当期收入。
+# 3. 进展 vs 结果：研发链上只有「获批上市」与「失败/撤回」改变收入预期，
+#    中间节点都是进展。进展判无关，结果判方向。
+#
+# 顺序敏感：越具体的规则在前。R7（撤回）必须早于 R6（注册批准），
+# 因为「撤回药品注册申请」同时含「注册」字样。
+MENTOR_RULINGS: tuple[tuple[str, str, str], ...] = (
+    # R7 撤回/终止：管线归零，是结果不是进展。必须在 R6 之前。
+    ("R7", ImpactDirection.CONFLICT.value, r"撤回药品注册申请|撤回.{0,6}注册申请"),
+    # R1~R4 研发过程节点：高频且不改变当期收入 → 无关。
+    # 样本内 IND 批件 128 条，均值超额 +2.01% vs 恒瑞无条件基准 +2.06%，
+    # 置换检验 p=0.554——与「随便哪天买入」在统计上无法区分。
+    (
+        "R1",
+        ImpactDirection.IRRELEVANT.value,
+        r"临床试验批准|临床试验许可|新药临床试验|临床试验进展",
+    ),
+    ("R2", ImpactDirection.IRRELEVANT.value, r"突破性治疗"),
+    ("R3", ImpactDirection.IRRELEVANT.value, r"快速通道|孤儿药资格"),
+    # R4 只覆盖「单纯的优先审评认定」。刻意用「拟纳入」限定：
+    # 「上市许可申请获受理并纳入优先审评程序」是一次 NDA 受理（归 R5 中性），
+    # 不加限定会被 R4 抢走并降级为无关——实测误吞 5 条。
+    ("R4", ImpactDirection.IRRELEVANT.value, r"拟纳入优先审评|拟纳入.{0,4}优先审评程序"),
+    # R8 GMP 通过：合规底线，不通过才是事件。
+    ("R8", ImpactDirection.IRRELEVANT.value, r"GMP符合性检查|通过.{0,4}GMP"),
+    # R6 获批上市：研发链上唯一改变收入的节点。样本内 27 条正超额 70.4%，高于基准 5.8pp。
+    ("R6", ImpactDirection.SUPPORT.value, r"注册证书|注册批准|补充申请批准|获准上市"),
+    # R5 上市申请受理：审批时钟起点，对当期无方向、对下一窗口有预告价值 → 中性。
+    # 样本内 19 条正超额 42.1%（低于基准 22.5pp），但 n 小且与业务逻辑反向，
+    # 更可能是「受理后长期等待、短期缺催化」的时间结构，不据此判冲突。
+    ("R5", ImpactDirection.NEUTRAL.value, r"上市许可申请.{0,6}受理|上市申请.{0,6}受理"),
+    # R10/R11 融资程序性文件与资金调度：无经营信息。
+    # 队列 149 条融资分歧里 116 条属于这两类，是 A3 原则（程式化披露判无关）
+    # 未覆盖到融资类的遗留问题。中介机构出具的核查意见不是公司经营证据。
+    (
+        "R10",
+        ImpactDirection.IRRELEVANT.value,
+        r"存放与实际使用|存放与使用|存放、管理|专项报告|专项说明|鉴证报告|核查意见"
+        r"|核查报告|审核报告|管理办法|管理制度|法律意见|资产评估报告|独立财务顾问"
+        r"|事前认可|独立(董事|意见)|修订说明|暂不召开"
+        # 「问询函」只在审核问询语境下算程序文件。交易所对股价异动发的问询函
+        # 是风险事件，不能一并判无关——实测误吞药明康德股票异常波动问询函回复。
+        r"|审核问询函|问询函回复之核查|关于.{0,20}审核问询函",
+    ),
+    ("R11", ImpactDirection.IRRELEVANT.value, r"闲置募集资金|现金管理|补充流动资金|归还|等额置换"),
+    # R15 无金额框架协议：不含对价、不含交付时点、不构成履约义务。
+    # 全样本 6 条命中 1/6、均值超额 −15.31%（小鹏与大众的合作公告连续误报）。
+    # 业务口径：没有金额的合作公告不是订单。读不出金额时判无关而非支持——
+    # 宁可漏一条真订单，不要放进一条公关公告。
+    (
+        "R15",
+        ImpactDirection.IRRELEVANT.value,
+        r"框架协议|合作框架|采购协议|营运服务协议|联合开发协议",
+    ),
+    # R16 含对价的授权/合作：有金额即有收入。放在 R15 之后由更具体的词命中。
+    ("R16", ImpactDirection.SUPPORT.value, r"授权许可协议|战略合作及许可|许可协议"),
+    # R12/R13 资产注入与债务融资：方向取决于标的质量与资金用途，标题读不出 → 中性。
+    # 现有规则判支持并在样本内得到 5 条 +10.00%，但那是同一天同一起收购的 7 份文件，
+    # 一个事件计了 7 次（伪重复），不是 7 条独立证据。
+    ("R12", ImpactDirection.NEUTRAL.value, r"发行股份购买资产"),
+    ("R13", ImpactDirection.NEUTRAL.value, r"中期票据|资产支持商业票据|永续"),
+    # R14 收购与对外投资：方向取决于标的与对价。
+    ("R14", ImpactDirection.NEUTRAL.value, r"收购|投资设立|共同投资|少数股东股权"),
+)
+
+# 裁决判「中性」或方向性结论时对应的假设。判「无关」的不需要假设。
+RULING_HYPOTHESIS: dict[str, str] = {
+    "R5": "H1-需求与出货",
+    "R6": "H1-需求与出货",
+    "R7": "H1-需求与出货",
+    "R12": "H3-产能与扩张",
+    "R13": "H3-产能与扩张",
+    "R14": "H3-产能与扩张",
+    "R16": "H1-需求与出货",
+}
+
+
+def apply_ruling(title: str) -> tuple[str, str, str] | None:
+    """套用导师裁决。命中返回 (规则号, 假设, 方向)，未命中返回 None。
+
+    对两名标注者共同生效，因此不影响 A/B 一致性的可比性——
+    裁决覆盖的样本上双方必然一致，这个一致是业务裁定的结果，
+    不能读作「标注规则变清晰了」。统计时需分开报告。
+    """
+    for rule_id, direction, pattern in MENTOR_RULINGS:
+        if re.search(pattern, title):
+            if direction == ImpactDirection.IRRELEVANT.value:
+                return rule_id, "", direction
+            return rule_id, RULING_HYPOTHESIS.get(rule_id, ""), direction
+    return None
+
+
 # 业务动作词表，标注者 B 用。刻意与关键词基线的词表不同：
 # B 看的是方向性动作词，基线看的是主题词。
 POSITIVE_ACTIONS = (
@@ -199,6 +307,10 @@ class EventSample:
     needs_adjudication: bool
     split: str = ""
     url: str = ""
+    # 命中的导师裁决规则号（如 R1）。空串表示两名标注者独立判断的结果。
+    # 存这个字段是为了让一致性指标可以剔除裁决覆盖的部分——
+    # 裁决后 A、B 在这些样本上必然一致，把它们算进 kappa 会得到虚假的 1.0。
+    ruling_rule: str = ""
 
 
 def classify_category(title: str) -> str:
@@ -227,7 +339,13 @@ def annotate_by_category(title: str, category: str) -> tuple[str, str]:
 
     方向判断：定期报告与业绩预告需要看是增是减，其余类型按该类型的一般业务含义给
     默认方向。拿不准就给中性——强行归类会制造错误的证据方向（标注规范 §4）。
+
+    导师裁决优先于本函数的全部规则：业务裁定不是标注立场，A 无权推翻它。
     """
+    ruling = apply_ruling(title)
+    if ruling is not None:
+        return ruling[1], ruling[2]
+
     hypothesis = CATEGORY_TO_HYPOTHESIS.get(category, "")
     if not hypothesis:
         return "", ImpactDirection.IRRELEVANT.value
@@ -275,7 +393,14 @@ def annotate_by_action(title: str, category: str) -> tuple[str, str]:
 
     与 A 的差别是刻意的：B 认为「没有明确方向动作词的公告不构成可判断的证据」，
     这是一种更保守的标注立场。两者的分歧点正是规则需要澄清的地方。
+
+    导师裁决同样优先于 B 的规则。B 在批件类上判「中性」也被裁为错误——
+    「中性」是「相关但方向不明、留在证据链里等结果」，而批件应当根本不进证据链。
     """
+    ruling = apply_ruling(title)
+    if ruling is not None:
+        return ruling[1], ruling[2]
+
     positive = sum(1 for w in POSITIVE_ACTIONS if w in title)
     negative = sum(1 for w in NEGATIVE_ACTIONS if w in title)
 
@@ -334,6 +459,7 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
         category = classify_category(title)
         a_hypothesis, a_direction = annotate_by_category(title, category)
         b_hypothesis, b_direction = annotate_by_action(title, category)
+        ruling = apply_ruling(title)
 
         agreed = (a_hypothesis, a_direction) == (b_hypothesis, b_direction)
         disclosure = item["disclosure_time"]
@@ -359,11 +485,19 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
                 needs_adjudication=not agreed,
                 split="in_sample" if disclosure[:10] < split_date else "out_of_sample",
                 url=item.get("url", ""),
+                ruling_rule=ruling[0] if ruling else "",
             )
         )
 
     direction_pairs = [(s.annotator_a_direction, s.annotator_b_direction) for s in samples]
     hypothesis_pairs = [(s.annotator_a_hypothesis, s.annotator_b_hypothesis) for s in samples]
+
+    # 剔除导师裁决覆盖的样本后再算一次。**这个数才是「标注规则是否清晰」的度量。**
+    # 全样本 kappa 在裁决后必然是 1.0：裁决对 A、B 共同生效，被覆盖的样本上
+    # 两人被强制一致。报 1.0 而不加限定，等于用业务裁定冒充标注质量，
+    # 与原来 hypothesis_kappa 恒为 1.0 是同一类错误。
+    unruled = [s for s in samples if not s.ruling_rule]
+    unruled_pairs = [(s.annotator_a_direction, s.annotator_b_direction) for s in unruled]
 
     stats: dict[str, object] = {
         "annotation_version": ANNOTATION_VERSION,
@@ -377,6 +511,14 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
         "hypothesis_kappa": round(cohen_kappa(hypothesis_pairs), 4),
         "direction_observed_agreement": round(
             sum(1 for a, b in direction_pairs if a == b) / len(direction_pairs), 4
+        ),
+        # 裁决层的覆盖与效果。ruled_count 越大，全样本 kappa 越没有信息量。
+        "ruling_version": RULING_VERSION,
+        "ruled_count": len(samples) - len(unruled),
+        "unruled_count": len(unruled),
+        "direction_kappa_excluding_ruled": round(cohen_kappa(unruled_pairs), 4),
+        "ruled_rule_counts": dict(
+            Counter(s.ruling_rule for s in samples if s.ruling_rule).most_common()
         ),
         "category_counts": dict(Counter(s.category for s in samples).most_common()),
         "imprecise_time_count": sum(1 for s in samples if not s.disclosure_time_precise),
@@ -473,9 +615,17 @@ def main() -> None:
     write(samples, stats)
 
     print()
+    print(f"导师裁决 {stats['ruling_version']}")
+    print(f"  裁决覆盖        {stats['ruled_count']} / {stats['total']}")
+    print(f"  规则命中        {stats['ruled_rule_counts']}")
+    print()
     print("标注一致性（说明书 12：用于检查规则是否清晰）")
     print(f"  方向观察一致率  {stats['direction_observed_agreement']}")
-    print(f"  方向 kappa      {stats['direction_kappa']}")
+    print(f"  方向 kappa      {stats['direction_kappa']}  ← 含裁决样本，不可读作标注质量")
+    print(
+        f"  方向 kappa*     {stats['direction_kappa_excluding_ruled']}  "
+        f"← 剔除裁决样本后（n={stats['unruled_count']}），这个才是规则清晰度"
+    )
     print(f"  假设 kappa      {stats['hypothesis_kappa']}")
     print(f"  待裁决          {stats['needs_adjudication']} / {stats['total']}")
     print()

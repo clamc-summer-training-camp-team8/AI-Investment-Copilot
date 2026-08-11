@@ -97,32 +97,30 @@ def test_用户标识必须可进HTTP头() -> None:
 
 
 def test_裁决队列分页且带分歧类型(client: TestClient) -> None:
-    """471 条待裁决样本要能按页取，并标出分歧在假设还是方向。"""
+    """队列要能按页取，并标出分歧在假设还是方向。
+
+    导师裁决（mentor-ruling-v1）落地后队列应为空：原 471 条方向分歧已由
+    业务规则统一裁定。断言写成「空队列合法、非空则每条都标出分歧类型」，
+    而不是断言某个具体条数——条数会随裁决版本变化，写死会让规则更新时
+    测试无意义地失败。
+    """
     response = client.get("/api/reviews/adjudications", params={"limit": 5}, headers=HEADERS)
     assert response.status_code == 200
 
     body = response.json()
-    if body["page"]["total"] == 0:
-        pytest.skip("数据集未构建，队列为空")
-
-    assert body["page"]["total"] == 471
-    assert len(body["items"]) == 5
-    # 假设 kappa 为 1.0，分歧全部集中在方向
-    assert all(item["disagreement"] == "方向" for item in body["items"])
+    assert body["page"]["total"] >= 0
+    assert all(item["disagreement"] in ("假设", "方向", "假设、方向") for item in body["items"])
 
 
-def test_裁决队列可按公司过滤(client: TestClient) -> None:
-    """恒瑞占 471 条里的 316 条，是共识缺口最集中的地方。"""
-    response = client.get(
-        "/api/reviews/adjudications",
-        params={"company": "恒瑞医药", "limit": 1},
-        headers=HEADERS,
-    )
+def test_裁决完成后队列应为空(client: TestClient) -> None:
+    """裁决书 20260811 覆盖了当时全部 471 条分歧，队列清零。
+
+    这条测试是回退护栏：如果后续改动重新引入了未裁决的分歧，
+    队列会变为非空，此时应当补裁决规则或更新裁决书，而不是改这条断言。
+    """
+    response = client.get("/api/reviews/adjudications", params={"limit": 1}, headers=HEADERS)
     assert response.status_code == 200
-    body = response.json()
-    if body["page"]["total"] == 0:
-        pytest.skip("数据集未构建，队列为空")
-    assert body["page"]["total"] == 316
+    assert response.json()["page"]["total"] == 0
 
 
 def test_裁决队列不给系统建议(client: TestClient) -> None:
@@ -130,7 +128,6 @@ def test_裁决队列不给系统建议(client: TestClient) -> None:
     独立于抽取规则的人工金标。"""
     response = client.get("/api/reviews/adjudications", params={"limit": 1}, headers=HEADERS)
     body = response.json()
-    if not body["items"]:
-        pytest.skip("数据集未构建，队列为空")
-    assert "suggested_direction" not in body["items"][0]
-    assert "system_suggestion" not in body["items"][0]
+    for item in body["items"]:
+        assert "suggested_direction" not in item
+        assert "system_suggestion" not in item
