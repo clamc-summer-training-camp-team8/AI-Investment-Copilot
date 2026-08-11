@@ -14,10 +14,12 @@ ingest.extract_events → ingest.dedupe
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 from decimal import Decimal
 
+from app.ai.agents import AgentEvent, CandidateHypothesis
+from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
+from app.ai.runtime import InvestmentResearchAgent
 from app.calc.rules import StatusSuggestion
 from app.core.config import RuleThresholds
 from app.core.enums import AiStatus, ConfirmationStatus, ImpactDirection
@@ -67,7 +69,7 @@ def _pick_hypothesis(
 
 def process_events(
     uow: UnitOfWork,
-    gateway: Gateway,
+    ai: Gateway | InvestmentResearchAgent,
     *,
     events: list[ExtractedEvent],
     security_id: str,
@@ -79,6 +81,11 @@ def process_events(
     """处理一批事件，产出候选证据与状态建议。"""
     kept, sources = dedupe_events(events)
     recalled = thesis.recall_candidates(uow, security_id=security_id, actor=actor)
+    runtime = (
+        ai
+        if isinstance(ai, InvestmentResearchAgent)
+        else InvestmentResearchAgent.build(ai)
+    )
 
     candidates: list[EvidenceRecord] = []
     deferred: list[tuple[str, str]] = []
@@ -100,17 +107,40 @@ def process_events(
                 deferred.append((event.event_id, "缺少引用定位，无法进入证据链"))
                 continue
 
-            outcome = gateway.event_impact(
-                document_id=event.document_id,
-                security_id=security_id,
-                segment_locator=locator,
-                segment_text=event.summary,
-                disclosure_time=_iso(event.disclosure_time),
-                thesis_id=record.thesis_id,
-                hypothesis_id=hypothesis_id,
-                event_type=event.event_type,
-                occurred_on=event.occurred_on.isoformat() if event.occurred_on else None,
+            hypothesis = next(
+                item
+                for item in hypotheses
+                if str(getattr(item, "hypothesis_id", "")) == hypothesis_id
             )
+            execution = runtime.analyze_event(
+                AgentEvent(
+                    event_id=event.event_id,
+                    document_id=event.document_id,
+                    security_id=security_id,
+                    segment_locator=locator,
+                    segment_text=event.summary,
+                    disclosure_time=event.disclosure_time,
+                    event_type=event.event_type,
+                    occurred_on=event.occurred_on,
+                ),
+                [
+                    CandidateHypothesis(
+                        thesis_id=record.thesis_id,
+                        hypothesis_id=hypothesis_id,
+                        statement=str(getattr(hypothesis, "statement", "")),
+                    )
+                ],
+                idempotency_key=f"event:{event.event_id}:hypothesis:{hypothesis_id}",
+            )
+            if execution.retryable:
+                raise ModelUnavailable(
+                    execution.degraded_reason or "Runtime 暂时不可用",
+                    retryable=True,
+                )
+            if execution.result is None or not execution.result.impacts:
+                deferred.append((event.event_id, "Runtime 未生成候选影响，转人工"))
+                continue
+            outcome = execution.result.impacts[0].outcome
 
             audit.record_model_call(
                 uow.audit,
@@ -186,10 +216,6 @@ def process_events(
         deferred=deferred,
         matched_theses=[r.thesis_id for r, _ in recalled],
     )
-
-
-def _iso(value: datetime) -> str:
-    return value.isoformat()
 
 
 def _dec(value: object) -> Decimal | None:
