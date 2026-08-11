@@ -10,21 +10,12 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.ai.contracts.validator import ValidationOutcome, validate
-from app.ai.providers.http import HttpLLMProvider, ProviderResponseError
+from app.ai.errors import ModelUnavailable
+from app.ai.providers.http import HttpProvider
 from app.ai.providers.local import LocalProvider
 from app.ai.providers.mock import MockProvider
 from app.core.config import Settings
 from app.core.config import settings as default_settings
-from app.core.enums import AiStatus
-
-
-class ModelUnavailable(RuntimeError):
-    """模型不可用。PRD 7.4：任务排队和重试，原始输入不丢失。
-
-    调用方必须保留输入并允许重试，不能把这个异常直接变成用户可见的失败。
-    """
-
-    retryable = True
 
 
 class Provider(Protocol):
@@ -47,6 +38,8 @@ class Provider(Protocol):
         disclosure_time: str,
         thesis_id: str | None = ...,
         hypothesis_id: str | None = ...,
+        thesis_context: str | None = ...,
+        hypothesis_context: dict[str, Any] | None = ...,
         event_type: str = ...,
         occurred_on: str | None = ...,
         context: str = ...,
@@ -97,8 +90,11 @@ class Gateway:
         # http 提供者指向机构批准的私有部署。未配置端点时不静默退回 local：
         # 静默降级会让人以为在用私有模型，实际跑的是规则实现（PRD 12.1）。
         if not conf.llm_endpoint:
-            raise ModelUnavailable("llm_provider=http 但未配置 LLM_ENDPOINT")
-        return cls(settings=conf, provider=HttpLLMProvider(conf))
+            raise ModelUnavailable(
+                "llm_provider=http 但未配置 LLM_ENDPOINT",
+                retryable=False,
+            )
+        return cls(settings=conf, provider=HttpProvider(conf))
 
     def event_impact(
         self,
@@ -110,29 +106,26 @@ class Gateway:
         disclosure_time: str,
         thesis_id: str | None = None,
         hypothesis_id: str | None = None,
+        thesis_context: str | None = None,
+        hypothesis_context: dict[str, Any] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
         context: str = "",
     ) -> ValidationOutcome:
-        try:
-            payload = self.provider.analyze_event_impact(
-                document_id=document_id,
-                security_id=security_id,
-                segment_locator=segment_locator,
-                segment_text=segment_text,
-                disclosure_time=disclosure_time,
-                thesis_id=thesis_id,
-                hypothesis_id=hypothesis_id,
-                event_type=event_type,
-                occurred_on=occurred_on,
-                context=context,
-            )
-        except ProviderResponseError as exc:
-            return ValidationOutcome(
-                ai_status=AiStatus.PARSE_FAILED,
-                payload={},
-                errors=[str(exc)],
-            )
+        payload = self.provider.analyze_event_impact(
+            document_id=document_id,
+            security_id=security_id,
+            segment_locator=segment_locator,
+            segment_text=segment_text,
+            disclosure_time=disclosure_time,
+            thesis_id=thesis_id,
+            hypothesis_id=hypothesis_id,
+            thesis_context=thesis_context,
+            hypothesis_context=hypothesis_context,
+            event_type=event_type,
+            occurred_on=occurred_on,
+            context=context,
+        )
         return validate("event_impact", payload, thresholds=self.settings.rules)
 
     def thesis_draft(
@@ -143,19 +136,12 @@ class Gateway:
         segments: list[tuple[str, str]],
         source_document_id: str | None = None,
     ) -> ValidationOutcome:
-        try:
-            payload = self.provider.draft_thesis(
-                security_id=security_id,
-                view=view,
-                segments=segments,
-                source_document_id=source_document_id,
-            )
-        except ProviderResponseError as exc:
-            return ValidationOutcome(
-                ai_status=AiStatus.PARSE_FAILED,
-                payload={},
-                errors=[str(exc)],
-            )
+        payload = self.provider.draft_thesis(
+            security_id=security_id,
+            view=view,
+            segments=segments,
+            source_document_id=source_document_id,
+        )
         return validate("thesis_draft", payload, thresholds=self.settings.rules)
 
     def metric_explain(
@@ -166,15 +152,12 @@ class Gateway:
         hypothesis: str,
         calc_result: dict[str, Any],
     ) -> ValidationOutcome:
-        try:
-            payload = self.provider.explain_metric(
-                security_id=security_id,
-                hypothesis_id=hypothesis_id,
-                hypothesis=hypothesis,
-                calc_result=calc_result,
-            )
-        except ProviderResponseError as exc:
-            return ValidationOutcome(AiStatus.PARSE_FAILED, {}, [str(exc)])
+        payload = self.provider.explain_metric(
+            security_id=security_id,
+            hypothesis_id=hypothesis_id,
+            hypothesis=hypothesis,
+            calc_result=calc_result,
+        )
         return validate("metric_explain", payload, thresholds=self.settings.rules)
 
     def review_draft(
@@ -186,14 +169,11 @@ class Gateway:
         period_end: str,
         records: list[dict[str, Any]],
     ) -> ValidationOutcome:
-        try:
-            payload = self.provider.draft_review(
-                security_id=security_id,
-                thesis_id=thesis_id,
-                period_start=period_start,
-                period_end=period_end,
-                records=records,
-            )
-        except ProviderResponseError as exc:
-            return ValidationOutcome(AiStatus.PARSE_FAILED, {}, [str(exc)])
+        payload = self.provider.draft_review(
+            security_id=security_id,
+            thesis_id=thesis_id,
+            period_start=period_start,
+            period_end=period_end,
+            records=records,
+        )
         return validate("review_draft", payload, thresholds=self.settings.rules)

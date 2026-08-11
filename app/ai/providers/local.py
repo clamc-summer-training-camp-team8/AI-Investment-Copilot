@@ -136,6 +136,8 @@ class LocalProvider:
         disclosure_time: str,
         thesis_id: str | None = None,
         hypothesis_id: str | None = None,
+        thesis_context: str | None = None,
+        hypothesis_context: dict[str, Any] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
         context: str = "",

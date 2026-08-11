@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.ai.agents import AgentEvent, CandidateHypothesis
-from app.ai.gateway import Gateway
+from app.ai.errors import ModelUnavailable as SharedModelUnavailable
+from app.ai.gateway import Gateway, ModelUnavailable
+from app.ai.providers.http import HttpLLMProvider, HttpProvider, ProviderResponseError
 from app.ai.runtime import InvestmentResearchAgent
 from app.core.config import Settings
 
@@ -58,6 +60,36 @@ def test_frontend_change_worker_gateway_contract_is_compatible() -> None:
     } <= signal.keys()
     assert outcome.payload["model_version"]
     assert outcome.payload["prompt_version"]
+
+
+def test_integrated_change_worker_context_contract_is_compatible() -> None:
+    outcome = _gateway().event_impact(
+        document_id="DOC-002",
+        security_id="000538.SZ",
+        segment_locator="DOC-002#paragraph-1",
+        segment_text="公司订单持续提升。",
+        disclosure_time="2026-08-10T09:00:00+08:00",
+        thesis_id="THS-002",
+        hypothesis_id="THS-002-H1",
+        thesis_context="订单增长支持收入兑现",
+        hypothesis_context={
+            "statement": "订单增长能够转化为收入",
+            "importance": "核心",
+            "metrics": [],
+        },
+        event_type="订单",
+    )
+
+    assert outcome.usable
+    assert outcome.payload["thesis_id"] == "THS-002"
+    assert outcome.payload["hypothesis_id"] == "THS-002-H1"
+
+
+def test_integrated_import_names_remain_compatible() -> None:
+    assert ModelUnavailable is SharedModelUnavailable
+    assert ProviderResponseError is ModelUnavailable
+    assert HttpLLMProvider is HttpProvider
+    assert ModelUnavailable("配置错误", retryable=False).retryable is False
 
 
 def test_runtime_build_exposes_typed_event_analysis() -> None:

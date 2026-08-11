@@ -156,6 +156,11 @@
       "type": "string",
       "enum": ["候选", "低置信", "解析失败"]
     },
-    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "model_metadata": {
+      "type": "object",
+      "description": "提供者请求 ID、token 用量与结束原因；不得包含密钥或提示词正文。",
+      "additionalProperties": true
+    }
   }
 }

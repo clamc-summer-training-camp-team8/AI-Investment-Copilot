@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import httpx
+import pytest
+from pydantic import SecretStr
 
+from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
-from app.ai.providers.http import HttpLLMProvider
+from app.ai.providers.http import HttpLLMProvider, HttpProvider
 from app.core.config import Settings
 from app.core.enums import AiStatus
 
@@ -47,3 +51,113 @@ def test_openai_compatible_provider_supports_metric_contract_without_network() -
     assert outcome.ai_status is AiStatus.CANDIDATE
     assert outcome.payload["calculation_source"] == "app.calc"
     assert outcome.payload["model_version"] == "deepseek-v4-flash"
+
+
+def test_http_provider_accepts_full_endpoint_and_secret_str() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["path"] = request.url.path
+        captured["authorization"] = request.headers.get("Authorization")
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "summary": "已接收程序结果",
+                                    "meaning": "继续人工判断",
+                                    "suggested_tracking": [],
+                                    "confidence": 0.8,
+                                },
+                                ensure_ascii=False,
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    settings = SimpleNamespace(
+        llm_endpoint="https://model.internal/v1/chat/completions",
+        llm_api_key=SecretStr("server-secret"),
+        llm_model_version="approved-model-v1",
+        llm_timeout_seconds=30.0,
+        llm_max_retries=0,
+    )
+    provider = HttpProvider(  # type: ignore[arg-type]
+        settings,
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    provider.explain_metric(
+        security_id="000538.SZ",
+        hypothesis_id="H1",
+        hypothesis="收入增长",
+        calc_result={"verdict": "支持"},
+    )
+
+    assert captured == {
+        "path": "/v1/chat/completions",
+        "authorization": "Bearer server-secret",
+    }
+
+
+def test_gateway_propagates_retryable_provider_outage() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, request=request)
+
+    settings = Settings(
+        _env_file=None,
+        llm_provider="http",
+        llm_endpoint="https://model.internal/v1/chat/completions",
+        llm_max_retries=0,
+    )
+    gateway = Gateway(
+        settings=settings,
+        provider=HttpProvider(
+            settings,
+            client=httpx.Client(transport=httpx.MockTransport(handler)),
+        ),
+    )
+
+    with pytest.raises(ModelUnavailable) as raised:
+        gateway.thesis_draft(
+            security_id="000538.SZ",
+            view="订单增长",
+            segments=[],
+        )
+
+    assert raised.value.retryable is True
+
+
+def test_invalid_model_json_degrades_through_schema_validation() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            request=request,
+            json={"choices": [{"message": {"content": "not-json"}}]},
+        )
+
+    settings = Settings(
+        _env_file=None,
+        llm_provider="http",
+        llm_endpoint="https://model.internal/v1/chat/completions",
+        llm_max_retries=0,
+    )
+    outcome = Gateway(
+        settings=settings,
+        provider=HttpProvider(
+            settings,
+            client=httpx.Client(transport=httpx.MockTransport(handler)),
+        ),
+    ).thesis_draft(
+        security_id="000538.SZ",
+        view="订单增长",
+        segments=[],
+    )
+
+    assert outcome.ai_status is AiStatus.PARSE_FAILED
+    assert outcome.errors

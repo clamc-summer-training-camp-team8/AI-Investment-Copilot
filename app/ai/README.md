@@ -105,3 +105,8 @@ FastAPI、ORM、数据库或 `app.services`。
 
 Runtime 返回 `RuntimeExecution`，需要持久化时可用 `to_backend_envelope()` 转成稳定的
 `ai-runtime-envelope-v1` JSON 结构。
+
+`feat/mvp-closed-loop-integrated` 额外传入 `thesis_context` 与
+`hypothesis_context`，Gateway 和 local/http Provider 均保留这两个显式参数。模型端点
+不可用时统一抛出 `app.ai.errors.ModelUnavailable`：可重试错误由 ARQ 重试，配置或
+客户端错误进入人工处理；模型已响应但输出不合 Schema 时仍返回 `解析失败`。
