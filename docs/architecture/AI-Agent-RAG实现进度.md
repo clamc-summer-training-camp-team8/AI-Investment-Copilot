@@ -326,3 +326,18 @@
 - 使用一条提交的真实事件、对应真实 Thesis/Hypothesis 跑通数据适配到 Runtime 的离线链路。
 
 验证结果：AI 单元测试 24 passed；全部 `app/ai` Python 文件编译通过；`git diff --check` 通过。
+### 阶段 18：全项目回归与本地 DeepSeek 配置隔离
+
+状态：完成。
+
+主要内容：
+- DeepSeek 配置保存在本机被 Git 忽略的 `.env.deepseek`，密钥不进入代码、文档或提交。
+- 默认 `.env` 继续使用 `local` 且不配置外部端点，避免测试、队友开发和未授权资料在无感知情况下外发。
+- DeepSeek profile 使用官方 OpenAI-compatible 端点和 `deepseek-v4-flash`；本阶段仅验证配置可读取和离线 HTTP 协议，不发起真实付费调用。
+- 全项目非数据库测试通过，确认真实数据合并和 AI 改动没有破坏现有闭环。
+
+验证结果：
+- `python -m pytest -q --ignore=tests/integration/db`：203 passed。
+- 数据库约束测试 4 项未执行：当前环境缺少 `psycopg` 且未启动 PostgreSQL；这是环境依赖，不是 AI 测试失败。
+- AI 单元测试：24 passed。
+- 工作区无待提交代码；所有提交均只在本地分支，未 push。
