@@ -53,8 +53,11 @@ class Settings(BaseSettings):
     sample_pack_dir: Path = PROJECT_ROOT / "docs" / "data" / "数据分析交付包" / "业务样例包"
 
     # 模型网关。local 使用规则实现，不外发任何数据。
-    llm_provider: str = Field(default="local", pattern="^(local|http)$")
+    llm_provider: str = Field(default="local", pattern="^(local|http|mock)$")
     llm_endpoint: str | None = None
+    llm_api_key: str | None = None
+    llm_timeout_seconds: float = 30.0
+    llm_max_retries: int = 2
     llm_model_version: str = "local-rule-v1"
     prompt_version: str = "prompts-v1"
 

@@ -10,9 +10,12 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.ai.contracts.validator import ValidationOutcome, validate
+from app.ai.providers.http import HttpLLMProvider, ProviderResponseError
 from app.ai.providers.local import LocalProvider
+from app.ai.providers.mock import MockProvider
 from app.core.config import Settings
 from app.core.config import settings as default_settings
+from app.core.enums import AiStatus
 
 
 class ModelUnavailable(RuntimeError):
@@ -70,11 +73,13 @@ class Gateway:
         conf = settings or default_settings
         if conf.llm_provider == "local":
             return cls(settings=conf, provider=LocalProvider(conf))
+        if conf.llm_provider == "mock":
+            return cls(settings=conf, provider=MockProvider(conf))
         # http 提供者指向机构批准的私有部署。未配置端点时不静默退回 local：
         # 静默降级会让人以为在用私有模型，实际跑的是规则实现（PRD 12.1）。
         if not conf.llm_endpoint:
             raise ModelUnavailable("llm_provider=http 但未配置 LLM_ENDPOINT")
-        raise ModelUnavailable("http 提供者尚未实现，请使用 local 或接入私有部署")
+        return cls(settings=conf, provider=HttpLLMProvider(conf))
 
     def event_impact(
         self,
@@ -89,17 +94,24 @@ class Gateway:
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> ValidationOutcome:
-        payload = self.provider.analyze_event_impact(
-            document_id=document_id,
-            security_id=security_id,
-            segment_locator=segment_locator,
-            segment_text=segment_text,
-            disclosure_time=disclosure_time,
-            thesis_id=thesis_id,
-            hypothesis_id=hypothesis_id,
-            event_type=event_type,
-            occurred_on=occurred_on,
-        )
+        try:
+            payload = self.provider.analyze_event_impact(
+                document_id=document_id,
+                security_id=security_id,
+                segment_locator=segment_locator,
+                segment_text=segment_text,
+                disclosure_time=disclosure_time,
+                thesis_id=thesis_id,
+                hypothesis_id=hypothesis_id,
+                event_type=event_type,
+                occurred_on=occurred_on,
+            )
+        except ProviderResponseError as exc:
+            return ValidationOutcome(
+                ai_status=AiStatus.PARSE_FAILED,
+                payload={},
+                errors=[str(exc)],
+            )
         return validate("event_impact", payload, thresholds=self.settings.rules)
 
     def thesis_draft(
@@ -110,10 +122,17 @@ class Gateway:
         segments: list[tuple[str, str]],
         source_document_id: str | None = None,
     ) -> ValidationOutcome:
-        payload = self.provider.draft_thesis(
-            security_id=security_id,
-            view=view,
-            segments=segments,
-            source_document_id=source_document_id,
-        )
+        try:
+            payload = self.provider.draft_thesis(
+                security_id=security_id,
+                view=view,
+                segments=segments,
+                source_document_id=source_document_id,
+            )
+        except ProviderResponseError as exc:
+            return ValidationOutcome(
+                ai_status=AiStatus.PARSE_FAILED,
+                payload={},
+                errors=[str(exc)],
+            )
         return validate("thesis_draft", payload, thresholds=self.settings.rules)
