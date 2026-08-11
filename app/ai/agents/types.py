@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 
 from app.ai.contracts.validator import ValidationOutcome
 from app.ai.retrieval import RetrievalResult
@@ -26,6 +27,8 @@ class CandidateHypothesis:
     thesis_id: str
     hypothesis_id: str
     statement: str
+    thesis_context: str | None = None
+    hypothesis_context: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

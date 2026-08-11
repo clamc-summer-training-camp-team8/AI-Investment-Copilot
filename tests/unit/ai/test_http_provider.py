@@ -21,6 +21,9 @@ def test_openai_compatible_provider_supports_metric_contract_without_network() -
         body = json.loads(request.content)
         assert body["model"] == "deepseek-v4-flash"
         assert body["response_format"] == {"type": "json_object"}
+        system = body["messages"][0]["content"]
+        assert "JSON Schema (metric_explain)" in system
+        assert '"required"' in system
         payload = {
             "summary": "程序计算结果已接收",
             "meaning": "该结果支持继续观察当前假设",
@@ -51,6 +54,52 @@ def test_openai_compatible_provider_supports_metric_contract_without_network() -
     assert outcome.ai_status is AiStatus.CANDIDATE
     assert outcome.payload["calculation_source"] == "app.calc"
     assert outcome.payload["model_version"] == "deepseek-v4-flash"
+
+
+def test_gateway_retries_once_with_schema_errors_for_http_provider() -> None:
+    requests: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        requests.append(body)
+        payload = (
+            {"summary": "missing required fields"}
+            if len(requests) == 1
+            else {
+                "summary": "calculation result received",
+                "meaning": "continue human review",
+                "suggested_tracking": [],
+                "confidence": 0.8,
+            }
+        )
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": json.dumps(payload)}}]},
+        )
+
+    settings = Settings(
+        _env_file=None,
+        llm_provider="http",
+        llm_endpoint="https://api.deepseek.com",
+        llm_api_key="test-key",
+        llm_max_retries=0,
+    )
+    outcome = Gateway(
+        settings=settings,
+        provider=HttpProvider(
+            settings, client=httpx.Client(transport=httpx.MockTransport(handler))
+        ),
+    ).metric_explain(
+        security_id="000538.SZ",
+        hypothesis_id="H1",
+        hypothesis="revenue growth",
+        calc_result={"verdict": "support"},
+    )
+
+    assert outcome.usable
+    assert outcome.repaired
+    assert len(requests) == 2
+    assert "上一次输出未通过契约或证据校验" in requests[1]["messages"][1]["content"]
 
 
 def test_http_provider_accepts_full_endpoint_and_secret_str() -> None:

@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 
+from app.ai.contracts.validator import load_schema
 from app.ai.errors import ModelUnavailable
 from app.ai.prompts.templates import EVENT_IMPACT, METRIC_EXPLAIN, REVIEW_DRAFT, THESIS_DRAFT
 from app.core.config import Settings
@@ -73,6 +74,10 @@ class HttpProvider:
     def model_version(self) -> str:
         return self._settings.llm_model_version
 
+    @property
+    def supports_repair(self) -> bool:
+        return True
+
     def analyze_event_impact(
         self,
         *,
@@ -88,6 +93,7 @@ class HttpProvider:
         event_type: str = "其他",
         occurred_on: str | None = None,
         context: str = "",
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         prompt = EVENT_IMPACT.render(
             event=segment_text,
@@ -103,7 +109,12 @@ class HttpProvider:
             ),
             context=context or "仅使用调用方提供的上下文；当前没有额外检索片段。",
         )
-        payload = self._complete(system=EVENT_IMPACT.system, instruction=prompt)
+        payload = self._complete(
+            system=EVENT_IMPACT.system,
+            instruction=prompt,
+            schema_name="event_impact",
+            repair_errors=repair_errors,
+        )
         relevance = payload.get("relevance")
         payload.update(
             {
@@ -138,14 +149,28 @@ class HttpProvider:
         view: str,
         segments: list[tuple[str, str]],
         source_document_id: str | None = None,
+        investment_context: dict[str, Any] | None = None,
+        industry_metrics: list[dict[str, Any]] | None = None,
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         rendered_segments = "\n".join(f"[{locator}] {text}" for locator, text in segments)
         prompt = THESIS_DRAFT.render(
             security=security_id,
             view=view,
             segments=rendered_segments or "无资料正文，仅整理研究员输入观点",
+            investment_context=json.dumps(
+                investment_context or {}, ensure_ascii=False, sort_keys=True
+            ),
+            industry_metrics=json.dumps(
+                industry_metrics or [], ensure_ascii=False, sort_keys=True
+            ),
         )
-        payload = self._complete(system=THESIS_DRAFT.system, instruction=prompt)
+        payload = self._complete(
+            system=THESIS_DRAFT.system,
+            instruction=prompt,
+            schema_name="thesis_draft",
+            repair_errors=repair_errors,
+        )
         _normalize_thesis_references(payload)
         payload.setdefault("security_id", security_id)
         payload.setdefault("source_document_id", source_document_id)
@@ -162,12 +187,18 @@ class HttpProvider:
         hypothesis_id: str,
         hypothesis: str,
         calc_result: dict[str, Any],
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         prompt = METRIC_EXPLAIN.render(
             hypothesis=hypothesis,
             calc_result=json.dumps(calc_result, ensure_ascii=False, sort_keys=True),
         )
-        payload = self._complete(system=METRIC_EXPLAIN.system, instruction=prompt)
+        payload = self._complete(
+            system=METRIC_EXPLAIN.system,
+            instruction=prompt,
+            schema_name="metric_explain",
+            repair_errors=repair_errors,
+        )
         payload.setdefault("security_id", security_id)
         payload.setdefault("hypothesis_id", hypothesis_id)
         payload.setdefault("calculation_source", "app.calc")
@@ -181,6 +212,7 @@ class HttpProvider:
         period_start: str,
         period_end: str,
         records: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         prompt = REVIEW_DRAFT.render(
             security=security_id,
@@ -189,7 +221,12 @@ class HttpProvider:
             period_end=period_end,
             records=json.dumps(records, ensure_ascii=False, sort_keys=True),
         )
-        payload = self._complete(system=REVIEW_DRAFT.system, instruction=prompt)
+        payload = self._complete(
+            system=REVIEW_DRAFT.system,
+            instruction=prompt,
+            schema_name="review_draft",
+            repair_errors=repair_errors,
+        )
         for key, value in (
             ("security_id", security_id),
             ("thesis_id", thesis_id),
@@ -200,7 +237,14 @@ class HttpProvider:
         payload.setdefault("requires_human_review", True)
         return self._metadata(payload, prompt_version=REVIEW_DRAFT.version)
 
-    def _complete(self, *, system: str, instruction: str) -> dict[str, Any]:
+    def _complete(
+        self,
+        *,
+        system: str,
+        instruction: str,
+        schema_name: str,
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
         self._last_model_metadata = {}
         headers = {"Content-Type": "application/json"}
         api_key = _secret_value(self._settings.llm_api_key)
@@ -209,8 +253,11 @@ class HttpProvider:
         request: dict[str, Any] = {
             "model": self.model_version,
             "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": instruction},
+                {"role": "system", "content": _system_with_contract(system, schema_name)},
+                {
+                    "role": "user",
+                    "content": _instruction_with_repair(instruction, repair_errors),
+                },
             ],
             "stream": False,
             "max_tokens": int(getattr(self._settings, "llm_max_output_tokens", 4096)),
@@ -325,6 +372,42 @@ def _normalize_thesis_references(payload: dict[str, Any]) -> None:
         reference = suggestion.get("hypothesis_ref")
         if reference is not None and not isinstance(reference, str):
             suggestion["hypothesis_ref"] = None
+
+
+def _system_with_contract(system: str, schema_name: str) -> str:
+    """将完整但去除说明字段的契约交给 JSON mode，避免模型猜字段。"""
+    contract = _compact_schema(load_schema(schema_name))
+    return (
+        f"{system}\n\n"
+        "你必须输出一个 JSON 对象，且必须满足以下完整输出契约。"
+        "不要输出 Markdown、代码围栏或契约之外的字段。\n"
+        f"JSON Schema ({schema_name}):\n{json.dumps(contract, ensure_ascii=False)}"
+    )
+
+
+def _instruction_with_repair(instruction: str, repair_errors: list[str] | None) -> str:
+    if not repair_errors:
+        return instruction
+    issues = "\n".join(f"- {error}" for error in repair_errors[:10])
+    return (
+        f"{instruction}\n\n"
+        "上一次输出未通过契约或证据校验。请仅根据已给输入重写完整 JSON；"
+        "不要补造事实、引用或数值。必须修复：\n"
+        f"{issues}"
+    )
+
+
+def _compact_schema(value: object) -> object:
+    """保留所有结构约束，移除只消耗 token 的说明性元数据。"""
+    if isinstance(value, dict):
+        return {
+            key: _compact_schema(item)
+            for key, item in value.items()
+            if key not in {"$schema", "$id", "title", "description"}
+        }
+    if isinstance(value, list):
+        return [_compact_schema(item) for item in value]
+    return value
 
 
 # 旧 AI 分支使用该类名；保留别名避免已有调用方在合并后失效。

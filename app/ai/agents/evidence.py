@@ -85,6 +85,35 @@ class EvidenceAgent:
         )
 
     @staticmethod
+    def validate_thesis_citations(
+        payload: dict[str, object],
+        *,
+        allowed_locators: set[str],
+    ) -> EvidenceValidation:
+        citations = payload.get("citations")
+        cited = tuple(
+            str(item) for item in citations if isinstance(item, str)
+        ) if isinstance(citations, list) else ()
+        missing = tuple(sorted(set(cited) - allowed_locators))
+        unsupported = payload.get("unsupported_claims")
+        unsupported_claims = (
+            tuple(str(item) for item in unsupported)
+            if isinstance(unsupported, list)
+            else ()
+        )
+        requires_citation = bool(allowed_locators)
+        valid = (
+            bool(cited) if requires_citation else True
+        ) and not missing and not unsupported_claims
+        return EvidenceValidation(
+            valid=valid,
+            cited_locators=cited,
+            missing_locators=missing,
+            unsupported_claims=unsupported_claims,
+            requires_human_review=not valid,
+        )
+
+    @staticmethod
     def check_consistency(impact: AgentImpact) -> EvidenceConsistency:
         payload = impact.outcome.payload
         validation = EvidenceAgent.validate_impact(impact)

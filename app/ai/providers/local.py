@@ -126,6 +126,10 @@ class LocalProvider:
     def model_version(self) -> str:
         return self._settings.llm_model_version
 
+    @property
+    def supports_repair(self) -> bool:
+        return False
+
     def analyze_event_impact(
         self,
         *,
@@ -141,6 +145,7 @@ class LocalProvider:
         event_type: str = "其他",
         occurred_on: str | None = None,
         context: str = "",
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """产出符合 contracts/ai/event_impact.schema.json 的载荷。"""
         verdict = judge_impact(segment_text)
@@ -181,6 +186,9 @@ class LocalProvider:
         view: str,
         segments: list[tuple[str, str]],
         source_document_id: str | None = None,
+        investment_context: dict[str, Any] | None = None,
+        industry_metrics: list[dict[str, Any]] | None = None,
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """从资料正文生成卡片草稿。
 
@@ -213,6 +221,7 @@ class LocalProvider:
         hypothesis_id: str,
         hypothesis: str,
         calc_result: dict[str, Any],
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """解释程序结果，不重新计算或修正输入数值。"""
         verdict = str(calc_result.get("verdict") or calc_result.get("status") or "信息不足")
@@ -244,6 +253,7 @@ class LocalProvider:
         period_start: str,
         period_end: str,
         records: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """按输入记录生成复盘草稿，不补充外部事实。"""
         supporting: list[str] = []

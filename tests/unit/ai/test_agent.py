@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import datetime, timezone
 
+from app.ai.contracts.validator import ValidationOutcome
 from app.ai.agent import (
     AgentEvent,
     CandidateHypothesis,
@@ -14,6 +15,163 @@ from app.ai.gateway import Gateway
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument
 from app.core.config import Settings
 from app.core.enums import AiStatus
+
+
+class _CitationRetryGateway:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def event_impact(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        citation = (
+            "history-001#paragraph-1"
+            if len(self.calls) == 2
+            else "unknown#paragraph-9"
+        )
+        return ValidationOutcome(
+            ai_status=AiStatus.CANDIDATE,
+            payload={
+                "document_id": "new-001",
+                "security_id": "000538.SZ",
+                "thesis_id": "THESIS-001",
+                "hypothesis_id": "H1",
+                "relevance": "相关",
+                "event": {
+                    "event_type": "其他",
+                    "disclosure_time": "2026-08-10T00:00:00+00:00",
+                    "fact": "公司收入增长",
+                    "evidence_locator": "new-001#paragraph-1",
+                },
+                "signal": {
+                    "direction": "正向",
+                    "confidence": 0.8,
+                    "requires_human_review": True,
+                },
+                "citations": [citation],
+                "model_version": "test-model",
+                "prompt_version": "test-prompt",
+                "generated_at": "2026-08-10T00:00:00+00:00",
+                "ai_status": "候选",
+            },
+        )
+
+
+class _ThesisContextGateway:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+        self.delegate = Gateway.build(Settings(llm_provider="local"))
+
+    def thesis_draft(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        return self.delegate.thesis_draft(**kwargs)  # type: ignore[arg-type]
+
+
+def test_thesis_draft_passes_structured_investment_context() -> None:
+    gateway = _ThesisContextGateway()
+    agent = ThesisDraftAgent(gateway=gateway, retriever=KeywordRetriever())
+    agent.generate(
+        security_id="000538.SZ",
+        view="核心业务收入保持增长",
+        source_segments=[
+            RetrievalDocument(
+                document_id="doc-001",
+                security_id="000538.SZ",
+                locator="doc-001#paragraph-1",
+                content="核心业务收入保持增长，订单持续增加。",
+                published_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+            )
+        ],
+        investment_context={"company": "示例公司", "market": "A股"},
+        industry_metrics=[
+            {"metric_name": "收入同比", "unit": "%", "observation_frequency": "季度"}
+        ],
+    )
+
+    assert gateway.calls[0]["investment_context"] == {
+        "company": "示例公司",
+        "market": "A股",
+    }
+    assert gateway.calls[0]["industry_metrics"] == [
+        {"metric_name": "收入同比", "unit": "%", "observation_frequency": "季度"}
+    ]
+
+
+class _ThesisCitationRetryGateway(_ThesisContextGateway):
+    def thesis_draft(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        outcome = self.delegate.thesis_draft(**kwargs)  # type: ignore[arg-type]
+        outcome.payload["citations"] = [
+            "unknown#paragraph-9"
+            if len(self.calls) == 1
+            else "doc-001#paragraph-1"
+        ]
+        return outcome
+
+
+def test_thesis_draft_retries_citation_outside_input() -> None:
+    gateway = _ThesisCitationRetryGateway()
+    result = ThesisDraftAgent(gateway=gateway, retriever=KeywordRetriever()).generate(
+        security_id="000538.SZ",
+        view="核心业务收入保持增长",
+        source_segments=[
+            RetrievalDocument(
+                document_id="doc-001",
+                security_id="000538.SZ",
+                locator="doc-001#paragraph-1",
+                content="核心业务收入保持增长，订单持续增加。",
+                published_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+            )
+        ],
+    )
+
+    assert len(gateway.calls) == 2
+    assert gateway.calls[1]["repair_errors"]
+    assert result.outcome.payload["citations"] == ["doc-001#paragraph-1"]
+
+
+def test_agent_retries_invalid_citation_with_structured_context() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="公司收入增长",
+                published_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+            )
+        ]
+    )
+    gateway = _CitationRetryGateway()
+    result = InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever).analyze(
+        AgentEvent(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            segment_locator="new-001#paragraph-1",
+            segment_text="公司收入增长",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=timezone.utc),
+        ),
+        [
+            CandidateHypothesis(
+                thesis_id="THESIS-001",
+                hypothesis_id="H1",
+                statement="收入保持增长",
+                thesis_context="盈利增长依赖核心业务收入持续增长",
+            )
+        ],
+    )
+
+    assert len(gateway.calls) == 2
+    assert gateway.calls[0]["thesis_context"] == "盈利增长依赖核心业务收入持续增长"
+    assert gateway.calls[0]["hypothesis_context"] == {
+        "thesis_id": "THESIS-001",
+        "hypothesis_id": "H1",
+        "statement": "收入保持增长",
+        "retrieved_locators": ["history-001#paragraph-1"],
+    }
+    assert gateway.calls[1]["repair_errors"]
+    assert result.impacts[0].outcome.payload["citations"] == ["history-001#paragraph-1"]
 
 
 def test_agent_编排检索和事件影响分析() -> None:

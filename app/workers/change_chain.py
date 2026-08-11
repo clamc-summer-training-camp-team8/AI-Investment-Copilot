@@ -128,9 +128,31 @@ def process_events(
                         thesis_id=record.thesis_id,
                         hypothesis_id=hypothesis_id,
                         statement=str(getattr(hypothesis, "statement", "")),
+                        thesis_context=str(getattr(record, "core_view", "")) or None,
+                        hypothesis_context={
+                            "hypothesis_type": getattr(hypothesis, "hypothesis_type", None),
+                            "importance": getattr(
+                                getattr(hypothesis, "importance", None), "value", None
+                            ),
+                            "expected_direction": getattr(
+                                getattr(hypothesis, "expected_direction", None), "value", None
+                            ),
+                            "invalidation_rule": getattr(
+                                hypothesis, "invalidation_rule", None
+                            ),
+                            "metrics": [
+                                {
+                                    "metric_id": getattr(mapping, "metric_id", None),
+                                    "unit": getattr(mapping, "unit", None),
+                                }
+                                for mapping in uow.thesis.list_mappings(hypothesis_id)
+                            ],
+                        },
                     )
                 ],
-                idempotency_key=f"event:{event.event_id}:hypothesis:{hypothesis_id}",
+                idempotency_key=(
+                    f"event:{event.event_id}:thesis:{record.thesis_id}:hypothesis:{hypothesis_id}"
+                ),
             )
             if execution.retryable:
                 raise ModelUnavailable(

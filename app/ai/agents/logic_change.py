@@ -7,7 +7,9 @@ from app.ai.agents.types import (
     AgentImpact,
     AgentRunResult,
     CandidateHypothesis,
+    EvidenceValidation,
 )
+from app.ai.agents.evidence import EvidenceAgent
 from app.ai.gateway import Gateway
 from app.ai.retrieval import RetrievedChunk, RetrievalQuery, Retriever
 
@@ -44,17 +46,48 @@ class InvestmentLogicChangeAgent:
                     top_k=top_k,
                 )
             )
-            outcome = self.gateway.event_impact(
-                document_id=event.document_id,
-                security_id=event.security_id,
-                segment_locator=event.segment_locator,
-                segment_text=event.segment_text,
-                disclosure_time=event.disclosure_time.isoformat(),
-                thesis_id=candidate.thesis_id,
-                hypothesis_id=candidate.hypothesis_id,
-                event_type=event.event_type,
-                occurred_on=event.occurred_on.isoformat() if event.occurred_on else None,
-                context=self._context(candidate, retrieval.items),
-            )
-            impacts.append(AgentImpact(candidate, retrieval, outcome))
+            def request_impact(repair_errors: list[str] | None = None):
+                return self.gateway.event_impact(
+                    document_id=event.document_id,
+                    security_id=event.security_id,
+                    segment_locator=event.segment_locator,
+                    segment_text=event.segment_text,
+                    disclosure_time=event.disclosure_time.isoformat(),
+                    thesis_id=candidate.thesis_id,
+                    hypothesis_id=candidate.hypothesis_id,
+                    thesis_context=candidate.thesis_context or candidate.statement,
+                    hypothesis_context={
+                        **(candidate.hypothesis_context or {}),
+                        "thesis_id": candidate.thesis_id,
+                        "hypothesis_id": candidate.hypothesis_id,
+                        "statement": candidate.statement,
+                        "retrieved_locators": [item.locator for item in retrieval.items],
+                    },
+                    event_type=event.event_type,
+                    occurred_on=(
+                        event.occurred_on.isoformat() if event.occurred_on else None
+                    ),
+                    context=self._context(candidate, retrieval.items),
+                    repair_errors=repair_errors,
+                )
+
+            outcome = request_impact()
+            impact = AgentImpact(candidate, retrieval, outcome)
+            validation = EvidenceAgent.validate_impact(impact)
+            if outcome.usable and not validation.valid:
+                outcome = request_impact(_citation_repair_errors(validation))
+                impact = AgentImpact(candidate, retrieval, outcome)
+            impacts.append(impact)
         return AgentRunResult(event_id=event.event_id, impacts=impacts)
+
+
+def _citation_repair_errors(validation: EvidenceValidation) -> list[str]:
+    """把证据校验失败转换为模型可执行、但不泄露额外数据的修复要求。"""
+    missing = validation.missing_locators
+    unsupported = validation.unsupported_claims
+    errors: list[str] = []
+    if missing:
+        errors.append(f"引用不存在或不在允许范围内: {', '.join(missing)}")
+    if unsupported:
+        errors.append("删除或明确标注 unsupported_claims 中没有证据支持的陈述")
+    return errors or ["补全有效引用，且不要新增输入之外的事实"]

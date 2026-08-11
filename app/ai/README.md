@@ -10,8 +10,9 @@ PRD 层级：AI 与规则层（模型侧）
 ```
 ai/
 ├── agents/      五类业务能力及共享输入输出类型
+├── skills/      四个模型任务的版本化 SKILL.md
 ├── contracts/   契约校验器（Schema 本体在 contracts/ai/）
-├── prompts/     提示词模板，带版本号
+├── prompts/     从 Skill 构建的兼容提示词入口
 ├── providers/   模型网关：local / mock / http
 ├── agent.py     旧导入路径的兼容出口
 ├── retrieval.py 当前 Retriever 接口与关键词/混合检索
