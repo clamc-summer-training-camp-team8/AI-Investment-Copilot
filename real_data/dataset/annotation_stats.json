@@ -1,14 +1,35 @@
 {
-  "annotation_version": "pre-annotation-v2",
+  "annotation_version": "pre-annotation-v3",
   "total": 3784,
   "split_date": "2025-10-01",
   "in_sample": 2489,
   "out_of_sample": 1295,
-  "thesis_relevant": 807,
-  "needs_adjudication": 471,
-  "direction_kappa": 0.6587,
+  "thesis_relevant": 459,
+  "needs_adjudication": 0,
+  "direction_kappa": 1.0,
   "hypothesis_kappa": 1.0,
-  "direction_observed_agreement": 0.8755,
+  "direction_observed_agreement": 1.0,
+  "ruling_version": "mentor-ruling-v1-20260811",
+  "ruled_count": 921,
+  "unruled_count": 2863,
+  "direction_kappa_excluding_ruled": 1.0,
+  "ruled_rule_counts": {
+    "R10": 506,
+    "R1": 213,
+    "R6": 41,
+    "R5": 34,
+    "R11": 29,
+    "R12": 27,
+    "R2": 21,
+    "R14": 19,
+    "R15": 8,
+    "R16": 8,
+    "R3": 6,
+    "R13": 6,
+    "R8": 1,
+    "R4": 1,
+    "R7": 1
+  },
   "category_counts": {
     "治理": 1062,
     "其他": 797,
@@ -32,69 +53,69 @@
   "by_industry": {
     "医药": {
       "total": 1456,
-      "thesis_relevant": 392,
+      "thesis_relevant": 149,
       "in_sample": 987,
       "out_of_sample": 469,
-      "needs_adjudication": 331,
-      "direction_kappa": 0.5006,
+      "needs_adjudication": 0,
+      "direction_kappa": 1.0,
       "imprecise_time_count": 1438
     },
     "新能源汽车": {
       "total": 1026,
-      "thesis_relevant": 177,
+      "thesis_relevant": 172,
       "in_sample": 673,
       "out_of_sample": 353,
-      "needs_adjudication": 11,
-      "direction_kappa": 0.9633,
+      "needs_adjudication": 0,
+      "direction_kappa": 1.0,
       "imprecise_time_count": 386
     },
     "芯片半导体": {
       "total": 1302,
-      "thesis_relevant": 238,
+      "thesis_relevant": 138,
       "in_sample": 829,
       "out_of_sample": 473,
-      "needs_adjudication": 129,
-      "direction_kappa": 0.691,
+      "needs_adjudication": 0,
+      "direction_kappa": 1.0,
       "imprecise_time_count": 1299
     }
   },
   "by_company": {
     "中芯国际": {
       "total": 372,
-      "thesis_relevant": 98
+      "thesis_relevant": 67
     },
     "云南白药": {
       "total": 236,
-      "thesis_relevant": 33
+      "thesis_relevant": 26
     },
     "兆易创新": {
       "total": 514,
-      "thesis_relevant": 82
+      "thesis_relevant": 33
     },
     "北方华创": {
       "total": 416,
-      "thesis_relevant": 58
+      "thesis_relevant": 38
     },
     "吉利汽车": {
       "total": 451,
-      "thesis_relevant": 68
+      "thesis_relevant": 69
     },
     "小鹏汽车": {
       "total": 184,
-      "thesis_relevant": 48
+      "thesis_relevant": 43
     },
     "恒瑞医药": {
       "total": 694,
-      "thesis_relevant": 335
+      "thesis_relevant": 104
     },
     "比亚迪": {
       "total": 391,
-      "thesis_relevant": 61
+      "thesis_relevant": 60
     },
     "药明康德": {
       "total": 526,
-      "thesis_relevant": 24
+      "thesis_relevant": 19
     }
   },
-  "generated_at": "2026-08-11T13:04:20.872597+08:00"
+  "generated_at": "2026-08-11T15:30:18.012631+08:00"
 }
