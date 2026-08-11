@@ -61,6 +61,24 @@ class Provider(Protocol):
         source_document_id: str | None = ...,
     ) -> dict[str, Any]: ...
 
+    def explain_metric(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, Any],
+    ) -> dict[str, Any]: ...
+
+    def draft_review(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        records: list[dict[str, Any]],
+    ) -> dict[str, Any]: ...
 
 @dataclass
 class Gateway:
@@ -139,3 +157,43 @@ class Gateway:
                 errors=[str(exc)],
             )
         return validate("thesis_draft", payload, thresholds=self.settings.rules)
+
+    def metric_explain(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, Any],
+    ) -> ValidationOutcome:
+        try:
+            payload = self.provider.explain_metric(
+                security_id=security_id,
+                hypothesis_id=hypothesis_id,
+                hypothesis=hypothesis,
+                calc_result=calc_result,
+            )
+        except ProviderResponseError as exc:
+            return ValidationOutcome(AiStatus.PARSE_FAILED, {}, [str(exc)])
+        return validate("metric_explain", payload, thresholds=self.settings.rules)
+
+    def review_draft(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        records: list[dict[str, Any]],
+    ) -> ValidationOutcome:
+        try:
+            payload = self.provider.draft_review(
+                security_id=security_id,
+                thesis_id=thesis_id,
+                period_start=period_start,
+                period_end=period_end,
+                records=records,
+            )
+        except ProviderResponseError as exc:
+            return ValidationOutcome(AiStatus.PARSE_FAILED, {}, [str(exc)])
+        return validate("review_draft", payload, thresholds=self.settings.rules)

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 THESIS_DRAFT_VERSION = "thesis-draft-v1"
 EVENT_IMPACT_VERSION = "event-impact-v1"
 METRIC_EXPLAIN_VERSION = "metric-validation-v1"
+REVIEW_DRAFT_VERSION = "review-draft-v1"
 
 
 @dataclass(frozen=True)
@@ -85,8 +86,25 @@ METRIC_EXPLAIN = PromptTemplate(
     ),
 )
 
+REVIEW_DRAFT = PromptTemplate(
+    version=REVIEW_DRAFT_VERSION,
+    system=(
+        "你负责根据已有记录生成阶段复盘草稿。"
+        f"{_NO_TRADE_ADVICE}{_CITATION_RULE}"
+        "不得引入输入之外的新事实，不得改变正式 Thesis 状态。"
+    ),
+    instruction=(
+        "投资对象：{security}\n"
+        "Thesis：{thesis_id}\n"
+        "复盘区间：{period_start} 至 {period_end}\n"
+        "已有记录（带引用）：\n{records}\n\n"
+        "输出 JSON，包含复盘摘要、支持变化、冲突变化、待确认问题和引用。"
+        "所有内容仍需研究员确认。"
+    ),
+)
 ALL_TEMPLATES = {
     THESIS_DRAFT_VERSION: THESIS_DRAFT,
     EVENT_IMPACT_VERSION: EVENT_IMPACT,
     METRIC_EXPLAIN_VERSION: METRIC_EXPLAIN,
+    REVIEW_DRAFT_VERSION: REVIEW_DRAFT,
 }

@@ -313,3 +313,16 @@
 - 单元测试显式禁用 `.env`，避免本地真实模型配置污染离线测试。
 
 验证结果：AI 单元测试 20 passed；未调用真实 DeepSeek API，未产生外部费用。
+### 阶段 17：P1 指标解释与复盘草稿 Agent
+
+状态：AI 能力层完成；业务 API 和持久化仍由后端支线接入。
+
+主要内容：
+- 新增 `MetricExplainAgent`：只消费 `app.calc` 的确定性结果并解释含义，不重新计算、修正或推导关键数值。
+- 新增 `ReviewAgent`：只汇总输入的已有记录，区分支持、冲突和待确认事项，不引入外部事实、不改变正式 Thesis 状态。
+- 新增 `metric_explain`、`review_draft` Prompt、Provider/Gateway 方法和 JSON Schema。
+- 两项能力接入统一 Runtime，并记录模型、Prompt 和 Schema 版本。
+- Local/Mock/HTTP Provider 均保持同一契约；使用 MockTransport 验证 DeepSeek/OpenAI-compatible 请求形状，不进行真实网络调用。
+- 使用一条提交的真实事件、对应真实 Thesis/Hypothesis 跑通数据适配到 Runtime 的离线链路。
+
+验证结果：AI 单元测试 24 passed；全部 `app/ai` Python 文件编译通过；`git diff --check` 通过。

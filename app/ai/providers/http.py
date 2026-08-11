@@ -12,7 +12,7 @@ from typing import Any
 
 import httpx
 
-from app.ai.prompts.templates import EVENT_IMPACT, THESIS_DRAFT
+from app.ai.prompts.templates import EVENT_IMPACT, METRIC_EXPLAIN, REVIEW_DRAFT, THESIS_DRAFT
 from app.core.config import Settings
 
 
@@ -100,3 +100,28 @@ class HttpLLMProvider:
         payload.setdefault("security_id", kwargs["security_id"])
         payload.setdefault("source_document_id", kwargs.get("source_document_id"))
         return self._metadata(payload, prompt_version=THESIS_DRAFT.version)
+
+    def explain_metric(self, **kwargs: Any) -> dict[str, Any]:
+        prompt = METRIC_EXPLAIN.render(
+            hypothesis=kwargs["hypothesis"],
+            calc_result=json.dumps(kwargs["calc_result"], ensure_ascii=False, sort_keys=True),
+        )
+        payload = self._call(system=METRIC_EXPLAIN.system, instruction=prompt)
+        payload.setdefault("security_id", kwargs["security_id"])
+        payload.setdefault("hypothesis_id", kwargs["hypothesis_id"])
+        payload.setdefault("calculation_source", "app.calc")
+        return self._metadata(payload, prompt_version=METRIC_EXPLAIN.version)
+
+    def draft_review(self, **kwargs: Any) -> dict[str, Any]:
+        prompt = REVIEW_DRAFT.render(
+            security=kwargs["security_id"],
+            thesis_id=kwargs["thesis_id"],
+            period_start=kwargs["period_start"],
+            period_end=kwargs["period_end"],
+            records=json.dumps(kwargs["records"], ensure_ascii=False, sort_keys=True),
+        )
+        payload = self._call(system=REVIEW_DRAFT.system, instruction=prompt)
+        for key in ("security_id", "thesis_id", "period_start", "period_end"):
+            payload.setdefault(key, kwargs[key])
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=REVIEW_DRAFT.version)

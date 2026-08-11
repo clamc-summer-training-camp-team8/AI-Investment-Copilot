@@ -20,6 +20,10 @@ from app.ai.agent import (
     EvidenceGrade,
     EvidenceValidation,
     InvestmentLogicChangeAgent,
+    MetricExplainAgent,
+    MetricExplainRunResult,
+    ReviewAgent,
+    ReviewDraftRunResult,
     ThesisDraftAgent,
     ThesisDraftRunResult,
 )
@@ -70,9 +74,18 @@ def _payload_versions(execution: RuntimeExecution, payloads: list[dict[str, Any]
 class InvestmentResearchAgent:
     """把 AI 能力模块串起来，但不承担后端持久化职责。"""
 
-    def __init__(self, *, thesis_draft: ThesisDraftAgent, logic_change: InvestmentLogicChangeAgent) -> None:
+    def __init__(
+        self,
+        *,
+        thesis_draft: ThesisDraftAgent,
+        logic_change: InvestmentLogicChangeAgent,
+        metric_explain: MetricExplainAgent | None = None,
+        review: ReviewAgent | None = None,
+    ) -> None:
         self.thesis_draft = thesis_draft
         self.logic_change = logic_change
+        self.metric_explain = metric_explain or MetricExplainAgent(gateway=thesis_draft.gateway)
+        self.review = review or ReviewAgent(gateway=thesis_draft.gateway)
 
     def draft_thesis(self, **kwargs: Any) -> RuntimeExecution:
         execution = RuntimeExecution(
@@ -152,6 +165,55 @@ class InvestmentResearchAgent:
                     )
                 )
                 execution.status = "needs_human_review" if has_review else "completed"
+        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
+            execution.status = "failed"
+            execution.errors.append(str(exc))
+        finally:
+            execution.finished_at = _now()
+        return execution
+    def explain_metric(self, **kwargs: Any) -> RuntimeExecution:
+        execution = RuntimeExecution(
+            run_id=f"run-{uuid4().hex[:12]}",
+            task="metric_explain",
+            schema_name="metric_explain",
+        )
+        try:
+            execution.status = "generating"
+            result: MetricExplainRunResult = self.metric_explain.explain(**kwargs)
+            execution.result = result
+            _payload_versions(execution, [result.outcome.payload])
+            execution.errors.extend(result.outcome.errors)
+            if result.outcome.ai_status is AiStatus.PARSE_FAILED:
+                execution.status = "degraded"
+                execution.degraded_reason = "provider_or_schema_failure"
+            elif result.outcome.ai_status is AiStatus.LOW_CONFIDENCE:
+                execution.status = "needs_human_review"
+            else:
+                execution.status = "completed"
+        except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
+            execution.status = "failed"
+            execution.errors.append(str(exc))
+        finally:
+            execution.finished_at = _now()
+        return execution
+
+    def draft_review(self, **kwargs: Any) -> RuntimeExecution:
+        execution = RuntimeExecution(
+            run_id=f"run-{uuid4().hex[:12]}",
+            task="review_draft",
+            schema_name="review_draft",
+        )
+        try:
+            execution.status = "generating"
+            result: ReviewDraftRunResult = self.review.generate(**kwargs)
+            execution.result = result
+            _payload_versions(execution, [result.outcome.payload])
+            execution.errors.extend(result.outcome.errors)
+            if result.outcome.ai_status is AiStatus.PARSE_FAILED:
+                execution.status = "degraded"
+                execution.degraded_reason = "provider_or_schema_failure"
+            else:
+                execution.status = "needs_human_review"
         except Exception as exc:  # noqa: BLE001 - 非预期编程/配置异常统一为 failed
             execution.status = "failed"
             execution.errors.append(str(exc))

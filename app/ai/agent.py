@@ -277,3 +277,67 @@ class InvestmentLogicChangeAgent:
             )
             impacts.append(AgentImpact(candidate, retrieval, outcome))
         return AgentRunResult(event_id=event.event_id, impacts=impacts)
+
+
+@dataclass(frozen=True)
+class MetricExplainRunResult:
+    security_id: str
+    hypothesis_id: str
+    outcome: ValidationOutcome
+
+
+class MetricExplainAgent:
+    """只解释 app.calc 输出，不让模型承担关键数值计算。"""
+
+    def __init__(self, *, gateway: Gateway) -> None:
+        self.gateway = gateway
+
+    def explain(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, object],
+    ) -> MetricExplainRunResult:
+        outcome = self.gateway.metric_explain(
+            security_id=security_id,
+            hypothesis_id=hypothesis_id,
+            hypothesis=hypothesis,
+            calc_result=calc_result,
+        )
+        return MetricExplainRunResult(security_id, hypothesis_id, outcome)
+
+
+@dataclass(frozen=True)
+class ReviewDraftRunResult:
+    security_id: str
+    thesis_id: str
+    outcome: ValidationOutcome
+
+
+class ReviewAgent:
+    """从已有记录生成复盘草稿；不引入事实、不改变正式状态。"""
+
+    def __init__(self, *, gateway: Gateway) -> None:
+        self.gateway = gateway
+
+    def generate(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: date,
+        period_end: date,
+        records: list[dict[str, object]],
+    ) -> ReviewDraftRunResult:
+        if period_end < period_start:
+            raise ValueError("复盘结束日期不能早于开始日期")
+        outcome = self.gateway.review_draft(
+            security_id=security_id,
+            thesis_id=thesis_id,
+            period_start=period_start.isoformat(),
+            period_end=period_end.isoformat(),
+            records=records,
+        )
+        return ReviewDraftRunResult(security_id, thesis_id, outcome)

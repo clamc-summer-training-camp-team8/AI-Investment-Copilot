@@ -57,3 +57,8 @@ Envelope 可直接 JSON 序列化，但仍是候选计算结果。后端应另�
 `HybridRetriever` 只负责合并全文与向量 Retriever 的排序，并在合并后再次执行证券、时间和权限过滤。向量侧可以由后端后续实现为 pgvector，但必须遵循现有 `Retriever` Protocol。
 
 本支线没有创建 pgvector 表、迁移或任务队列，因为这些属于后端/数据共同边界。接入时不得绕过 `document_id + locator + published_at + visibility_label` 四项约束。
+## 7. P1 调用
+
+- `runtime.explain_metric(...)`：后端先调用 `app.calc`，再把固定口径结果传给 AI；不得把原始财务表直接交给模型自行计算。
+- `runtime.draft_review(...)`：后端传入选定复盘区间的已有记录；输出恒需人工确认。
+- 对应 Schema 为 `metric_explain` 和 `review_draft`，交接仍使用同一个 Runtime Envelope。

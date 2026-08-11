@@ -544,3 +544,24 @@ Agent 采用“一个编排入口 + 可替换能力模块”的组织方式：
 - 不直接修改后端数据库、队列、API 和正式 Thesis 状态。
 
 生产级能力按上述 P0-P4 分阶段补齐，不能把当前 `KeywordRetriever` 和内存测试结果表述为生产级 RAG。
+## 15. 当前 AI 支线实现结果（2026-08-11）
+
+已完成：
+
+- P0 `thesis_draft` 与 `event_impact`；
+- P1 `metric_explain` 与 `review_draft`；
+- 一个统一 Runtime 入口和 4 个可替换业务能力模块；
+- Local/Mock/HTTP Provider、Prompt 版本和 4 份输出 Schema；
+- 真实公开数据只读适配、关键词检索和可插拔混合检索融合；
+- 引用边界、完整性、实体/事实一致性与冲突检查；
+- `degraded/failed/needs_human_review` 状态和后端 JSON Envelope。
+
+需要跨支线接入而未在本分支擅自实现：
+
+- PostgreSQL/pgvector 表、迁移、索引重建和数据软删除；
+- 后端任务队列、幂等、运行记录持久化、API 与人工复核表；
+- 公告 PDF 正文批量解析和段落入库；
+- 前端引用定位、人工确认和失败重试交互；
+- 独立人工金标确认后的模型效果结论。
+
+这些事项不是 AI 模块内继续堆代码即可独立完成，接入依据见 `AI后端接入契约.md`。当前代码不会把标题数据冒充正文，也不会把程序预标注报告宣称为真实模型准确率。
