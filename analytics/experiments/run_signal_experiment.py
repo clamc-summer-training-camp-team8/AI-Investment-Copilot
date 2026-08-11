@@ -1,7 +1,7 @@
 """候选信号实验：事件方向 → 20 日行业中性超额收益（DA-AC-06）。
 
 经济假设、固化规则、偏差控制声明见
-`analytics/experiments/20260809-事件方向信号/README.md`，写在看结果之前。
+`analytics/experiments/20260811-三行业事件方向信号/README.md`，写在看结果之前。
 
 用法：
     python -m analytics.experiments.run_signal_experiment
@@ -20,12 +20,14 @@ from statistics import mean
 
 from analytics.evaluation.candidate_v2 import predict as candidate_predict
 from analytics.pipelines.return_labels import QuoteBook, ReturnLabel, build_label, is_hit
+from analytics.pipelines.universe import BENCHMARKS, INDUSTRIES
 from app.core.config import PROJECT_ROOT
 from app.core.enums import ImpactDirection
 
 DATASET_DIR = PROJECT_ROOT / "real_data" / "dataset"
-EXPERIMENT_DIR = PROJECT_ROOT / "analytics" / "experiments" / "20260809-事件方向信号"
-EXPERIMENT_ID = "EXP-20260809-001"
+# 研究范围、基准与词表已变化，因此新开实验目录，保留旧实验的可追溯性。
+EXPERIMENT_DIR = PROJECT_ROOT / "analytics" / "experiments" / "20260811-三行业事件方向信号"
+EXPERIMENT_ID = "EXP-20260811-001"
 
 
 @dataclass
@@ -43,6 +45,7 @@ class SignalRecord:
     excess_return: Decimal | None
     label_status: str
     hit: bool | None
+    industry: str = ""
     source_event_count: int = 1
     source_event_ids: tuple[str, ...] = ()
 
@@ -58,6 +61,7 @@ class CandidateEvent:
     hypothesis: str
     direction: str
     label: ReturnLabel
+    industry: str = ""
 
 
 @dataclass(frozen=True)
@@ -102,6 +106,7 @@ def deduplicate_candidates(
                 event_id=first.event_id,
                 security_id=first.security_id,
                 company=first.company,
+                industry=first.industry,
                 title=first.title,
                 disclosure_time=first.disclosure_time,
                 split=(
@@ -147,13 +152,13 @@ def collect_with_stats(book: QuoteBook) -> tuple[list[SignalRecord], DedupStats]
                 book,
                 security_id=row["security_id"],
                 disclosure_time=row["disclosure_time"],
-                time_is_precise=row["disclosure_time_precise"] == "True",
             )
             candidates.append(
                 CandidateEvent(
                     event_id=row["event_id"],
                     security_id=row["security_id"],
                     company=row["company"],
+                    industry=row.get("industry", ""),
                     title=row["title"],
                     disclosure_time=row["disclosure_time"],
                     split=row["split"],
@@ -319,12 +324,17 @@ def main() -> None:
         summarize("样本外", out_sample, book),
         summarize("全样本", records, book),
     ]
+    summaries.extend(
+        summarize(f"行业：{industry}", [r for r in records if r.industry == industry], book)
+        for industry in INDUSTRIES
+    )
 
     lines = [
         f"# 候选信号实验结果 {EXPERIMENT_ID}",
         "",
         f"生成时间: {datetime.now().astimezone().isoformat()}",
-        f"行情数据版本: {book.data_version}（前复权，基准=创业板指 399006）",
+        f"行情数据版本: {book.data_version}（前复权，基准按行业取）",
+        "基准: " + "、".join(f"{k}→{v.name}({v.security_id})" for k, v in BENCHMARKS.items()),
         f"行情截止日: {book.last_trading_day}",
         "窗口: 20 个交易日，T+1 起算，窗口结束后生成标签",
         (
@@ -399,15 +409,24 @@ def main() -> None:
     EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPERIMENT_DIR / "result.md").write_text("\n".join(lines), encoding="utf-8")
 
+    def _range(subset: list[SignalRecord]) -> str:
+        if not subset:
+            return "无样本"
+        days = sorted(record.disclosure_time[:10] for record in subset)
+        return f"{days[0]}~{days[-1]}"
+
     ledger = {
         "experiment_id": EXPERIMENT_ID,
-        "实验名称": "事件方向信号的20日超额收益对照",
+        "实验名称": "三行业事件方向信号的20日超额收益对照",
         "经济假设": "经营类事件的方向判断包含未被价格完全反映的短期基本面信息",
         "信号类型": "事件方向信号",
+        "研究范围": f"{'、'.join(INDUSTRIES)}，每行业 3 家公司",
+        "基准": "按行业分别取（科创50 / 中证医药 / 中证新能源汽车），前复权",
         "模型版本": "local-rule-v1 + candidate_v2",
-        "数据集版本": "cninfo-announcement-v1 / em-qfq-v1",
-        "样本内区间": "2024-01-02~2025-09-30",
-        "样本外区间": "2025-10-01~2026-08-07",
+        "数据集版本": "cninfo-announcement-v2 / tencent-qfq-v1",
+        "样本内区间": _range(in_sample),
+        "样本外区间": _range(out_sample),
+        "样本内信号数": summaries[0].signal_count,
         "样本外信号数": out_summary.signal_count,
         "20日命中率": out_summary.hit_rate,
         "同期同证券无条件命中率": out_summary.unconditional_hit_rate,
@@ -419,7 +438,14 @@ def main() -> None:
         "平均20日超额收益": out_summary.mean_excess,
         "同日去重统计": vars(dedup),
         "结论等级": "探索性",
-        "主要限制": "59条独立盲标未完成；3家公司约2.5年样本；未考虑交易可实现性",
+        "分行业结果": {
+            industry: vars(summarize(industry, [r for r in records if r.industry == industry], book))
+            for industry in INDUSTRIES
+        },
+        "主要限制": (
+            "独立盲标显示方向一致率仍低；9家公司约2.5年样本；未考虑交易可实现性；"
+            "两家港股个股为港币计价而汽车基准为人民币计价，汇率波动进入超额收益"
+        ),
         "实验状态": "已完成一轮",
     }
     (EXPERIMENT_DIR / "ledger.json").write_text(

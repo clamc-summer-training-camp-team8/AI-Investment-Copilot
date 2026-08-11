@@ -28,7 +28,13 @@ def test_所有卡片路由都过可见性校验() -> None:
     判据是函数体里出现 `_require_visible`。这比逐个接口发请求更早失败，也不需要
     起数据库。
     """
-    exempt = {"create_draft"}  # 建卡时对象还不存在，无从校验
+    exempt = {
+        "create_draft",  # 建卡时对象还不存在，无从校验
+        # 列表接口不校验单张卡片，而是在服务层按可见性过滤整页
+        # （app/services/query.py 的 list_theses）。它的守卫是下面那条
+        # test_列表接口按可见性过滤，不是 _require_visible。
+        "list_theses",
+    }
     checked = 0
 
     for name, func in vars(router_module).items():

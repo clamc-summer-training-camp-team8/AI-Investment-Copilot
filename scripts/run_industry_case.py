@@ -20,13 +20,12 @@ import csv
 import json
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from analytics.evaluation.candidate_v2 import predict as candidate_predict
-from analytics.pipelines.universe import COMPANIES
-from app.calc.rules import RuleThresholds
-from app.core.config import PROJECT_ROOT
+from analytics.pipelines.universe import COMPANIES, INDUSTRIES, companies_of
+from app.core.config import PROJECT_ROOT, RuleThresholds
 from app.core.domain import (
     EvidenceRecord,
     HypothesisRecord,
@@ -52,11 +51,11 @@ RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 REPORT_DIR = PROJECT_ROOT / "real_data" / "reports"
 
 MODEL_VERSION = "local-rule-v1+candidate_v2"
-DATA_VERSION = "cninfo-announcement-v1/em-f10-gincome-v1"
+DATA_VERSION = "cninfo-announcement-v2/em-f10-gincome-v2/tencent-qfq-v1"
 THRESHOLDS = RuleThresholds()
 
-# 定期报告的实际披露滞后。用报告期末当可得时间是未来信息泄露：
-# 2025Q4 的数据在 2026 年 4 月才公开。这里按各季度的法定披露截止日近似。
+# 法定披露截止日，仅在拿不到实际披露日时兜底。
+# 用报告期末当可得时间是未来信息泄露：2025Q4 的数据在 2026 年 4 月才公开。
 _DISCLOSURE_LAG_MONTH_DAY = {
     "Q1": (4, 30),
     "Q2": (8, 31),
@@ -65,20 +64,57 @@ _DISCLOSURE_LAG_MONTH_DAY = {
 }
 
 
-def _observation_date(period: str) -> date:
-    """报告期 → 该期数据的实际可得日期。"""
+# 港股不强制季报，A 股那套季度截止日对它无效。港股季度值是从中报/年报差分出来的，
+# 真正可得的时点是中报或年报发布日，最晚可到报告期末后约 3 个月（上市规则 13.49）。
+# 小鹏 2026Q1 实际 05-28 披露，比 A 股 Q1 截止日晚 28 天，按 A 股口径就成了泄露。
+_HK_DISCLOSURE_LAG_DAYS = 92
+
+# 从 universe 取而不是写死，避免以后增删港股标的时这里漏改。
+_HK_SECURITIES = frozenset(c.security_id for c in COMPANIES if c.is_hk)
+
+
+def _statutory_deadline(period: str, *, is_hk: bool = False) -> date:
+    """报告期 → 法定披露截止日（拿不到实际披露日时的兜底上限）。"""
     year = int(period[:4])
     quarter = period[-2:]
+    if is_hk:
+        period_end = {
+            "Q1": date(year, 3, 31),
+            "Q2": date(year, 6, 30),
+            "Q3": date(year, 9, 30),
+            "Q4": date(year, 12, 31),
+        }[quarter]
+        return period_end + timedelta(days=_HK_DISCLOSURE_LAG_DAYS)
     month, day = _DISCLOSURE_LAG_MONTH_DAY[quarter]
     if quarter == "Q4":
         year += 1
     return date(year, month, day)
 
 
+def _observation_date(
+    period: str, disclosure_date: str | None = None, *, is_hk: bool = False
+) -> date:
+    """报告期 → 该期数据的实际可得日期。
+
+    优先用真实披露日。法定截止日只是上限，实际可以晚得多：中芯国际 2025Q3 是
+    11-13 才披露（截止日 10-31），小鹏 2026Q1 是 05-28（截止日 04-30）。按截止日
+    当可得日，等于让系统在数据还没公开时就用上它，最多提前 28 天——这正是
+    窗口裁剪要防的未来信息泄露。
+
+    两边都取较晚的那个：披露日晚于截止日就用披露日，早于截止日（少见，提前披露）
+    仍用披露日，因为那才是信息真正可得的时点。
+    """
+    if disclosure_date:
+        return date.fromisoformat(disclosure_date[:10])
+    return _statutory_deadline(period, is_hk=is_hk)
+
+
 @dataclass
 class LoopOutcome:
     thesis_id: str
     company: str
+    industry: str
+    market: str
     quarter: str
     final_status: str
     suggested_status: str
@@ -105,7 +141,7 @@ def _load_events() -> list[dict]:
         return list(csv.DictReader(fh))
 
 
-def _seed_observations(uow, security_id: str, metrics: list[dict]) -> int:
+def _seed_observations(uow, security_id: str, metrics: list[dict], *, is_hk: bool = False) -> int:
     """写入指标观测值。
 
     `observation_date` 用实际可得日期而非报告期末——`app/calc` 的窗口裁剪依赖它
@@ -114,7 +150,7 @@ def _seed_observations(uow, security_id: str, metrics: list[dict]) -> int:
     count = 0
     for metric in metrics:
         period = metric["period"]
-        available_on = _observation_date(period)
+        available_on = _observation_date(period, metric.get("disclosure_date"), is_hk=is_hk)
         for metric_id, value in (
             ("MET-001", metric.get("revenue_yoy")),
             ("MET-002", metric.get("gross_margin")),
@@ -228,9 +264,11 @@ def _attach_evidence(
         if target is None:
             continue
 
+        # 方向字面量必须与 ImpactDirection 的枚举值一致。写成外部别名「削弱」时，
+        # 所有冲突证据都会落到下面的 NEUTRAL 兜底，负向证据在闭环里彻底消失。
         direction = {
-            "支持": ImpactDirection.SUPPORT,
-            "削弱": ImpactDirection.CONFLICT,
+            ImpactDirection.SUPPORT.value: ImpactDirection.SUPPORT,
+            ImpactDirection.CONFLICT.value: ImpactDirection.CONFLICT,
         }.get(output.direction, ImpactDirection.NEUTRAL)
 
         # 方向明确的由人工确认后计入状态判断；方向不明的挂为待确认。
@@ -285,14 +323,23 @@ def _audit(actor: str, action: str, object_type: str, object_id: str, detail: st
 def run_one(spec: dict, financials: dict[str, list[dict]], events: list[dict]) -> LoopOutcome:
     uow = build_fake_uow()
     thesis, hypotheses = _seed_thesis(uow, spec)
-    _seed_observations(uow, spec["security_id"], financials.get(spec["security_id"], []))
+    security_id = spec["security_id"]
+    _seed_observations(
+        uow,
+        security_id,
+        financials.get(security_id, []),
+        is_hk=security_id in _HK_SECURITIES,
+    )
     total, confirmed = _attach_evidence(uow, thesis, hypotheses, events, spec)
 
     as_of = date.fromisoformat(spec["horizon_end"])
     suggestion = status_service.compute_suggestion(
         uow, thesis=thesis, hypotheses=hypotheses, thresholds=THRESHOLDS, today=as_of
     )
-    suggestion_id = status_service.record_suggestion(
+    # record_suggestion 返回的是记录本身，apply_decision 要的是主键。
+    # 原来直接把记录传进 suggestion_id，一直没暴露是因为上一轮没有任何逻辑
+    # 的建议状态与当前状态不同，这个分支从未被执行过。
+    saved = status_service.record_suggestion(
         uow, thesis=thesis, suggestion=suggestion, actor="system"
     )
 
@@ -302,7 +349,7 @@ def run_one(spec: dict, financials: dict[str, list[dict]], events: list[dict]) -
             uow,
             thesis=thesis,
             hypotheses=hypotheses,
-            suggestion_id=suggestion_id,
+            suggestion_id=saved.suggestion_id,
             action="接受",
             actor="analyst-mvp",
             reason="按真实披露数据复核后接受系统建议",
@@ -315,6 +362,8 @@ def run_one(spec: dict, financials: dict[str, list[dict]], events: list[dict]) -
     return LoopOutcome(
         thesis_id=thesis.thesis_id,
         company=spec["company"],
+        industry=spec.get("industry", ""),
+        market=spec.get("market", ""),
         quarter=spec["quarter"],
         final_status=thesis.status.value,
         suggested_status=suggestion.suggested_status.value,
@@ -384,10 +433,32 @@ def main() -> None:
         "traceability_rate": (traceable / evidence_total) if evidence_total else None,
         "untraceable_samples": untraceable[:10],
         "status_distribution": dict(status_counts),
+        # 分行业统计。跨行业跑一轮却只报总数会掩盖单个行业的问题：
+        # 比如某个行业证据全部待人工确认，混在总数里看不出来。
+        "by_industry": {
+            industry: {
+                "thesis_count": sum(1 for o in outcomes if o.industry == industry),
+                "evidence_attached": sum(
+                    o.evidence_total for o in outcomes if o.industry == industry
+                ),
+                "evidence_confirmed": sum(
+                    o.evidence_confirmed for o in outcomes if o.industry == industry
+                ),
+                "status_distribution": dict(
+                    Counter(o.final_status for o in outcomes if o.industry == industry)
+                ),
+                "breached_theses": sum(
+                    1 for o in outcomes if o.industry == industry and o.breached_hypotheses
+                ),
+            }
+            for industry in INDUSTRIES
+        },
         "outcomes": [
             {
                 "thesis_id": o.thesis_id,
                 "company": o.company,
+                "industry": o.industry,
+                "market": o.market,
                 "quarter": o.quarter,
                 "final_status": o.final_status,
                 "evidence": o.evidence_total,
@@ -410,7 +481,9 @@ def main() -> None:
     print("=" * 70)
     print("行业级 MVP 闭环结果")
     print("=" * 70)
-    print(f"行业：储能与动力电池 | 公司：{'、'.join(c.name for c in COMPANIES)}")
+    for industry in INDUSTRIES:
+        names = "、".join(c.name for c in companies_of(industry))
+        print(f"{industry}：{names}")
     print(f"模型版本 {MODEL_VERSION}")
     print(f"数据版本 {DATA_VERSION}")
     print()

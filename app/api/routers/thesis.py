@@ -10,27 +10,34 @@
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Annotated, TypeVar
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.api.deps import ActorDep, SettingsDep, UowDep
-from app.core.domain import ThesisRecord, UnitOfWork
+from app.core.domain import ThesisQuery, ThesisRecord, UnitOfWork
 from app.core.enums import ImpactDirection, ThesisStatus
 from app.schemas.thesis import (
+    AuditOut,
+    AuditPage,
     EvidenceActionIn,
     EvidenceOut,
     HypothesisOut,
+    HypothesisTrendOut,
+    PageMeta,
     StatusDecisionIn,
     SuggestionOut,
     ThesisDraftIn,
     ThesisOut,
+    ThesisPage,
     ThesisPublishIn,
+    TrendPointOut,
 )
 from app.services import audit, permission
 from app.services import evidence as evidence_service
+from app.services import query as query_service
 from app.services import status as status_service
 from app.services import thesis as thesis_service
 from app.services.errors import (
@@ -142,6 +149,43 @@ def create_draft(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return _to_out(uow, thesis_id)
+
+
+@router.get("/theses", response_model=ThesisPage)
+def list_theses(
+    actor: ActorDep,
+    uow: UowDep,
+    status: Annotated[list[str] | None, Query(description="按状态过滤，可多值")] = None,
+    security_id: Annotated[list[str] | None, Query(description="按标的过滤，可多值")] = None,
+    owner: Annotated[str | None, Query(description="按负责人过滤")] = None,
+    keyword: Annotated[
+        str | None, Query(max_length=100, description="标题与核心观点模糊匹配")
+    ] = None,
+    limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> ThesisPage:
+    """卡片列表。强制分页，只返回当前用户可见的卡片。
+
+    `page.total` 是过滤后的候选总数，当页条数可能少于 limit——可见性过滤在取回
+    当页之后进行，理由见 app/services/query.py 的 list_theses。
+    """
+    statuses = tuple(_parse_required_enum(ThesisStatus, s, "状态") for s in (status or []))
+    page = query_service.list_theses(
+        uow,
+        actor,
+        ThesisQuery(
+            statuses=statuses,
+            securities=tuple(security_id or []),
+            owner=owner,
+            keyword=keyword,
+            limit=limit,
+            offset=offset,
+        ),
+    )
+    return ThesisPage(
+        items=[_to_out(uow, r.thesis_id) for r in page.items],
+        page=PageMeta(total=page.total, limit=page.limit, offset=page.offset),
+    )
 
 
 @router.get("/theses/{thesis_id}", response_model=ThesisOut)
@@ -290,6 +334,92 @@ def decide_status(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return _to_out(uow, thesis_id)
+
+
+@router.get("/theses/{thesis_id}/trends", response_model=list[HypothesisTrendOut])
+def list_trends(
+    thesis_id: str,
+    actor: ActorDep,
+    uow: UowDep,
+    settings: SettingsDep,
+) -> list[HypothesisTrendOut]:
+    """按假设返回趋势（FR-V-002：最近 4-8 期）。
+
+    没有指标映射的假设也返回一行、`direction` 为「无量化指标」，前端据此显示
+    「需人工判断」。静默跳过会让界面上少一条假设。
+    """
+    thesis_record = _require_visible(uow, actor, thesis_id)
+    trends = query_service.hypothesis_trends(uow, thesis_record, thresholds=settings.rules)
+
+    out: list[HypothesisTrendOut] = []
+    for item in trends:
+        result = item.result
+        out.append(
+            HypothesisTrendOut(
+                hypothesis_id=item.hypothesis_id,
+                statement=item.statement,
+                metric_id=item.metric_id,
+                unit=item.unit,
+                period_type=item.period_type,
+                metric_version=item.metric_version,
+                data_version=item.data_version,
+                direction=result.direction if result else "无量化指标",
+                slope=result.slope if result else None,
+                consecutive_decline=result.consecutive_decline if result else 0,
+                consecutive_below_expectation=(
+                    result.consecutive_below_expectation if result else 0
+                ),
+                verdict=result.verdict.value if result else None,
+                points=(
+                    [
+                        TrendPointOut(period=period, value=value)
+                        for period, value in zip(result.periods, result.values, strict=True)
+                    ]
+                    if result
+                    else []
+                ),
+                note=item.note,
+            )
+        )
+    return out
+
+
+@router.get("/theses/{thesis_id}/audit", response_model=AuditPage)
+def list_audit(
+    thesis_id: str,
+    actor: ActorDep,
+    uow: UowDep,
+    limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> AuditPage:
+    """卡片留痕（PRD 12.2：高影响输出可追溯）。倒序，最近的在前。"""
+    _require_visible(uow, actor, thesis_id)
+    records, total = query_service.audit_trail(
+        uow, object_type="thesis", object_id=thesis_id, limit=limit, offset=offset
+    )
+    return AuditPage(
+        items=[
+            AuditOut(
+                actor=r.actor,
+                action=r.action,
+                object_type=r.object_type,
+                object_id=r.object_id,
+                model_version=r.model_version,
+                occurred_at=r.occurred_at,
+                detail=r.detail,
+            )
+            for r in records
+        ],
+        page=PageMeta(total=total, limit=limit, offset=offset),
+    )
+
+
+def _parse_required_enum(enum_cls: type[E], raw: str, label: str) -> E:
+    """查询参数版的枚举解析：值必填，非法即 400。"""
+    parsed = _parse_enum(enum_cls, raw, label)
+    if parsed is None:
+        raise HTTPException(status_code=400, detail=f"{label} 不能为空")
+    return parsed
 
 
 def _parse_enum(enum_cls: type[E], raw: str | None, label: str) -> E | None:

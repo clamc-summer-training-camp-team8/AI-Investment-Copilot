@@ -1,7 +1,11 @@
 """共享夹具。
 
 夹具中的业务数据一律来自 docs/data/数据分析交付包/业务样例包/ 或其派生，
-且标记 is_illustrative。禁止引入真实投研资料。
+且标记 is_illustrative。
+
+单元测试不读 real_data/ 的真实数据：单元测试要能在任何环境秒级跑完，
+依赖外部数据集会让它变慢且不稳定。真实公开数据的验证放集成测试
+（tests/integration/test_industry_case_loop.py），见 ADR-0006。
 """
 
 from __future__ import annotations

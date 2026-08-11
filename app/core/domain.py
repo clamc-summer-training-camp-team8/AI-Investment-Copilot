@@ -162,6 +162,28 @@ class AuditRecord:
     object_id: str
     detail: dict[str, object] | None = None
     model_version: str | None = None
+    # 写入时由数据库填充，读出来才有值。留痕页必须显示时间，否则「谁在何时改了什么」
+    # 只剩下「谁改了什么」。
+    occurred_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class ThesisQuery:
+    """卡片列表查询条件。
+
+    `limit` 有上限：列表接口禁止无上限查询（contracts/api/README.md，对齐
+    PRD 12.2 的列表 P95 <= 2 秒）。上限在服务层校验，这里只承载条件。
+
+    `statuses` 与 `securities` 为空表示不过滤该维度，不是「过滤掉全部」——
+    空列表当成全不匹配会让默认查询返回空页。
+    """
+
+    statuses: tuple[ThesisStatus, ...] = ()
+    securities: tuple[str, ...] = ()
+    owner: str | None = None
+    keyword: str | None = None
+    limit: int = 20
+    offset: int = 0
 
 
 @dataclass
@@ -187,6 +209,13 @@ class ThesisRepo(Protocol):
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]: ...
     def add_mapping(self, record: MetricMappingRecord) -> None: ...
     def find_by_security(self, security_id: str) -> list[ThesisRecord]: ...
+    def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]: ...
+
+    """按条件分页查询，返回（当页记录, 满足条件的总数）。
+
+    总数与当页一起返回，否则前端无法渲染分页器。可见性过滤不在这里做——
+    那是业务规则，属于 app/services。
+    """
 
 
 class EvidenceRepo(Protocol):
@@ -217,6 +246,9 @@ class VersionRepo(Protocol):
 class AuditRepo(Protocol):
     def add(self, record: AuditRecord) -> None: ...
     def list_for_object(self, object_type: str, object_id: str) -> list[AuditRecord]: ...
+    def page_for_object(
+        self, object_type: str, object_id: str, *, limit: int, offset: int
+    ) -> tuple[list[AuditRecord], int]: ...
 
 
 class ReviewTaskRepo(Protocol):

@@ -1,0 +1,4912 @@
+{
+  "data_version": "em-f10-gincome-v2",
+  "metrics": {
+    "688981": [
+      {
+        "security_id": "688981",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "850663000",
+        "cost": "676122000",
+        "gross_margin": "20.5182",
+        "revenue_yoy": null,
+        "disclosure_date": "2019-02-26"
+      },
+      {
+        "security_id": "688981",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "20444286842.03",
+        "cost": "15758447923.98",
+        "gross_margin": "22.9200",
+        "revenue_yoy": null,
+        "disclosure_date": "2019-05-05"
+      },
+      {
+        "security_id": "688981",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "4624563624.06",
+        "cost": "3756417693.92",
+        "gross_margin": "18.7725",
+        "revenue_yoy": null,
+        "disclosure_date": "2019-05-13"
+      },
+      {
+        "security_id": "688981",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "5547835375.94",
+        "cost": "4280384306.08",
+        "gross_margin": "22.8459",
+        "revenue_yoy": null,
+        "disclosure_date": "2019-08-30"
+      },
+      {
+        "security_id": "688981",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "5799103000",
+        "cost": "4637433000",
+        "gross_margin": "20.0319",
+        "revenue_yoy": "581.7157",
+        "disclosure_date": "2020-11-12"
+      },
+      {
+        "security_id": "688981",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "6046381000",
+        "cost": "4756541000",
+        "gross_margin": "21.3324",
+        "revenue_yoy": "-70.4251",
+        "disclosure_date": "2020-04-29"
+      },
+      {
+        "security_id": "688981",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "6401136000",
+        "cost": "5019806000",
+        "gross_margin": "21.5795",
+        "revenue_yoy": "38.4160",
+        "disclosure_date": "2020-06-30"
+      },
+      {
+        "security_id": "688981",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "6760363000",
+        "cost": "5048266000",
+        "gross_margin": "25.3255",
+        "revenue_yoy": "21.8559",
+        "disclosure_date": "2020-08-28"
+      },
+      {
+        "security_id": "688981",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "7638160000",
+        "cost": "5629912000",
+        "gross_margin": "26.2923",
+        "revenue_yoy": "31.7128",
+        "disclosure_date": "2020-11-12"
+      },
+      {
+        "security_id": "688981",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "6671050000",
+        "cost": "5239269000",
+        "gross_margin": "21.4626",
+        "revenue_yoy": "10.3313",
+        "disclosure_date": "2021-04-01"
+      },
+      {
+        "security_id": "688981",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "7291961000",
+        "cost": "5325251000",
+        "gross_margin": "26.9709",
+        "revenue_yoy": "13.9167",
+        "disclosure_date": "2021-05-14"
+      },
+      {
+        "security_id": "688981",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "8798426000",
+        "cost": "6474531000",
+        "gross_margin": "26.4126",
+        "revenue_yoy": "30.1472",
+        "disclosure_date": "2021-08-28"
+      },
+      {
+        "security_id": "688981",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "9280610000",
+        "cost": "6481607000",
+        "gross_margin": "30.1597",
+        "revenue_yoy": "21.5032",
+        "disclosure_date": "2021-11-12"
+      },
+      {
+        "security_id": "688981",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "10259637000",
+        "cost": "6907681000",
+        "gross_margin": "32.6713",
+        "revenue_yoy": "53.7934",
+        "disclosure_date": "2022-03-31"
+      },
+      {
+        "security_id": "688981",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "11854010000",
+        "cost": "6973532000",
+        "gross_margin": "41.1715",
+        "revenue_yoy": "62.5627",
+        "disclosure_date": "2022-05-13"
+      },
+      {
+        "security_id": "688981",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "12738235000",
+        "cost": "7718723000",
+        "gross_margin": "39.4051",
+        "revenue_yoy": "44.7786",
+        "disclosure_date": "2022-08-27"
+      },
+      {
+        "security_id": "688981",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "13171314000",
+        "cost": "8001944000",
+        "gross_margin": "39.2472",
+        "revenue_yoy": "41.9229",
+        "disclosure_date": "2022-11-11"
+      },
+      {
+        "security_id": "688981",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "11752525000",
+        "cost": "7858474000",
+        "gross_margin": "33.1337",
+        "revenue_yoy": "14.5511",
+        "disclosure_date": "2023-03-29"
+      },
+      {
+        "security_id": "688981",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "10208898000",
+        "cost": "7884820000",
+        "gross_margin": "22.7652",
+        "revenue_yoy": "-13.8781",
+        "disclosure_date": "2023-05-12"
+      },
+      {
+        "security_id": "688981",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "11108892000",
+        "cost": "8649533000",
+        "gross_margin": "22.1387",
+        "revenue_yoy": "-12.7910",
+        "disclosure_date": "2023-08-26"
+      },
+      {
+        "security_id": "688981",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "11780454000",
+        "cost": "8947598000",
+        "gross_margin": "24.0471",
+        "revenue_yoy": "-10.5598",
+        "disclosure_date": "2023-11-10"
+      },
+      {
+        "security_id": "688981",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "12152181000",
+        "cost": "9864350000",
+        "gross_margin": "18.8265",
+        "revenue_yoy": "3.4006",
+        "disclosure_date": "2024-03-29"
+      },
+      {
+        "security_id": "688981",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "12593782000",
+        "cost": "10807279000",
+        "gross_margin": "14.1856",
+        "revenue_yoy": "23.3608",
+        "disclosure_date": "2024-05-10"
+      },
+      {
+        "security_id": "688981",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "13675528000",
+        "cost": "11808881000",
+        "gross_margin": "13.6495",
+        "revenue_yoy": "23.1043",
+        "disclosure_date": "2024-08-30"
+      },
+      {
+        "security_id": "688981",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "15609410000",
+        "cost": "11875441000",
+        "gross_margin": "23.9213",
+        "revenue_yoy": "32.5026",
+        "disclosure_date": "2024-11-08"
+      },
+      {
+        "security_id": "688981",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "15916850000",
+        "cost": "12559666000",
+        "gross_margin": "21.0920",
+        "revenue_yoy": "30.9794",
+        "disclosure_date": "2025-03-28"
+      },
+      {
+        "security_id": "688981",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "16301085000",
+        "cost": "12536046000",
+        "gross_margin": "23.0969",
+        "revenue_yoy": "29.4376",
+        "disclosure_date": "2025-05-09"
+      },
+      {
+        "security_id": "688981",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "16046964000",
+        "cost": "12724863000",
+        "gross_margin": "20.7024",
+        "revenue_yoy": "17.3407",
+        "disclosure_date": "2025-08-29"
+      },
+      {
+        "security_id": "688981",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "17162367000",
+        "cost": "12787288000",
+        "gross_margin": "25.4923",
+        "revenue_yoy": "9.9489",
+        "disclosure_date": "2025-11-14"
+      },
+      {
+        "security_id": "688981",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "17812776000",
+        "cost": "14716926000",
+        "gross_margin": "17.3799",
+        "revenue_yoy": "11.9114",
+        "disclosure_date": "2026-03-27"
+      },
+      {
+        "security_id": "688981",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "17617218000",
+        "cost": "13833769000",
+        "gross_margin": "21.4759",
+        "revenue_yoy": "8.0739",
+        "disclosure_date": "2026-05-15"
+      }
+    ],
+    "603986": [
+      {
+        "security_id": "603986",
+        "period": "2015Q3",
+        "period_type": "单季度",
+        "revenue": "338532615.35",
+        "cost": "243130056.05",
+        "gross_margin": "28.1812",
+        "revenue_yoy": null,
+        "disclosure_date": "2016-10-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2015Q4",
+        "period_type": "单季度",
+        "revenue": "361703321.96",
+        "cost": "254712731.6",
+        "gross_margin": "29.5797",
+        "revenue_yoy": null,
+        "disclosure_date": "2016-07-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2016Q1",
+        "period_type": "单季度",
+        "revenue": "308554817.22",
+        "cost": "219532109.4",
+        "gross_margin": "28.8515",
+        "revenue_yoy": null,
+        "disclosure_date": "2017-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2016Q2",
+        "period_type": "单季度",
+        "revenue": "346549477.18",
+        "cost": "256090111.11",
+        "gross_margin": "26.1029",
+        "revenue_yoy": null,
+        "disclosure_date": "2016-08-31"
+      },
+      {
+        "security_id": "603986",
+        "period": "2016Q3",
+        "period_type": "单季度",
+        "revenue": "393418703.61",
+        "cost": "286154141.12",
+        "gross_margin": "27.2647",
+        "revenue_yoy": "16.2129",
+        "disclosure_date": "2016-10-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2016Q4",
+        "period_type": "单季度",
+        "revenue": "440425174.01",
+        "cost": "329314023.95",
+        "gross_margin": "25.2282",
+        "revenue_yoy": "21.7642",
+        "disclosure_date": "2017-04-11"
+      },
+      {
+        "security_id": "603986",
+        "period": "2017Q1",
+        "period_type": "单季度",
+        "revenue": "452370256.22",
+        "cost": "317751584.54",
+        "gross_margin": "29.7585",
+        "revenue_yoy": "46.6094",
+        "disclosure_date": "2017-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2017Q2",
+        "period_type": "单季度",
+        "revenue": "486326583.26",
+        "cost": "285931052.28",
+        "gross_margin": "41.2060",
+        "revenue_yoy": "40.3340",
+        "disclosure_date": "2017-08-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2017Q3",
+        "period_type": "单季度",
+        "revenue": "578374191.59",
+        "cost": "328236269.69",
+        "gross_margin": "43.2485",
+        "revenue_yoy": "47.0124",
+        "disclosure_date": "2017-10-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2017Q4",
+        "period_type": "单季度",
+        "revenue": "512637800.44",
+        "cost": "302933243.50",
+        "gross_margin": "40.9070",
+        "revenue_yoy": "16.3961",
+        "disclosure_date": "2018-04-16"
+      },
+      {
+        "security_id": "603986",
+        "period": "2018Q1",
+        "period_type": "单季度",
+        "revenue": "541516604.14",
+        "cost": "334443486.38",
+        "gross_margin": "38.2395",
+        "revenue_yoy": "19.7065",
+        "disclosure_date": "2018-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2018Q2",
+        "period_type": "单季度",
+        "revenue": "565005558.23",
+        "cost": "352997068.07",
+        "gross_margin": "37.5233",
+        "revenue_yoy": "16.1782",
+        "disclosure_date": "2018-08-25"
+      },
+      {
+        "security_id": "603986",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "614603800.53",
+        "cost": "372563436.69",
+        "gross_margin": "39.3815",
+        "revenue_yoy": "6.2640",
+        "disclosure_date": "2018-10-31"
+      },
+      {
+        "security_id": "603986",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "524660359.22",
+        "cost": "326756091.13",
+        "gross_margin": "37.7205",
+        "revenue_yoy": "2.3452",
+        "disclosure_date": "2019-04-30"
+      },
+      {
+        "security_id": "603986",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "456337509.24",
+        "cost": "280740772.24",
+        "gross_margin": "38.4796",
+        "revenue_yoy": "-15.7297",
+        "disclosure_date": "2019-04-30"
+      },
+      {
+        "security_id": "603986",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "745720085.85",
+        "cost": "466335679.97",
+        "gross_margin": "37.4651",
+        "revenue_yoy": "31.9846",
+        "disclosure_date": "2019-08-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "1001607890.28",
+        "cost": "595109538.91",
+        "gross_margin": "40.5846",
+        "revenue_yoy": "62.9681",
+        "disclosure_date": "2019-10-30"
+      },
+      {
+        "security_id": "603986",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "999251617.83",
+        "cost": "562903814.42",
+        "gross_margin": "43.6675",
+        "revenue_yoy": "90.4569",
+        "disclosure_date": "2020-03-27"
+      },
+      {
+        "security_id": "603986",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "805476025.47",
+        "cost": "475875208.75",
+        "gross_margin": "40.9200",
+        "revenue_yoy": "76.5088",
+        "disclosure_date": "2020-04-29"
+      },
+      {
+        "security_id": "603986",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "852327878.24",
+        "cost": "509261386.17",
+        "gross_margin": "40.2505",
+        "revenue_yoy": "14.2960",
+        "disclosure_date": "2020-08-26"
+      },
+      {
+        "security_id": "603986",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "1515909970.83",
+        "cost": "897843110.91",
+        "gross_margin": "40.7720",
+        "revenue_yoy": "51.3476",
+        "disclosure_date": "2020-10-30"
+      },
+      {
+        "security_id": "603986",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "1323180993.27",
+        "cost": "946405023.89",
+        "gross_margin": "28.4750",
+        "revenue_yoy": "32.4172",
+        "disclosure_date": "2021-04-17"
+      },
+      {
+        "security_id": "603986",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "1603963163.57",
+        "cost": "1034927876.7",
+        "gross_margin": "35.4768",
+        "revenue_yoy": "99.1323",
+        "disclosure_date": "2021-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "2036920894.59",
+        "cost": "1148992433.33",
+        "gross_margin": "43.5917",
+        "revenue_yoy": "138.9833",
+        "disclosure_date": "2021-08-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "2689060905.51",
+        "cost": "1355542374.29",
+        "gross_margin": "49.5905",
+        "revenue_yoy": "77.3892",
+        "disclosure_date": "2021-10-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "2180278505.06",
+        "cost": "1009920967.08",
+        "gross_margin": "53.6793",
+        "revenue_yoy": "64.7755",
+        "disclosure_date": "2022-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "2229810940.28",
+        "cost": "1126252830.46",
+        "gross_margin": "49.4911",
+        "revenue_yoy": "39.0188",
+        "disclosure_date": "2022-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "2551235748.94",
+        "cost": "1291027560.71",
+        "gross_margin": "49.3960",
+        "revenue_yoy": "25.2496",
+        "disclosure_date": "2022-08-27"
+      },
+      {
+        "security_id": "603986",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "1988036331.86",
+        "cost": "1071567300.28",
+        "gross_margin": "46.0992",
+        "revenue_yoy": "-26.0695",
+        "disclosure_date": "2022-10-29"
+      },
+      {
+        "security_id": "603986",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "1360909403.91",
+        "cost": "766507991.13",
+        "gross_margin": "43.6768",
+        "revenue_yoy": "-37.5809",
+        "disclosure_date": "2023-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "1341311243.71",
+        "cost": "828226202.25",
+        "gross_margin": "38.2525",
+        "revenue_yoy": "-39.8464",
+        "disclosure_date": "2023-04-28"
+      },
+      {
+        "security_id": "603986",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "1624500820.11",
+        "cost": "1146030052.06",
+        "gross_margin": "29.4534",
+        "revenue_yoy": "-36.3249",
+        "disclosure_date": "2023-08-26"
+      },
+      {
+        "security_id": "603986",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "1428675586.88",
+        "cost": "909212037.78",
+        "gross_margin": "36.3598",
+        "revenue_yoy": "-28.1363",
+        "disclosure_date": "2023-10-25"
+      },
+      {
+        "security_id": "603986",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "1366335763.95",
+        "cost": "894339750.88",
+        "gross_margin": "34.5447",
+        "revenue_yoy": "0.3987",
+        "disclosure_date": "2024-04-20"
+      },
+      {
+        "security_id": "603986",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "1627269967.75",
+        "cost": "1006318257.04",
+        "gross_margin": "38.1591",
+        "revenue_yoy": "21.3193",
+        "disclosure_date": "2024-04-20"
+      },
+      {
+        "security_id": "603986",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "1981767352.42",
+        "cost": "1225652850.06",
+        "gross_margin": "38.1535",
+        "revenue_yoy": "21.9924",
+        "disclosure_date": "2024-08-21"
+      },
+      {
+        "security_id": "603986",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "2040559511.23",
+        "cost": "1188307033.26",
+        "gross_margin": "41.7656",
+        "revenue_yoy": "42.8288",
+        "disclosure_date": "2024-10-26"
+      },
+      {
+        "security_id": "603986",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "1706380845.71",
+        "cost": "1140346657.63",
+        "gross_margin": "33.1716",
+        "revenue_yoy": "24.8874",
+        "disclosure_date": "2025-04-26"
+      },
+      {
+        "security_id": "603986",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "1909062290.61",
+        "cost": "1194301276.72",
+        "gross_margin": "37.4404",
+        "revenue_yoy": "17.3169",
+        "disclosure_date": "2025-04-26"
+      },
+      {
+        "security_id": "603986",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "2241246342.27",
+        "cost": "1411674412.31",
+        "gross_margin": "37.0139",
+        "revenue_yoy": "13.0933",
+        "disclosure_date": "2025-08-23"
+      },
+      {
+        "security_id": "603986",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "2681325810.90",
+        "cost": "1589446412.52",
+        "gross_margin": "40.7216",
+        "revenue_yoy": "31.4015",
+        "disclosure_date": "2025-10-29"
+      },
+      {
+        "security_id": "603986",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "2371828680.80",
+        "cost": "1306757990.37",
+        "gross_margin": "44.9050",
+        "revenue_yoy": "38.9976",
+        "disclosure_date": "2026-03-31"
+      },
+      {
+        "security_id": "603986",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "4188075574.04",
+        "cost": "1797659470.9",
+        "gross_margin": "57.0767",
+        "revenue_yoy": "119.3787",
+        "disclosure_date": "2026-04-30"
+      }
+    ],
+    "002371": [
+      {
+        "security_id": "002371",
+        "period": "2008Q1",
+        "period_type": "单季度",
+        "revenue": "115458922.48",
+        "cost": "73373825.69",
+        "gross_margin": "36.4503",
+        "revenue_yoy": null,
+        "disclosure_date": "2008-10-09"
+      },
+      {
+        "security_id": "002371",
+        "period": "2008Q2",
+        "period_type": "单季度",
+        "revenue": "147885425.86",
+        "cost": "105823356.54",
+        "gross_margin": "28.4423",
+        "revenue_yoy": null,
+        "disclosure_date": "2008-10-09"
+      },
+      {
+        "security_id": "002371",
+        "period": "2008Q3",
+        "period_type": "单季度",
+        "revenue": "141738679.77",
+        "cost": "93578606.47",
+        "gross_margin": "33.9781",
+        "revenue_yoy": null,
+        "disclosure_date": "2008-10-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2008Q4",
+        "period_type": "单季度",
+        "revenue": "174427144.80",
+        "cost": "136693948.0",
+        "gross_margin": "21.6326",
+        "revenue_yoy": null,
+        "disclosure_date": "2010-02-23"
+      },
+      {
+        "security_id": "002371",
+        "period": "2009Q1",
+        "period_type": "单季度",
+        "revenue": "142759392.12",
+        "cost": "91771793.13",
+        "gross_margin": "35.7158",
+        "revenue_yoy": "23.6452",
+        "disclosure_date": "2010-04-22"
+      },
+      {
+        "security_id": "002371",
+        "period": "2009Q2",
+        "period_type": "单季度",
+        "revenue": "148499681.81",
+        "cost": "93592359.16",
+        "gross_margin": "36.9747",
+        "revenue_yoy": "0.4154",
+        "disclosure_date": "2010-08-11"
+      },
+      {
+        "security_id": "002371",
+        "period": "2009Q3",
+        "period_type": "单季度",
+        "revenue": "112783488.84",
+        "cost": "71744152.31",
+        "gross_margin": "36.3877",
+        "revenue_yoy": "-20.4286",
+        "disclosure_date": "2010-10-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2009Q4",
+        "period_type": "单季度",
+        "revenue": "183334847.22",
+        "cost": "131424415.92",
+        "gross_margin": "28.3145",
+        "revenue_yoy": "5.1068",
+        "disclosure_date": "2010-02-23"
+      },
+      {
+        "security_id": "002371",
+        "period": "2010Q1",
+        "period_type": "单季度",
+        "revenue": "165681092.76",
+        "cost": "111253602.02",
+        "gross_margin": "32.8508",
+        "revenue_yoy": "16.0562",
+        "disclosure_date": "2010-04-22"
+      },
+      {
+        "security_id": "002371",
+        "period": "2010Q2",
+        "period_type": "单季度",
+        "revenue": "189563577.06",
+        "cost": "115554614.47",
+        "gross_margin": "39.0418",
+        "revenue_yoy": "27.6525",
+        "disclosure_date": "2010-08-11"
+      },
+      {
+        "security_id": "002371",
+        "period": "2010Q3",
+        "period_type": "单季度",
+        "revenue": "200219836.09",
+        "cost": "133849870.32",
+        "gross_margin": "33.1485",
+        "revenue_yoy": "77.5258",
+        "disclosure_date": "2010-10-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2010Q4",
+        "period_type": "单季度",
+        "revenue": "254786140.11",
+        "cost": "185764838.91",
+        "gross_margin": "27.0899",
+        "revenue_yoy": "38.9731",
+        "disclosure_date": "2011-02-25"
+      },
+      {
+        "security_id": "002371",
+        "period": "2011Q1",
+        "period_type": "单季度",
+        "revenue": "248590974.61",
+        "cost": "170230701",
+        "gross_margin": "31.5218",
+        "revenue_yoy": "50.0418",
+        "disclosure_date": "2011-04-15"
+      },
+      {
+        "security_id": "002371",
+        "period": "2011Q2",
+        "period_type": "单季度",
+        "revenue": "308598762.14",
+        "cost": "201927271.63",
+        "gross_margin": "34.5664",
+        "revenue_yoy": "62.7943",
+        "disclosure_date": "2011-08-12"
+      },
+      {
+        "security_id": "002371",
+        "period": "2011Q3",
+        "period_type": "单季度",
+        "revenue": "279330539.39",
+        "cost": "189510336.29",
+        "gross_margin": "32.1555",
+        "revenue_yoy": "39.5119",
+        "disclosure_date": "2011-10-28"
+      },
+      {
+        "security_id": "002371",
+        "period": "2011Q4",
+        "period_type": "单季度",
+        "revenue": "319472709.60",
+        "cost": "208236989.94",
+        "gross_margin": "34.8185",
+        "revenue_yoy": "25.3886",
+        "disclosure_date": "2012-02-10"
+      },
+      {
+        "security_id": "002371",
+        "period": "2012Q1",
+        "period_type": "单季度",
+        "revenue": "271740969.06",
+        "cost": "177578365.63",
+        "gross_margin": "34.6516",
+        "revenue_yoy": "9.3125",
+        "disclosure_date": "2012-04-25"
+      },
+      {
+        "security_id": "002371",
+        "period": "2012Q2",
+        "period_type": "单季度",
+        "revenue": "291225997.21",
+        "cost": "184023197.20",
+        "gross_margin": "36.8109",
+        "revenue_yoy": "-5.6296",
+        "disclosure_date": "2012-08-25"
+      },
+      {
+        "security_id": "002371",
+        "period": "2012Q3",
+        "period_type": "单季度",
+        "revenue": "166344697.72",
+        "cost": "73522440.74",
+        "gross_margin": "55.8012",
+        "revenue_yoy": "-40.4488",
+        "disclosure_date": "2012-10-27"
+      },
+      {
+        "security_id": "002371",
+        "period": "2012Q4",
+        "period_type": "单季度",
+        "revenue": "282931800.65",
+        "cost": "178144042.74",
+        "gross_margin": "37.0364",
+        "revenue_yoy": "-11.4379",
+        "disclosure_date": "2013-03-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2013Q1",
+        "period_type": "单季度",
+        "revenue": "183763570.52",
+        "cost": "117850267.49",
+        "gross_margin": "35.8685",
+        "revenue_yoy": "-32.3755",
+        "disclosure_date": "2013-04-16"
+      },
+      {
+        "security_id": "002371",
+        "period": "2013Q2",
+        "period_type": "单季度",
+        "revenue": "237356483.96",
+        "cost": "127459103.69",
+        "gross_margin": "46.3006",
+        "revenue_yoy": "-18.4975",
+        "disclosure_date": "2013-08-23"
+      },
+      {
+        "security_id": "002371",
+        "period": "2013Q3",
+        "period_type": "单季度",
+        "revenue": "168720244.74",
+        "cost": "86602186.81",
+        "gross_margin": "48.6711",
+        "revenue_yoy": "1.4281",
+        "disclosure_date": "2013-10-26"
+      },
+      {
+        "security_id": "002371",
+        "period": "2013Q4",
+        "period_type": "单季度",
+        "revenue": "269686770.97",
+        "cost": "167446881.39",
+        "gross_margin": "37.9106",
+        "revenue_yoy": "-4.6814",
+        "disclosure_date": "2015-03-11"
+      },
+      {
+        "security_id": "002371",
+        "period": "2014Q1",
+        "period_type": "单季度",
+        "revenue": "163587414.56",
+        "cost": "99385605.42",
+        "gross_margin": "39.2462",
+        "revenue_yoy": "-10.9794",
+        "disclosure_date": "2014-04-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2014Q2",
+        "period_type": "单季度",
+        "revenue": "216848448.74",
+        "cost": "126246744.60",
+        "gross_margin": "41.7811",
+        "revenue_yoy": "-8.6402",
+        "disclosure_date": "2014-08-20"
+      },
+      {
+        "security_id": "002371",
+        "period": "2014Q3",
+        "period_type": "单季度",
+        "revenue": "184204642.5",
+        "cost": "106510587.42",
+        "gross_margin": "42.1781",
+        "revenue_yoy": "9.1776",
+        "disclosure_date": "2014-10-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2014Q4",
+        "period_type": "单季度",
+        "revenue": "397093591.45",
+        "cost": "296641511.09",
+        "gross_margin": "25.2968",
+        "revenue_yoy": "47.2425",
+        "disclosure_date": "2015-03-11"
+      },
+      {
+        "security_id": "002371",
+        "period": "2015Q1",
+        "period_type": "单季度",
+        "revenue": "117338005.63",
+        "cost": "55742546.68",
+        "gross_margin": "52.4940",
+        "revenue_yoy": "-28.2720",
+        "disclosure_date": "2015-04-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2015Q2",
+        "period_type": "单季度",
+        "revenue": "201048819.56",
+        "cost": "114633435.20",
+        "gross_margin": "42.9823",
+        "revenue_yoy": "-7.2860",
+        "disclosure_date": "2015-08-22"
+      },
+      {
+        "security_id": "002371",
+        "period": "2015Q3",
+        "period_type": "单季度",
+        "revenue": "412148169.30",
+        "cost": "254101006.15",
+        "gross_margin": "38.3472",
+        "revenue_yoy": "123.7447",
+        "disclosure_date": "2015-10-21"
+      },
+      {
+        "security_id": "002371",
+        "period": "2015Q4",
+        "period_type": "单季度",
+        "revenue": "489748913.50",
+        "cost": "299659920.84",
+        "gross_margin": "38.8136",
+        "revenue_yoy": "23.3334",
+        "disclosure_date": "2016-03-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2016Q1",
+        "period_type": "单季度",
+        "revenue": "259542399.73",
+        "cost": "159622757.14",
+        "gross_margin": "38.4984",
+        "revenue_yoy": "121.1921",
+        "disclosure_date": "2016-04-27"
+      },
+      {
+        "security_id": "002371",
+        "period": "2016Q2",
+        "period_type": "单季度",
+        "revenue": "442571457.24",
+        "cost": "262957627.13",
+        "gross_margin": "40.5841",
+        "revenue_yoy": "120.1313",
+        "disclosure_date": "2016-08-18"
+      },
+      {
+        "security_id": "002371",
+        "period": "2016Q3",
+        "period_type": "单季度",
+        "revenue": "336208915.46",
+        "cost": "199389820.91",
+        "gross_margin": "40.6947",
+        "revenue_yoy": "-18.4252",
+        "disclosure_date": "2016-10-26"
+      },
+      {
+        "security_id": "002371",
+        "period": "2016Q4",
+        "period_type": "单季度",
+        "revenue": "584064645.47",
+        "cost": "355815057.48",
+        "gross_margin": "39.0795",
+        "revenue_yoy": "19.2580",
+        "disclosure_date": "2017-03-16"
+      },
+      {
+        "security_id": "002371",
+        "period": "2017Q1",
+        "period_type": "单季度",
+        "revenue": "414526271",
+        "cost": "276509285.97",
+        "gross_margin": "33.2951",
+        "revenue_yoy": "59.7143",
+        "disclosure_date": "2017-04-22"
+      },
+      {
+        "security_id": "002371",
+        "period": "2017Q2",
+        "period_type": "单季度",
+        "revenue": "630715887.73",
+        "cost": "393463606.97",
+        "gross_margin": "37.6163",
+        "revenue_yoy": "42.5117",
+        "disclosure_date": "2017-08-24"
+      },
+      {
+        "security_id": "002371",
+        "period": "2017Q3",
+        "period_type": "单季度",
+        "revenue": "504444484.10",
+        "cost": "278825273.59",
+        "gross_margin": "44.7263",
+        "revenue_yoy": "50.0390",
+        "disclosure_date": "2017-10-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2017Q4",
+        "period_type": "单季度",
+        "revenue": "673131826.86",
+        "cost": "460750516.82",
+        "gross_margin": "31.5512",
+        "revenue_yoy": "15.2495",
+        "disclosure_date": "2018-04-12"
+      },
+      {
+        "security_id": "002371",
+        "period": "2018Q1",
+        "period_type": "单季度",
+        "revenue": "542427314.3",
+        "cost": "315096376.84",
+        "gross_margin": "41.9099",
+        "revenue_yoy": "30.8547",
+        "disclosure_date": "2018-04-28"
+      },
+      {
+        "security_id": "002371",
+        "period": "2018Q2",
+        "period_type": "单季度",
+        "revenue": "852313991.48",
+        "cost": "540249801.16",
+        "gross_margin": "36.6138",
+        "revenue_yoy": "35.1344",
+        "disclosure_date": "2018-08-25"
+      },
+      {
+        "security_id": "002371",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "706405811.71",
+        "cost": "399988858.33",
+        "gross_margin": "43.3769",
+        "revenue_yoy": "40.0364",
+        "disclosure_date": "2018-10-27"
+      },
+      {
+        "security_id": "002371",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "1222703839.05",
+        "cost": "792970390.54",
+        "gross_margin": "35.1462",
+        "revenue_yoy": "81.6440",
+        "disclosure_date": "2019-04-24"
+      },
+      {
+        "security_id": "002371",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "707938610.32",
+        "cost": "390214264.4",
+        "gross_margin": "44.8802",
+        "revenue_yoy": "30.5131",
+        "disclosure_date": "2019-04-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "946704347.26",
+        "cost": "542051453.76",
+        "gross_margin": "42.7433",
+        "revenue_yoy": "11.0746",
+        "disclosure_date": "2019-08-15"
+      },
+      {
+        "security_id": "002371",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "1081986634.81",
+        "cost": "653684414.64",
+        "gross_margin": "39.5848",
+        "revenue_yoy": "53.1679",
+        "disclosure_date": "2019-10-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "1321683289.31",
+        "cost": "827330653.05",
+        "gross_margin": "37.4033",
+        "revenue_yoy": "8.0951",
+        "disclosure_date": "2020-04-25"
+      },
+      {
+        "security_id": "002371",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "937940633.62",
+        "cost": "596479454.94",
+        "gross_margin": "36.4054",
+        "revenue_yoy": "32.4890",
+        "disclosure_date": "2020-04-25"
+      },
+      {
+        "security_id": "002371",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "1239056140.80",
+        "cost": "789856969.40",
+        "gross_margin": "36.2533",
+        "revenue_yoy": "30.8810",
+        "disclosure_date": "2020-08-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "1658582120.11",
+        "cost": "1100368137.89",
+        "gross_margin": "33.6561",
+        "revenue_yoy": "53.2904",
+        "disclosure_date": "2020-10-27"
+      },
+      {
+        "security_id": "002371",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "2220464136.67",
+        "cost": "1347558364.69",
+        "gross_margin": "39.3119",
+        "revenue_yoy": "68.0027",
+        "disclosure_date": "2021-04-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "1423425330.52",
+        "cost": "860836694.84",
+        "gross_margin": "39.5236",
+        "revenue_yoy": "51.7607",
+        "disclosure_date": "2021-04-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "2184933389.01",
+        "cost": "1190475650.33",
+        "gross_margin": "45.5143",
+        "revenue_yoy": "76.3385",
+        "disclosure_date": "2021-08-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "2565015923.34",
+        "cost": "1594736295.21",
+        "gross_margin": "37.8274",
+        "revenue_yoy": "54.6511",
+        "disclosure_date": "2021-10-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "3510103476.51",
+        "cost": "2220909100.81",
+        "gross_margin": "36.7281",
+        "revenue_yoy": "58.0797",
+        "disclosure_date": "2022-04-28"
+      },
+      {
+        "security_id": "002371",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "2135734862.37",
+        "cost": "1182255427",
+        "gross_margin": "44.6441",
+        "revenue_yoy": "50.0419",
+        "disclosure_date": "2022-04-28"
+      },
+      {
+        "security_id": "002371",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "3308078996.53",
+        "cost": "1736736701.07",
+        "gross_margin": "47.5001",
+        "revenue_yoy": "51.4041",
+        "disclosure_date": "2022-08-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "4568487633.47",
+        "cost": "2690101793.78",
+        "gross_margin": "41.1161",
+        "revenue_yoy": "78.1076",
+        "disclosure_date": "2022-10-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "4675810477.30",
+        "cost": "2640527673.28",
+        "gross_margin": "43.5279",
+        "revenue_yoy": "33.2100",
+        "disclosure_date": "2023-04-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "3871132953.79",
+        "cost": "2276816935.06",
+        "gross_margin": "41.1847",
+        "revenue_yoy": "81.2553",
+        "disclosure_date": "2023-04-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "4555457133.74",
+        "cost": "2579556116.83",
+        "gross_margin": "43.3744",
+        "revenue_yoy": "37.7070",
+        "disclosure_date": "2023-08-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "6161772205.34",
+        "cost": "3920846586.96",
+        "gross_margin": "36.3682",
+        "revenue_yoy": "34.8755",
+        "disclosure_date": "2023-10-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "7491095799.50",
+        "cost": "4298807177.02",
+        "gross_margin": "42.6144",
+        "revenue_yoy": "60.2096",
+        "disclosure_date": "2024-04-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "5950568399.86",
+        "cost": "3333897634.11",
+        "gross_margin": "43.9735",
+        "revenue_yoy": "53.7165",
+        "disclosure_date": "2024-04-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "6513016544.02",
+        "cost": "3429904866.77",
+        "gross_margin": "47.3377",
+        "revenue_yoy": "42.9717",
+        "disclosure_date": "2024-08-28"
+      },
+      {
+        "security_id": "002371",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "8068481014.87",
+        "cost": "4660477328.51",
+        "gross_margin": "42.2385",
+        "revenue_yoy": "30.9442",
+        "disclosure_date": "2024-10-30"
+      },
+      {
+        "security_id": "002371",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "9542794206.14",
+        "cost": "5737682876.11",
+        "gross_margin": "39.8742",
+        "revenue_yoy": "27.3885",
+        "disclosure_date": "2025-04-26"
+      },
+      {
+        "security_id": "002371",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "8206029208.83",
+        "cost": "4676152385.65",
+        "gross_margin": "43.0157",
+        "revenue_yoy": "37.9033",
+        "disclosure_date": "2025-04-26"
+      },
+      {
+        "security_id": "002371",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "7935516975.91",
+        "cost": "4658766171.49",
+        "gross_margin": "41.2922",
+        "revenue_yoy": "21.8409",
+        "disclosure_date": "2025-08-29"
+      },
+      {
+        "security_id": "002371",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "11159833472.07",
+        "cost": "6661799208.68",
+        "gross_margin": "40.3056",
+        "revenue_yoy": "38.3139",
+        "disclosure_date": "2025-10-31"
+      },
+      {
+        "security_id": "002371",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "12051732762.97",
+        "cost": "7574323615.88",
+        "gross_margin": "37.1516",
+        "revenue_yoy": "26.2914",
+        "disclosure_date": "2026-04-18"
+      },
+      {
+        "security_id": "002371",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "10322863908.82",
+        "cost": "6113944336.44",
+        "gross_margin": "40.7728",
+        "revenue_yoy": "25.7961",
+        "disclosure_date": "2026-04-30"
+      }
+    ],
+    "600276": [
+      {
+        "security_id": "600276",
+        "period": "2002Q1",
+        "period_type": "单季度",
+        "revenue": "148300121.19",
+        "cost": "62544015.71",
+        "gross_margin": "57.8261",
+        "revenue_yoy": null,
+        "disclosure_date": "2002-04-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2002Q2",
+        "period_type": "单季度",
+        "revenue": "209978066.72",
+        "cost": "94543506.04",
+        "gross_margin": "54.9746",
+        "revenue_yoy": null,
+        "disclosure_date": "2003-08-18"
+      },
+      {
+        "security_id": "600276",
+        "period": "2002Q3",
+        "period_type": "单季度",
+        "revenue": "188633381.17",
+        "cost": "67204012.12",
+        "gross_margin": "64.3732",
+        "revenue_yoy": null,
+        "disclosure_date": "2003-10-27"
+      },
+      {
+        "security_id": "600276",
+        "period": "2002Q4",
+        "period_type": "单季度",
+        "revenue": "209113893.39",
+        "cost": "54305103.53",
+        "gross_margin": "74.0308",
+        "revenue_yoy": null,
+        "disclosure_date": "2004-02-18"
+      },
+      {
+        "security_id": "600276",
+        "period": "2003Q1",
+        "period_type": "单季度",
+        "revenue": "222771972.3",
+        "cost": "73539419.6",
+        "gross_margin": "66.9889",
+        "revenue_yoy": "50.2170",
+        "disclosure_date": "2004-04-16"
+      },
+      {
+        "security_id": "600276",
+        "period": "2003Q2",
+        "period_type": "单季度",
+        "revenue": "273249589.73",
+        "cost": "109968302.64",
+        "gross_margin": "59.7554",
+        "revenue_yoy": "30.1324",
+        "disclosure_date": "2004-08-10"
+      },
+      {
+        "security_id": "600276",
+        "period": "2003Q3",
+        "period_type": "单季度",
+        "revenue": "264858456.12",
+        "cost": "79852125.79",
+        "gross_margin": "69.8510",
+        "revenue_yoy": "40.4091",
+        "disclosure_date": "2004-10-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2003Q4",
+        "period_type": "单季度",
+        "revenue": "289472293.46",
+        "cost": "84834054.41",
+        "gross_margin": "70.6935",
+        "revenue_yoy": "38.4281",
+        "disclosure_date": "2005-01-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2004Q1",
+        "period_type": "单季度",
+        "revenue": "298986595.44",
+        "cost": "85773380.56",
+        "gross_margin": "71.3120",
+        "revenue_yoy": "34.2119",
+        "disclosure_date": "2005-04-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2004Q2",
+        "period_type": "单季度",
+        "revenue": "315584729.17",
+        "cost": "79514650.16",
+        "gross_margin": "74.8040",
+        "revenue_yoy": "15.4932",
+        "disclosure_date": "2005-08-09"
+      },
+      {
+        "security_id": "600276",
+        "period": "2004Q3",
+        "period_type": "单季度",
+        "revenue": "277217230.70",
+        "cost": "53027904.81",
+        "gross_margin": "80.8714",
+        "revenue_yoy": "4.6662",
+        "disclosure_date": "2005-10-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2004Q4",
+        "period_type": "单季度",
+        "revenue": "253355063.88",
+        "cost": "68002889.61",
+        "gross_margin": "73.1591",
+        "revenue_yoy": "-12.4769",
+        "disclosure_date": "2006-03-29"
+      },
+      {
+        "security_id": "600276",
+        "period": "2005Q1",
+        "period_type": "单季度",
+        "revenue": "290450607.4",
+        "cost": "39655715.49",
+        "gross_margin": "86.3468",
+        "revenue_yoy": "-2.8550",
+        "disclosure_date": "2006-04-21"
+      },
+      {
+        "security_id": "600276",
+        "period": "2005Q2",
+        "period_type": "单季度",
+        "revenue": "287707640.62",
+        "cost": "58046586.29",
+        "gross_margin": "79.8245",
+        "revenue_yoy": "-8.8335",
+        "disclosure_date": "2006-07-19"
+      },
+      {
+        "security_id": "600276",
+        "period": "2005Q3",
+        "period_type": "单季度",
+        "revenue": "298926349.37",
+        "cost": "51557033.12",
+        "gross_margin": "82.7526",
+        "revenue_yoy": "7.8311",
+        "disclosure_date": "2006-10-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2005Q4",
+        "period_type": "单季度",
+        "revenue": "302174960.48",
+        "cost": "80649339.88",
+        "gross_margin": "73.3104",
+        "revenue_yoy": "19.2694",
+        "disclosure_date": "2007-02-08"
+      },
+      {
+        "security_id": "600276",
+        "period": "2006Q1",
+        "period_type": "单季度",
+        "revenue": "337857264.54",
+        "cost": "64405337.72",
+        "gross_margin": "80.9371",
+        "revenue_yoy": "16.3218",
+        "disclosure_date": "2007-04-10"
+      },
+      {
+        "security_id": "600276",
+        "period": "2006Q2",
+        "period_type": "单季度",
+        "revenue": "340697307.92",
+        "cost": "67778669.67",
+        "gross_margin": "80.1059",
+        "revenue_yoy": "18.4179",
+        "disclosure_date": "2007-08-08"
+      },
+      {
+        "security_id": "600276",
+        "period": "2006Q3",
+        "period_type": "单季度",
+        "revenue": "370429662.56",
+        "cost": "66911925.07",
+        "gross_margin": "81.9367",
+        "revenue_yoy": "23.9200",
+        "disclosure_date": "2007-10-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2006Q4",
+        "period_type": "单季度",
+        "revenue": "387624348.28",
+        "cost": "80395717.86",
+        "gross_margin": "79.2594",
+        "revenue_yoy": "28.2781",
+        "disclosure_date": "2008-02-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2007Q1",
+        "period_type": "单季度",
+        "revenue": "401912736.59",
+        "cost": "60858608.93",
+        "gross_margin": "84.8578",
+        "revenue_yoy": "18.9593",
+        "disclosure_date": "2008-04-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2007Q2",
+        "period_type": "单季度",
+        "revenue": "498238442.09",
+        "cost": "95800485.58",
+        "gross_margin": "80.7722",
+        "revenue_yoy": "46.2408",
+        "disclosure_date": "2008-08-01"
+      },
+      {
+        "security_id": "600276",
+        "period": "2007Q3",
+        "period_type": "单季度",
+        "revenue": "486965884.26",
+        "cost": "80272801.83",
+        "gross_margin": "83.5157",
+        "revenue_yoy": "31.4597",
+        "disclosure_date": "2008-10-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2007Q4",
+        "period_type": "单季度",
+        "revenue": "593498007.66",
+        "cost": "94284566.76",
+        "gross_margin": "84.1138",
+        "revenue_yoy": "53.1116",
+        "disclosure_date": "2009-02-18"
+      },
+      {
+        "security_id": "600276",
+        "period": "2008Q1",
+        "period_type": "单季度",
+        "revenue": "598494571.35",
+        "cost": "93767081.69",
+        "gross_margin": "84.3328",
+        "revenue_yoy": "48.9116",
+        "disclosure_date": "2009-04-21"
+      },
+      {
+        "security_id": "600276",
+        "period": "2008Q2",
+        "period_type": "单季度",
+        "revenue": "598988476.75",
+        "cost": "126865808.64",
+        "gross_margin": "78.8200",
+        "revenue_yoy": "20.2212",
+        "disclosure_date": "2009-08-26"
+      },
+      {
+        "security_id": "600276",
+        "period": "2008Q3",
+        "period_type": "单季度",
+        "revenue": "589816877.56",
+        "cost": "85511215.23",
+        "gross_margin": "85.5021",
+        "revenue_yoy": "21.1208",
+        "disclosure_date": "2009-10-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2008Q4",
+        "period_type": "单季度",
+        "revenue": "605261233.82",
+        "cost": "94728815.16",
+        "gross_margin": "84.3491",
+        "revenue_yoy": "1.9820",
+        "disclosure_date": "2010-02-08"
+      },
+      {
+        "security_id": "600276",
+        "period": "2009Q1",
+        "period_type": "单季度",
+        "revenue": "711561419.92",
+        "cost": "116186292.43",
+        "gross_margin": "83.6716",
+        "revenue_yoy": "18.8919",
+        "disclosure_date": "2010-04-22"
+      },
+      {
+        "security_id": "600276",
+        "period": "2009Q2",
+        "period_type": "单季度",
+        "revenue": "717582275.96",
+        "cost": "112769822.77",
+        "gross_margin": "84.2848",
+        "revenue_yoy": "19.7990",
+        "disclosure_date": "2010-08-07"
+      },
+      {
+        "security_id": "600276",
+        "period": "2009Q3",
+        "period_type": "单季度",
+        "revenue": "782326618.52",
+        "cost": "123784803.92",
+        "gross_margin": "84.1773",
+        "revenue_yoy": "32.6389",
+        "disclosure_date": "2010-10-30"
+      },
+      {
+        "security_id": "600276",
+        "period": "2009Q4",
+        "period_type": "单季度",
+        "revenue": "817490566.93",
+        "cost": "171110731.58",
+        "gross_margin": "79.0688",
+        "revenue_yoy": "35.0641",
+        "disclosure_date": "2011-03-02"
+      },
+      {
+        "security_id": "600276",
+        "period": "2010Q1",
+        "period_type": "单季度",
+        "revenue": "942476139.11",
+        "cost": "142034621.1",
+        "gross_margin": "84.9296",
+        "revenue_yoy": "32.4518",
+        "disclosure_date": "2010-04-22"
+      },
+      {
+        "security_id": "600276",
+        "period": "2010Q2",
+        "period_type": "单季度",
+        "revenue": "926929390.73",
+        "cost": "141644558.77",
+        "gross_margin": "84.7189",
+        "revenue_yoy": "29.1740",
+        "disclosure_date": "2010-08-07"
+      },
+      {
+        "security_id": "600276",
+        "period": "2010Q3",
+        "period_type": "单季度",
+        "revenue": "944622167.58",
+        "cost": "152762007.00",
+        "gross_margin": "83.8282",
+        "revenue_yoy": "20.7452",
+        "disclosure_date": "2010-10-30"
+      },
+      {
+        "security_id": "600276",
+        "period": "2010Q4",
+        "period_type": "单季度",
+        "revenue": "930078572.08",
+        "cost": "169061990.80",
+        "gross_margin": "81.8228",
+        "revenue_yoy": "13.7724",
+        "disclosure_date": "2011-03-02"
+      },
+      {
+        "security_id": "600276",
+        "period": "2011Q1",
+        "period_type": "单季度",
+        "revenue": "1119205671.74",
+        "cost": "193761762.8",
+        "gross_margin": "82.6876",
+        "revenue_yoy": "18.7516",
+        "disclosure_date": "2011-04-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2011Q2",
+        "period_type": "单季度",
+        "revenue": "1047515440.13",
+        "cost": "167876911.98",
+        "gross_margin": "83.9738",
+        "revenue_yoy": "13.0092",
+        "disclosure_date": "2011-08-06"
+      },
+      {
+        "security_id": "600276",
+        "period": "2011Q3",
+        "period_type": "单季度",
+        "revenue": "1152494492.23",
+        "cost": "203853350.52",
+        "gross_margin": "82.3120",
+        "revenue_yoy": "22.0059",
+        "disclosure_date": "2011-10-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2011Q4",
+        "period_type": "单季度",
+        "revenue": "1231176164.89",
+        "cost": "218651243.61",
+        "gross_margin": "82.2405",
+        "revenue_yoy": "32.3734",
+        "disclosure_date": "2012-03-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2012Q1",
+        "period_type": "单季度",
+        "revenue": "1339998690.81",
+        "cost": "224275077.32",
+        "gross_margin": "83.2630",
+        "revenue_yoy": "19.7277",
+        "disclosure_date": "2012-04-27"
+      },
+      {
+        "security_id": "600276",
+        "period": "2012Q2",
+        "period_type": "单季度",
+        "revenue": "1270757637.57",
+        "cost": "184027258.21",
+        "gross_margin": "85.5183",
+        "revenue_yoy": "21.3116",
+        "disclosure_date": "2012-08-10"
+      },
+      {
+        "security_id": "600276",
+        "period": "2012Q3",
+        "period_type": "单季度",
+        "revenue": "1428842200.57",
+        "cost": "213492513.77",
+        "gross_margin": "85.0584",
+        "revenue_yoy": "23.9782",
+        "disclosure_date": "2012-10-27"
+      },
+      {
+        "security_id": "600276",
+        "period": "2012Q4",
+        "period_type": "单季度",
+        "revenue": "1395469032.25",
+        "cost": "248601904.61",
+        "gross_margin": "82.1851",
+        "revenue_yoy": "13.3444",
+        "disclosure_date": "2013-04-02"
+      },
+      {
+        "security_id": "600276",
+        "period": "2013Q1",
+        "period_type": "单季度",
+        "revenue": "1481852802.02",
+        "cost": "236803221.14",
+        "gross_margin": "84.0198",
+        "revenue_yoy": "10.5861",
+        "disclosure_date": "2013-04-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2013Q2",
+        "period_type": "单季度",
+        "revenue": "1487398218.79",
+        "cost": "360279243.09",
+        "gross_margin": "75.7779",
+        "revenue_yoy": "17.0481",
+        "disclosure_date": "2013-08-17"
+      },
+      {
+        "security_id": "600276",
+        "period": "2013Q3",
+        "period_type": "单季度",
+        "revenue": "1567948351.33",
+        "cost": "286660608.66",
+        "gross_margin": "81.7175",
+        "revenue_yoy": "9.7356",
+        "disclosure_date": "2013-10-29"
+      },
+      {
+        "security_id": "600276",
+        "period": "2013Q4",
+        "period_type": "单季度",
+        "revenue": "1665874983.29",
+        "cost": "274338597.62",
+        "gross_margin": "83.5319",
+        "revenue_yoy": "19.3774",
+        "disclosure_date": "2014-04-09"
+      },
+      {
+        "security_id": "600276",
+        "period": "2014Q1",
+        "period_type": "单季度",
+        "revenue": "1721396845.85",
+        "cost": "315561054.64",
+        "gross_margin": "81.6683",
+        "revenue_yoy": "16.1652",
+        "disclosure_date": "2014-04-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2014Q2",
+        "period_type": "单季度",
+        "revenue": "1789046258.26",
+        "cost": "335946713.26",
+        "gross_margin": "81.2220",
+        "revenue_yoy": "20.2802",
+        "disclosure_date": "2014-08-16"
+      },
+      {
+        "security_id": "600276",
+        "period": "2014Q3",
+        "period_type": "单季度",
+        "revenue": "1979228276.99",
+        "cost": "321176925.9",
+        "gross_margin": "83.7726",
+        "revenue_yoy": "26.2305",
+        "disclosure_date": "2014-10-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2014Q4",
+        "period_type": "单季度",
+        "revenue": "1962581706.74",
+        "cost": "340531421.07",
+        "gross_margin": "82.6488",
+        "revenue_yoy": "17.8109",
+        "disclosure_date": "2015-03-31"
+      },
+      {
+        "security_id": "600276",
+        "period": "2015Q1",
+        "period_type": "单季度",
+        "revenue": "2203946358.76",
+        "cost": "361951939.11",
+        "gross_margin": "83.5771",
+        "revenue_yoy": "28.0324",
+        "disclosure_date": "2015-04-18"
+      },
+      {
+        "security_id": "600276",
+        "period": "2015Q2",
+        "period_type": "单季度",
+        "revenue": "2182254804.80",
+        "cost": "324092556.88",
+        "gross_margin": "85.1487",
+        "revenue_yoy": "21.9787",
+        "disclosure_date": "2015-08-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2015Q3",
+        "period_type": "单季度",
+        "revenue": "2484618075.73",
+        "cost": "343802684.01",
+        "gross_margin": "86.1628",
+        "revenue_yoy": "25.5347",
+        "disclosure_date": "2015-10-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2015Q4",
+        "period_type": "单季度",
+        "revenue": "2445140929.11",
+        "cost": "341823284.29",
+        "gross_margin": "86.0203",
+        "revenue_yoy": "24.5880",
+        "disclosure_date": "2016-04-13"
+      },
+      {
+        "security_id": "600276",
+        "period": "2016Q1",
+        "period_type": "单季度",
+        "revenue": "2668603010.24",
+        "cost": "382975322.48",
+        "gross_margin": "85.6488",
+        "revenue_yoy": "21.0829",
+        "disclosure_date": "2016-04-26"
+      },
+      {
+        "security_id": "600276",
+        "period": "2016Q2",
+        "period_type": "单季度",
+        "revenue": "2610508346.88",
+        "cost": "321616850.42",
+        "gross_margin": "87.6799",
+        "revenue_yoy": "19.6244",
+        "disclosure_date": "2016-08-30"
+      },
+      {
+        "security_id": "600276",
+        "period": "2016Q3",
+        "period_type": "单季度",
+        "revenue": "2984961732.30",
+        "cost": "382431856.31",
+        "gross_margin": "87.1880",
+        "revenue_yoy": "20.1376",
+        "disclosure_date": "2016-10-29"
+      },
+      {
+        "security_id": "600276",
+        "period": "2016Q4",
+        "period_type": "单季度",
+        "revenue": "2829651031.76",
+        "cost": "347607382.48",
+        "gross_margin": "87.7155",
+        "revenue_yoy": "15.7255",
+        "disclosure_date": "2017-03-11"
+      },
+      {
+        "security_id": "600276",
+        "period": "2017Q1",
+        "period_type": "单季度",
+        "revenue": "3169364959.21",
+        "cost": "418387039.43",
+        "gross_margin": "86.7990",
+        "revenue_yoy": "18.7649",
+        "disclosure_date": "2017-04-21"
+      },
+      {
+        "security_id": "600276",
+        "period": "2017Q2",
+        "period_type": "单季度",
+        "revenue": "3175229744.01",
+        "cost": "433115421.76",
+        "gross_margin": "86.3596",
+        "revenue_yoy": "21.6326",
+        "disclosure_date": "2017-08-30"
+      },
+      {
+        "security_id": "600276",
+        "period": "2017Q3",
+        "period_type": "单季度",
+        "revenue": "3721524400.52",
+        "cost": "502801889.76",
+        "gross_margin": "86.4894",
+        "revenue_yoy": "24.6758",
+        "disclosure_date": "2017-10-19"
+      },
+      {
+        "security_id": "600276",
+        "period": "2017Q4",
+        "period_type": "单季度",
+        "revenue": "3769510266.24",
+        "cost": "495572701.06",
+        "gross_margin": "86.8531",
+        "revenue_yoy": "33.2147",
+        "disclosure_date": "2018-04-16"
+      },
+      {
+        "security_id": "600276",
+        "period": "2018Q1",
+        "period_type": "单季度",
+        "revenue": "3857128089.89",
+        "cost": "521900121.89",
+        "gross_margin": "86.4692",
+        "revenue_yoy": "21.7003",
+        "disclosure_date": "2018-04-27"
+      },
+      {
+        "security_id": "600276",
+        "period": "2018Q2",
+        "period_type": "单季度",
+        "revenue": "3903621454.70",
+        "cost": "517330445.59",
+        "gross_margin": "86.7474",
+        "revenue_yoy": "22.9398",
+        "disclosure_date": "2018-08-10"
+      },
+      {
+        "security_id": "600276",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "4698018801.92",
+        "cost": "638342952.12",
+        "gross_margin": "86.4125",
+        "revenue_yoy": "26.2391",
+        "disclosure_date": "2018-10-26"
+      },
+      {
+        "security_id": "600276",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "4959132703.51",
+        "cost": "656994565.76",
+        "gross_margin": "86.7518",
+        "revenue_yoy": "31.5591",
+        "disclosure_date": "2019-02-16"
+      },
+      {
+        "security_id": "600276",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "4966854058.57",
+        "cost": "676335229.25",
+        "gross_margin": "86.3830",
+        "revenue_yoy": "28.7708",
+        "disclosure_date": "2019-04-17"
+      },
+      {
+        "security_id": "600276",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "5059445976.03",
+        "cost": "658225515.43",
+        "gross_margin": "86.9902",
+        "revenue_yoy": "29.6090",
+        "disclosure_date": "2019-08-30"
+      },
+      {
+        "security_id": "600276",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "6918746432.39",
+        "cost": "837921963.99",
+        "gross_margin": "87.8891",
+        "revenue_yoy": "47.2694",
+        "disclosure_date": "2019-10-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "6343530140.06",
+        "cost": "740461344.42",
+        "gross_margin": "88.3273",
+        "revenue_yoy": "27.9161",
+        "disclosure_date": "2020-03-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "5527015316.47",
+        "cost": "740898993.56",
+        "gross_margin": "86.5950",
+        "revenue_yoy": "11.2780",
+        "disclosure_date": "2020-04-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "5781866606.61",
+        "cost": "622851203.28",
+        "gross_margin": "89.2275",
+        "revenue_yoy": "14.2787",
+        "disclosure_date": "2020-08-01"
+      },
+      {
+        "security_id": "600276",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "8104243144.73",
+        "cost": "1020799582.14",
+        "gross_margin": "87.4041",
+        "revenue_yoy": "17.1346",
+        "disclosure_date": "2020-10-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "8321473680.01",
+        "cost": "964139890.46",
+        "gross_margin": "88.4138",
+        "revenue_yoy": "31.1805",
+        "disclosure_date": "2021-04-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "6929054893.69",
+        "cost": "910398449.37",
+        "gross_margin": "86.8611",
+        "revenue_yoy": "25.3670",
+        "disclosure_date": "2021-04-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "6368487842.60",
+        "cost": "843821704.82",
+        "gross_margin": "86.7500",
+        "revenue_yoy": "10.1459",
+        "disclosure_date": "2021-08-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "6901425756.86",
+        "cost": "974347149.86",
+        "gross_margin": "85.8819",
+        "revenue_yoy": "-14.8418",
+        "disclosure_date": "2021-10-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "5706557882.65",
+        "cost": "1013231246.06",
+        "gross_margin": "82.2444",
+        "revenue_yoy": "-31.4237",
+        "disclosure_date": "2022-04-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "5478539090.55",
+        "cost": "855294895.12",
+        "gross_margin": "84.3883",
+        "revenue_yoy": "-20.9338",
+        "disclosure_date": "2022-04-23"
+      },
+      {
+        "security_id": "600276",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "4749502670.34",
+        "cost": "832631068.46",
+        "gross_margin": "82.4691",
+        "revenue_yoy": "-25.4218",
+        "disclosure_date": "2022-08-20"
+      },
+      {
+        "security_id": "600276",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "5717263637.41",
+        "cost": "980822107.00",
+        "gross_margin": "82.8446",
+        "revenue_yoy": "-17.1582",
+        "disclosure_date": "2022-10-29"
+      },
+      {
+        "security_id": "600276",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "5329965283.22",
+        "cost": "817890819.51",
+        "gross_margin": "84.6549",
+        "revenue_yoy": "-6.5993",
+        "disclosure_date": "2023-04-22"
+      },
+      {
+        "security_id": "600276",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "5492320140.43",
+        "cost": "859517096.88",
+        "gross_margin": "84.3506",
+        "revenue_yoy": "0.2515",
+        "disclosure_date": "2023-04-22"
+      },
+      {
+        "security_id": "600276",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "5676058865.70",
+        "cost": "909855080.49",
+        "gross_margin": "83.9703",
+        "revenue_yoy": "19.5085",
+        "disclosure_date": "2023-08-19"
+      },
+      {
+        "security_id": "600276",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "5845253168.48",
+        "cost": "888181906.99",
+        "gross_margin": "84.8051",
+        "revenue_yoy": "2.2387",
+        "disclosure_date": "2023-10-26"
+      },
+      {
+        "security_id": "600276",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "5806152566.70",
+        "cost": "867693702.55",
+        "gross_margin": "85.0556",
+        "revenue_yoy": "8.9342",
+        "disclosure_date": "2024-04-18"
+      },
+      {
+        "security_id": "600276",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "5997533912.14",
+        "cost": "942849379.52",
+        "gross_margin": "84.2794",
+        "revenue_yoy": "9.1985",
+        "disclosure_date": "2024-04-18"
+      },
+      {
+        "security_id": "600276",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "7603200202.63",
+        "cost": "930454275.86",
+        "gross_margin": "87.7623",
+        "revenue_yoy": "33.9521",
+        "disclosure_date": "2024-08-22"
+      },
+      {
+        "security_id": "600276",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "6588569730.33",
+        "cost": "959879022.32",
+        "gross_margin": "85.4311",
+        "revenue_yoy": "12.7166",
+        "disclosure_date": "2024-10-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "7795301496.96",
+        "cost": "1014994714.18",
+        "gross_margin": "86.9794",
+        "revenue_yoy": "34.2593",
+        "disclosure_date": "2025-03-31"
+      },
+      {
+        "security_id": "600276",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "7205611122.72",
+        "cost": "1068662516.36",
+        "gross_margin": "85.1690",
+        "revenue_yoy": "20.1429",
+        "disclosure_date": "2025-04-25"
+      },
+      {
+        "security_id": "600276",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "8555582506.18",
+        "cost": "1046299652.82",
+        "gross_margin": "87.7706",
+        "revenue_yoy": "12.5261",
+        "disclosure_date": "2025-08-21"
+      },
+      {
+        "security_id": "600276",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "7426888299.87",
+        "cost": "1080479014.16",
+        "gross_margin": "85.4518",
+        "revenue_yoy": "12.7238",
+        "disclosure_date": "2025-10-28"
+      },
+      {
+        "security_id": "600276",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "8441334265.06",
+        "cost": "1167214632.09",
+        "gross_margin": "86.1726",
+        "revenue_yoy": "8.2875",
+        "disclosure_date": "2026-03-26"
+      },
+      {
+        "security_id": "600276",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "8140565320.77",
+        "cost": "1090949138.37",
+        "gross_margin": "86.5986",
+        "revenue_yoy": "12.9754",
+        "disclosure_date": "2026-04-23"
+      }
+    ],
+    "603259": [
+      {
+        "security_id": "603259",
+        "period": "2017Q1",
+        "period_type": "单季度",
+        "revenue": "1768190096.85",
+        "cost": "996234978.2",
+        "gross_margin": "43.6579",
+        "revenue_yoy": null,
+        "disclosure_date": "2017-07-14"
+      },
+      {
+        "security_id": "603259",
+        "period": "2017Q2",
+        "period_type": "单季度",
+        "revenue": "1897184902.52",
+        "cost": "1078872476.17",
+        "gross_margin": "43.1330",
+        "revenue_yoy": null,
+        "disclosure_date": "2018-08-22"
+      },
+      {
+        "security_id": "603259",
+        "period": "2017Q3",
+        "period_type": "单季度",
+        "revenue": "2012503890.39",
+        "cost": "1175108750.28",
+        "gross_margin": "41.6096",
+        "revenue_yoy": null,
+        "disclosure_date": "2018-02-06"
+      },
+      {
+        "security_id": "603259",
+        "period": "2017Q4",
+        "period_type": "单季度",
+        "revenue": "2087380966.52",
+        "cost": "1266578163.73",
+        "gross_margin": "39.3221",
+        "revenue_yoy": null,
+        "disclosure_date": "2018-04-16"
+      },
+      {
+        "security_id": "603259",
+        "period": "2018Q1",
+        "period_type": "单季度",
+        "revenue": "2141764392.11",
+        "cost": "1304294322.67",
+        "gross_margin": "39.1019",
+        "revenue_yoy": "21.1275",
+        "disclosure_date": "2018-05-07"
+      },
+      {
+        "security_id": "603259",
+        "period": "2018Q2",
+        "period_type": "单季度",
+        "revenue": "2267442786.89",
+        "cost": "1338389200.35",
+        "gross_margin": "40.9736",
+        "revenue_yoy": "19.5162",
+        "disclosure_date": "2018-08-22"
+      },
+      {
+        "security_id": "603259",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "2511927822.68",
+        "cost": "1462832305.49",
+        "gross_margin": "41.7646",
+        "revenue_yoy": "24.8160",
+        "disclosure_date": "2018-10-31"
+      },
+      {
+        "security_id": "603259",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "2692548591.36",
+        "cost": "1715466972.36",
+        "gross_margin": "36.2884",
+        "revenue_yoy": "28.9917",
+        "disclosure_date": "2019-03-23"
+      },
+      {
+        "security_id": "603259",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "2769465924.23",
+        "cost": "1713229762.27",
+        "gross_margin": "38.1386",
+        "revenue_yoy": "29.3077",
+        "disclosure_date": "2019-04-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "3124892522.49",
+        "cost": "1895053085.96",
+        "gross_margin": "39.3562",
+        "revenue_yoy": "37.8157",
+        "disclosure_date": "2019-08-20"
+      },
+      {
+        "security_id": "603259",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "3384155804.66",
+        "cost": "2004453094.76",
+        "gross_margin": "40.7695",
+        "revenue_yoy": "34.7234",
+        "disclosure_date": "2019-10-31"
+      },
+      {
+        "security_id": "603259",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "3593692185.78",
+        "cost": "2245563292.35",
+        "gross_margin": "37.5138",
+        "revenue_yoy": "33.4681",
+        "disclosure_date": "2020-03-25"
+      },
+      {
+        "security_id": "603259",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "3187514732.38",
+        "cost": "2089069069.44",
+        "gross_margin": "34.4609",
+        "revenue_yoy": "15.0949",
+        "disclosure_date": "2020-04-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "4043919274.50",
+        "cost": "2473942491.93",
+        "gross_margin": "38.8231",
+        "revenue_yoy": "29.4099",
+        "disclosure_date": "2020-08-14"
+      },
+      {
+        "security_id": "603259",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "4583368978.34",
+        "cost": "2811769972.90",
+        "gross_margin": "38.6528",
+        "revenue_yoy": "35.4361",
+        "disclosure_date": "2020-10-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "4720628480.19",
+        "cost": "2878494204.62",
+        "gross_margin": "39.0231",
+        "revenue_yoy": "31.3587",
+        "disclosure_date": "2021-03-31"
+      },
+      {
+        "security_id": "603259",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "4950479646.73",
+        "cost": "3113892231.21",
+        "gross_margin": "37.0992",
+        "revenue_yoy": "55.3084",
+        "disclosure_date": "2021-04-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "5586078300.25",
+        "cost": "3525364672.31",
+        "gross_margin": "36.8902",
+        "revenue_yoy": "38.1353",
+        "disclosure_date": "2021-08-13"
+      },
+      {
+        "security_id": "603259",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "5984811444.39",
+        "cost": "3771497515.67",
+        "gross_margin": "36.9822",
+        "revenue_yoy": "30.5767",
+        "disclosure_date": "2021-10-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "6381015737.74",
+        "cost": "4181501168.34",
+        "gross_margin": "34.4697",
+        "revenue_yoy": "35.1730",
+        "disclosure_date": "2022-03-24"
+      },
+      {
+        "security_id": "603259",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "8474419333.59",
+        "cost": "5441326127.95",
+        "gross_margin": "35.7912",
+        "revenue_yoy": "71.1838",
+        "disclosure_date": "2022-04-26"
+      },
+      {
+        "security_id": "603259",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "9281838665.53",
+        "cost": "5877982926.71",
+        "gross_margin": "36.6722",
+        "revenue_yoy": "66.1602",
+        "disclosure_date": "2022-07-27"
+      },
+      {
+        "security_id": "603259",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "10638303791.29",
+        "cost": "6534446775.42",
+        "gross_margin": "38.5762",
+        "revenue_yoy": "77.7550",
+        "disclosure_date": "2022-10-27"
+      },
+      {
+        "security_id": "603259",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "10960216015.12",
+        "cost": "6823461015.30",
+        "gross_margin": "37.7434",
+        "revenue_yoy": "71.7629",
+        "disclosure_date": "2023-03-21"
+      },
+      {
+        "security_id": "603259",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "8963741607.53",
+        "cost": "5387881541.14",
+        "gross_margin": "39.8925",
+        "revenue_yoy": "5.7741",
+        "disclosure_date": "2023-04-25"
+      },
+      {
+        "security_id": "603259",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "9907543890.09",
+        "cost": "5837596269.37",
+        "gross_margin": "41.0793",
+        "revenue_yoy": "6.7412",
+        "disclosure_date": "2023-08-01"
+      },
+      {
+        "security_id": "603259",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "10670040635.96",
+        "cost": "6115829358.81",
+        "gross_margin": "42.6822",
+        "revenue_yoy": "0.2983",
+        "disclosure_date": "2023-10-31"
+      },
+      {
+        "security_id": "603259",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "10799480743.46",
+        "cost": "6387492468.45",
+        "gross_margin": "40.8537",
+        "revenue_yoy": "-1.4665",
+        "disclosure_date": "2024-03-19"
+      },
+      {
+        "security_id": "603259",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "7981934236.96",
+        "cost": "4938382494.26",
+        "gross_margin": "38.1305",
+        "revenue_yoy": "-10.9531",
+        "disclosure_date": "2024-04-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "9258984026.06",
+        "cost": "5515554396.18",
+        "gross_margin": "40.4302",
+        "revenue_yoy": "-6.5461",
+        "disclosure_date": "2024-07-30"
+      },
+      {
+        "security_id": "603259",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "10461083991.74",
+        "cost": "5986319238.73",
+        "gross_margin": "42.7753",
+        "revenue_yoy": "-1.9583",
+        "disclosure_date": "2024-10-29"
+      },
+      {
+        "security_id": "603259",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "11539429105.12",
+        "cost": "6524259331.45",
+        "gross_margin": "43.4612",
+        "revenue_yoy": "6.8517",
+        "disclosure_date": "2025-03-18"
+      },
+      {
+        "security_id": "603259",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "9654595304.28",
+        "cost": "5574529171.26",
+        "gross_margin": "42.2604",
+        "revenue_yoy": "20.9556",
+        "disclosure_date": "2025-04-29"
+      },
+      {
+        "security_id": "603259",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "11144686578.18",
+        "cost": "5979595037.64",
+        "gross_margin": "46.3458",
+        "revenue_yoy": "20.3662",
+        "disclosure_date": "2025-07-29"
+      },
+      {
+        "security_id": "603259",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "12057434626.40",
+        "cost": "5983974428.89",
+        "gross_margin": "50.3711",
+        "revenue_yoy": "15.2599",
+        "disclosure_date": "2025-10-27"
+      },
+      {
+        "security_id": "603259",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "12599449265.32",
+        "cost": "6263335920.15",
+        "gross_margin": "50.2888",
+        "revenue_yoy": "9.1861",
+        "disclosure_date": "2026-03-24"
+      },
+      {
+        "security_id": "603259",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "12435776568.29",
+        "cost": "6167822778.36",
+        "gross_margin": "50.4026",
+        "revenue_yoy": "28.8068",
+        "disclosure_date": "2026-04-28"
+      },
+      {
+        "security_id": "603259",
+        "period": "2026Q2",
+        "period_type": "单季度",
+        "revenue": "16461702150.07",
+        "cost": "7151176771.22",
+        "gross_margin": "56.5587",
+        "revenue_yoy": "47.7090",
+        "disclosure_date": "2026-08-04"
+      }
+    ],
+    "000538": [
+      {
+        "security_id": "000538",
+        "period": "2001Q3",
+        "period_type": "单季度",
+        "revenue": "271028076.22",
+        "cost": "188050867.63",
+        "gross_margin": "30.6157",
+        "revenue_yoy": null,
+        "disclosure_date": "2002-10-25"
+      },
+      {
+        "security_id": "000538",
+        "period": "2001Q4",
+        "period_type": "单季度",
+        "revenue": "235953938.25",
+        "cost": "143251598.27",
+        "gross_margin": "39.2883",
+        "revenue_yoy": null,
+        "disclosure_date": "2003-03-01"
+      },
+      {
+        "security_id": "000538",
+        "period": "2002Q1",
+        "period_type": "单季度",
+        "revenue": "226799360.57",
+        "cost": "147222667.11",
+        "gross_margin": "35.0868",
+        "revenue_yoy": null,
+        "disclosure_date": "2002-04-18"
+      },
+      {
+        "security_id": "000538",
+        "period": "2002Q2",
+        "period_type": "单季度",
+        "revenue": "261986252.69",
+        "cost": "165014838.39",
+        "gross_margin": "37.0139",
+        "revenue_yoy": null,
+        "disclosure_date": "2003-07-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2002Q3",
+        "period_type": "单季度",
+        "revenue": "297161938.19",
+        "cost": "188640647.21",
+        "gross_margin": "36.5192",
+        "revenue_yoy": "9.6425",
+        "disclosure_date": "2003-10-23"
+      },
+      {
+        "security_id": "000538",
+        "period": "2002Q4",
+        "period_type": "单季度",
+        "revenue": "314994948.04",
+        "cost": "204658043.18",
+        "gross_margin": "35.0282",
+        "revenue_yoy": "33.4985",
+        "disclosure_date": "2004-03-02"
+      },
+      {
+        "security_id": "000538",
+        "period": "2003Q1",
+        "period_type": "单季度",
+        "revenue": "286112507.83",
+        "cost": "193331985.47",
+        "gross_margin": "32.4280",
+        "revenue_yoy": "26.1523",
+        "disclosure_date": "2004-04-20"
+      },
+      {
+        "security_id": "000538",
+        "period": "2003Q2",
+        "period_type": "单季度",
+        "revenue": "336389306.61",
+        "cost": "229821779.79",
+        "gross_margin": "31.6798",
+        "revenue_yoy": "28.3996",
+        "disclosure_date": "2004-07-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2003Q3",
+        "period_type": "单季度",
+        "revenue": "333170628.44",
+        "cost": "226157442.41",
+        "gross_margin": "32.1196",
+        "revenue_yoy": "12.1175",
+        "disclosure_date": "2004-10-21"
+      },
+      {
+        "security_id": "000538",
+        "period": "2003Q4",
+        "period_type": "单季度",
+        "revenue": "389161935.92",
+        "cost": "278907830.23",
+        "gross_margin": "28.3312",
+        "revenue_yoy": "23.5455",
+        "disclosure_date": "2005-03-04"
+      },
+      {
+        "security_id": "000538",
+        "period": "2004Q1",
+        "period_type": "单季度",
+        "revenue": "372007516.76",
+        "cost": "270671826.71",
+        "gross_margin": "27.2402",
+        "revenue_yoy": "30.0214",
+        "disclosure_date": "2005-04-19"
+      },
+      {
+        "security_id": "000538",
+        "period": "2004Q2",
+        "period_type": "单季度",
+        "revenue": "479599695.57",
+        "cost": "315835148.61",
+        "gross_margin": "34.1461",
+        "revenue_yoy": "42.5728",
+        "disclosure_date": "2005-07-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2004Q3",
+        "period_type": "单季度",
+        "revenue": "475458538.38",
+        "cost": "331082802.53",
+        "gross_margin": "30.3656",
+        "revenue_yoy": "42.7072",
+        "disclosure_date": "2005-10-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2004Q4",
+        "period_type": "单季度",
+        "revenue": "505246446.15",
+        "cost": "356661411.73",
+        "gross_margin": "29.4084",
+        "revenue_yoy": "29.8294",
+        "disclosure_date": "2006-04-17"
+      },
+      {
+        "security_id": "000538",
+        "period": "2005Q1",
+        "period_type": "单季度",
+        "revenue": "519430352.15",
+        "cost": "368123776.03",
+        "gross_margin": "29.1293",
+        "revenue_yoy": "39.6290",
+        "disclosure_date": "2006-04-17"
+      },
+      {
+        "security_id": "000538",
+        "period": "2005Q2",
+        "period_type": "单季度",
+        "revenue": "613645945.35",
+        "cost": "434790937.02",
+        "gross_margin": "29.1463",
+        "revenue_yoy": "27.9496",
+        "disclosure_date": "2006-07-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2005Q3",
+        "period_type": "单季度",
+        "revenue": "649907833.95",
+        "cost": "469064924.10",
+        "gross_margin": "27.8259",
+        "revenue_yoy": "36.6907",
+        "disclosure_date": "2006-10-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2005Q4",
+        "period_type": "单季度",
+        "revenue": "665410890.39",
+        "cost": "491778290.01",
+        "gross_margin": "26.0940",
+        "revenue_yoy": "31.7003",
+        "disclosure_date": "2007-03-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2006Q1",
+        "period_type": "单季度",
+        "revenue": "729901416.84",
+        "cost": "492350140.21",
+        "gross_margin": "32.5457",
+        "revenue_yoy": "40.5196",
+        "disclosure_date": "2007-04-18"
+      },
+      {
+        "security_id": "000538",
+        "period": "2006Q2",
+        "period_type": "单季度",
+        "revenue": "742866668.69",
+        "cost": "540983984.61",
+        "gross_margin": "27.1762",
+        "revenue_yoy": "21.0579",
+        "disclosure_date": "2007-08-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2006Q3",
+        "period_type": "单季度",
+        "revenue": "841740141.77",
+        "cost": "611436778.30",
+        "gross_margin": "27.3604",
+        "revenue_yoy": "29.5168",
+        "disclosure_date": "2007-10-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2006Q4",
+        "period_type": "单季度",
+        "revenue": "889857372.6",
+        "cost": "629778164.81",
+        "gross_margin": "29.2271",
+        "revenue_yoy": "33.7305",
+        "disclosure_date": "2008-04-09"
+      },
+      {
+        "security_id": "000538",
+        "period": "2007Q1",
+        "period_type": "单季度",
+        "revenue": "855108072.71",
+        "cost": "616735197.09",
+        "gross_margin": "27.8763",
+        "revenue_yoy": "17.1539",
+        "disclosure_date": "2008-04-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2007Q2",
+        "period_type": "单季度",
+        "revenue": "903382348.29",
+        "cost": "641365387.68",
+        "gross_margin": "29.0040",
+        "revenue_yoy": "21.6076",
+        "disclosure_date": "2008-08-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2007Q3",
+        "period_type": "单季度",
+        "revenue": "1103599182.71",
+        "cost": "824438446.19",
+        "gross_margin": "25.2955",
+        "revenue_yoy": "31.1092",
+        "disclosure_date": "2008-10-24"
+      },
+      {
+        "security_id": "000538",
+        "period": "2007Q4",
+        "period_type": "单季度",
+        "revenue": "1401178948.54",
+        "cost": "853260680.31",
+        "gross_margin": "39.1041",
+        "revenue_yoy": "57.4611",
+        "disclosure_date": "2009-04-24"
+      },
+      {
+        "security_id": "000538",
+        "period": "2008Q1",
+        "period_type": "单季度",
+        "revenue": "1131962293.76",
+        "cost": "831269281.43",
+        "gross_margin": "26.5639",
+        "revenue_yoy": "32.3765",
+        "disclosure_date": "2009-04-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2008Q2",
+        "period_type": "单季度",
+        "revenue": "1597932824.76",
+        "cost": "1146264411.77",
+        "gross_margin": "28.2658",
+        "revenue_yoy": "76.8833",
+        "disclosure_date": "2009-08-15"
+      },
+      {
+        "security_id": "000538",
+        "period": "2008Q3",
+        "period_type": "单季度",
+        "revenue": "1377778841.17",
+        "cost": "1023271131.11",
+        "gross_margin": "25.7304",
+        "revenue_yoy": "24.8441",
+        "disclosure_date": "2009-10-24"
+      },
+      {
+        "security_id": "000538",
+        "period": "2008Q4",
+        "period_type": "单季度",
+        "revenue": "1615524707.96",
+        "cost": "957186249.17",
+        "gross_margin": "40.7508",
+        "revenue_yoy": "15.2975",
+        "disclosure_date": "2010-04-24"
+      },
+      {
+        "security_id": "000538",
+        "period": "2009Q1",
+        "period_type": "单季度",
+        "revenue": "1522928182.99",
+        "cost": "1168392631.38",
+        "gross_margin": "23.2799",
+        "revenue_yoy": "34.5388",
+        "disclosure_date": "2010-04-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2009Q2",
+        "period_type": "单季度",
+        "revenue": "2029436967.41",
+        "cost": "1333951904.81",
+        "gross_margin": "34.2699",
+        "revenue_yoy": "27.0039",
+        "disclosure_date": "2010-08-21"
+      },
+      {
+        "security_id": "000538",
+        "period": "2009Q3",
+        "period_type": "单季度",
+        "revenue": "1758056247.26",
+        "cost": "1269026874.31",
+        "gross_margin": "27.8165",
+        "revenue_yoy": "27.6008",
+        "disclosure_date": "2010-10-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2009Q4",
+        "period_type": "单季度",
+        "revenue": "1861362645.97",
+        "cost": "1223485142.19",
+        "gross_margin": "34.2694",
+        "revenue_yoy": "15.2172",
+        "disclosure_date": "2011-03-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2010Q1",
+        "period_type": "单季度",
+        "revenue": "2133237989.27",
+        "cost": "1546262787.56",
+        "gross_margin": "27.5157",
+        "revenue_yoy": "40.0748",
+        "disclosure_date": "2010-04-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2010Q2",
+        "period_type": "单季度",
+        "revenue": "2368916798.90",
+        "cost": "1608840997.07",
+        "gross_margin": "32.0854",
+        "revenue_yoy": "16.7278",
+        "disclosure_date": "2010-08-21"
+      },
+      {
+        "security_id": "000538",
+        "period": "2010Q3",
+        "period_type": "单季度",
+        "revenue": "2158420732.06",
+        "cost": "1508002558.36",
+        "gross_margin": "30.1340",
+        "revenue_yoy": "22.7731",
+        "disclosure_date": "2010-10-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2010Q4",
+        "period_type": "单季度",
+        "revenue": "3414862314.03",
+        "cost": "2341658318.45",
+        "gross_margin": "31.4274",
+        "revenue_yoy": "83.4603",
+        "disclosure_date": "2011-03-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2011Q1",
+        "period_type": "单季度",
+        "revenue": "2457338833.32",
+        "cost": "1815543309.2",
+        "gross_margin": "26.1175",
+        "revenue_yoy": "15.1929",
+        "disclosure_date": "2011-04-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2011Q2",
+        "period_type": "单季度",
+        "revenue": "2616481152.87",
+        "cost": "1641026930.41",
+        "gross_margin": "37.2811",
+        "revenue_yoy": "10.4505",
+        "disclosure_date": "2011-08-20"
+      },
+      {
+        "security_id": "000538",
+        "period": "2011Q3",
+        "period_type": "单季度",
+        "revenue": "2667832413.83",
+        "cost": "1883323113.56",
+        "gross_margin": "29.4062",
+        "revenue_yoy": "23.6011",
+        "disclosure_date": "2011-10-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2011Q4",
+        "period_type": "单季度",
+        "revenue": "3570670032.01",
+        "cost": "2581914874.97",
+        "gross_margin": "27.6910",
+        "revenue_yoy": "4.5626",
+        "disclosure_date": "2012-03-17"
+      },
+      {
+        "security_id": "000538",
+        "period": "2012Q1",
+        "period_type": "单季度",
+        "revenue": "2831893129.81",
+        "cost": "2011443069.7",
+        "gross_margin": "28.9718",
+        "revenue_yoy": "15.2423",
+        "disclosure_date": "2012-04-21"
+      },
+      {
+        "security_id": "000538",
+        "period": "2012Q2",
+        "period_type": "单季度",
+        "revenue": "3309847680.52",
+        "cost": "2335767580.92",
+        "gross_margin": "29.4298",
+        "revenue_yoy": "26.5000",
+        "disclosure_date": "2012-08-16"
+      },
+      {
+        "security_id": "000538",
+        "period": "2012Q3",
+        "period_type": "单季度",
+        "revenue": "3518142313.26",
+        "cost": "2341949801.00",
+        "gross_margin": "33.4322",
+        "revenue_yoy": "31.8727",
+        "disclosure_date": "2012-10-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2012Q4",
+        "period_type": "单季度",
+        "revenue": "4155358945.87",
+        "cost": "2903385888.24",
+        "gross_margin": "30.1291",
+        "revenue_yoy": "16.3748",
+        "disclosure_date": "2013-03-19"
+      },
+      {
+        "security_id": "000538",
+        "period": "2013Q1",
+        "period_type": "单季度",
+        "revenue": "3348966758.87",
+        "cost": "2386265043.84",
+        "gross_margin": "28.7462",
+        "revenue_yoy": "18.2589",
+        "disclosure_date": "2013-04-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2013Q2",
+        "period_type": "单季度",
+        "revenue": "3962474471.16",
+        "cost": "2716859484.44",
+        "gross_margin": "31.4353",
+        "revenue_yoy": "19.7177",
+        "disclosure_date": "2013-08-22"
+      },
+      {
+        "security_id": "000538",
+        "period": "2013Q3",
+        "period_type": "单季度",
+        "revenue": "3917239845.35",
+        "cost": "2658589979.46",
+        "gross_margin": "32.1310",
+        "revenue_yoy": "11.3440",
+        "disclosure_date": "2013-10-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2013Q4",
+        "period_type": "单季度",
+        "revenue": "4586109805.43",
+        "cost": "3356670417.11",
+        "gross_margin": "26.8079",
+        "revenue_yoy": "10.3662",
+        "disclosure_date": "2014-03-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2014Q1",
+        "period_type": "单季度",
+        "revenue": "4158805171.01",
+        "cost": "2900356205.57",
+        "gross_margin": "30.2599",
+        "revenue_yoy": "24.1817",
+        "disclosure_date": "2014-04-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2014Q2",
+        "period_type": "单季度",
+        "revenue": "4468601332.33",
+        "cost": "3141834399.67",
+        "gross_margin": "29.6909",
+        "revenue_yoy": "12.7730",
+        "disclosure_date": "2014-08-22"
+      },
+      {
+        "security_id": "000538",
+        "period": "2014Q3",
+        "period_type": "单季度",
+        "revenue": "4690115853.86",
+        "cost": "3234328888.85",
+        "gross_margin": "31.0395",
+        "revenue_yoy": "19.7301",
+        "disclosure_date": "2014-10-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2014Q4",
+        "period_type": "单季度",
+        "revenue": "5496844015.54",
+        "cost": "3862678164.25",
+        "gross_margin": "29.7292",
+        "revenue_yoy": "19.8585",
+        "disclosure_date": "2015-04-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2015Q1",
+        "period_type": "单季度",
+        "revenue": "4708930602.84",
+        "cost": "3326260605.91",
+        "gross_margin": "29.3627",
+        "revenue_yoy": "13.2280",
+        "disclosure_date": "2015-04-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2015Q2",
+        "period_type": "单季度",
+        "revenue": "4833644121.71",
+        "cost": "3295938499.27",
+        "gross_margin": "31.8126",
+        "revenue_yoy": "8.1691",
+        "disclosure_date": "2015-08-20"
+      },
+      {
+        "security_id": "000538",
+        "period": "2015Q3",
+        "period_type": "单季度",
+        "revenue": "5145199663.59",
+        "cost": "3456647475.20",
+        "gross_margin": "32.8180",
+        "revenue_yoy": "9.7030",
+        "disclosure_date": "2015-10-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2015Q4",
+        "period_type": "单季度",
+        "revenue": "6050351816.94",
+        "cost": "4327058244.18",
+        "gross_margin": "28.4825",
+        "revenue_yoy": "10.0696",
+        "disclosure_date": "2016-04-20"
+      },
+      {
+        "security_id": "000538",
+        "period": "2016Q1",
+        "period_type": "单季度",
+        "revenue": "5170468851.67",
+        "cost": "3687217637.39",
+        "gross_margin": "28.6870",
+        "revenue_yoy": "9.8013",
+        "disclosure_date": "2016-04-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2016Q2",
+        "period_type": "单季度",
+        "revenue": "5281945642.27",
+        "cost": "3618395872.98",
+        "gross_margin": "31.4950",
+        "revenue_yoy": "9.2746",
+        "disclosure_date": "2016-08-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2016Q3",
+        "period_type": "单季度",
+        "revenue": "5835265244.82",
+        "cost": "3931108598.91",
+        "gross_margin": "32.6319",
+        "revenue_yoy": "13.4118",
+        "disclosure_date": "2016-10-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2016Q4",
+        "period_type": "单季度",
+        "revenue": "6122974665.55",
+        "cost": "4481239094.63",
+        "gross_margin": "26.8127",
+        "revenue_yoy": "1.2003",
+        "disclosure_date": "2017-04-22"
+      },
+      {
+        "security_id": "000538",
+        "period": "2017Q1",
+        "period_type": "单季度",
+        "revenue": "5908715879.97",
+        "cost": "4104524267.67",
+        "gross_margin": "30.5344",
+        "revenue_yoy": "14.2781",
+        "disclosure_date": "2017-04-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2017Q2",
+        "period_type": "单季度",
+        "revenue": "6051604453.86",
+        "cost": "4055286650.21",
+        "gross_margin": "32.9882",
+        "revenue_yoy": "14.5715",
+        "disclosure_date": "2017-08-24"
+      },
+      {
+        "security_id": "000538",
+        "period": "2017Q3",
+        "period_type": "单季度",
+        "revenue": "6047471689.17",
+        "cost": "4118010644.06",
+        "gross_margin": "31.9053",
+        "revenue_yoy": "3.6366",
+        "disclosure_date": "2017-10-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2017Q4",
+        "period_type": "单季度",
+        "revenue": "6306822021.21",
+        "cost": "4453753647.75",
+        "gross_margin": "29.3820",
+        "revenue_yoy": "3.0026",
+        "disclosure_date": "2018-04-12"
+      },
+      {
+        "security_id": "000538",
+        "period": "2018Q1",
+        "period_type": "单季度",
+        "revenue": "6337444217.97",
+        "cost": "4407296456.78",
+        "gross_margin": "30.4562",
+        "revenue_yoy": "7.2559",
+        "disclosure_date": "2018-04-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2018Q2",
+        "period_type": "单季度",
+        "revenue": "6807660857.58",
+        "cost": "4640067117.57",
+        "gross_margin": "31.8405",
+        "revenue_yoy": "12.4935",
+        "disclosure_date": "2018-08-18"
+      },
+      {
+        "security_id": "000538",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "6831774885.72",
+        "cost": "4714339418.34",
+        "gross_margin": "30.9939",
+        "revenue_yoy": "12.9691",
+        "disclosure_date": "2018-10-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "7040034544.14",
+        "cost": "4812829540.67",
+        "gross_margin": "31.6363",
+        "revenue_yoy": "11.6257",
+        "disclosure_date": "2019-03-22"
+      },
+      {
+        "security_id": "000538",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "7005894122.86",
+        "cost": "5017467802.06",
+        "gross_margin": "28.3822",
+        "revenue_yoy": "10.5476",
+        "disclosure_date": "2019-04-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "6891489254.85",
+        "cost": "4844236788.80",
+        "gross_margin": "29.7070",
+        "revenue_yoy": "1.2314",
+        "disclosure_date": "2019-08-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "7748782135.04",
+        "cost": "5354958699.69",
+        "gross_margin": "30.8929",
+        "revenue_yoy": "13.4227",
+        "disclosure_date": "2019-10-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "8018508355.93",
+        "cost": "5974701060.85",
+        "gross_margin": "25.4886",
+        "revenue_yoy": "13.8987",
+        "disclosure_date": "2020-03-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "7743346885.1",
+        "cost": "5525431780.47",
+        "gross_margin": "28.6428",
+        "revenue_yoy": "10.5262",
+        "disclosure_date": "2020-04-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "7750118056.24",
+        "cost": "5479267932.02",
+        "gross_margin": "29.3008",
+        "revenue_yoy": "12.4593",
+        "disclosure_date": "2020-08-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "8437599150.97",
+        "cost": "5840027347.05",
+        "gross_margin": "30.7857",
+        "revenue_yoy": "8.8894",
+        "disclosure_date": "2020-10-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "8811702671.48",
+        "cost": "6811151075.02",
+        "gross_margin": "22.7033",
+        "revenue_yoy": "9.8920",
+        "disclosure_date": "2021-03-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "10327715582.47",
+        "cost": "7383392056.84",
+        "gross_margin": "28.5090",
+        "revenue_yoy": "33.3753",
+        "disclosure_date": "2021-04-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "8755401146.30",
+        "cost": "6173461667.63",
+        "gross_margin": "29.4897",
+        "revenue_yoy": "12.9712",
+        "disclosure_date": "2021-08-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "9279405760.86",
+        "cost": "6852883195.27",
+        "gross_margin": "26.1495",
+        "revenue_yoy": "9.9768",
+        "disclosure_date": "2021-10-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "8011396526.40",
+        "cost": "6088698202.24",
+        "gross_margin": "23.9995",
+        "revenue_yoy": "-9.0823",
+        "disclosure_date": "2022-03-26"
+      },
+      {
+        "security_id": "000538",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "9429539929.02",
+        "cost": "6587705590.68",
+        "gross_margin": "30.1376",
+        "revenue_yoy": "-8.6968",
+        "disclosure_date": "2022-04-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "8587198680.13",
+        "cost": "6204792541.27",
+        "gross_margin": "27.7437",
+        "revenue_yoy": "-1.9211",
+        "disclosure_date": "2022-08-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "8898951097.63",
+        "cost": "6529298205.86",
+        "gross_margin": "26.6285",
+        "revenue_yoy": "-4.1000",
+        "disclosure_date": "2022-10-28"
+      },
+      {
+        "security_id": "000538",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "9572682942.95",
+        "cost": "7561688967.65",
+        "gross_margin": "21.0076",
+        "revenue_yoy": "19.4883",
+        "disclosure_date": "2023-03-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "10512750996.14",
+        "cost": "7630142609.46",
+        "gross_margin": "27.4201",
+        "revenue_yoy": "11.4874",
+        "disclosure_date": "2023-04-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "9796621853.93",
+        "cost": "7083089657.94",
+        "gross_margin": "27.6987",
+        "revenue_yoy": "14.0840",
+        "disclosure_date": "2023-08-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "9379159224.37",
+        "cost": "6848534547.94",
+        "gross_margin": "26.9814",
+        "revenue_yoy": "5.3962",
+        "disclosure_date": "2023-10-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "9422760081.56",
+        "cost": "7182750824.95",
+        "gross_margin": "23.7723",
+        "revenue_yoy": "-1.5662",
+        "disclosure_date": "2024-03-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "10774290921.49",
+        "cost": "7544467227.29",
+        "gross_margin": "29.9771",
+        "revenue_yoy": "2.4878",
+        "disclosure_date": "2024-04-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "9680995366.03",
+        "cost": "6918342723.56",
+        "gross_margin": "28.5369",
+        "revenue_yoy": "-1.1803",
+        "disclosure_date": "2024-08-27"
+      },
+      {
+        "security_id": "000538",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "9459868782.32",
+        "cost": "6956036947.63",
+        "gross_margin": "26.4679",
+        "revenue_yoy": "0.8605",
+        "disclosure_date": "2024-10-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "10118145744.88",
+        "cost": "7445919306.62",
+        "gross_margin": "26.4102",
+        "revenue_yoy": "7.3799",
+        "disclosure_date": "2025-04-01"
+      },
+      {
+        "security_id": "000538",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "10841237721.29",
+        "cost": "7420335309.2",
+        "gross_margin": "31.5545",
+        "revenue_yoy": "0.6214",
+        "disclosure_date": "2025-04-29"
+      },
+      {
+        "security_id": "000538",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "10415865174.73",
+        "cost": "7277532760.09",
+        "gross_margin": "30.1303",
+        "revenue_yoy": "7.5908",
+        "disclosure_date": "2025-08-30"
+      },
+      {
+        "security_id": "000538",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "9397111312.99",
+        "cost": "6741721730.23",
+        "gross_margin": "28.2575",
+        "revenue_yoy": "-0.6634",
+        "disclosure_date": "2025-10-31"
+      },
+      {
+        "security_id": "000538",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "10532784881.30",
+        "cost": "7593333396.30",
+        "gross_margin": "27.9076",
+        "revenue_yoy": "4.0980",
+        "disclosure_date": "2026-04-01"
+      },
+      {
+        "security_id": "000538",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "11602596895.18",
+        "cost": "8048363101.82",
+        "gross_margin": "30.6331",
+        "revenue_yoy": "7.0228",
+        "disclosure_date": "2026-04-30"
+      }
+    ],
+    "002594": [
+      {
+        "security_id": "002594",
+        "period": "2010Q1",
+        "period_type": "单季度",
+        "revenue": "13246528000",
+        "cost": "9870607000",
+        "gross_margin": "25.4853",
+        "revenue_yoy": null,
+        "disclosure_date": "2011-06-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2010Q2",
+        "period_type": "单季度",
+        "revenue": "12018079000",
+        "cost": "9619942000",
+        "gross_margin": "19.9544",
+        "revenue_yoy": null,
+        "disclosure_date": "2011-08-23"
+      },
+      {
+        "security_id": "002594",
+        "period": "2010Q3",
+        "period_type": "单季度",
+        "revenue": "10626023000",
+        "cost": "8948466000",
+        "gross_margin": "15.7873",
+        "revenue_yoy": null,
+        "disclosure_date": "2011-10-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2010Q4",
+        "period_type": "单季度",
+        "revenue": "12557786000",
+        "cost": "10734961000",
+        "gross_margin": "14.5155",
+        "revenue_yoy": null,
+        "disclosure_date": "2011-06-08"
+      },
+      {
+        "security_id": "002594",
+        "period": "2011Q1",
+        "period_type": "单季度",
+        "revenue": "11710335000",
+        "cost": "9717091000",
+        "gross_margin": "17.0212",
+        "revenue_yoy": "-11.5969",
+        "disclosure_date": "2012-04-26"
+      },
+      {
+        "security_id": "002594",
+        "period": "2011Q2",
+        "period_type": "单季度",
+        "revenue": "10834329000",
+        "cost": "9274869000",
+        "gross_margin": "14.3937",
+        "revenue_yoy": "-9.8497",
+        "disclosure_date": "2011-08-23"
+      },
+      {
+        "security_id": "002594",
+        "period": "2011Q3",
+        "period_type": "单季度",
+        "revenue": "11789425000",
+        "cost": "9899712000",
+        "gross_margin": "16.0289",
+        "revenue_yoy": "10.9486",
+        "disclosure_date": "2011-10-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2011Q4",
+        "period_type": "单季度",
+        "revenue": "14492830000",
+        "cost": "11547117000",
+        "gross_margin": "20.3253",
+        "revenue_yoy": "15.4091",
+        "disclosure_date": "2012-03-26"
+      },
+      {
+        "security_id": "002594",
+        "period": "2012Q1",
+        "period_type": "单季度",
+        "revenue": "11734272000",
+        "cost": "9692229000",
+        "gross_margin": "17.4024",
+        "revenue_yoy": "0.2044",
+        "disclosure_date": "2012-04-26"
+      },
+      {
+        "security_id": "002594",
+        "period": "2012Q2",
+        "period_type": "单季度",
+        "revenue": "10847740000",
+        "cost": "9354339000",
+        "gross_margin": "13.7669",
+        "revenue_yoy": "0.1238",
+        "disclosure_date": "2012-08-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2012Q3",
+        "period_type": "单季度",
+        "revenue": "10526928000",
+        "cost": "9195135000",
+        "gross_margin": "12.6513",
+        "revenue_yoy": "-10.7087",
+        "disclosure_date": "2012-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2012Q4",
+        "period_type": "单季度",
+        "revenue": "13744834000",
+        "cost": "11911361000",
+        "gross_margin": "13.3394",
+        "revenue_yoy": "-5.1611",
+        "disclosure_date": "2013-03-25"
+      },
+      {
+        "security_id": "002594",
+        "period": "2013Q1",
+        "period_type": "单季度",
+        "revenue": "12883871000",
+        "cost": "10830404000",
+        "gross_margin": "15.9383",
+        "revenue_yoy": "9.7969",
+        "disclosure_date": "2013-04-26"
+      },
+      {
+        "security_id": "002594",
+        "period": "2013Q2",
+        "period_type": "单季度",
+        "revenue": "13157062000",
+        "cost": "11068815000",
+        "gross_margin": "15.8717",
+        "revenue_yoy": "21.2885",
+        "disclosure_date": "2013-08-26"
+      },
+      {
+        "security_id": "002594",
+        "period": "2013Q3",
+        "period_type": "单季度",
+        "revenue": "12663556000",
+        "cost": "10762268000",
+        "gross_margin": "15.0139",
+        "revenue_yoy": "20.2968",
+        "disclosure_date": "2013-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2013Q4",
+        "period_type": "单季度",
+        "revenue": "14158795000",
+        "cost": "12084068000",
+        "gross_margin": "14.6533",
+        "revenue_yoy": "3.0118",
+        "disclosure_date": "2014-03-20"
+      },
+      {
+        "security_id": "002594",
+        "period": "2014Q1",
+        "period_type": "单季度",
+        "revenue": "11723871000",
+        "cost": "9729657000",
+        "gross_margin": "17.0099",
+        "revenue_yoy": "-9.0035",
+        "disclosure_date": "2014-04-25"
+      },
+      {
+        "security_id": "002594",
+        "period": "2014Q2",
+        "period_type": "单季度",
+        "revenue": "14991835000",
+        "cost": "12524160000",
+        "gross_margin": "16.4601",
+        "revenue_yoy": "13.9452",
+        "disclosure_date": "2014-08-25"
+      },
+      {
+        "security_id": "002594",
+        "period": "2014Q3",
+        "period_type": "单季度",
+        "revenue": "13692897000",
+        "cost": "11948348000",
+        "gross_margin": "12.7405",
+        "revenue_yoy": "8.1284",
+        "disclosure_date": "2014-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2014Q4",
+        "period_type": "单季度",
+        "revenue": "17787275000",
+        "cost": "14941721000",
+        "gross_margin": "15.9977",
+        "revenue_yoy": "25.6270",
+        "disclosure_date": "2015-03-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2015Q1",
+        "period_type": "单季度",
+        "revenue": "15282504000",
+        "cost": "12659597000",
+        "gross_margin": "17.1628",
+        "revenue_yoy": "30.3537",
+        "disclosure_date": "2015-04-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2015Q2",
+        "period_type": "单季度",
+        "revenue": "16299862000",
+        "cost": "13416153000",
+        "gross_margin": "17.6916",
+        "revenue_yoy": "8.7249",
+        "disclosure_date": "2015-08-27"
+      },
+      {
+        "security_id": "002594",
+        "period": "2015Q3",
+        "period_type": "单季度",
+        "revenue": "16911208000",
+        "cost": "13814442000",
+        "gross_margin": "18.3119",
+        "revenue_yoy": "23.5035",
+        "disclosure_date": "2015-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2015Q4",
+        "period_type": "单季度",
+        "revenue": "31515394000",
+        "cost": "26623367000",
+        "gross_margin": "15.5227",
+        "revenue_yoy": "77.1794",
+        "disclosure_date": "2016-03-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2016Q1",
+        "period_type": "单季度",
+        "revenue": "20285247000",
+        "cost": "16419554000",
+        "gross_margin": "19.0567",
+        "revenue_yoy": "32.7351",
+        "disclosure_date": "2016-04-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2016Q2",
+        "period_type": "单季度",
+        "revenue": "24664318000",
+        "cost": "19168887000",
+        "gross_margin": "22.2809",
+        "revenue_yoy": "51.3161",
+        "disclosure_date": "2016-08-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2016Q3",
+        "period_type": "单季度",
+        "revenue": "27848225000",
+        "cost": "21865709000",
+        "gross_margin": "21.4826",
+        "revenue_yoy": "64.6732",
+        "disclosure_date": "2016-10-31"
+      },
+      {
+        "security_id": "002594",
+        "period": "2016Q4",
+        "period_type": "单季度",
+        "revenue": "30672207000",
+        "cost": "24946750000",
+        "gross_margin": "18.6666",
+        "revenue_yoy": "-2.6755",
+        "disclosure_date": "2017-03-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2017Q1",
+        "period_type": "单季度",
+        "revenue": "21046138000",
+        "cost": "16625725000",
+        "gross_margin": "21.0034",
+        "revenue_yoy": "3.7510",
+        "disclosure_date": "2017-04-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2017Q2",
+        "period_type": "单季度",
+        "revenue": "23991499000",
+        "cost": "19259669000",
+        "gross_margin": "19.7229",
+        "revenue_yoy": "-2.7279",
+        "disclosure_date": "2017-08-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2017Q3",
+        "period_type": "单季度",
+        "revenue": "28895258000",
+        "cost": "23365650000",
+        "gross_margin": "19.1367",
+        "revenue_yoy": "3.7598",
+        "disclosure_date": "2017-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2017Q4",
+        "period_type": "单季度",
+        "revenue": "31981807000",
+        "cost": "26524438000",
+        "gross_margin": "17.0640",
+        "revenue_yoy": "4.2697",
+        "disclosure_date": "2018-03-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2018Q1",
+        "period_type": "单季度",
+        "revenue": "24737565000",
+        "cost": "20496606000",
+        "gross_margin": "17.1438",
+        "revenue_yoy": "17.5397",
+        "disclosure_date": "2018-04-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2018Q2",
+        "period_type": "单季度",
+        "revenue": "29413365000",
+        "cost": "25511991000",
+        "gross_margin": "13.2639",
+        "revenue_yoy": "22.5991",
+        "disclosure_date": "2018-08-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2018Q3",
+        "period_type": "单季度",
+        "revenue": "34830396000",
+        "cost": "29114472000",
+        "gross_margin": "16.4107",
+        "revenue_yoy": "20.5402",
+        "disclosure_date": "2018-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2018Q4",
+        "period_type": "单季度",
+        "revenue": "41073381000",
+        "cost": "33602274000",
+        "gross_margin": "18.1897",
+        "revenue_yoy": "28.4273",
+        "disclosure_date": "2019-03-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2019Q1",
+        "period_type": "单季度",
+        "revenue": "30304111000",
+        "cost": "24531984000",
+        "gross_margin": "19.0473",
+        "revenue_yoy": "22.5024",
+        "disclosure_date": "2019-04-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2019Q2",
+        "period_type": "单季度",
+        "revenue": "31880152000",
+        "cost": "26990914000",
+        "gross_margin": "15.3363",
+        "revenue_yoy": "8.3866",
+        "disclosure_date": "2019-08-22"
+      },
+      {
+        "security_id": "002594",
+        "period": "2019Q3",
+        "period_type": "单季度",
+        "revenue": "31637534000",
+        "cost": "27252213000",
+        "gross_margin": "13.8611",
+        "revenue_yoy": "-9.1669",
+        "disclosure_date": "2019-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2019Q4",
+        "period_type": "单季度",
+        "revenue": "33916726000",
+        "cost": "28149177000",
+        "gross_margin": "17.0050",
+        "revenue_yoy": "-17.4241",
+        "disclosure_date": "2020-04-22"
+      },
+      {
+        "security_id": "002594",
+        "period": "2020Q1",
+        "period_type": "单季度",
+        "revenue": "19678542000",
+        "cost": "16203918000",
+        "gross_margin": "17.6569",
+        "revenue_yoy": "-35.0631",
+        "disclosure_date": "2020-04-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2020Q2",
+        "period_type": "单季度",
+        "revenue": "40824444000",
+        "cost": "32442767000",
+        "gross_margin": "20.5310",
+        "revenue_yoy": "28.0560",
+        "disclosure_date": "2020-08-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2020Q3",
+        "period_type": "单季度",
+        "revenue": "44519647000",
+        "cost": "34584857000",
+        "gross_margin": "22.3155",
+        "revenue_yoy": "40.7178",
+        "disclosure_date": "2020-10-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2020Q4",
+        "period_type": "单季度",
+        "revenue": "51575058000",
+        "cost": "43019838000",
+        "gross_margin": "16.5879",
+        "revenue_yoy": "52.0638",
+        "disclosure_date": "2021-03-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2021Q1",
+        "period_type": "单季度",
+        "revenue": "40991873000",
+        "cost": "35828950000",
+        "gross_margin": "12.5950",
+        "revenue_yoy": "108.3075",
+        "disclosure_date": "2021-04-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2021Q2",
+        "period_type": "单季度",
+        "revenue": "49893527000",
+        "cost": "43455968000",
+        "gross_margin": "12.9026",
+        "revenue_yoy": "22.2148",
+        "disclosure_date": "2021-08-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2021Q3",
+        "period_type": "单季度",
+        "revenue": "54306958000",
+        "cost": "47068821000",
+        "gross_margin": "13.3282",
+        "revenue_yoy": "21.9843",
+        "disclosure_date": "2021-10-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2021Q4",
+        "period_type": "单季度",
+        "revenue": "70950037000",
+        "cost": "61643950000",
+        "gross_margin": "13.1164",
+        "revenue_yoy": "37.5666",
+        "disclosure_date": "2022-03-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "66825185000",
+        "cost": "58537865000",
+        "gross_margin": "12.4015",
+        "revenue_yoy": "63.0206",
+        "disclosure_date": "2022-04-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "83782067000",
+        "cost": "71727613000",
+        "gross_margin": "14.3879",
+        "revenue_yoy": "67.9217",
+        "disclosure_date": "2022-08-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2022Q3",
+        "period_type": "单季度",
+        "revenue": "117080595000",
+        "cost": "94881469000",
+        "gross_margin": "18.9606",
+        "revenue_yoy": "115.5904",
+        "disclosure_date": "2022-10-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2022Q4",
+        "period_type": "单季度",
+        "revenue": "156372788000",
+        "cost": "126668733000",
+        "gross_margin": "18.9957",
+        "revenue_yoy": "120.3985",
+        "disclosure_date": "2023-03-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "120173608000",
+        "cost": "98706595000",
+        "gross_margin": "17.8633",
+        "revenue_yoy": "79.8328",
+        "disclosure_date": "2023-04-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "139950535000",
+        "cost": "113744961000",
+        "gross_margin": "18.7249",
+        "revenue_yoy": "67.0412",
+        "disclosure_date": "2023-08-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "162150695000",
+        "cost": "126275113000",
+        "gross_margin": "22.1248",
+        "revenue_yoy": "38.4949",
+        "disclosure_date": "2023-10-31"
+      },
+      {
+        "security_id": "002594",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "180040516000",
+        "cost": "151672276000",
+        "gross_margin": "15.7566",
+        "revenue_yoy": "15.1355",
+        "disclosure_date": "2024-03-27"
+      },
+      {
+        "security_id": "002594",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "124944397000",
+        "cost": "99074282000",
+        "gross_margin": "20.7053",
+        "revenue_yoy": "3.9699",
+        "disclosure_date": "2024-04-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "176182316000",
+        "cost": "145502726000",
+        "gross_margin": "17.4135",
+        "revenue_yoy": "25.8890",
+        "disclosure_date": "2024-08-29"
+      },
+      {
+        "security_id": "002594",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "201124599000",
+        "cost": "160654790000",
+        "gross_margin": "20.1218",
+        "revenue_yoy": "24.0356",
+        "disclosure_date": "2024-10-31"
+      },
+      {
+        "security_id": "002594",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "274851143000",
+        "cost": "220814818000",
+        "gross_margin": "19.6602",
+        "revenue_yoy": "52.6607",
+        "disclosure_date": "2025-03-25"
+      },
+      {
+        "security_id": "002594",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "170360448000",
+        "cost": "136175385000",
+        "gross_margin": "20.0663",
+        "revenue_yoy": "36.3490",
+        "disclosure_date": "2025-04-26"
+      },
+      {
+        "security_id": "002594",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "200920500000",
+        "cost": "168239704000",
+        "gross_margin": "16.2655",
+        "revenue_yoy": "14.0412",
+        "disclosure_date": "2025-08-30"
+      },
+      {
+        "security_id": "002594",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "194984598000",
+        "cost": "160638563000",
+        "gross_margin": "17.6147",
+        "revenue_yoy": "-3.0528",
+        "disclosure_date": "2025-10-31"
+      },
+      {
+        "security_id": "002594",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "237699412000",
+        "cost": "196251509000",
+        "gross_margin": "17.4371",
+        "revenue_yoy": "-13.5170",
+        "disclosure_date": "2026-03-28"
+      },
+      {
+        "security_id": "002594",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "150225314000",
+        "cost": "121973620000",
+        "gross_margin": "18.8062",
+        "revenue_yoy": "-11.8191",
+        "disclosure_date": "2026-04-29"
+      }
+    ],
+    "00175": [
+      {
+        "security_id": "00175",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "33506000000",
+        "cost": "28759000000",
+        "gross_margin": "14.1676",
+        "revenue_yoy": null,
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "39675745000",
+        "cost": "33882253000",
+        "gross_margin": "14.6021",
+        "revenue_yoy": null,
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2023Q3",
+        "period_type": "单季度",
+        "revenue": "50107255000",
+        "cost": "42368747000",
+        "gross_margin": "15.4439",
+        "revenue_yoy": null,
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2023Q4",
+        "period_type": "单季度",
+        "revenue": "55914592000",
+        "cost": "46778523000",
+        "gross_margin": "16.3393",
+        "revenue_yoy": null,
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "58225000000",
+        "cost": "49128000000",
+        "gross_margin": "15.6239",
+        "revenue_yoy": "73.7748",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "60567689000",
+        "cost": "49796341000",
+        "gross_margin": "17.7840",
+        "revenue_yoy": "52.6567",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2024Q3",
+        "period_type": "单季度",
+        "revenue": "70741311000",
+        "cost": "59823659000",
+        "gross_margin": "15.4332",
+        "revenue_yoy": "41.1798",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2024Q4",
+        "period_type": "单季度",
+        "revenue": "86376484000",
+        "cost": "71358735000",
+        "gross_margin": "17.3864",
+        "revenue_yoy": "54.4793",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "72692000000",
+        "cost": "61246000000",
+        "gross_margin": "15.7459",
+        "revenue_yoy": "24.8467",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "77592734000",
+        "cost": "64319995000",
+        "gross_margin": "17.1056",
+        "revenue_yoy": "28.1091",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2025Q3",
+        "period_type": "单季度",
+        "revenue": "89192266000",
+        "cost": "74399005000",
+        "gross_margin": "16.5858",
+        "revenue_yoy": "26.0823",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2025Q4",
+        "period_type": "单季度",
+        "revenue": "105755201000",
+        "cost": "87920471000",
+        "gross_margin": "16.8642",
+        "revenue_yoy": "22.4352",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "00175",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "83776000000",
+        "cost": "69112000000",
+        "gross_margin": "17.5038",
+        "revenue_yoy": "15.2479",
+        "disclosure_date": null
+      }
+    ],
+    "09868": [
+      {
+        "security_id": "09868",
+        "period": "2022Q1",
+        "period_type": "单季度",
+        "revenue": "7454938000",
+        "cost": "6544209000",
+        "gross_margin": "12.2165",
+        "revenue_yoy": null,
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2022Q2",
+        "period_type": "单季度",
+        "revenue": "7436345000",
+        "cost": "6626985000",
+        "gross_margin": "10.8838",
+        "revenue_yoy": null,
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2023Q1",
+        "period_type": "单季度",
+        "revenue": "4033420000",
+        "cost": "3966388000",
+        "gross_margin": "1.6619",
+        "revenue_yoy": "-45.8960",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2023Q2",
+        "period_type": "单季度",
+        "revenue": "5062696000",
+        "cost": "5260087000",
+        "gross_margin": "-3.8989",
+        "revenue_yoy": "-31.9196",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2024Q1",
+        "period_type": "单季度",
+        "revenue": "6548096000",
+        "cost": "5704343000",
+        "gross_margin": "12.8855",
+        "revenue_yoy": "62.3460",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2024Q2",
+        "period_type": "单季度",
+        "revenue": "8111407000",
+        "cost": "6975617000",
+        "gross_margin": "14.0024",
+        "revenue_yoy": "60.2191",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2025Q1",
+        "period_type": "单季度",
+        "revenue": "15810628000",
+        "cost": "13351098000",
+        "gross_margin": "15.5562",
+        "revenue_yoy": "141.4538",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2025Q2",
+        "period_type": "单季度",
+        "revenue": "18274405000",
+        "cost": "15107075000",
+        "gross_margin": "17.3321",
+        "revenue_yoy": "125.2927",
+        "disclosure_date": null
+      },
+      {
+        "security_id": "09868",
+        "period": "2026Q1",
+        "period_type": "单季度",
+        "revenue": "13033781000",
+        "cost": "10351188000",
+        "gross_margin": "20.5818",
+        "revenue_yoy": "-17.5632",
+        "disclosure_date": null
+      }
+    ]
+  },
+  "annual_revenue": {
+    "688981": {
+      "2025": "67323192000",
+      "2024": "57795570000",
+      "2023": "45250425000",
+      "2022": "49516084000",
+      "2021": "35630634000",
+      "2020": "27470709000",
+      "2019": "22017883000",
+      "2018": "23016706842.03",
+      "2017": "21389822412.14",
+      "2015": "2236415000",
+      "2014": "1969966000",
+      "2013": "2068964000",
+      "2012": "1701598000"
+    },
+    "603986": {
+      "2025": "9203463124.58",
+      "2024": "7355977677.11",
+      "2023": "5760823414.65",
+      "2022": "8129992424.99",
+      "2021": "8510223468.73",
+      "2020": "4496894867.81",
+      "2019": "3202917103.2",
+      "2018": "2245786322.12",
+      "2017": "2029708831.51",
+      "2016": "1488948172.02",
+      "2015": "1188780219.78",
+      "2014": "946723202.09",
+      "2013": "788808407.63",
+      "2012": "835116822.52",
+      "2011": "321846304.44"
+    },
+    "002371": {
+      "2025": "39353112419.78",
+      "2024": "30074860164.89",
+      "2023": "22079458092.37",
+      "2022": "14688111969.67",
+      "2021": "9683478119.38",
+      "2020": "6056043031.2",
+      "2019": "4058312881.7",
+      "2018": "3323850956.54",
+      "2017": "2222818469.69",
+      "2016": "1622387417.9",
+      "2015": "1220283907.99",
+      "2014": "961734097.25",
+      "2013": "859527070.19",
+      "2012": "1012243464.64",
+      "2011": "1155992985.74",
+      "2010": "810250646.02",
+      "2009": "587377409.99",
+      "2008": "579510172.91",
+      "2007": "530899963.43",
+      "2006": "464032201.4",
+      "2005": "414225992.48",
+      "2004": "397555322.92"
+    },
+    "600276": {
+      "2025": "31629416193.83",
+      "2024": "27984605342.06",
+      "2023": "22819784741.31",
+      "2022": "21275270681.52",
+      "2021": "25905526375.8",
+      "2020": "27734598747.82",
+      "2019": "23288576607.05",
+      "2018": "17417901050.02",
+      "2017": "13835629369.98",
+      "2016": "11093724121.18",
+      "2015": "9315960168.4",
+      "2014": "7452253087.84",
+      "2013": "6203074355.43",
+      "2012": "5435067561.2",
+      "2011": "4550391768.99",
+      "2010": "3744106269.5",
+      "2009": "3028960881.33",
+      "2008": "2392561159.48",
+      "2007": "1980615070.6",
+      "2006": "1436608583.3",
+      "2005": "1179259557.87",
+      "2004": "1145143619.19",
+      "2003": "1050352311.61",
+      "2002": "756025462.47",
+      "2001": "634268947.69",
+      "2000": "484707192.06",
+      "1999": "413929931.49",
+      "1998": "363792258.93",
+      "1997": "303570800.24"
+    },
+    "603259": {
+      "2025": "45456165774.18",
+      "2024": "39241431359.88",
+      "2023": "40340806877.04",
+      "2022": "39354777805.53",
+      "2021": "22902385129.11",
+      "2020": "16535431465.41",
+      "2019": "12872206437.16",
+      "2018": "9613683593.04",
+      "2017": "7765259856.28",
+      "2016": "6116130888.85",
+      "2015": "4883348961.96",
+      "2014": "4139780779.66"
+    },
+    "000538": {
+      "2025": "41186999090.31",
+      "2024": "40033300814.72",
+      "2023": "39111292156",
+      "2022": "36488372649.73",
+      "2021": "36373919016.03",
+      "2020": "32742766763.79",
+      "2019": "29664673868.68",
+      "2018": "27016914505.41",
+      "2017": "24314614044.21",
+      "2016": "22410654404.31",
+      "2015": "20738126205.08",
+      "2014": "18814366372.74",
+      "2013": "15814790880.81",
+      "2012": "13815242069.46",
+      "2011": "11312322432.03",
+      "2010": "10075437834.26",
+      "2009": "7171784043.63",
+      "2008": "5723198667.65",
+      "2007": "4263268552.25",
+      "2006": "3204365599.9",
+      "2005": "2448395021.84",
+      "2004": "1832312196.86",
+      "2003": "1344834378.8",
+      "2002": "1100942499.49",
+      "2001": "900299289.51",
+      "2000": "795296591.99",
+      "1999": "232004659.53",
+      "1998": "164529222.21",
+      "1997": "131814157.22",
+      "1996": "93394902.33",
+      "1995": "78967380.09",
+      "1994": "59465065.16",
+      "1993": "58364435.49",
+      "1992": "44851290",
+      "1991": "37260710",
+      "1990": "32932640"
+    },
+    "002594": {
+      "2025": "803964958000",
+      "2024": "777102455000",
+      "2023": "602315354000",
+      "2022": "424060635000",
+      "2021": "216142395000",
+      "2020": "156597691000",
+      "2019": "127738523000",
+      "2018": "130054707000",
+      "2017": "105914702000",
+      "2016": "103469997000",
+      "2015": "80008968000",
+      "2014": "58195878000",
+      "2013": "52863284000",
+      "2012": "46853774000",
+      "2011": "48826919000",
+      "2010": "48448416000",
+      "2009": "41113912000",
+      "2008": "27727209000",
+      "2007": "21211213000",
+      "2006": "12938917000",
+      "2005": "6529023000",
+      "2004": "6441869000",
+      "2003": "4076006000",
+      "2002": "2290898000"
+    },
+    "00175": {
+      "2025": "345232201000",
+      "2024": "275910484000",
+      "2023": "179203592000",
+      "2022": "147964647000",
+      "2021": "101611056000",
+      "2020": "92113878000",
+      "2018": "106595133000",
+      "2017": "92760718000",
+      "2016": "53721576000",
+      "2015": "30138256000",
+      "2014": "21738358000",
+      "2013": "28707571000",
+      "2012": "24627913000",
+      "2011": "20964931000",
+      "2010": "20099388000",
+      "2009": "14069225000",
+      "2007": "131720000",
+      "2006": "127006000",
+      "2005": "101411000",
+      "2004": "31903000",
+      "2003": "40516000"
+    },
+    "09868": {
+      "2025": "76719742000",
+      "2024": "40866309000",
+      "2023": "30676067000",
+      "2022": "26855119000",
+      "2021": "20988131000",
+      "2020": "5844321000"
+    }
+  },
+  "markets": {
+    "688981": "A股",
+    "603986": "A股",
+    "002371": "A股",
+    "600276": "A股",
+    "603259": "A股",
+    "000538": "A股",
+    "002594": "A股",
+    "00175": "港股",
+    "09868": "港股"
+  }
+}

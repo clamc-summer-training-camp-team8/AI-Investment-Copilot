@@ -47,6 +47,11 @@ jobs:
       - name: 跨模块契约 Schema 合法性
         run: python -m scripts.check_contracts
 
+      # 前端依 contracts/api/openapi.yaml 开发。接口改了却没重新导出，
+      # 前端会照着过期契约写完才发现对不上，所以这里必须拦住漂移。
+      - name: OpenAPI 契约与代码一致
+        run: python -m scripts.export_openapi --check
+
   test:
     name: 测试
     runs-on: ubuntu-latest

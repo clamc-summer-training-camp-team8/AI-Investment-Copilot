@@ -24,6 +24,7 @@ from analytics.pipelines.annotate_events import (
     RULING_VERSION,
     mentor_ruling,
 )
+from analytics.pipelines.universe import INDUSTRIES
 from app.ai.providers.local import guess_hypothesis_type, judge_impact
 from app.core.config import PROJECT_ROOT, Settings
 from app.core.enums import ImpactDirection
@@ -36,6 +37,7 @@ REPORT_DIR = PROJECT_ROOT / "real_data" / "reports"
 class Row:
     event_id: str
     company: str
+    industry: str
     title: str
     category: str
     split: str
@@ -53,8 +55,8 @@ def adjudicate(
 ) -> tuple[str, str]:
     """裁决规则：两名标注者冲突时的确定性处理（说明书 12 要求提交业务裁决）。
 
-    先应用 ``mentor-ruling-v1-20260811``；未被导师规则覆盖的分歧才使用一条
-    **公开写明的保守回退规则**，而不是把冲突样本丢掉：
+    真正的裁决应由业务导师做（GAP-004）。在导师确认前用一条**公开写明的保守规则**
+    占位，而不是把冲突样本丢掉：
 
     - 关联与否有分歧 → 以「有关联」为准，保留样本，方向取中性。
       丢掉分歧样本会把评测集变简单（本轮实测：丢弃后 329 条方向明确样本只剩 5 条），
@@ -97,6 +99,7 @@ def load_gold() -> list[Row]:
                 Row(
                     event_id=record["event_id"],
                     company=record["company"],
+                    industry=record.get("industry", ""),
                     title=record["title"],
                     category=record["category"],
                     split=record["split"],
@@ -144,7 +147,6 @@ def _vocab_overlap() -> float:
     「规则复现规则」而不是「模型理解业务」。自己算出来写清楚，比等别人质疑要好。
     """
     from analytics.evaluation.candidate_v2 import _TOPIC_PATTERNS
-
     gold = {term for _, pattern in CATEGORY_RULES for term in pattern.split("|")}
     v2 = {term for _, pattern in _TOPIC_PATTERNS for term in pattern.pattern.split("|")}
     if not v2:
@@ -197,8 +199,9 @@ def main() -> None:
         f"生成时间: {datetime.now().astimezone().isoformat()}",
         f"模型版本: {settings.llm_model_version} (provider={settings.llm_provider})",
         f"标注版本: {ANNOTATION_VERSION} / {RULING_VERSION}",
-        "数据版本: cninfo-announcement-v1",
+        "数据版本: cninfo-announcement-v2",
         "基线: 关键词法（analytics/evaluation/baseline.py）",
+        f"研究范围: {len(INDUSTRIES)} 个行业 × 3 家公司（{'、'.join(INDUSTRIES)}）",
         "",
         f"金标样本: {len(rows)} 条（全部样本，含裁决后的 {adjudicated} 条分歧样本）",
         f"其中影响核心假设: {linked} 条",
@@ -208,22 +211,42 @@ def main() -> None:
         "",
         "**本轮证明的是评测链路可运行、口径可复算，不构成 AI 能力结论。**",
         "",
-        "1. 导师裁决规则已生效，但程序化预标注仍不是独立金标；59 条盲标尚未完成。",
+        (
+            "1. 本报告仍以程序化预标注 + 导师规则裁决评估旧规则模型，不能替代独立金标。"
+            "59 条独立盲标已完成，结论见 `dataset/blind_annotation_result/REPORT.md`："
+            "筛选精度较高，但方向判断一致率不足。"
+        ),
         f"2. `candidate_v2` 的词表与金标词表重合 {_vocab_overlap():.0%}。",
         "   其准确率有相当部分来自「规则复现规则」，**不能读作 AI 能力**。",
         "   要得到可信数字，必须有独立于抽取规则的人工金标。这是本轮最重要的结论。",
         "3. `ai_local_v1` 是 `app/ai/providers/local.py` 的现网规则，未做任何改动。",
-        "   它的词表按研报正文措辞写（装机/需求/毛利率），与公告标题措辞不匹配，",
-        "   在 1382 条标题上只触发 19 次且全部误报。这是真实能力缺口，不是实现缺陷。",
+        "   它的词表按储能行业研报正文措辞写（装机/需求/毛利率），既不匹配公告标题，",
+        "   也不覆盖半导体与医药的措辞，因此召回率极低。这是真实能力缺口，不是实现缺陷。",
         "4. `candidate_v2` 的词表**只用样本内数据构造**，定稿后未依据样本外结果调整。",
         "   样本外那一次即最终成绩（说明书 10.2 第 2、4 步）。",
-        "5. 裁决后剩余样本缺少可分歧空间，kappa 不再具备独立诊断意义。",
+        "5. 裁决规则系统性偏向中性，会压低本报告中的方向一致率。",
+        "6. 跨行业后金标的方向一致性按行业差异很大（医药 kappa 0.50、半导体 0.69、",
+        "   汽车 0.96）。医药低是因为「拿到临床批件算不算支持需求」这类问题本身没有",
+        "   共识，需要业务裁决，不是标注者失误。",
         "",
     ]
 
     sections: list[str] = list(header)
     for label, subset in (("样本内", in_sample), ("样本外", out_sample), ("全样本", rows)):
         sections.extend(_report_block(label, evaluate(subset)))
+
+    # 分行业看样本外表现。总数会掩盖单行业失效：同一套规则在三个行业上的
+    # 召回与方向一致率差异很大，混在一起报只会得到一个没人能用的平均数。
+    sections.extend(["## 分行业（样本外）", ""])
+    for industry in INDUSTRIES:
+        subset = [r for r in out_sample if r.industry == industry]
+        if not subset:
+            sections.extend([f"### {industry}", "- 样本外无样本", ""])
+            continue
+        sections.append(f"### {industry}（{len(subset)} 条）")
+        for name, result in evaluate(subset).items():
+            sections.append(f"- **{name}**：" + "；".join(result.render()))
+        sections.append("")
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     target = REPORT_DIR / "evaluation_report.md"

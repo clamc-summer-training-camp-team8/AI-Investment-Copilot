@@ -7,10 +7,51 @@
 
 | 文件 | 说明 |
 | --- | --- |
-| `openapi.yaml` | 接口定义。可由 FastAPI 生成后固化，作为前端开发依据 |
+| `openapi.yaml` | 接口定义。**由 `make openapi` 从 `app/api` 生成，不要手改** |
 | `errors.yaml` | 统一错误码表 |
 
 前端依此开发，不读后端源码。接口未就绪时用契约生成 mock。
+
+契约由代码生成而非手写：手写会与实现漂移，而漂移的契约比没有契约更糟——前端照着它
+写完才发现对不上。CI 用 `python -m scripts.export_openapi --check` 拦住漂移，
+改完接口必须运行 `make openapi` 再提交。
+
+## 已就绪的读接口
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| GET | `/api/workbench` | 工作台：状态概览 + 三类待办 |
+| GET | `/api/theses` | 卡片列表，支持状态/标的/负责人/关键词过滤，强制分页 |
+| GET | `/api/theses/{id}` | 卡片详情 |
+| GET | `/api/theses/{id}/trends` | 按假设的趋势（最近 4-8 期，带口径） |
+| GET | `/api/theses/{id}/evidence` | 证据列表 |
+| GET | `/api/theses/{id}/suggestions` | 状态建议列表 |
+| GET | `/api/theses/{id}/audit` | 留痕，倒序分页 |
+| GET | `/api/reviews/adjudications` | 待裁决样本队列 |
+
+## 已就绪的写接口与后台任务
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| POST | `/api/theses/drafts` | 创建 AI 候选逻辑草稿 |
+| POST | `/api/theses/{id}/publish` | 人工确认并发布草稿 |
+| POST | `/api/theses/{id}/status` | 人工确认状态变更 |
+| POST | `/api/evidence/{id}/actions` | 确认、驳回或调整证据 |
+| POST | `/api/jobs/documents` | 上传文档并进入后台抽取队列 |
+| GET | `/api/jobs/{job_id}` | 查询后台任务状态 |
+| POST | `/api/reviews` | 创建复核任务 |
+| POST | `/api/reviews/{task_id}/resolve` | 解决复核任务 |
+
+## 身份传递
+
+本地开发默认 `AUTH_MODE=trusted_headers`，使用 `X-User-Id` 与 `X-User-Teams`
+模拟内网网关身份。试点和生产必须设置 `AUTH_MODE=jwt`，并配置签名密钥、issuer 与
+audience；客户端通过 `Authorization: Bearer <token>` 传递身份。非本地环境禁止启用
+受信请求头模式。
+
+**`X-User-Id` 必须是 ASCII**（账号 ID 或工号）。HTTP 头按 RFC 7230 只能承载
+latin-1，而示例数据里的负责人是「研究员A」这类中文名——中文直接放进请求头，客户端
+在编码阶段就会失败，不是服务端返回错误而是请求根本发不出去。中文姓名走展示层查询。
 
 ## 路由分组
 

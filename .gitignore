@@ -28,3 +28,10 @@ analytics/**/*.pkl
 
 # 未经清洗和授权检查的上传资料不进仓库。
 /uploads/
+
+# real_data/ 中经过来源核验、可公开再分发的数据纳入版本控制；这里只排除
+# 采集过程产生的大体积公告分片、行情分片和本地备份文件。
+/real_data/raw/announcements/
+/real_data/raw/quotes/
+/real_data/**/*.bak.json
+/real_data/**/*.v1.bak.json

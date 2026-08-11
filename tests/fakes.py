@@ -19,6 +19,7 @@ from app.core.domain import (
     ObservationRecord,
     ReviewTaskRecord,
     SuggestionRecord,
+    ThesisQuery,
     ThesisRecord,
     UnitOfWork,
     VersionRecord,
@@ -57,6 +58,32 @@ class FakeThesisRepo:
 
     def find_by_security(self, security_id: str) -> list[ThesisRecord]:
         return [replace(t) for t in self.theses.values() if t.security_id == security_id]
+
+    def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]:
+        """内存版分页查询。
+
+        排序与 SQL 实现保持一致（established_on 倒序 + thesis_id 兜底），否则
+        用 fake 写的分页测试通不过真实仓储。
+        """
+        rows = list(self.theses.values())
+        if query.statuses:
+            rows = [r for r in rows if r.status in query.statuses]
+        if query.securities:
+            rows = [r for r in rows if r.security_id in query.securities]
+        if query.owner:
+            rows = [r for r in rows if r.owner == query.owner]
+        if query.keyword:
+            needle = query.keyword.lower()
+            rows = [r for r in rows if needle in r.title.lower() or needle in r.core_view.lower()]
+
+        # established_on 倒序、thesis_id 正序。先按次键正排再按主键倒排会让次键
+        # 方向也跟着反过来，所以这里一次排完：主键取负不可行（date 不支持），
+        # 改用两段式 key 的等价写法——先按 thesis_id 正排，再稳定地按日期倒排。
+        rows.sort(key=lambda r: r.thesis_id)
+        rows.sort(key=lambda r: r.established_on, reverse=True)
+        total = len(rows)
+        window = rows[query.offset : query.offset + query.limit]
+        return [replace(r) for r in window], total
 
 
 class FakeEvidenceRepo:
@@ -148,6 +175,13 @@ class FakeAuditRepo:
 
     def list_for_object(self, object_type: str, object_id: str) -> list[AuditRecord]:
         return [r for r in self.items if r.object_type == object_type and r.object_id == object_id]
+
+    def page_for_object(
+        self, object_type: str, object_id: str, *, limit: int, offset: int
+    ) -> tuple[list[AuditRecord], int]:
+        """倒序分页，与 SQL 实现一致。"""
+        matched = list(reversed(self.list_for_object(object_type, object_id)))
+        return matched[offset : offset + limit], len(matched)
 
     def actions(self) -> list[str]:
         return [r.action for r in self.items]

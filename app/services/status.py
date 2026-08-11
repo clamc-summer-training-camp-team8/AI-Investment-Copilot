@@ -88,7 +88,15 @@ def compute_suggestion(
         )
 
         for mapping in uow.thesis.list_mappings(hypothesis.hypothesis_id):
-            threshold = mapping.invalidation_threshold or mapping.expected_value
+            # 必须用 `is None` 判断，不能用 `or`。阈值 0 是完全合法的业务取值
+            # （「营业收入同比转负则失效」就是阈值 0），而 Decimal("0.00") 为假，
+            # 用 `or` 会把它替换成预期值，失效判定从「同比转负」变成「同比低于预期」。
+            # 北方华创 2026Q1 同比 +26% 被判失效就是这个原因：26% < 预期 30%。
+            threshold = (
+                mapping.invalidation_threshold
+                if mapping.invalidation_threshold is not None
+                else mapping.expected_value
+            )
             if threshold is None:
                 continue
             observations = [

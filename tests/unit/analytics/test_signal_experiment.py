@@ -22,7 +22,7 @@ def _candidate(
 ) -> CandidateEvent:
     return CandidateEvent(
         event_id=event_id,
-        security_id="600000.SH",
+        security_id="600276",
         company="测试公司",
         title=event_id,
         disclosure_time=disclosure_time,
@@ -30,7 +30,7 @@ def _candidate(
         hypothesis="H1",
         direction=direction,
         label=ReturnLabel(
-            security_id="600000.SH",
+            security_id="600276",
             disclosure_time=disclosure_time,
             window_start=trading_day,
             window_end="2025-02-01",
@@ -65,14 +65,14 @@ class FakeBook:
     def unconditional_excess_returns(
         self, security_id: str, *, start: str, end: str
     ) -> list[Decimal]:
-        assert security_id == "600000.SH"
+        assert security_id == "600276"
         assert start == end == "2025-01-01"
         return [Decimal("1"), Decimal("-1"), Decimal("2")]
 
 
 def test_unconditional_baseline_respects_signal_direction() -> None:
     common = {
-        "security_id": "600000.SH",
+        "security_id": "600276",
         "company": "测试公司",
         "title": "公告",
         "disclosure_time": "2025-01-01T18:00:00+08:00",
@@ -101,15 +101,15 @@ def test_quote_book_builds_unconditional_forward_windows(tmp_path: Path) -> None
     payload = {
         "data_version": "test",
         "series": {
-            "600000.SH": {day: str(100 + index) for index, day in enumerate(days)},
-            "399006": {day: "100" for day in days},
+            "600276": {day: str(100 + index) for index, day in enumerate(days)},
+            "000913": {day: "100" for day in days},
         },
     }
     path = tmp_path / "quotes.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
     values = QuoteBook(path).unconditional_excess_returns(
-        "600000.SH", start="2025-01-01", end="2025-01-03", window_days=2
+        "600276", start="2025-01-01", end="2025-01-03", window_days=2
     )
 
     assert len(values) == 3

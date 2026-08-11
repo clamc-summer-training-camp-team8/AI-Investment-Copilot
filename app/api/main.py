@@ -67,9 +67,13 @@ def create_app() -> FastAPI:
             },
         )
 
-    from app.api.routers import jobs, review, thesis
+    from app.api.routers import jobs, review, reviews, thesis, workbench
 
     application.include_router(thesis.router, prefix="/api")
+    application.include_router(workbench.router, prefix="/api")
+    # 静态路径 /reviews/adjudications 必须先于 review 中的 /reviews/{task_id}
+    # 注册，否则 FastAPI 会把 "adjudications" 当作 task_id。
+    application.include_router(reviews.router, prefix="/api")
     application.include_router(review.router, prefix="/api")
     application.include_router(jobs.router, prefix="/api")
 

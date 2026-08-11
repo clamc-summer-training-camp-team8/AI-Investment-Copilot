@@ -1,0 +1,121 @@
+{
+  "annotation_version": "pre-annotation-v3",
+  "total": 3784,
+  "split_date": "2025-10-01",
+  "in_sample": 2489,
+  "out_of_sample": 1295,
+  "thesis_relevant": 459,
+  "needs_adjudication": 0,
+  "direction_kappa": 1.0,
+  "hypothesis_kappa": 1.0,
+  "direction_observed_agreement": 1.0,
+  "ruling_version": "mentor-ruling-v1-20260811",
+  "ruled_count": 921,
+  "unruled_count": 2863,
+  "direction_kappa_excluding_ruled": 1.0,
+  "ruled_rule_counts": {
+    "R10": 506,
+    "R1": 213,
+    "R6": 41,
+    "R5": 34,
+    "R11": 29,
+    "R12": 27,
+    "R2": 21,
+    "R14": 19,
+    "R15": 8,
+    "R16": 8,
+    "R3": 6,
+    "R13": 6,
+    "R8": 1,
+    "R4": 1,
+    "R7": 1
+  },
+  "category_counts": {
+    "治理": 1062,
+    "其他": 797,
+    "程式化披露": 600,
+    "股权激励": 261,
+    "药品研发进展": 245,
+    "回购与持股变动": 204,
+    "定期报告": 177,
+    "融资": 130,
+    "产销数据": 96,
+    "药品注册与上市": 71,
+    "担保与关联交易": 53,
+    "投资与产能": 39,
+    "风险与异动": 17,
+    "业绩预告": 15,
+    "订单与合同": 14,
+    "集采与准入": 2,
+    "药品质量与合规": 1
+  },
+  "imprecise_time_count": 3123,
+  "by_industry": {
+    "医药": {
+      "total": 1456,
+      "thesis_relevant": 149,
+      "in_sample": 987,
+      "out_of_sample": 469,
+      "needs_adjudication": 0,
+      "direction_kappa": 1.0,
+      "imprecise_time_count": 1438
+    },
+    "新能源汽车": {
+      "total": 1026,
+      "thesis_relevant": 172,
+      "in_sample": 673,
+      "out_of_sample": 353,
+      "needs_adjudication": 0,
+      "direction_kappa": 1.0,
+      "imprecise_time_count": 386
+    },
+    "芯片半导体": {
+      "total": 1302,
+      "thesis_relevant": 138,
+      "in_sample": 829,
+      "out_of_sample": 473,
+      "needs_adjudication": 0,
+      "direction_kappa": 1.0,
+      "imprecise_time_count": 1299
+    }
+  },
+  "by_company": {
+    "中芯国际": {
+      "total": 372,
+      "thesis_relevant": 67
+    },
+    "云南白药": {
+      "total": 236,
+      "thesis_relevant": 26
+    },
+    "兆易创新": {
+      "total": 514,
+      "thesis_relevant": 33
+    },
+    "北方华创": {
+      "total": 416,
+      "thesis_relevant": 38
+    },
+    "吉利汽车": {
+      "total": 451,
+      "thesis_relevant": 69
+    },
+    "小鹏汽车": {
+      "total": 184,
+      "thesis_relevant": 43
+    },
+    "恒瑞医药": {
+      "total": 694,
+      "thesis_relevant": 104
+    },
+    "比亚迪": {
+      "total": 391,
+      "thesis_relevant": 60
+    },
+    "药明康德": {
+      "total": 526,
+      "thesis_relevant": 19
+    }
+  },
+  "generated_at": "2026-08-11T15:30:18.012631+08:00"
+}

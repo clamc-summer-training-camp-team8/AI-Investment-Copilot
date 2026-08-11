@@ -1,4 +1,4 @@
-.PHONY: help install hooks fmt lint lint-arch lint-contracts type test test-integration check migrate revision seed clean
+.PHONY: help install hooks fmt lint lint-arch lint-contracts openapi type test test-integration check migrate revision seed clean
 .DEFAULT_GOAL := help
 
 PY := python3
@@ -9,7 +9,8 @@ help:
 	@echo "fmt               自动修复格式"
 	@echo "lint              ruff 检查"
 	@echo "lint-arch         分层依赖契约检查"
-	@echo "lint-contracts    contracts/ 下 Schema 合法性检查"
+	@echo "lint-contracts    contracts/ 下 Schema 合法性检查 + OpenAPI 契约未漂移"
+	@echo "openapi           由 app/api 重新导出 contracts/api/openapi.yaml"
 	@echo "type              mypy 类型检查"
 	@echo "test              单元 + 契约测试（不需要数据库）"
 	@echo "test-integration  集成测试（需要数据库）"
@@ -41,6 +42,10 @@ lint-arch:
 
 lint-contracts:
 	$(PY) -m scripts.check_contracts
+	$(PY) -m scripts.export_openapi --check
+
+openapi:
+	$(PY) -m scripts.export_openapi
 
 type:
 	mypy app
