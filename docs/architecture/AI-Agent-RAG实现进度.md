@@ -178,3 +178,17 @@
 遇到的问题：现有 `/theses/drafts` 请求模型仍要求 `view`，接口内部仍传入空 `segments`，因此 documents-only 还未贯通 HTTP API。
 
 解决/下一步：下一阶段扩展 `ThesisDraftIn`，允许传入来源片段或文档 ID，并由 API/服务层构造 `RetrievalDocument` 后调用 `ThesisDraftAgent`；保留 view 作为可选人工提示。
+### 阶段 6：EvidenceAgent 证据边界校验
+
+状态：实现完成，未接入后端持久化。
+
+主要内容：
+- 新增 `EvidenceAgent`，只校验 Agent 输出的 citations 是否来自本次检索结果或事件原始 locator。
+- 支持校验字符串引用和 `{locator: ...}` 引用格式。
+- 无引用、引用越界或存在 `unsupported_claims` 时标记为需要人工复核。
+- 新增 `EvidenceValidation` 结果对象，并支持批量校验 `AgentRunResult`。
+- 不修改数据库、不创建正式 Evidence、不改变 Thesis 状态，保持与后端职责分离。
+
+验证结果：AI 单元测试 8 passed。
+
+下一步：等待后端同学确定 Evidence 持久化字段后，由后端适配 `EvidenceValidation`，本支线继续完善 RAG 评测样例和真实模型兼容性测试。

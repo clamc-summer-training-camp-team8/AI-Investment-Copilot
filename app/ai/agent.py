@@ -107,6 +107,49 @@ class ThesisDraftAgent:
             outcome=outcome,
         )
 
+@dataclass(frozen=True)
+class EvidenceValidation:
+    valid: bool
+    cited_locators: tuple[str, ...]
+    missing_locators: tuple[str, ...]
+    unsupported_claims: tuple[str, ...]
+    requires_human_review: bool
+
+
+class EvidenceAgent:
+    """只校验证据边界，不写数据库，也不替换模型结论。"""
+
+    @staticmethod
+    def validate_impact(impact: AgentImpact) -> EvidenceValidation:
+        payload = impact.outcome.payload
+        allowed = {item.locator for item in impact.retrieval.items}
+        event = payload.get("event")
+        if isinstance(event, dict) and event.get("evidence_locator"):
+            allowed.add(str(event["evidence_locator"]))
+        citations = payload.get("citations")
+        cited: list[str] = []
+        if isinstance(citations, list):
+            for citation in citations:
+                if isinstance(citation, dict) and citation.get("locator"):
+                    cited.append(str(citation["locator"]))
+                elif isinstance(citation, str):
+                    cited.append(citation)
+        missing = sorted(set(cited) - allowed)
+        unsupported = payload.get("unsupported_claims")
+        unsupported_claims = tuple(str(item) for item in unsupported) if isinstance(unsupported, list) else ()
+        valid = bool(cited) and not missing and not unsupported_claims
+        return EvidenceValidation(
+            valid=valid,
+            cited_locators=tuple(cited),
+            missing_locators=tuple(missing),
+            unsupported_claims=unsupported_claims,
+            requires_human_review=not valid or impact.outcome.ai_status.value != "候选",
+        )
+
+    @staticmethod
+    def validate_run(result: AgentRunResult) -> list[EvidenceValidation]:
+        return [EvidenceAgent.validate_impact(impact) for impact in result.impacts]
+
 class InvestmentLogicChangeAgent:
     """把新事件编排为一组面向具体假设的候选影响结果。"""
 
