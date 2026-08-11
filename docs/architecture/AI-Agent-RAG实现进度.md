@@ -76,6 +76,34 @@
 - git diff --check 通过；
 - 真实网站抓取尚未执行，需后续在获得数据源访问和使用确认后做小批量验证。
 
+### 阶段 2B：可替换 Retriever 和 RAG 检索基线
+
+状态：实现完成，测试通过，待 Git 提交。
+
+实现内容：
+
+- 新增 Retriever Protocol；
+- 新增 RetrievalDocument、RetrievalQuery、RetrievedChunk、RetrievalResult；
+- 新增确定性 KeywordRetriever，作为不依赖额外向量数据库的 RAG 基线；
+- 检索支持 security_id、s_of 时间上界和 llowed_visibility 权限过滤；
+- 返回原文 document_id、locator、发布时间、来源和得分；
+- 后续 Chroma/pgvector 只需替换 Retriever 实现，不改变 Agent 契约。
+
+遇到的问题：
+
+- 当前依赖中没有 Chroma、FAISS 或 pgvector；
+- 如果先绑定具体向量库，会把基础设施选择和业务过滤规则混在一起。
+
+解决方法：
+
+- 先实现可复现关键词检索，冻结 RAG 的输入输出和权限/时间过滤语义；
+- 等真实数据规模和部署方式确认后，再增加向量检索实现。
+
+验证结果：
+
+- 	ests/unit/ai/test_retrieval.py：2 passed；
+- 已验证证券过滤、未来信息过滤、权限过滤和 locator 返回。
+
 ## 后续阶段占位
 
 ### 阶段 2：公告正文采集和文档标准化
