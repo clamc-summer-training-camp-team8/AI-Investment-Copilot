@@ -435,3 +435,23 @@ ThesisDraftAgent -> InvestmentLogicChangeAgent -> Evidence 校验 -> ReviewAgent
 ```
 
 无论 Agent 数量如何增加，正式 Thesis 发布、预期值和失效阈值确认仍由研究员完成。
+## 13. Agent 与后端职责边界决策
+
+本支线只实现 `app/ai/` 下的 AI 能力，不直接修改后端路由、业务服务、数据库模型和迁移文件，以降低多人并行开发时的合并冲突。
+
+Agent 采用“一个编排入口 + 可替换能力模块”的组织方式：
+
+```text
+后端事件/任务
+    -> Agent 编排入口
+       -> ThesisDraftAgent
+       -> InvestmentLogicChangeAgent
+       -> EvidenceAgent
+       -> ReviewAgent（P1）
+    -> 返回结构化候选结果
+    -> 后端负责持久化、状态变更和 API 返回
+```
+
+`Gateway`、`Provider`、`Retriever`、Prompt 和 Schema 校验属于 AI 公共基础设施；Agent 不直接写数据库、不发布 Thesis、不改变正式业务状态。后端同学只需依赖 Agent 的输入输出契约，数据格式确定后通过适配层接入。
+
+本次只冻结 Agent 边界，不改变当前 RAG 检索实现和数据库/向量库选型；RAG 存储升级另行评估。
