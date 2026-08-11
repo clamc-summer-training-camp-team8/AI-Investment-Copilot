@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.domain import (
@@ -284,6 +284,18 @@ def _to_version(row: ThesisVersion) -> VersionRecord:
     )
 
 
+def _to_audit(row: AuditLog) -> AuditRecord:
+    return AuditRecord(
+        actor=row.actor,
+        action=row.action,
+        object_type=row.object_type,
+        object_id=row.object_id,
+        detail=dict(row.detail) if row.detail else None,
+        model_version=row.model_version,
+        occurred_at=row.occurred_at,
+    )
+
+
 class SqlAuditRepo:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -301,20 +313,25 @@ class SqlAuditRepo:
         )
         self._session.flush()
 
+    def page_for_object(
+        self, object_type: str, object_id: str, *, limit: int, offset: int
+    ) -> tuple[list[AuditRecord], int]:
+        """分页版留痕查询。倒序：留痕页最关心最近发生了什么。"""
+        conditions = (AuditLog.object_type == object_type, AuditLog.object_id == object_id)
+        total = self._session.scalar(select(func.count()).select_from(AuditLog).where(*conditions))
+        rows = self._session.scalars(
+            select(AuditLog)
+            .where(*conditions)
+            .order_by(AuditLog.id.desc())
+            .limit(limit)
+            .offset(offset)
+        ).all()
+        return [_to_audit(r) for r in rows], int(total or 0)
+
     def list_for_object(self, object_type: str, object_id: str) -> list[AuditRecord]:
         rows = self._session.scalars(
             select(AuditLog)
             .where(AuditLog.object_type == object_type, AuditLog.object_id == object_id)
             .order_by(AuditLog.id)
         ).all()
-        return [
-            AuditRecord(
-                actor=r.actor,
-                action=r.action,
-                object_type=r.object_type,
-                object_id=r.object_id,
-                detail=dict(r.detail) if r.detail else None,
-                model_version=r.model_version,
-            )
-            for r in rows
-        ]
+        return [_to_audit(r) for r in rows]

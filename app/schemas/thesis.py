@@ -157,3 +157,104 @@ class ErrorOut(Base):
     message: str
     retryable: bool = False
     candidates: list[dict[str, str]] | None = None
+
+
+class TrendPointOut(Base):
+    """趋势上的一个点。值用字符串传，理由见模块文档第 1 条。"""
+
+    period: str
+    value: Decimal
+
+    @field_serializer("value")
+    def _value_as_str(self, value: Decimal) -> str:
+        return str(value)
+
+
+class HypothesisTrendOut(Base):
+    """假设趋势。
+
+    口径字段是必填而非可选：FR-V-001 要求同时展示口径、报告期与来源，
+    字段可选会让前端拿不到时静默不显示，那条要求就落空了。
+
+    `direction` 取「上升/下降/持平/信息不足」，不是预测。FR-V-002 明确不用
+    复杂预测模型，只给方向、斜率与连续性。
+    """
+
+    hypothesis_id: str
+    statement: str
+    metric_id: str
+    unit: str
+    period_type: str
+    metric_version: str
+    data_version: str | None = None
+    direction: str
+    slope: Decimal | None = None
+    consecutive_decline: int = 0
+    consecutive_below_expectation: int = 0
+    verdict: str | None = None
+    points: list[TrendPointOut] = Field(default_factory=list)
+    note: str = ""
+
+    @field_serializer("slope")
+    def _slope_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+
+class AuditOut(Base):
+    """一条留痕。"""
+
+    actor: str
+    action: str
+    object_type: str
+    object_id: str
+    model_version: str | None = None
+    occurred_at: datetime | None = None
+    detail: dict[str, object] | None = None
+
+
+class AuditPage(Base):
+    items: list[AuditOut]
+    page: PageMeta
+
+
+class PendingItemOut(Base):
+    """一条待办。`kind` 决定前端跳到哪个处置入口。"""
+
+    kind: str
+    thesis_id: str
+    title: str
+    object_id: str
+    summary: str
+    occurred_on: date | None = None
+
+
+class WorkbenchOut(Base):
+    """工作台聚合。只含当前用户可见的卡片。"""
+
+    status_counts: dict[str, int] = Field(default_factory=dict)
+    pending_evidence: list[PendingItemOut] = Field(default_factory=list)
+    pending_suggestions: list[PendingItemOut] = Field(default_factory=list)
+    review_due: list[PendingItemOut] = Field(default_factory=list)
+
+
+class AdjudicationOut(Base):
+    """一条待裁决样本。
+
+    两位标注者的判断都原样给出，不做合并：裁决界面要让导师看到分歧在哪，
+    给一个「系统建议」会引导他跟随而不是判断。
+    """
+
+    event_id: str
+    company: str
+    title: str
+    category: str
+    annotator_a_hypothesis: str
+    annotator_a_direction: str
+    annotator_b_hypothesis: str
+    annotator_b_direction: str
+    disagreement: str
+
+
+class AdjudicationPage(Base):
+    items: list[AdjudicationOut]
+    page: PageMeta

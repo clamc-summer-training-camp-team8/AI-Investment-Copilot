@@ -7,10 +7,35 @@
 
 | 文件 | 说明 |
 | --- | --- |
-| `openapi.yaml` | 接口定义。可由 FastAPI 生成后固化，作为前端开发依据 |
+| `openapi.yaml` | 接口定义。**由 `make openapi` 从 `app/api` 生成，不要手改** |
 | `errors.yaml` | 统一错误码表 |
 
 前端依此开发，不读后端源码。接口未就绪时用契约生成 mock。
+
+契约由代码生成而非手写：手写会与实现漂移，而漂移的契约比没有契约更糟——前端照着它
+写完才发现对不上。CI 用 `python -m scripts.export_openapi --check` 拦住漂移，
+改完接口必须运行 `make openapi` 再提交。
+
+## 已就绪的读接口
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| GET | `/api/workbench` | 工作台：状态概览 + 三类待办 |
+| GET | `/api/theses` | 卡片列表，支持状态/标的/负责人/关键词过滤，强制分页 |
+| GET | `/api/theses/{id}` | 卡片详情 |
+| GET | `/api/theses/{id}/trends` | 按假设的趋势（最近 4-8 期，带口径） |
+| GET | `/api/theses/{id}/evidence` | 证据列表 |
+| GET | `/api/theses/{id}/suggestions` | 状态建议列表 |
+| GET | `/api/theses/{id}/audit` | 留痕，倒序分页 |
+| GET | `/api/reviews/adjudications` | 待裁决样本队列 |
+
+## 身份传递
+
+MVP 用 `X-User-Id` 与 `X-User-Teams` 两个请求头，由内网网关注入。
+
+**`X-User-Id` 必须是 ASCII**（账号 ID 或工号）。HTTP 头按 RFC 7230 只能承载
+latin-1，而示例数据里的负责人是「研究员A」这类中文名——中文直接放进请求头，客户端
+在编码阶段就会失败，不是服务端返回错误而是请求根本发不出去。中文姓名走展示层查询。
 
 ## 路由分组
 

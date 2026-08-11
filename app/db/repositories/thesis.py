@@ -9,10 +9,16 @@ from __future__ import annotations
 
 import re
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
-from app.core.domain import HypothesisRecord, MetricMappingRecord, ThesisRecord
+from app.core.domain import (
+    HypothesisRecord,
+    MetricMappingRecord,
+    ThesisQuery,
+    ThesisRecord,
+)
 from app.core.enums import ConfirmationStatus, ExpectationDirection, Importance, ThesisStatus
 from app.db.models.core import Hypothesis, HypothesisMetricMap, Thesis
 
@@ -178,6 +184,46 @@ class SqlThesisRepo:
         ).all()
         participating = self._participating_bulk([r.thesis_id for r in rows])
         return [_to_thesis(r, participating=participating.get(r.thesis_id, [])) for r in rows]
+
+    def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]:
+        """条件分页查询。
+
+        总数用独立的 count 查询而不是 len(全量结果)：后者要把所有行拉进内存，
+        分页就失去意义了。
+        """
+        conditions: list[ColumnElement[bool]] = []
+        if query.statuses:
+            conditions.append(Thesis.status.in_([s.value for s in query.statuses]))
+        if query.securities:
+            conditions.append(Thesis.security_id.in_(query.securities))
+        if query.owner:
+            conditions.append(Thesis.owner == query.owner)
+        if query.keyword:
+            # 标题与核心观点都匹配。ilike 的 % 需要转义，否则用户输入的 %
+            # 会变成通配符，让「%」这类查询命中全表。
+            pattern = "%{}%".format(
+                query.keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
+            conditions.append(
+                Thesis.title.ilike(pattern, escape="\\")
+                | Thesis.core_view.ilike(pattern, escape="\\")
+            )
+
+        total = self._session.scalar(select(func.count()).select_from(Thesis).where(*conditions))
+
+        rows = self._session.scalars(
+            select(Thesis)
+            .where(*conditions)
+            # established_on 倒序让最新的卡片在前；thesis_id 兜底保证分页稳定，
+            # 否则同一天建立的卡片在翻页时可能重复或漏掉。
+            .order_by(Thesis.established_on.desc(), Thesis.thesis_id)
+            .limit(query.limit)
+            .offset(query.offset)
+        ).all()
+
+        participating = self._participating_bulk([r.thesis_id for r in rows])
+        records = [_to_thesis(r, participating=participating.get(r.thesis_id, [])) for r in rows]
+        return records, int(total or 0)
 
     def _participating(self, thesis_id: str) -> list[str]:
         """参与 thesis 级失效条件的假设：写了 invalidation_rule 的那些。
