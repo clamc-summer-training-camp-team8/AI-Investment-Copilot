@@ -341,3 +341,23 @@
 - 数据库约束测试 4 项未执行：当前环境缺少 `psycopg` 且未启动 PostgreSQL；这是环境依赖，不是 AI 测试失败。
 - AI 单元测试：24 passed。
 - 工作区无待提交代码；所有提交均只在本地分支，未 push。
+### 阶段 19：Agent 能力目录拆分
+
+状态：完成。
+
+主要内容：
+- 将原来 343 行的 `app/ai/agent.py` 按职责拆分为 `app/ai/agents/` 包。
+- `types.py` 只保存 Agent 共享输入、输出和值对象。
+- `thesis_draft.py`、`logic_change.py`、`evidence.py`、`metric_explain.py`、`review.py` 分别保存对应能力实现。
+- 统一 Runtime 和真实数据适配层改为依赖新包，不再依赖聚合实现文件。
+- 原 `app/ai/agent.py` 保留为兼容导出入口，后端和既有测试的导入路径不会失效。
+- 本阶段只移动现有逻辑，没有修改 Prompt、Schema、运行状态、评分公式和业务行为。
+
+遇到的问题：
+- 完整目标结构还包含 `retrieval/`、`embeddings/` 和 `pgvector.py`，但当前任务只拆分已有 Agent；在真实 Embedding/PgVectorRetriever 尚未实现前，不创建空壳文件冒充完成。
+
+解决方法：
+- 先完成可独立验证的 Agent 结构重构；检索与 Embedding 在下一阶段实现真实能力时再拆分。
+- 新增兼容性测试，断言旧入口与新模块导出的是同一个实现类。
+
+验证结果：重构前 AI 单元测试 24 passed；重构后 25 passed；全项目非数据库测试 204 passed；全部 `app/ai` Python 文件编译通过。当前环境未安装 Ruff，因此未执行 Ruff 检查。

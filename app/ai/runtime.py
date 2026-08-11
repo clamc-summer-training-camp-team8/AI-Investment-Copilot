@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
-from app.ai.agent import (
+from app.ai.agents import (
     AgentEvent,
     AgentRunResult,
     CandidateHypothesis,

@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from app.ai.agent import AgentEvent, CandidateHypothesis
+from app.ai.agents.types import AgentEvent, CandidateHypothesis
 from app.ai.retrieval import RetrievalDocument
 from app.core.config import PROJECT_ROOT
 from app.core.enums import ImpactDirection

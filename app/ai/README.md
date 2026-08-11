@@ -9,9 +9,14 @@ PRD 层级：AI 与规则层（模型侧）
 
 ```
 ai/
+├── agents/      五类业务能力及共享输入输出类型
 ├── contracts/   契约校验器（Schema 本体在 contracts/ai/）
 ├── prompts/     提示词模板，带版本号
-└── providers/   模型网关：local 规则实现 / http 私有部署
+├── providers/   模型网关：local / mock / http
+├── agent.py     旧导入路径的兼容出口
+├── retrieval.py 当前 Retriever 接口与关键词/混合检索
+├── runtime.py   统一运行状态和能力编排
+└── integration.py 后端 JSON Envelope
 ```
 
 ## 四类任务
