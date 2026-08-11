@@ -191,3 +191,33 @@ def test_evidence_agent_计算引用完整性评分() -> None:
     assert grade.score == 0.6
     assert grade.valid_cited_count == 1
     assert grade.source_count == 1
+
+def test_evidence_agent_检查事实与引用一致性和实体匹配() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="历史公告显示收入增长。",
+                published_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+                source="cninfo",
+            )
+        ]
+    )
+    result = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    ).analyze(
+        AgentEvent("event-001", "new-001", "000538.SZ", "new-001#paragraph-1", "收入增长。", datetime(2026, 8, 10, tzinfo=timezone.utc)),
+        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+    )
+    impact = result.impacts[0]
+    impact.outcome.payload["event"]["fact"] = "另一家公司完全无关的事实"
+
+    consistency = EvidenceAgent.check_consistency(impact)
+
+    assert consistency.entity_matched
+    assert not consistency.fact_supported
+    assert "fact_not_supported" in consistency.reasons
