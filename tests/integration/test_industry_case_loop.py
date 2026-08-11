@@ -1,7 +1,7 @@
 """行业级闭环的回归测试。
 
-`real_data/` 不进版本控制，因此数据不在时跳过。CI 里这些测试会 skip，本地跑过
-数据管道后会真实执行。
+这是早期 30--50 条逻辑、200 个相关事件的大样本实验；与九公司 MVP 冻结集相互
+独立。未准备该旧实验数据时跳过，本地跑完对应历史管道后会真实执行。
 
 这里守的是几条容易在重构中失效的纪律：时间窗口裁剪、人工闸门、可追溯性、
 口径不混算。
@@ -21,7 +21,7 @@ RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 
 pytestmark = pytest.mark.skipif(
     not (DATASET_DIR / "theses.json").exists() or not (RAW_DIR / "financials.json").exists(),
-    reason="real_data/ 不在版本控制内，需先跑 analytics.pipelines 采集数据",
+    reason="旧版行业大样本数据未准备；九公司 MVP 由独立冻结集测试覆盖",
 )
 
 

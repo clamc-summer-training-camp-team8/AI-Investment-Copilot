@@ -12,14 +12,16 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from statistics import mean
 
 from analytics.evaluation.candidate_v2 import predict as candidate_predict
-from analytics.pipelines.return_labels import QuoteBook, build_label, is_hit
+from analytics.pipelines.return_labels import QuoteBook, ReturnLabel, build_label, is_hit
 from app.core.config import PROJECT_ROOT
+from app.core.enums import ImpactDirection
 
 DATASET_DIR = PROJECT_ROOT / "real_data" / "dataset"
 EXPERIMENT_DIR = PROJECT_ROOT / "analytics" / "experiments" / "20260809-事件方向信号"
@@ -41,15 +43,104 @@ class SignalRecord:
     excess_return: Decimal | None
     label_status: str
     hit: bool | None
+    source_event_count: int = 1
+    source_event_ids: tuple[str, ...] = ()
 
 
-def collect(book: QuoteBook) -> list[SignalRecord]:
-    """对每条事件生成信号与收益标签。只有方向为支持/削弱的才是信号。"""
+@dataclass(frozen=True)
+class CandidateEvent:
+    event_id: str
+    security_id: str
+    company: str
+    title: str
+    disclosure_time: str
+    split: str
+    hypothesis: str
+    direction: str
+    label: ReturnLabel
+
+
+@dataclass(frozen=True)
+class DedupStats:
+    raw_directional_events: int
+    same_day_groups: int
+    duplicate_events_removed: int
+    conflicting_groups_removed: int
+    output_signals: int
+
+
+def _direction(value: str) -> str:
+    return ImpactDirection.CONFLICT.value if value == "削弱" else value
+
+
+def deduplicate_candidates(
+    candidates: list[CandidateEvent],
+) -> tuple[list[SignalRecord], DedupStats]:
+    """Merge same-security/same-trading-day signals before measuring outcomes.
+
+    Same-direction events become one observation.  A group containing support
+    and conflict is neutral by mentor ruling and therefore leaves the directional
+    signal experiment for human review.
+    """
+    grouped: dict[tuple[str, str], list[CandidateEvent]] = defaultdict(list)
+    for candidate in candidates:
+        trading_day = candidate.label.window_start or candidate.disclosure_time[:10]
+        grouped[(candidate.security_id, trading_day)].append(candidate)
+
     records: list[SignalRecord] = []
+    conflicting_groups = 0
+    for group in grouped.values():
+        directions = {_direction(item.direction) for item in group}
+        if len(directions) != 1:
+            conflicting_groups += 1
+            continue
+        first = max(group, key=lambda item: item.disclosure_time)
+        direction = directions.pop()
+        hypotheses = sorted({item.hypothesis for item in group if item.hypothesis})
+        records.append(
+            SignalRecord(
+                event_id=first.event_id,
+                security_id=first.security_id,
+                company=first.company,
+                title=first.title,
+                disclosure_time=first.disclosure_time,
+                split=(
+                    "out_of_sample"
+                    if any(item.split == "out_of_sample" for item in group)
+                    else first.split
+                ),
+                hypothesis=" / ".join(hypotheses),
+                direction=direction,
+                window_start=first.label.window_start,
+                window_end=first.label.window_end,
+                excess_return=first.label.excess_return,
+                label_status=first.label.status,
+                hit=is_hit(direction, first.label),
+                source_event_count=len(group),
+                source_event_ids=tuple(item.event_id for item in group),
+            )
+        )
+
+    return records, DedupStats(
+        raw_directional_events=len(candidates),
+        same_day_groups=len(grouped),
+        duplicate_events_removed=sum(max(0, len(group) - 1) for group in grouped.values()),
+        conflicting_groups_removed=conflicting_groups,
+        output_signals=len(records),
+    )
+
+
+def collect_with_stats(book: QuoteBook) -> tuple[list[SignalRecord], DedupStats]:
+    """Generate labels, then enforce the mentor's same-day deduplication ruling."""
+    candidates: list[CandidateEvent] = []
     with (DATASET_DIR / "events.csv").open(encoding="utf-8") as fh:
         for row in csv.DictReader(fh):
             output = candidate_predict(row["title"])
-            if output.direction not in ("支持", "削弱"):
+            direction = _direction(output.direction)
+            if direction not in {
+                ImpactDirection.SUPPORT.value,
+                ImpactDirection.CONFLICT.value,
+            }:
                 continue
 
             label = build_label(
@@ -58,8 +149,8 @@ def collect(book: QuoteBook) -> list[SignalRecord]:
                 disclosure_time=row["disclosure_time"],
                 time_is_precise=row["disclosure_time_precise"] == "True",
             )
-            records.append(
-                SignalRecord(
+            candidates.append(
+                CandidateEvent(
                     event_id=row["event_id"],
                     security_id=row["security_id"],
                     company=row["company"],
@@ -67,15 +158,51 @@ def collect(book: QuoteBook) -> list[SignalRecord]:
                     disclosure_time=row["disclosure_time"],
                     split=row["split"],
                     hypothesis=output.hypothesis,
-                    direction=output.direction,
-                    window_start=label.window_start,
-                    window_end=label.window_end,
-                    excess_return=label.excess_return,
-                    label_status=label.status,
-                    hit=is_hit(output.direction, label),
+                    direction=direction,
+                    label=label,
                 )
             )
+    return deduplicate_candidates(candidates)
+
+
+def collect(book: QuoteBook) -> list[SignalRecord]:
+    """Backward-compatible record-only entry point."""
+    records, _ = collect_with_stats(book)
     return records
+
+
+@dataclass(frozen=True)
+class UnconditionalBaseline:
+    sample_count: int
+    expected_hit_rate: float | None
+    mean_excess: float | None
+
+
+def unconditional_baseline(records: list[SignalRecord], book: QuoteBook) -> UnconditionalBaseline:
+    """Compare signals with every same-security trading day in the same period."""
+    if not records:
+        return UnconditionalBaseline(0, None, None)
+    start = min(record.disclosure_time[:10] for record in records)
+    end = max(record.disclosure_time[:10] for record in records)
+    pools = {
+        security_id: book.unconditional_excess_returns(security_id, start=start, end=end)
+        for security_id in {record.security_id for record in records}
+    }
+    expected_rates: list[float] = []
+    for record in records:
+        pool = pools[record.security_id]
+        if not pool:
+            continue
+        if record.direction == ImpactDirection.SUPPORT.value:
+            expected_rates.append(sum(value > 0 for value in pool) / len(pool))
+        elif record.direction == ImpactDirection.CONFLICT.value:
+            expected_rates.append(sum(value < 0 for value in pool) / len(pool))
+    all_values = [value for pool in pools.values() for value in pool]
+    return UnconditionalBaseline(
+        sample_count=len(all_values),
+        expected_hit_rate=mean(expected_rates) if expected_rates else None,
+        mean_excess=round(mean(float(value) for value in all_values), 4) if all_values else None,
+    )
 
 
 @dataclass
@@ -91,6 +218,9 @@ class Summary:
     mean_excess: float | None
     positive_signals: int
     negative_signals: int
+    unconditional_sample_count: int
+    unconditional_hit_rate: float | None
+    unconditional_mean_excess: float | None
 
     @property
     def hit_rate(self) -> float | None:
@@ -100,7 +230,7 @@ class Summary:
 
     def render(self) -> list[str]:
         lines = [
-            f"信号数: {self.signal_count}（支持 {self.positive_signals} / 削弱 {self.negative_signals}）",
+            f"信号数: {self.signal_count}（支持 {self.positive_signals} / 冲突 {self.negative_signals}）",
             f"标签已生成: {self.labeled_count}，待观察: {self.pending_count}",
         ]
         if self.hit_rate is None:
@@ -113,13 +243,28 @@ class Summary:
             lines.append("平均 20 日超额收益: 无样本")
         else:
             lines.append(f"平均 20 日超额收益: {self.mean_excess:+.2f}%")
+        if self.unconditional_hit_rate is None:
+            lines.append("同期同证券无条件命中率: 无可用基准窗口")
+        else:
+            lift = (
+                self.hit_rate - self.unconditional_hit_rate if self.hit_rate is not None else None
+            )
+            lift_text = "不可比较" if lift is None else f"{lift:+.1%}"
+            lines.append(
+                "同期同证券无条件命中率: "
+                f"{self.unconditional_hit_rate:.1%} (n={self.unconditional_sample_count})；"
+                f"信号相对差 {lift_text}"
+            )
+        if self.unconditional_mean_excess is not None:
+            lines.append(f"同期同证券无条件平均超额: {self.unconditional_mean_excess:+.2f}%")
         return lines
 
 
-def summarize(label: str, records: list[SignalRecord]) -> Summary:
+def summarize(label: str, records: list[SignalRecord], book: QuoteBook) -> Summary:
     labeled = [r for r in records if r.label_status == "已生成"]
     judgeable = [r for r in labeled if r.hit is not None]
     excesses = [float(r.excess_return) for r in labeled if r.excess_return is not None]
+    baseline = unconditional_baseline(records, book)
     return Summary(
         label=label,
         signal_count=len(records),
@@ -129,7 +274,10 @@ def summarize(label: str, records: list[SignalRecord]) -> Summary:
         judgeable_count=len(judgeable),
         mean_excess=round(mean(excesses), 4) if excesses else None,
         positive_signals=sum(1 for r in records if r.direction == "支持"),
-        negative_signals=sum(1 for r in records if r.direction == "削弱"),
+        negative_signals=sum(1 for r in records if r.direction == ImpactDirection.CONFLICT.value),
+        unconditional_sample_count=baseline.sample_count,
+        unconditional_hit_rate=baseline.expected_hit_rate,
+        unconditional_mean_excess=baseline.mean_excess,
     )
 
 
@@ -161,15 +309,15 @@ def main() -> None:
     parser.parse_args()
 
     book = QuoteBook()
-    records = collect(book)
+    records, dedup = collect_with_stats(book)
 
     in_sample = [r for r in records if r.split == "in_sample"]
     out_sample = [r for r in records if r.split == "out_of_sample"]
 
     summaries = [
-        summarize("样本内", in_sample),
-        summarize("样本外", out_sample),
-        summarize("全样本", records),
+        summarize("样本内", in_sample, book),
+        summarize("样本外", out_sample, book),
+        summarize("全样本", records, book),
     ]
 
     lines = [
@@ -179,6 +327,12 @@ def main() -> None:
         f"行情数据版本: {book.data_version}（前复权，基准=创业板指 399006）",
         f"行情截止日: {book.last_trading_day}",
         "窗口: 20 个交易日，T+1 起算，窗口结束后生成标签",
+        (
+            "同日去重: 原始方向事件 "
+            f"{dedup.raw_directional_events} → {dedup.output_signals} 个独立信号；"
+            f"合并重复 {dedup.duplicate_events_removed} 条，"
+            f"方向冲突转人工 {dedup.conflicting_groups_removed} 组"
+        ),
         "",
         "经济假设与偏差控制声明见同目录 README.md（写于结果观察之前）。",
         "",
@@ -213,15 +367,17 @@ def main() -> None:
     if rate is None:
         lines.append("样本外无可判定样本，不给出方向性结论。")
     else:
-        distance = abs(rate - 0.5)
-        if distance < 0.05:
+        comparison = out_summary.unconditional_hit_rate
+        if comparison is None:
             verdict = (
-                f"样本外 20 日命中率 {rate:.1%}，与随机（50%）的差距在 5 个百分点以内，"
-                "**未观察到方向预测力**。这与实验前写下的预期一致。"
+                f"样本外 20 日命中率 {rate:.1%}，但同期同证券无条件基准不可用，"
+                "不作方向预测力判断。"
             )
         else:
+            distance = rate - comparison
             verdict = (
-                f"样本外 20 日命中率 {rate:.1%}，与随机（50%）相差 {distance:.1%}。"
+                f"样本外 20 日命中率 {rate:.1%}，同期同证券无条件期望为 "
+                f"{comparison:.1%}，相差 {distance:+.1%}。"
                 "样本量与时间跨度不足以排除行业行情与噪音的解释，"
                 "**不构成信号有效的证据**，需更长周期样本外验证。"
             )
@@ -254,9 +410,16 @@ def main() -> None:
         "样本外区间": "2025-10-01~2026-08-07",
         "样本外信号数": out_summary.signal_count,
         "20日命中率": out_summary.hit_rate,
+        "同期同证券无条件命中率": out_summary.unconditional_hit_rate,
+        "相对无条件基准": (
+            None
+            if out_summary.hit_rate is None or out_summary.unconditional_hit_rate is None
+            else out_summary.hit_rate - out_summary.unconditional_hit_rate
+        ),
         "平均20日超额收益": out_summary.mean_excess,
+        "同日去重统计": vars(dedup),
         "结论等级": "探索性",
-        "主要限制": "金标未经导师确认；3家公司约2.5年样本；未考虑交易可实现性",
+        "主要限制": "59条独立盲标未完成；3家公司约2.5年样本；未考虑交易可实现性",
         "实验状态": "已完成一轮",
     }
     (EXPERIMENT_DIR / "ledger.json").write_text(

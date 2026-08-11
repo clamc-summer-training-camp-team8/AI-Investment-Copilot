@@ -93,6 +93,40 @@ def process_events(
                 continue
             if hypothesis_id not in {str(getattr(h, "hypothesis_id", "")) for h in hypotheses}:
                 continue
+            target_hypothesis = next(
+                hypothesis
+                for hypothesis in hypotheses
+                if str(getattr(hypothesis, "hypothesis_id", "")) == hypothesis_id
+            )
+            mappings = uow.thesis.list_mappings(hypothesis_id)
+            hypothesis_context: dict[str, object] = {
+                "statement": target_hypothesis.statement,
+                "hypothesis_type": target_hypothesis.hypothesis_type,
+                "importance": target_hypothesis.importance.value,
+                "expected_direction": (
+                    target_hypothesis.expected_direction.value
+                    if target_hypothesis.expected_direction is not None
+                    else None
+                ),
+                "invalidation_rule": target_hypothesis.invalidation_rule,
+                "metrics": [
+                    {
+                        "metric_id": mapping.metric_id,
+                        "expected_direction": mapping.expected_direction.value,
+                        "expected_value": (
+                            str(mapping.expected_value)
+                            if mapping.expected_value is not None
+                            else None
+                        ),
+                        "invalidation_threshold": (
+                            str(mapping.invalidation_threshold)
+                            if mapping.invalidation_threshold is not None
+                            else None
+                        ),
+                    }
+                    for mapping in mappings
+                ],
+            }
 
             locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
             if locator is None:
@@ -108,6 +142,8 @@ def process_events(
                 disclosure_time=_iso(event.disclosure_time),
                 thesis_id=record.thesis_id,
                 hypothesis_id=hypothesis_id,
+                thesis_context=record.core_view,
+                hypothesis_context=hypothesis_context,
                 event_type=event.event_type,
                 occurred_on=event.occurred_on.isoformat() if event.occurred_on else None,
             )

@@ -156,8 +156,9 @@ def to_single_quarter(reports: list[RawReport]) -> list[QuarterMetric]:
         if revenue != 0:
             margin = str(((revenue - cost) / revenue * Decimal(100)).quantize(QUANT))
 
-        year, quarter = int(period[:4]), period[-1]
-        prior = single.get(f"{year - 1}Q{quarter}")
+        metric_year = int(period[:4])
+        metric_quarter = period[-1]
+        prior = single.get(f"{metric_year - 1}Q{metric_quarter}")
         yoy = None
         if prior and prior[0] != 0:
             yoy = str(((revenue - prior[0]) / abs(prior[0]) * Decimal(100)).quantize(QUANT))

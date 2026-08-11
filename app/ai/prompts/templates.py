@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-THESIS_DRAFT_VERSION = "thesis-draft-v1"
-EVENT_IMPACT_VERSION = "event-impact-v1"
+THESIS_DRAFT_VERSION = "thesis-draft-v3-deepseek-json-ref-null"
+EVENT_IMPACT_VERSION = "event-impact-v2-mentor-ruling"
 METRIC_EXPLAIN_VERSION = "metric-validation-v1"
 
 
@@ -35,12 +35,72 @@ _CITATION_RULE = (
     "无法引用的内容必须标记为推断或不确定，不得作为事实输出。"
 )
 
+_THESIS_JSON_SHAPE = """
+只输出一个 JSON 对象，不要使用 Markdown 代码块，不要增加下列结构之外的字段：
+{
+  "title": "不超过40字的标题",
+  "direction": null,
+  "core_view": "不超过200字的核心观点",
+  "hypotheses": [
+    {
+      "statement": "可证伪假设",
+      "hypothesis_type": "经营",
+      "importance": "核心",
+      "metric_suggestions": [{"metric_name": "指标名称", "unit": "单位", "observation_frequency": "季度", "rationale": "观察目的"}],
+      "evidence_locator": "输入中的文档ID#paragraph-1"
+    },
+    {
+      "statement": "第二条可证伪假设",
+      "hypothesis_type": "盈利",
+      "importance": "辅助",
+      "metric_suggestions": [],
+      "evidence_locator": null
+    }
+  ],
+  "risks": [{"statement": "风险", "evidence_locator": null}],
+  "invalidation_suggestions": [{"statement": "失效条件建议", "hypothesis_ref": null, "require_all": true, "consecutive_periods": 2}],
+  "citations": [],
+  "unsupported_claims": [],
+  "confidence": 0.8
+}
+草稿阶段尚未分配 hypothesis_id，因此 hypothesis_ref 必须为 null，禁止填写数组索引或序号。
+""".strip()
+
+_EVENT_JSON_SHAPE = """
+只输出一个 JSON 对象，不要使用 Markdown 代码块，不要增加下列结构之外的字段：
+{
+  "relevance": "相关",
+  "event": {"fact": "可由输入引用支持的事实", "inference": "与事实分开的推断"},
+  "signal": {
+    "direction": "正向",
+    "impact_direction": "支持",
+    "strength": 0.8,
+    "confidence": 0.8,
+    "horizon": "中期",
+    "rationale": "相对具体假设的判断理由",
+    "transmission_path": "事件到可观测指标再到假设的路径",
+    "suggested_tracking": ["后续观察项"]
+  }
+}
+枚举必须严格使用：relevance=相关/不相关/待定；direction=正向/负向/中性/不确定；
+impact_direction=支持/冲突/中性/无关；horizon=短期/中期/长期/null。
+""".strip()
+
+_MENTOR_EVENT_RULES = (
+    "业务裁决 mentor-ruling-v1-20260811：影响方向只相对于给定假设及其可观测指标判断。"
+    "无关表示不进入证据链；中性表示相关但方向不明。高频过程公告、程式化文件、"
+    "I/II期进展和无金额框架协议判无关；NDA受理、方向取决于标的的融资或投资判中性；"
+    "获批上市、III期达到主要终点、有明确金额的订单或许可判支持；研发失败、撤回、"
+    "III期未达终点判冲突。无法从正文确认金额或决定性节点时采取保守方向。"
+)
+
 THESIS_DRAFT = PromptTemplate(
     version=THESIS_DRAFT_VERSION,
     system=(
         "你是投研助手，负责把研究员的观点和资料整理成结构化的投资逻辑草稿。"
         f"{_NO_TRADE_ADVICE}{_CITATION_RULE}"
         "不要填写研究员的预期值和正式阈值——这两项只能由研究员本人填写。"
+        f"{_THESIS_JSON_SHAPE}"
     ),
     instruction=(
         "投资对象：{security}\n"
@@ -58,6 +118,7 @@ EVENT_IMPACT = PromptTemplate(
         "你负责判断一条新事件对已有投资假设的影响。"
         f"{_NO_TRADE_ADVICE}{_CITATION_RULE}"
         "影响方向是相对于具体假设的，不是股价方向，也不是通用情绪极性。"
+        f"{_MENTOR_EVENT_RULES}{_EVENT_JSON_SHAPE}"
     ),
     instruction=(
         "事件正文：{event}\n"

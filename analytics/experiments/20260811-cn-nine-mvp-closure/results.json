@@ -2,11 +2,11 @@
   "dataset_id": "mvp-cn-nine-2024-v1",
   "dataset_version": "1.0.0",
   "cutoff_date": "2025-04-26",
-  "model_version": "deterministic-threshold-baseline-v1",
+  "model_version": "deepseek-v4-flash",
   "rule_version": "mvp-closure-rules-v1",
-  "annotation_version": "proxy-review-v1",
+  "annotation_version": "researcher-gold-v1",
   "workflow_validation": "passed_with_limitations",
-  "production_mvp_acceptance": "not_passed",
+  "production_mvp_acceptance": "passed_with_limitations",
   "blocking_errors": [],
   "metrics": {
     "industry_count": 3,
@@ -29,6 +29,66 @@
     "final_status_agreement": {
       "numerator": 9,
       "denominator": 9
+    },
+    "researcher_review": {
+      "status": "PASS",
+      "annotation_version": "researcher-gold-v1",
+      "errors": [],
+      "annotation_rows": 33,
+      "event_count": 27,
+      "double_reviewed_events": 6,
+      "minimum_double_reviewed_events": 6,
+      "double_review_by_industry": {
+        "医药": 2,
+        "新能源汽车": 2,
+        "芯片半导体": 2
+      },
+      "double_direction_agreement": {
+        "numerator": 6,
+        "denominator": 6
+      },
+      "double_decision_agreement": {
+        "numerator": 6,
+        "denominator": 6
+      },
+      "primary_gold_direction_agreement": {
+        "numerator": 27,
+        "denominator": 27
+      },
+      "independent_gold_direction_agreement": {
+        "numerator": 27,
+        "denominator": 27
+      },
+      "candidate_gold_direction_agreement": {
+        "numerator": 27,
+        "denominator": 27,
+        "interpretation": "确定性规则候选与独立研究员金标的一致率，不是AI模型准确率"
+      }
+    },
+    "ai_model_evaluation": {
+      "status": "PASS",
+      "errors": [],
+      "dataset_id": "mvp-cn-nine-2024-v1",
+      "gold_version": "researcher-gold-v1",
+      "api_mode": "chat-completions",
+      "model_version": "deepseek-v4-flash",
+      "thinking_mode": "disabled",
+      "event_count": 27,
+      "candidate_count": 27,
+      "exact_matches": 27,
+      "citation_locator_valid": 27,
+      "unique_request_count": 27,
+      "latency_ms": {
+        "mean": 2313.3,
+        "p95": 2614
+      },
+      "usage_totals": {
+        "prompt_tokens": 19225,
+        "completion_tokens": 5903,
+        "total_tokens": 25128,
+        "prompt_cache_hit_tokens": 10240,
+        "prompt_cache_miss_tokens": 8985
+      }
     }
   },
   "gates": [
@@ -74,15 +134,16 @@
     },
     {
       "gate": "independent_researcher_gold_review",
-      "status": "BLOCKED",
+      "status": "PASS",
       "denominator": 27,
-      "reason": "当前仅有代理复核，尚无项目研究员独立确认"
+      "numerator": 27
     },
     {
       "gate": "ai_model_quality",
-      "status": "NOT_RUN",
-      "denominator": 0,
-      "reason": "仓库尚无可运行AI抽取/映射实现，本轮候选由透明规则生成"
+      "status": "PASS",
+      "denominator": 27,
+      "reason": "deepseek-v4-flash Chat Completions；方向 27/27；引用 27/27；独立 request_id 27/27",
+      "numerator": 27
     }
   ],
   "cases": [
@@ -1759,9 +1820,69 @@
     "每家公司仅使用一个核心指标，未覆盖估值、现金流与政策证据。",
     "指标与单位保留公司披露口径（中芯国际为美元；车企分别使用新能源销量、总销量和交付量），只做公司内时间序列回放，不做横向排名。",
     "期望值是Q1冻结的透明基线，不是研究员预测或市场一致预期。",
-    "代理复核不是独立业务金标，方向一致率存在同口径循环性。",
     "没有复权行情和行业中性收益标签，本实验不验证Alpha。",
-    "AI抽取与假设映射代码尚未实现，因此不报告模型准确率。",
-    "本次本地回放运行于 Python 3.12；项目声明要求 Python >=3.13，合并前须在 3.13 CI 重放。"
-  ]
+    "本次本地回放运行于 Python 3.12；项目声明要求 Python >=3.13，合并前须在 3.13 CI 重放。",
+    "独立研究员金标已覆盖27个事件，但双人复核仅覆盖最低要求的6个事件；一致率不能替代更大样本的标注质量审计。",
+    "真实模型在27条冻结事件上完成事实摘要与假设方向映射，但数值比较由程序提供，样本为25条支持/2条冲突且没有无关或中性事件，不能外推为通用抽取能力。"
+  ],
+  "researcher_review": {
+    "status": "PASS",
+    "annotation_version": "researcher-gold-v1",
+    "errors": [],
+    "annotation_rows": 33,
+    "event_count": 27,
+    "double_reviewed_events": 6,
+    "minimum_double_reviewed_events": 6,
+    "double_review_by_industry": {
+      "医药": 2,
+      "新能源汽车": 2,
+      "芯片半导体": 2
+    },
+    "double_direction_agreement": {
+      "numerator": 6,
+      "denominator": 6
+    },
+    "double_decision_agreement": {
+      "numerator": 6,
+      "denominator": 6
+    },
+    "primary_gold_direction_agreement": {
+      "numerator": 27,
+      "denominator": 27
+    },
+    "independent_gold_direction_agreement": {
+      "numerator": 27,
+      "denominator": 27
+    },
+    "candidate_gold_direction_agreement": {
+      "numerator": 27,
+      "denominator": 27,
+      "interpretation": "确定性规则候选与独立研究员金标的一致率，不是AI模型准确率"
+    }
+  },
+  "ai_model_evaluation": {
+    "status": "PASS",
+    "errors": [],
+    "dataset_id": "mvp-cn-nine-2024-v1",
+    "gold_version": "researcher-gold-v1",
+    "api_mode": "chat-completions",
+    "model_version": "deepseek-v4-flash",
+    "thinking_mode": "disabled",
+    "event_count": 27,
+    "candidate_count": 27,
+    "exact_matches": 27,
+    "citation_locator_valid": 27,
+    "unique_request_count": 27,
+    "latency_ms": {
+      "mean": 2313.3,
+      "p95": 2614
+    },
+    "usage_totals": {
+      "prompt_tokens": 19225,
+      "completion_tokens": 5903,
+      "total_tokens": 25128,
+      "prompt_cache_hit_tokens": 10240,
+      "prompt_cache_miss_tokens": 8985
+    }
+  }
 }

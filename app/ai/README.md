@@ -11,7 +11,7 @@ PRD 层级：AI 与规则层（模型侧）
 ai/
 ├── contracts/   契约校验器（Schema 本体在 contracts/ai/）
 ├── prompts/     提示词模板，带版本号
-└── providers/   模型网关：local 规则实现 / http 私有部署
+└── providers/   模型网关：local 规则实现 / http 外部或私有兼容端点
 ```
 
 ## 四类任务
@@ -52,17 +52,21 @@ FR-R-007：低置信结果进入人工队列，不升级提醒。
 
 降级规则必须可测试（FR-R-007 验收要点）。阈值在 `app/core/config.py`，不硬编码。
 
-## 数据不外发
+## 模型数据与密钥
 
 `llm_provider = local` 时使用规则实现，不外发任何数据。这是默认值。
 
-PRD 12.1：外部模型调用须遵循数据分类和脱敏要求，受限数据使用批准的私有环境。因此：
-
-- 生产配置只允许 `http` 指向私有部署，不接公有云 API。
-- 带 `visibility_label = 内部受限` 的文档内容进入提示词前需确认部署环境合规。
-- 提示词与请求体不落日志明文。
+`http` 可指向公有云或私有兼容端点。API Key 只从服务端环境变量或密钥管理系统读取，
+不得写入仓库、返回前端或出现在日志中；提示词与请求体同样不落日志明文。
 
 `local` 提供者的存在还有一个工程价值：其他模块开发时不需要真实模型即可跑通链路，CI 也不依赖外部服务。
+
+`llm_provider = http` 已实现 OpenAI-compatible `chat/completions` 适配器。DeepSeek
+推荐配置为 `https://api.deepseek.com/chat/completions` + `deepseek-v4-flash`。配置
+`LLM_ENDPOINT`、`LLM_MODEL_VERSION` 和由密钥管理系统注入的 `LLM_API_KEY` 后启用。
+适配器固定结构化 JSON 输出、超时和有限重试，并由 Gateway 追加模型/提示词版本后再过
+`contracts/ai/` 校验。远程端点必须使用 HTTPS（只有 localhost/回环地址可用 HTTP）。
+HTTP 4xx 视为不可重试配置错误；408、429、5xx 和网络错误可重试。
 
 ## 提示词管理
 
@@ -82,3 +86,5 @@ PRD 12.1：外部模型调用须遵循数据分类和脱敏要求，受限数据
 - `tests/unit/ai/` 用 `local` 提供者，测校验、降级、版本记录。
 - `tests/contract/` 断言输出符合 `contracts/ai/` Schema。
 - 效果评测不在 `tests/`，在 `analytics/evaluation/`。CI 不跑效果评测，跑的是契约与降级逻辑。
+- `tests/unit/ai/test_http_provider.py` 使用 HTTPX MockTransport 验证鉴权头、结构化输出、
+  瞬时失败重试和不可重试错误，不调用真实模型、不消耗额度。

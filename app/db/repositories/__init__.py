@@ -17,12 +17,14 @@ from app.db.repositories.evidence import (
     SqlSuggestionRepo,
     SqlVersionRepo,
 )
+from app.db.repositories.review import SqlReviewTaskRepo
 from app.db.repositories.thesis import SqlThesisRepo
 
 __all__ = [
     "SqlAuditRepo",
     "SqlEvidenceRepo",
     "SqlObservationRepo",
+    "SqlReviewTaskRepo",
     "SqlSuggestionRepo",
     "SqlThesisRepo",
     "SqlVersionRepo",
@@ -38,4 +40,5 @@ def build_uow(session: Session) -> UnitOfWork:
         suggestions=SqlSuggestionRepo(session),
         versions=SqlVersionRepo(session),
         audit=SqlAuditRepo(session),
+        reviews=SqlReviewTaskRepo(session),
     )

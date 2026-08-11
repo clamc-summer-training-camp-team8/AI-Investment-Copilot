@@ -22,6 +22,7 @@ from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
+from typing import cast
 
 from analytics.pipelines.universe import BENCHMARK
 from app.calc.deterministic import excess_return
@@ -56,7 +57,7 @@ class QuoteBook:
     def __init__(self, path: Path | None = None) -> None:
         payload = json.loads((path or RAW_DIR / "quotes.json").read_text(encoding="utf-8"))
         self.data_version = str(payload.get("data_version", ""))
-        raw_series: dict[str, dict[str, str]] = payload["series"]  # type: ignore[assignment]
+        raw_series = cast(dict[str, dict[str, str]], payload["series"])
         self._series: dict[str, dict[str, Decimal]] = {
             security: {day: Decimal(price) for day, price in series.items()}
             for security, series in raw_series.items()
@@ -87,6 +88,13 @@ class QuoteBook:
     def close(self, security_id: str, day: str) -> Decimal | None:
         return (self._series.get(security_id) or {}).get(day)
 
+    def trading_days(self, security_id: str, *, start: str, end: str) -> list[str]:
+        """Return observed trading days in a closed calendar interval."""
+        days = self._days.get(security_id) or []
+        left = bisect_left(days, start)
+        right = bisect_right(days, end)
+        return days[left:right]
+
     def period_return(self, security_id: str, start: str, end: str) -> Decimal | None:
         """区间复权收益，百分比。"""
         first = self.close(security_id, start)
@@ -94,6 +102,35 @@ class QuoteBook:
         if first is None or last is None or first == 0:
             return None
         return ((last - first) / first * Decimal(100)).quantize(QUANT)
+
+    def unconditional_excess_returns(
+        self,
+        security_id: str,
+        *,
+        start: str,
+        end: str,
+        window_days: int = WINDOW_DAYS,
+    ) -> list[Decimal]:
+        """Build the same-security unconditional forward-return comparison pool.
+
+        Every trading day in the requested interval is treated as a hypothetical
+        disclosure day.  Its window starts on the next trading day, exactly like
+        ``build_label``.  Incomplete and missing-price windows are excluded.
+        """
+        values: list[Decimal] = []
+        for day in self.trading_days(security_id, start=start, end=end):
+            window_start = self.next_trading_day(security_id, day)
+            if window_start is None:
+                continue
+            window_end = self.forward_day(security_id, window_start, window_days)
+            if window_end is None:
+                continue
+            security_return = self.period_return(security_id, window_start, window_end)
+            benchmark_return = self.period_return(BENCHMARK.security_id, window_start, window_end)
+            if security_return is None or benchmark_return is None:
+                continue
+            values.append(excess_return(security_return, benchmark_return))
+        return values
 
 
 def build_label(
@@ -192,6 +229,6 @@ def is_hit(direction: str, label: ReturnLabel) -> bool | None:
         return None
     if direction == "支持":
         return label.excess_return > 0
-    if direction == "削弱":
+    if direction in {"削弱", "冲突"}:
         return label.excess_return < 0
     return None

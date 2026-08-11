@@ -12,7 +12,7 @@
 ```
 analytics/
 ├── pipelines/     四类数据管道
-├── datasets/      评测集与金标集版本目录（数据本体不进 git）
+├── datasets/      评测集与金标集版本目录（符合授权边界的数据可进 git）
 ├── evaluation/    基线对照与效果指标
 ├── experiments/   候选信号实验，一实验一目录
 └── notebooks/     探索性分析，不作为交付物

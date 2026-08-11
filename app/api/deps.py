@@ -14,6 +14,7 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
 
+from app.api.auth import AuthenticationFailed, verify_bearer_token
 from app.core.config import Settings, settings
 from app.services.permission import Actor
 from app.services.ports import UnitOfWork
@@ -25,6 +26,8 @@ def get_settings() -> Settings:
 
 
 def get_actor(
+    conf: Annotated[Settings, Depends(get_settings)],
+    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
     x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
     x_user_teams: Annotated[str | None, Header(alias="X-User-Teams")] = None,
 ) -> Actor:
@@ -34,10 +37,29 @@ def get_actor(
     这两个头。直接暴露到公网等于任何人都能声明任意身份——上线前必须换成校验过的
     令牌。这条限制写在这里，不是留给以后再想的事。
     """
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="缺少身份信息")
-    teams = frozenset(t.strip() for t in (x_user_teams or "").split(",") if t.strip())
-    return Actor(user_id=x_user_id, teams=teams)
+    if conf.auth_mode == "trusted_headers":
+        if conf.env != "local":
+            raise HTTPException(status_code=503, detail="非本地环境必须启用 AUTH_MODE=jwt")
+        if not x_user_id:
+            raise HTTPException(status_code=401, detail="缺少身份信息")
+        teams = frozenset(t.strip() for t in (x_user_teams or "").split(",") if t.strip())
+        return Actor(user_id=x_user_id, teams=teams)
+
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(
+            status_code=401,
+            detail="缺少 Bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        return verify_bearer_token(token, conf)
+    except AuthenticationFailed as exc:
+        raise HTTPException(
+            status_code=401,
+            detail=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
 
 
 def get_uow() -> Iterator[UnitOfWork]:

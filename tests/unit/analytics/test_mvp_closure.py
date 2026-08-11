@@ -1,9 +1,21 @@
 from __future__ import annotations
 
 import copy
+import json
 import unittest
 
-from analytics.pipelines.mvp_closure import DEFAULT_DATASET, evaluate_dataset, load_dataset
+from analytics.pipelines.mvp_closure import (
+    DEFAULT_AI_EVALUATION,
+    DEFAULT_DATASET,
+    DEFAULT_OUTPUT,
+    apply_ai_model_evaluation,
+    evaluate_dataset,
+    load_dataset,
+)
+from analytics.pipelines.researcher_review import (
+    apply_researcher_review,
+    validate_researcher_reviews,
+)
 
 
 class MvpClosureTest(unittest.TestCase):
@@ -66,6 +78,48 @@ class MvpClosureTest(unittest.TestCase):
             any("公司集合" in error for error in result["blocking_errors"]),
             result["blocking_errors"],
         )
+
+    def test_researcher_gold_has_required_coverage_and_double_review(self) -> None:
+        result = evaluate_dataset(self.dataset)
+        review = validate_researcher_reviews(
+            result["events"],
+            DEFAULT_OUTPUT / "review_queue.csv",
+            DEFAULT_OUTPUT / "review_queue-1.csv",
+            DEFAULT_OUTPUT / "researcher_gold_v1.csv",
+        )
+
+        self.assertEqual(review["status"], "PASS", review["errors"])
+        self.assertEqual(review["double_reviewed_events"], 6)
+        self.assertEqual(review["double_direction_agreement"], {"numerator": 6, "denominator": 6})
+
+    def test_live_ai_artifact_closes_bounded_production_gate(self) -> None:
+        result = evaluate_dataset(self.dataset)
+        review = validate_researcher_reviews(
+            result["events"],
+            DEFAULT_OUTPUT / "review_queue.csv",
+            DEFAULT_OUTPUT / "review_queue-1.csv",
+            DEFAULT_OUTPUT / "researcher_gold_v1.csv",
+        )
+        apply_researcher_review(result, review)
+        artifact = json.loads(DEFAULT_AI_EVALUATION.read_text(encoding="utf-8"))
+
+        evaluation = apply_ai_model_evaluation(result, artifact)
+
+        self.assertEqual(evaluation["status"], "PASS", evaluation["errors"])
+        self.assertEqual(evaluation["exact_matches"], 27)
+        self.assertEqual(evaluation["unique_request_count"], 27)
+        self.assertEqual(result["production_mvp_acceptance"], "passed_with_limitations")
+
+    def test_ai_gate_rejects_an_untraceable_artifact(self) -> None:
+        result = evaluate_dataset(self.dataset)
+        artifact = json.loads(DEFAULT_AI_EVALUATION.read_text(encoding="utf-8"))
+        artifact["results"][0]["request_id"] = None
+
+        evaluation = apply_ai_model_evaluation(result, artifact)
+
+        self.assertEqual(evaluation["status"], "FAIL")
+        self.assertTrue(any("request_id" in error for error in evaluation["errors"]))
+        self.assertEqual(result["production_mvp_acceptance"], "not_passed")
 
 
 if __name__ == "__main__":

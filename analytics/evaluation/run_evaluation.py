@@ -18,6 +18,12 @@ from datetime import datetime
 from analytics.evaluation.baseline import predict as baseline_predict
 from analytics.evaluation.candidate_v2 import predict as candidate_predict
 from analytics.evaluation.metrics import LinkMetrics, evaluate_links
+from analytics.pipelines.annotate_events import (
+    ANNOTATION_VERSION,
+    CATEGORY_RULES,
+    RULING_VERSION,
+    mentor_ruling,
+)
 from app.ai.providers.local import guess_hypothesis_type, judge_impact
 from app.core.config import PROJECT_ROOT, Settings
 from app.core.enums import ImpactDirection
@@ -43,11 +49,12 @@ def adjudicate(
     a_direction: str,
     b_hypothesis: str,
     b_direction: str,
+    title: str = "",
 ) -> tuple[str, str]:
     """裁决规则：两名标注者冲突时的确定性处理（说明书 12 要求提交业务裁决）。
 
-    真正的裁决应由业务导师做（GAP-004）。在导师确认前用一条**公开写明的保守规则**
-    占位，而不是把冲突样本丢掉：
+    先应用 ``mentor-ruling-v1-20260811``；未被导师规则覆盖的分歧才使用一条
+    **公开写明的保守回退规则**，而不是把冲突样本丢掉：
 
     - 关联与否有分歧 → 以「有关联」为准，保留样本，方向取中性。
       丢掉分歧样本会把评测集变简单（本轮实测：丢弃后 329 条方向明确样本只剩 5 条），
@@ -57,6 +64,10 @@ def adjudicate(
 
     这条规则会系统性偏向中性，压低方向一致率——是保守方向的偏差，报告里写明。
     """
+    ruled = mentor_ruling(title) if title else None
+    if ruled is not None:
+        return ruled
+
     hypothesis = a_hypothesis or b_hypothesis
     if not hypothesis:
         return "", ImpactDirection.IRRELEVANT.value
@@ -80,6 +91,7 @@ def load_gold() -> list[Row]:
                 record["annotator_a_direction"],
                 record["annotator_b_hypothesis"],
                 record["annotator_b_direction"],
+                record["title"],
             )
             rows.append(
                 Row(
@@ -132,7 +144,6 @@ def _vocab_overlap() -> float:
     「规则复现规则」而不是「模型理解业务」。自己算出来写清楚，比等别人质疑要好。
     """
     from analytics.evaluation.candidate_v2 import _TOPIC_PATTERNS
-    from analytics.pipelines.annotate_events import CATEGORY_RULES
 
     gold = {term for _, pattern in CATEGORY_RULES for term in pattern.split("|")}
     v2 = {term for _, pattern in _TOPIC_PATTERNS for term in pattern.pattern.split("|")}
@@ -185,7 +196,7 @@ def main() -> None:
         "",
         f"生成时间: {datetime.now().astimezone().isoformat()}",
         f"模型版本: {settings.llm_model_version} (provider={settings.llm_provider})",
-        "标注版本: pre-annotation-v1",
+        f"标注版本: {ANNOTATION_VERSION} / {RULING_VERSION}",
         "数据版本: cninfo-announcement-v1",
         "基线: 关键词法（analytics/evaluation/baseline.py）",
         "",
@@ -197,7 +208,7 @@ def main() -> None:
         "",
         "**本轮证明的是评测链路可运行、口径可复算，不构成 AI 能力结论。**",
         "",
-        "1. 金标是程序化预标注 + 规则裁决，**未经业务导师确认**（GAP-004 未关闭）。",
+        "1. 导师裁决规则已生效，但程序化预标注仍不是独立金标；59 条盲标尚未完成。",
         f"2. `candidate_v2` 的词表与金标词表重合 {_vocab_overlap():.0%}。",
         "   其准确率有相当部分来自「规则复现规则」，**不能读作 AI 能力**。",
         "   要得到可信数字，必须有独立于抽取规则的人工金标。这是本轮最重要的结论。",
@@ -206,7 +217,7 @@ def main() -> None:
         "   在 1382 条标题上只触发 19 次且全部误报。这是真实能力缺口，不是实现缺陷。",
         "4. `candidate_v2` 的词表**只用样本内数据构造**，定稿后未依据样本外结果调整。",
         "   样本外那一次即最终成绩（说明书 10.2 第 2、4 步）。",
-        "5. 裁决规则系统性偏向中性，会压低方向一致率。",
+        "5. 裁决后剩余样本缺少可分歧空间，kappa 不再具备独立诊断意义。",
         "",
     ]
 

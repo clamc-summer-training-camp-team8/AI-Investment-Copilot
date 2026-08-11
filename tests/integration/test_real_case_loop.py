@@ -1,8 +1,8 @@
 """真实案例闭环的回归保护。
 
-数据在 `real_data/`，不进版本控制（仓库禁止提交真实公司财务数据）。因此这些用例
-在数据缺失时 skip，有数据时必须通过。CI 里不会跑到——CI 没有这份数据，这是刻意
-的：合规优先于覆盖率。
+这是早期阳光电源单案例实验，使用独立的 `real_data/` 目录。在旧案例数据缺失时
+skip，有数据时必须通过；当前九公司 MVP 使用可提交的公开冻结数据集，由独立管道和
+回归测试覆盖。
 
 案例：阳光电源（300274.SZ）2025 年报储能业务。它与虚构样例 THS-DEMO-001 结构
 一致，但「收入大幅达标、毛利率显著不达标」这个形态是真实发生的，不是我们设计的。
@@ -32,7 +32,7 @@ run_real_case = pytest.importorskip("scripts.run_real_case")
 
 pytestmark = pytest.mark.skipif(
     not (run_real_case.REAL_DATA_DIR / "observations.csv").is_file(),
-    reason="real_data/ 未准备，真实数据不进版本控制",
+    reason="旧版阳光电源单案例数据未准备；九公司 MVP 由独立冻结集测试覆盖",
 )
 
 

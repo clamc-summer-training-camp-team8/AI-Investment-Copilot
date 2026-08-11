@@ -17,6 +17,7 @@ from app.core.domain import (
     HypothesisRecord,
     MetricMappingRecord,
     ObservationRecord,
+    ReviewTaskRecord,
     SuggestionRecord,
     ThesisRecord,
     UnitOfWork,
@@ -159,6 +160,34 @@ class ExplodingAuditRepo(FakeAuditRepo):
         raise RuntimeError("审计写入失败")
 
 
+class FakeReviewTaskRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, ReviewTaskRecord] = {}
+
+    def add(self, record: ReviewTaskRecord) -> ReviewTaskRecord:
+        self.items[record.task_id] = replace(record)
+        return replace(record)
+
+    def get(self, task_id: str) -> ReviewTaskRecord | None:
+        record = self.items.get(task_id)
+        return None if record is None else replace(record)
+
+    def update(self, record: ReviewTaskRecord) -> None:
+        if record.task_id not in self.items:
+            raise LookupError(record.task_id)
+        self.items[record.task_id] = replace(record)
+
+    def list_for_assignee(
+        self, assignee: str, *, state: str | None = None, limit: int = 100
+    ) -> list[ReviewTaskRecord]:
+        matching = [
+            replace(record)
+            for record in self.items.values()
+            if record.assignee == assignee and (state is None or record.state == state)
+        ]
+        return matching[:limit]
+
+
 def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
     return UnitOfWork(
         thesis=FakeThesisRepo(),
@@ -167,4 +196,5 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         suggestions=FakeSuggestionRepo(),
         versions=FakeVersionRepo(),
         audit=audit or FakeAuditRepo(),
+        reviews=FakeReviewTaskRepo(),
     )

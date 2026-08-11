@@ -113,12 +113,15 @@ def create_draft(
     except ModelUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    outcome = gateway.thesis_draft(
-        security_id=payload.security_id,
-        view=payload.view,
-        segments=[],
-        source_document_id=payload.document_id,
-    )
+    try:
+        outcome = gateway.thesis_draft(
+            security_id=payload.security_id,
+            view=payload.view,
+            segments=[],
+            source_document_id=payload.document_id,
+        )
+    except ModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     if not outcome.usable:
         raise HTTPException(
             status_code=422,

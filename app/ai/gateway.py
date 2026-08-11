@@ -10,18 +10,11 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.ai.contracts.validator import ValidationOutcome, validate
+from app.ai.errors import ModelUnavailable
+from app.ai.providers.http import HttpProvider
 from app.ai.providers.local import LocalProvider
 from app.core.config import Settings
 from app.core.config import settings as default_settings
-
-
-class ModelUnavailable(RuntimeError):
-    """模型不可用。PRD 7.4：任务排队和重试，原始输入不丢失。
-
-    调用方必须保留输入并允许重试，不能把这个异常直接变成用户可见的失败。
-    """
-
-    retryable = True
 
 
 class Provider(Protocol):
@@ -44,6 +37,8 @@ class Provider(Protocol):
         disclosure_time: str,
         thesis_id: str | None = ...,
         hypothesis_id: str | None = ...,
+        thesis_context: str | None = ...,
+        hypothesis_context: dict[str, Any] | None = ...,
         event_type: str = ...,
         occurred_on: str | None = ...,
     ) -> dict[str, Any]: ...
@@ -70,11 +65,11 @@ class Gateway:
         conf = settings or default_settings
         if conf.llm_provider == "local":
             return cls(settings=conf, provider=LocalProvider(conf))
-        # http 提供者指向机构批准的私有部署。未配置端点时不静默退回 local：
-        # 静默降级会让人以为在用私有模型，实际跑的是规则实现（PRD 12.1）。
+        # 未配置端点时不静默退回 local：静默降级会让人以为在用真实模型，
+        # 实际跑的是规则实现，进而污染模型评测结论。
         if not conf.llm_endpoint:
-            raise ModelUnavailable("llm_provider=http 但未配置 LLM_ENDPOINT")
-        raise ModelUnavailable("http 提供者尚未实现，请使用 local 或接入私有部署")
+            raise ModelUnavailable("llm_provider=http 但未配置 LLM_ENDPOINT", retryable=False)
+        return cls(settings=conf, provider=HttpProvider(conf))
 
     def event_impact(
         self,
@@ -86,6 +81,8 @@ class Gateway:
         disclosure_time: str,
         thesis_id: str | None = None,
         hypothesis_id: str | None = None,
+        thesis_context: str | None = None,
+        hypothesis_context: dict[str, Any] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> ValidationOutcome:
@@ -97,6 +94,8 @@ class Gateway:
             disclosure_time=disclosure_time,
             thesis_id=thesis_id,
             hypothesis_id=hypothesis_id,
+            thesis_context=thesis_context,
+            hypothesis_context=hypothesis_context,
             event_type=event_type,
             occurred_on=occurred_on,
         )

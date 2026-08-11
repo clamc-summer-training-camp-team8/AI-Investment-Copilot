@@ -18,6 +18,10 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+from analytics.pipelines.researcher_review import (
+    apply_researcher_review,
+    validate_researcher_reviews,
+)
 from app.calc.deterministic import Observation, expectation_gap, trend
 from app.calc.rules import check_invalidation, suggest_status, summarize_evidence
 from app.core.enums import (
@@ -34,6 +38,10 @@ DEFAULT_DATASET = (
     ROOT / "analytics" / "datasets" / "mvp-cn-nine-2024-v1" / "data" / "raw_observations.json"
 )
 DEFAULT_OUTPUT = ROOT / "analytics" / "experiments" / "20260811-cn-nine-mvp-closure"
+DEFAULT_REVIEW_ANNOTATIONS = DEFAULT_OUTPUT / "review_queue.csv"
+DEFAULT_INDEPENDENT_REVIEWS = DEFAULT_OUTPUT / "review_queue-1.csv"
+DEFAULT_RESEARCHER_GOLD = DEFAULT_OUTPUT / "researcher_gold_v1.csv"
+DEFAULT_AI_EVALUATION = DEFAULT_OUTPUT / "deepseek_v4_flash_results.json"
 
 
 @dataclass(frozen=True)
@@ -305,7 +313,7 @@ def evaluate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
             "gate": "ai_model_quality",
             "status": "NOT_RUN",
             "denominator": 0,
-            "reason": "仓库尚无可运行AI抽取/映射实现，本轮候选由透明规则生成",
+            "reason": "本实验尚未调用模型网关，本轮候选由透明确定性规则生成",
         },
     ]
 
@@ -343,7 +351,7 @@ def evaluate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
             "期望值是Q1冻结的透明基线，不是研究员预测或市场一致预期。",
             "代理复核不是独立业务金标，方向一致率存在同口径循环性。",
             "没有复权行情和行业中性收益标签，本实验不验证Alpha。",
-            "AI抽取与假设映射代码尚未实现，因此不报告模型准确率。",
+            "本实验尚未运行AI抽取与假设映射候选，因此不报告模型准确率。",
         ]
         + (
             [
@@ -355,6 +363,118 @@ def evaluate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
             else []
         ),
     }
+
+
+def apply_ai_model_evaluation(result: dict[str, Any], artifact: dict[str, Any]) -> dict[str, Any]:
+    """Validate a frozen live-model artifact and update only the AI acceptance gate.
+
+    Every event must have one traceable request, a contract-valid candidate, an
+    exact researcher-gold direction match, and a valid evidence locator. Passing
+    this gate proves the bounded MVP workflow, not generalization beyond it.
+    """
+    expected = {(event["case_id"], event["period"]) for event in result.get("events", [])}
+    rows = artifact.get("results")
+    errors: list[str] = []
+    if artifact.get("dataset_id") != result.get("dataset_id"):
+        errors.append("模型评测数据集与闭环数据集不一致")
+    if artifact.get("gold_version") != "researcher-gold-v1":
+        errors.append("模型评测未使用冻结的 researcher-gold-v1")
+    if artifact.get("api_mode") != "chat-completions":
+        errors.append("模型评测 API 模式不是 chat-completions")
+    if artifact.get("model_version") != "deepseek-v4-flash":
+        errors.append("模型评测版本不是 deepseek-v4-flash")
+    if artifact.get("prompt_or_raw_response_persisted") is not False:
+        errors.append("模型评测产物的数据最小化声明缺失")
+    if not isinstance(rows, list):
+        rows = []
+        errors.append("模型评测缺少逐事件结果")
+
+    observed: set[tuple[str, str]] = set()
+    request_ids: list[str] = []
+    exact_matches = 0
+    candidate_count = 0
+    locator_valid = 0
+    for row in rows:
+        if not isinstance(row, dict):
+            errors.append("模型评测包含非对象结果")
+            continue
+        key = (str(row.get("case_id", "")), str(row.get("period", "")))
+        observed.add(key)
+        if row.get("call_error"):
+            errors.append(f"{key[0]} {key[1]} 模型调用失败")
+        candidate_count += int(row.get("ai_status") == "候选")
+        exact_matches += int(row.get("exact_match") is True)
+        locator_valid += int(row.get("citation_locator_valid") is True)
+        request_id = row.get("request_id")
+        if isinstance(request_id, str) and request_id:
+            request_ids.append(request_id)
+
+    if observed != expected:
+        missing = len(expected - observed)
+        extra = len(observed - expected)
+        errors.append(f"模型逐事件覆盖不一致：缺少 {missing}，额外 {extra}")
+    event_count = len(expected)
+    if len(rows) != event_count:
+        errors.append(f"模型结果应为 {event_count} 条，实际 {len(rows)} 条")
+    if candidate_count != event_count:
+        errors.append(f"契约通过候选应为 {event_count} 条，实际 {candidate_count} 条")
+    if exact_matches != event_count:
+        errors.append(f"研究员金标方向一致应为 {event_count} 条，实际 {exact_matches} 条")
+    if locator_valid != event_count:
+        errors.append(f"引用定位完整应为 {event_count} 条，实际 {locator_valid} 条")
+    if len(request_ids) != event_count or len(set(request_ids)) != event_count:
+        errors.append("模型 request_id 缺失或不唯一")
+
+    raw_metrics = artifact.get("metrics")
+    metrics: dict[str, Any] = raw_metrics if isinstance(raw_metrics, dict) else {}
+    evaluation = {
+        "status": "PASS" if not errors else "FAIL",
+        "errors": errors,
+        "dataset_id": artifact.get("dataset_id"),
+        "gold_version": artifact.get("gold_version"),
+        "api_mode": artifact.get("api_mode"),
+        "model_version": artifact.get("model_version"),
+        "thinking_mode": artifact.get("thinking_mode"),
+        "event_count": event_count,
+        "candidate_count": candidate_count,
+        "exact_matches": exact_matches,
+        "citation_locator_valid": locator_valid,
+        "unique_request_count": len(set(request_ids)),
+        "latency_ms": metrics.get("latency_ms"),
+        "usage_totals": metrics.get("usage_totals"),
+    }
+    result["ai_model_evaluation"] = evaluation
+    result["metrics"]["ai_model_evaluation"] = evaluation
+    gate = next(item for item in result["gates"] if item["gate"] == "ai_model_quality")
+    gate["status"] = evaluation["status"]
+    gate["denominator"] = event_count
+    if errors:
+        gate["reason"] = "；".join(errors[:3])
+        gate.pop("numerator", None)
+        result["production_mvp_acceptance"] = "not_passed"
+        return evaluation
+
+    gate["numerator"] = event_count
+    gate["reason"] = (
+        f"deepseek-v4-flash Chat Completions；方向 {exact_matches}/{event_count}；"
+        f"引用 {locator_valid}/{event_count}；独立 request_id {len(set(request_ids))}/{event_count}"
+    )
+    result["model_version"] = str(artifact["model_version"])
+    result["limitations"] = [
+        item
+        for item in result.get("limitations", [])
+        if not item.startswith("本实验尚未运行AI抽取")
+    ]
+    result["limitations"].append(
+        "真实模型在27条冻结事件上完成事实摘要与假设方向映射，但数值比较由程序提供，"
+        "样本为25条支持/2条冲突且没有无关或中性事件，不能外推为通用抽取能力。"
+    )
+    researcher_gate = next(
+        item for item in result["gates"] if item["gate"] == "independent_researcher_gold_review"
+    )
+    if researcher_gate["status"] == "PASS":
+        result["production_mvp_acceptance"] = "passed_with_limitations"
+    return evaluation
 
 
 def _write_event_csv(path: Path, events: list[dict[str, Any]]) -> None:
@@ -433,6 +553,12 @@ def _format_values(case: dict[str, Any]) -> str:
 
 def _write_report(path: Path, result: dict[str, Any], dataset_hash: str) -> None:
     metrics = result["metrics"]
+    researcher_gate = next(
+        gate for gate in result["gates"] if gate["gate"] == "independent_researcher_gold_review"
+    )
+    researcher_review_complete = researcher_gate["status"] == "PASS"
+    ai_gate = next(gate for gate in result["gates"] if gate["gate"] == "ai_model_quality")
+    ai_evaluation_complete = ai_gate["status"] == "PASS"
     lines = [
         "# 九公司 MVP 历史回放闭环验证报告",
         "",
@@ -477,7 +603,19 @@ def _write_report(path: Path, result: dict[str, Any], dataset_hash: str) -> None
             "",
             "## 有限结论",
             "",
-            "技术工作流（真实数据→指标→规则候选→代理确认→状态版本→基本面复盘）已跑通。生产 MVP 尚未验收，因为仓库没有可运行的 AI 抽取/映射实现，且 27 个事件尚未由独立项目研究员复核。候选与代理方向一致率不得解释为 AI 准确率。",
+            "技术工作流（真实数据→指标→候选→人工确认→状态版本→基本面复盘）已跑通。"
+            + (
+                "27 个事件的独立研究员金标及 20% 双人复核已经纳入。"
+                if researcher_review_complete
+                else "独立研究员金标门槛尚未通过。"
+            )
+            + (
+                "真实 DeepSeek Chat Completions 已完成 27/27 条候选映射并通过冻结技术门槛；"
+                "生产 MVP 闭环按限定范围验收通过，但仍受样本结构和任务边界限制。"
+                if ai_evaluation_complete
+                else "生产 MVP 尚未验收，因为本实验还没有运行真实 AI 抽取/映射候选；"
+                "规则候选一致率不得解释为 AI 准确率。"
+            ),
             "",
             "## 限制",
             "",
@@ -489,9 +627,25 @@ def _write_report(path: Path, result: dict[str, Any], dataset_hash: str) -> None
             "",
             "## 下一步",
             "",
-            "1. 由至少两名研究员独立复核 `review_queue.csv` 中不少于 20% 的事件，并对全部 27 个事件完成单人确认。",
-            "2. 实现文档解析与假设映射提供者，以同一冻结数据集比较关键词基线、规则基线和 AI 候选。",
+            (
+                "1. 冻结本次 DeepSeek 结果、模型与提示词版本，后续变更另开实验。"
+                if ai_evaluation_complete
+                else "1. 冻结 `researcher-gold-v1`，后续模型和提示词版本统一在该金标上评测。"
+                if researcher_review_complete
+                else "1. 完成全部 27 个事件的单人复核及至少 20% 双人独立复核。"
+            ),
+            (
+                "2. 建立包含无关、中性和定性正文事件的新样本外金标，验证真正的抽取与筛选能力。"
+                if ai_evaluation_complete
+                else "2. 使用已实现的 HttpProvider 在同一冻结数据集运行真实模型，比较关键词基线、规则基线和 AI 候选。"
+            ),
             "3. 新建样本外数据集，加入利润/现金流和复权行情，冻结行业基准与收益窗口后再评估增量价值。",
+            "",
+            "真实模型评测入口：",
+            "`python -m analytics.evaluation.run_nine_company_model --limit 1`（单条冒烟）和",
+            "`python -m analytics.evaluation.run_nine_company_model`（27 条全量）。运行前由服务端环境",
+            "提供 `LLM_API_KEY`；配置检查失败时不会静默回退到 local 规则。评测产物不保存密钥、",
+            "完整提示词或供应商原始响应。",
             "",
             "> 本报告仅用于产品与研究流程验证，不构成证券研究结论或投资建议。",
             "",
@@ -508,7 +662,10 @@ def write_outputs(result: dict[str, Any], dataset_path: Path, output_dir: Path) 
         encoding="utf-8",
     )
     _write_event_csv(output_dir / "event_results.csv", result.get("events", []))
-    _write_review_queue(output_dir / "review_queue.csv", result.get("events", []))
+    _write_review_queue(output_dir / "review_queue_template.csv", result.get("events", []))
+    review_queue = output_dir / "review_queue.csv"
+    if not review_queue.exists():
+        _write_review_queue(review_queue, result.get("events", []))
     if result.get("metrics"):
         _write_report(output_dir / "REPORT.md", result, dataset_hash)
 
@@ -517,10 +674,21 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--review-annotations", type=Path, default=DEFAULT_REVIEW_ANNOTATIONS)
+    parser.add_argument("--independent-reviews", type=Path, default=DEFAULT_INDEPENDENT_REVIEWS)
+    parser.add_argument("--researcher-gold", type=Path, default=DEFAULT_RESEARCHER_GOLD)
+    parser.add_argument("--ai-evaluation", type=Path, default=DEFAULT_AI_EVALUATION)
     args = parser.parse_args()
 
     dataset = load_dataset(args.dataset)
     result = evaluate_dataset(dataset)
+    review_paths = (args.review_annotations, args.independent_reviews, args.researcher_gold)
+    if all(path.exists() for path in review_paths) and result.get("events"):
+        review = validate_researcher_reviews(result["events"], *review_paths)
+        apply_researcher_review(result, review)
+    if args.ai_evaluation.exists() and result.get("events"):
+        artifact = json.loads(args.ai_evaluation.read_text(encoding="utf-8"))
+        apply_ai_model_evaluation(result, artifact)
     write_outputs(result, args.dataset, args.output)
     print(
         json.dumps(

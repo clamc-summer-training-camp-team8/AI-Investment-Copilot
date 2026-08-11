@@ -1,8 +1,8 @@
 """从公告构建事件样本与预标注。
 
-**这里产出的是「程序化预标注」，不是金标。** 说明书第 12 节要求金标由研究员或具备
-金融业务判断能力的导师确认，GAP-004（金标负责人与裁决机制）至今未关闭。把程序生成
-的标签叫金标，等于用一个程序去评测另一个程序，评测结论没有意义。
+**这里产出的是「程序化预标注」，不是金标。** 2026-08-11 的导师裁决已经作为独立
+业务规则层落地，但裁决规则不能替代研究员盲标。把程序生成的标签叫金标，仍然等于用
+一个程序去评测另一个程序，评测结论没有意义；59 条独立盲标完成前只能报告规则评测。
 
 因此本模块的定位是：**把样本组织好、把规则不清楚的地方找出来，交给导师确认。**
 这正是数据分析师在说明书 12 节里的职责（样本组织、版本管理、一致性统计）。
@@ -16,9 +16,8 @@
 | 关键词基线 | 单一词表命中 | `analytics/evaluation/baseline.py` |
 | AI | app/ai 的 local 提供者 | `app/ai/providers/local.py` |
 
-A 与 B 的一致率（Cohen's kappa）用来回答「标注规则是否清晰」，不一致的样本进入
-裁决队列。说明书要求首批双人标注不少于 20% 样本，这里对全部样本都做，因为程序化
-标注的边际成本为零，没有理由只做 20%。
+A 与 B 的一致率（Cohen's kappa）只描述两套程序规则之间的关系。导师裁决后剩余样本
+缺少可分歧空间，该指标不再能证明「标注规则清晰」；真实准确率必须由独立盲标回答。
 
 用法：
     python -m analytics.pipelines.annotate_events
@@ -40,7 +39,87 @@ from app.core.enums import ImpactDirection
 RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 OUT_DIR = PROJECT_ROOT / "real_data" / "dataset"
 
-ANNOTATION_VERSION = "pre-annotation-v1"
+ANNOTATION_VERSION = "pre-annotation-v2"
+RULING_VERSION = "mentor-ruling-v1-20260811"
+
+H1 = "H1-需求与出货"
+H2 = "H2-盈利质量"
+H3 = "H3-产能与扩张"
+
+# 业务导师裁决层。顺序表达业务优先级：先识别决定性结果和明确对价，再排除
+# 高频过程公告与程式化文件，最后处理需要保留到人工队列的中性事件。
+_PHASE_III_SUCCESS = re.compile(r"III\s*期|Ⅲ\s*期|三期")
+_SUCCESS_RESULT = re.compile(r"达到.{0,8}主要终点|揭盲成功|试验成功")
+_FAILURE_RESULT = re.compile(r"未达.{0,8}主要终点|研发失败|终止.{0,12}(?:临床|研发|试验)")
+_EXPLICIT_CONSIDERATION = re.compile(
+    r"合同金额|交易对价|采购量|首付款|里程碑付款|"
+    r"\d+(?:\.\d+)?\s*(?:亿元|万元|元|亿美元|万美元|台|辆|套|吨|GWh|MWh|MW|GW)"
+)
+_PROCEDURAL_FINANCING = re.compile(
+    r"专项报告|鉴证报告|核查意见|管理制度|独立财务顾问|问询函回复|法律意见|"
+    r"评估报告|报告书|独立董事|事前认可|前十大股东|暂不召开股东大会"
+)
+
+
+def mentor_ruling(title: str) -> tuple[str, str] | None:
+    """Apply the mentor's business adjudication before either pre-annotator.
+
+    ``None`` means that the ruling does not cover the title and the original
+    independent annotator logic should continue.  An empty hypothesis with
+    ``无关`` means the event must not enter the evidence chain.
+    """
+    irrelevant = ("", ImpactDirection.IRRELEVANT.value)
+
+    if _PHASE_III_SUCCESS.search(title) and _FAILURE_RESULT.search(title):
+        return H1, ImpactDirection.CONFLICT.value
+    if _PHASE_III_SUCCESS.search(title) and _SUCCESS_RESULT.search(title):
+        return H1, ImpactDirection.SUPPORT.value
+    if re.search(r"集采.{0,8}(?:落选|未中选)", title):
+        return H2, ImpactDirection.CONFLICT.value
+    if re.search(r"进入.{0,8}(?:国家)?医保目录|纳入.{0,8}(?:国家)?医保目录", title):
+        return H1, ImpactDirection.SUPPORT.value
+    if re.search(r"医保谈判|集采中选", title):
+        return H2, ImpactDirection.NEUTRAL.value
+    if re.search(r"撤回.{0,12}(?:药品)?(?:注册|上市许可)申请", title):
+        return H1, ImpactDirection.CONFLICT.value
+    if re.search(r"药品注册证书|注册批准|获批上市|批准上市", title):
+        return H1, ImpactDirection.SUPPORT.value
+    if re.search(r"上市许可申请.{0,8}(?:获|被)?受理|NDA.{0,8}受理|EMA.{0,8}受理", title, re.I):
+        return H1, ImpactDirection.NEUTRAL.value
+
+    is_license_or_cooperation = bool(
+        re.search(r"对外授权|许可协议|战略合作|框架协议|采购协议|营运服务协议", title)
+    )
+    if is_license_or_cooperation and _EXPLICIT_CONSIDERATION.search(title):
+        return H1, ImpactDirection.SUPPORT.value
+
+    if re.search(
+        r"药物临床试验批准|临床试验批准通知书|获准开展.{0,8}临床试验|\bIND\b", title, re.I
+    ):
+        return irrelevant
+    if re.search(r"突破性治疗|拟纳入.{0,8}突破性", title):
+        return irrelevant
+    if re.search(r"快速通道|孤儿药|优先审评", title, re.I):
+        return irrelevant
+    if re.search(r"GMP.{0,8}(?:符合性)?检查|通过.{0,8}GMP", title, re.I):
+        return irrelevant
+    if re.search(r"(?:I|II|Ⅰ|Ⅱ|一|二)\s*期.{0,12}(?:数据读出|临床数据)", title, re.I):
+        return irrelevant
+
+    if _PROCEDURAL_FINANCING.search(title) and re.search(r"募集资金|发行股份|购买资产", title):
+        return irrelevant
+    if re.search(r"闲置募集资金.{0,16}(?:现金管理|补充流动资金|归还|置换)", title):
+        return irrelevant
+    if re.search(r"发行股份购买资产", title):
+        return H3, ImpactDirection.NEUTRAL.value
+    if re.search(r"中期票据|资产支持票据|永续债", title):
+        return H3, ImpactDirection.NEUTRAL.value
+    if re.search(r"收购股权|投资设立.{0,8}子公司|共同投资设立.{0,8}基金", title):
+        return H3, ImpactDirection.NEUTRAL.value
+    if is_license_or_cooperation:
+        return irrelevant
+    return None
+
 
 # 事件类型：按监管披露语义划分，与标题关键词无关
 CATEGORY_RULES: tuple[tuple[str, str], ...] = (
@@ -155,6 +234,10 @@ def annotate_by_category(title: str, category: str) -> tuple[str, str]:
     方向判断：定期报告与业绩预告需要看是增是减，其余类型按该类型的一般业务含义给
     默认方向。拿不准就给中性——强行归类会制造错误的证据方向（标注规范 §4）。
     """
+    ruling = mentor_ruling(title)
+    if ruling is not None:
+        return ruling
+
     hypothesis = CATEGORY_TO_HYPOTHESIS.get(category, "")
     if not hypothesis:
         return "", ImpactDirection.IRRELEVANT.value
@@ -183,6 +266,10 @@ def annotate_by_action(title: str, category: str) -> tuple[str, str]:
     与 A 的差别是刻意的：B 认为「没有明确方向动作词的公告不构成可判断的证据」，
     这是一种更保守的标注立场。两者的分歧点正是规则需要澄清的地方。
     """
+    ruling = mentor_ruling(title)
+    if ruling is not None:
+        return ruling
+
     positive = sum(1 for w in POSITIVE_ACTIONS if w in title)
     negative = sum(1 for w in NEGATIVE_ACTIONS if w in title)
 
@@ -267,6 +354,7 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
 
     stats: dict[str, object] = {
         "annotation_version": ANNOTATION_VERSION,
+        "ruling_version": RULING_VERSION,
         "total": len(samples),
         "split_date": split_date,
         "in_sample": sum(1 for s in samples if s.split == "in_sample"),

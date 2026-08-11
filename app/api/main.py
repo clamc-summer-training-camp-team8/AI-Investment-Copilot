@@ -8,7 +8,11 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 
@@ -23,18 +27,54 @@ def create_app() -> FastAPI:
         ),
         debug=settings.debug,
     )
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-User-Id", "X-User-Teams"],
+    )
 
     @application.get("/health", tags=["infra"])
     def health() -> dict[str, str]:
         return {"status": "ok", "env": settings.env}
 
-    from app.api.routers import thesis
+    @application.get("/health/ready", tags=["infra"])
+    async def readiness() -> JSONResponse:
+        from app.services.health import database_ready
+        from app.workers.queue import QueueUnavailable, open_queue
+
+        database_ok, database_detail = await asyncio.to_thread(database_ready)
+        redis = None
+        try:
+            redis = await open_queue(settings)
+            redis_ok = bool(await redis.ping())
+            redis_detail = "ok" if redis_ok else "ping_failed"
+        except QueueUnavailable as exc:
+            redis_ok, redis_detail = False, str(exc)
+        except Exception as exc:
+            redis_ok, redis_detail = False, type(exc).__name__
+        finally:
+            if redis is not None:
+                await redis.aclose()
+        ready = database_ok and redis_ok
+        return JSONResponse(
+            status_code=200 if ready else 503,
+            content={
+                "status": "ready" if ready else "not_ready",
+                "database": {"ready": database_ok, "detail": database_detail},
+                "queue": {"ready": redis_ok, "detail": redis_detail},
+            },
+        )
+
+    from app.api.routers import jobs, review, thesis
 
     application.include_router(thesis.router, prefix="/api")
+    application.include_router(review.router, prefix="/api")
+    application.include_router(jobs.router, prefix="/api")
 
     # 其余路由在各自模块实现后在此注册：
     # application.include_router(radar.router, prefix="/api/radar")
-    # application.include_router(review.router, prefix="/api/reviews")
     # application.include_router(admin.router, prefix="/api/admin")
 
     return application

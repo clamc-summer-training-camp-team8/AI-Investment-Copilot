@@ -2,7 +2,7 @@
 
 这是默认提供者（`settings.llm_provider == "local"`），存在两个理由：
 
-1. **合规**：PRD 12.1 要求受限数据使用批准的私有环境。local 不发出任何请求。
+1. **离线降级**：未配置外部端点时仍可运行确定性工作流，且不发出任何请求。
 2. **工程**：其他模块开发与 CI 不依赖外部服务，闭环可以在 CI 里完整跑通。
 
 它给出的是确定性的、可解释的抽取结果，不假装是模型。置信度按规则命中强度给，
@@ -135,6 +135,8 @@ class LocalProvider:
         disclosure_time: str,
         thesis_id: str | None = None,
         hypothesis_id: str | None = None,
+        thesis_context: str | None = None,
+        hypothesis_context: dict[str, Any] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> dict[str, Any]:

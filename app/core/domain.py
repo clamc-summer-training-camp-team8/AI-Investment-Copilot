@@ -164,6 +164,20 @@ class AuditRecord:
     model_version: str | None = None
 
 
+@dataclass
+class ReviewTaskRecord:
+    task_id: str
+    thesis_id: str
+    trigger: str
+    priority: str
+    assignee: str
+    state: str = "待处理"
+    detail: dict[str, object] | None = None
+    resolution: str | None = None
+    created_at: datetime | None = None
+    resolved_at: datetime | None = None
+
+
 class ThesisRepo(Protocol):
     def get(self, thesis_id: str) -> ThesisRecord | None: ...
     def add(self, record: ThesisRecord) -> None: ...
@@ -205,6 +219,15 @@ class AuditRepo(Protocol):
     def list_for_object(self, object_type: str, object_id: str) -> list[AuditRecord]: ...
 
 
+class ReviewTaskRepo(Protocol):
+    def add(self, record: ReviewTaskRecord) -> ReviewTaskRecord: ...
+    def get(self, task_id: str) -> ReviewTaskRecord | None: ...
+    def update(self, record: ReviewTaskRecord) -> None: ...
+    def list_for_assignee(
+        self, assignee: str, *, state: str | None = None, limit: int = 100
+    ) -> list[ReviewTaskRecord]: ...
+
+
 @dataclass
 class UnitOfWork:
     """一次业务动作的仓储集合。
@@ -219,3 +242,4 @@ class UnitOfWork:
     suggestions: SuggestionRepo
     versions: VersionRepo
     audit: AuditRepo
+    reviews: ReviewTaskRepo

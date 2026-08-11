@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from app.core.config import PROJECT_ROOT, settings
+from app.core.config import PROJECT_ROOT, Settings, settings
 
 
 def test_项目根指向仓库根() -> None:
@@ -22,8 +22,10 @@ def test_样例包路径存在且含样例数据() -> None:
 
 def test_默认模型提供者不外发数据() -> None:
     """local 使用规则实现，其他模块开发与 CI 都不依赖外部服务（PRD 12.1）。"""
-    assert settings.llm_provider == "local"
-    assert not settings.llm_endpoint
+    defaults = Settings(_env_file=None)
+
+    assert defaults.llm_provider == "local"
+    assert not defaults.llm_endpoint
 
 
 def test_规则阈值带版本号() -> None:

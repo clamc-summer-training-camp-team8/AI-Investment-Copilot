@@ -11,11 +11,11 @@
 - 期望基线：`q1-scale-floor-v1`，阈值在 Q1 披露日冻结，后续不调参。
 - 连续两季低于阈值触发重大风险；核心假设同时有支持和冲突证据时提示出现分歧。
 - 候选生成：`deterministic-threshold-baseline-v1`，不是 AI 模型。
-- 代理标注：`proxy-review-v1`，仅复核机械方向，不能替代独立研究员金标。
+- 独立复核：研究员已完成 27/27 个事件单人复核；其中 6 个事件完成第二人复核，覆盖每个行业 2 个事件，方向与结论一致率均为 100%。
 
 ## 基线与标签
 
-普通基线是“实际值是否达到冻结阈值”的关键词无关确定性规则。结果标签采用后续基本面是否实现，不计算股价方向或 Alpha。生产 AI 能力在本实验中标记为 `NOT_RUN`，不能用规则结果冒充模型结果。
+普通基线是“实际值是否达到冻结阈值”的关键词无关确定性规则。结果标签采用后续基本面是否实现，不计算股价方向或 Alpha。研究员金标版本为 `researcher-gold-v1`。生产 AI 能力在本实验中仍标记为 `NOT_RUN`，不能用规则结果冒充模型结果，也不能把候选规则与金标的一致率表述为 AI 准确率。
 
 ## 验收条件
 
@@ -38,4 +38,18 @@
 python -m analytics.pipelines.mvp_closure
 ```
 
-输出包括 `results.json`、`event_results.csv`、`review_queue.csv` 和 `REPORT.md`。
+复核输入包括 `review_queue.csv`（33 行，含 6 个双人样本）、`review_queue-1.csv`（27 个独立事件）和 `researcher_gold_v1.csv`（冻结金标）。管道会校验来源、字段完整性、时间、枚举、覆盖率和双人复核比例，并且不会覆盖已有复核结果。
+
+输出包括 `results.json`、`event_results.csv`、`review_queue_template.csv` 和 `REPORT.md`。
+
+冻结研究员金标后的真实 DeepSeek Chat Completions 评测：
+
+```powershell
+# 先在服务端环境或不进 Git 的 .env 中配置 LLM_API_KEY
+python -m analytics.evaluation.run_nine_company_model --limit 1
+python -m analytics.evaluation.run_nine_company_model
+```
+
+第一条用于单条冒烟，第二条运行全部 27 个事件。结果分别写入
+`deepseek_v4_flash_results.json` 和 `DEEPSEEK_V4_FLASH_REPORT.md`；两者都不包含密钥、
+完整提示词或供应商原始响应。实际值与冻结阈值仍由程序比较，模型只做事实摘要和方向映射。

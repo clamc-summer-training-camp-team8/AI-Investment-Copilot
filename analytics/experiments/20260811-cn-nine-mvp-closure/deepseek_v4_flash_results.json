@@ -1,0 +1,890 @@
+{
+  "experiment_id": "20260811-cn-nine-mvp-closure-deepseek-v4-flash",
+  "generated_at": "2026-08-11T08:15:43.805809+00:00",
+  "dataset_id": "mvp-cn-nine-2024-v1",
+  "gold_version": "researcher-gold-v1",
+  "provider": "http",
+  "endpoint_host": "api.deepseek.com",
+  "api_mode": "chat-completions",
+  "model_version": "deepseek-v4-flash",
+  "thinking_mode": "disabled",
+  "prompt_or_raw_response_persisted": false,
+  "disclosure_time_policy": "date-only disclosures normalized to 23:59:59+08:00",
+  "evaluation_scope": "event fact summarization and hypothesis-direction mapping",
+  "calculation_policy": "observed-value/threshold comparison computed by program",
+  "metrics": {
+    "expected_count": 27,
+    "attempted_count": 27,
+    "completed_count": 27,
+    "candidate_count": 27,
+    "low_confidence_count": 0,
+    "parse_failed_count": 0,
+    "call_failed_count": 0,
+    "directional_count": 27,
+    "exact_matches": 27,
+    "direction_accuracy": 1.0,
+    "by_gold_direction": {
+      "支持": {
+        "count": 25,
+        "matches": 25,
+        "accuracy": 1.0
+      },
+      "冲突": {
+        "count": 2,
+        "matches": 2,
+        "accuracy": 1.0
+      }
+    },
+    "citation_locator_integrity": 1.0,
+    "latency_ms": {
+      "mean": 2313.3,
+      "p95": 2614
+    },
+    "usage_totals": {
+      "prompt_tokens": 19225,
+      "completion_tokens": 5903,
+      "total_tokens": 25128,
+      "prompt_cache_hit_tokens": 10240,
+      "prompt_cache_miss_tokens": 8985
+    }
+  },
+  "results": [
+    {
+      "case_id": "semi-smic-2024",
+      "industry": "芯片半导体",
+      "company_name": "中芯国际",
+      "security_id": "688981.SH/00981.HK",
+      "period": "2024Q2",
+      "source_document_id": "SMIC-2024Q2",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2680,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "a8bdf596-31ab-4df4-a9d9-c75aaede9461",
+      "usage": {
+        "prompt_tokens": 711,
+        "completion_tokens": 236,
+        "total_tokens": 947,
+        "prompt_tokens_details": {
+          "cached_tokens": 640
+        },
+        "prompt_cache_hit_tokens": 640,
+        "prompt_cache_miss_tokens": 71
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-smic-2024",
+      "industry": "芯片半导体",
+      "company_name": "中芯国际",
+      "security_id": "688981.SH/00981.HK",
+      "period": "2024Q3",
+      "source_document_id": "SMIC-2024Q3",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2472,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "5a3ed298-20f1-4f9e-9981-dff73f46535e",
+      "usage": {
+        "prompt_tokens": 710,
+        "completion_tokens": 241,
+        "total_tokens": 951,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 710
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-smic-2024",
+      "industry": "芯片半导体",
+      "company_name": "中芯国际",
+      "security_id": "688981.SH/00981.HK",
+      "period": "2024Q4",
+      "source_document_id": "SMIC-2024Q4",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2195,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "6b05b360-5097-4ab8-a7a7-c2b466f3ddad",
+      "usage": {
+        "prompt_tokens": 710,
+        "completion_tokens": 227,
+        "total_tokens": 937,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 326
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-gigadevice-2024",
+      "industry": "芯片半导体",
+      "company_name": "兆易创新",
+      "security_id": "603986.SH",
+      "period": "2024Q2",
+      "source_document_id": "GIGA-2024H1",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2139,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "b45c6d63-efd3-45d6-98d1-8b0644beee43",
+      "usage": {
+        "prompt_tokens": 708,
+        "completion_tokens": 210,
+        "total_tokens": 918,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 324
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-gigadevice-2024",
+      "industry": "芯片半导体",
+      "company_name": "兆易创新",
+      "security_id": "603986.SH",
+      "period": "2024Q3",
+      "source_document_id": "GIGA-2024Q3",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2146,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "467d70cf-e1cd-4c1a-b3d2-6eebea4cf706",
+      "usage": {
+        "prompt_tokens": 708,
+        "completion_tokens": 209,
+        "total_tokens": 917,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 324
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-gigadevice-2024",
+      "industry": "芯片半导体",
+      "company_name": "兆易创新",
+      "security_id": "603986.SH",
+      "period": "2024Q4",
+      "source_document_id": "GIGA-2024FY",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2321,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "59b66443-9576-4b8a-afc5-999018735601",
+      "usage": {
+        "prompt_tokens": 708,
+        "completion_tokens": 192,
+        "total_tokens": 900,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 324
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-naura-2024",
+      "industry": "芯片半导体",
+      "company_name": "北方华创",
+      "security_id": "002371.SZ",
+      "period": "2024Q2",
+      "source_document_id": "NAURA-2024H1",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2290,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "da380a42-700f-4938-9a36-012d4577a54d",
+      "usage": {
+        "prompt_tokens": 705,
+        "completion_tokens": 213,
+        "total_tokens": 918,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 321
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-naura-2024",
+      "industry": "芯片半导体",
+      "company_name": "北方华创",
+      "security_id": "002371.SZ",
+      "period": "2024Q3",
+      "source_document_id": "NAURA-2024Q3",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2158,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "ee0ac107-ed59-477c-acd9-5edabdd5908c",
+      "usage": {
+        "prompt_tokens": 705,
+        "completion_tokens": 211,
+        "total_tokens": 916,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 321
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "semi-naura-2024",
+      "industry": "芯片半导体",
+      "company_name": "北方华创",
+      "security_id": "002371.SZ",
+      "period": "2024Q4",
+      "source_document_id": "NAURA-2024FY",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2188,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "cc41e14a-d8f0-42e6-8a63-baacc088dafa",
+      "usage": {
+        "prompt_tokens": 705,
+        "completion_tokens": 207,
+        "total_tokens": 912,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 321
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-hengrui-2024",
+      "industry": "医药",
+      "company_name": "恒瑞医药",
+      "security_id": "600276.SH",
+      "period": "2024Q2",
+      "source_document_id": "HENGRUI-2024H1",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2154,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "b2421ee8-6442-4958-bca0-348eddd46ce0",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 209,
+        "total_tokens": 918,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-hengrui-2024",
+      "industry": "医药",
+      "company_name": "恒瑞医药",
+      "security_id": "600276.SH",
+      "period": "2024Q3",
+      "source_document_id": "HENGRUI-2024Q3",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2517,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "29258f59-fefa-4b65-a927-2be5d5d53eac",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 219,
+        "total_tokens": 928,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-hengrui-2024",
+      "industry": "医药",
+      "company_name": "恒瑞医药",
+      "security_id": "600276.SH",
+      "period": "2024Q4",
+      "source_document_id": "HENGRUI-2024FY",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.7,
+      "citation_locator_valid": true,
+      "latency_ms": 2484,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "04caff23-b26e-4218-823d-7a134d322bc5",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 215,
+        "total_tokens": 924,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-wuxi-2024",
+      "industry": "医药",
+      "company_name": "药明康德",
+      "security_id": "603259.SH/02359.HK",
+      "period": "2024Q2",
+      "source_document_id": "WUXI-2024H1",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2375,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "b78fd904-fdeb-432d-899a-a839dc577bae",
+      "usage": {
+        "prompt_tokens": 714,
+        "completion_tokens": 230,
+        "total_tokens": 944,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 330
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-wuxi-2024",
+      "industry": "医药",
+      "company_name": "药明康德",
+      "security_id": "603259.SH/02359.HK",
+      "period": "2024Q3",
+      "source_document_id": "WUXI-2024Q3",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.7,
+      "citation_locator_valid": true,
+      "latency_ms": 2485,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "593b2621-8047-4a5d-92d0-23e2e6d753b7",
+      "usage": {
+        "prompt_tokens": 714,
+        "completion_tokens": 229,
+        "total_tokens": 943,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 330
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-wuxi-2024",
+      "industry": "医药",
+      "company_name": "药明康德",
+      "security_id": "603259.SH/02359.HK",
+      "period": "2024Q4",
+      "source_document_id": "WUXI-2024FY",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.7,
+      "citation_locator_valid": true,
+      "latency_ms": 2262,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "7c19fcaf-baf9-4c4c-849c-03b723821250",
+      "usage": {
+        "prompt_tokens": 714,
+        "completion_tokens": 210,
+        "total_tokens": 924,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 330
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-yunnan-baiyao-2024",
+      "industry": "医药",
+      "company_name": "云南白药",
+      "security_id": "000538.SZ",
+      "period": "2024Q2",
+      "source_document_id": "YNBY-2024H1",
+      "gold_direction": "冲突",
+      "ai_status": "候选",
+      "predicted_direction": "冲突",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2117,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "9db02e6f-26ef-41f0-942b-ced07033020c",
+      "usage": {
+        "prompt_tokens": 731,
+        "completion_tokens": 196,
+        "total_tokens": 927,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 347
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-yunnan-baiyao-2024",
+      "industry": "医药",
+      "company_name": "云南白药",
+      "security_id": "000538.SZ",
+      "period": "2024Q3",
+      "source_document_id": "YNBY-2024Q3",
+      "gold_direction": "冲突",
+      "ai_status": "候选",
+      "predicted_direction": "冲突",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2227,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "3b7f0810-e6cc-4870-9b9b-493b063a5705",
+      "usage": {
+        "prompt_tokens": 731,
+        "completion_tokens": 185,
+        "total_tokens": 916,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 347
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "pharma-yunnan-baiyao-2024",
+      "industry": "医药",
+      "company_name": "云南白药",
+      "security_id": "000538.SZ",
+      "period": "2024Q4",
+      "source_document_id": "YNBY-2024FY",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2296,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "6300d5ae-0ab9-4c20-a363-1df4a5d77329",
+      "usage": {
+        "prompt_tokens": 731,
+        "completion_tokens": 207,
+        "total_tokens": 938,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 347
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-byd-2024",
+      "industry": "新能源汽车",
+      "company_name": "比亚迪",
+      "security_id": "002594.SZ/01211.HK",
+      "period": "2024Q2",
+      "source_document_id": "BYD-2024M06",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2472,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "2f4f56dc-1689-4f7f-bce2-ff7a0c451c2e",
+      "usage": {
+        "prompt_tokens": 711,
+        "completion_tokens": 231,
+        "total_tokens": 942,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 327
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-byd-2024",
+      "industry": "新能源汽车",
+      "company_name": "比亚迪",
+      "security_id": "002594.SZ/01211.HK",
+      "period": "2024Q3",
+      "source_document_id": "BYD-2024M09",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2228,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "3895194d-5971-42dd-a2f2-71f4e67ddcd6",
+      "usage": {
+        "prompt_tokens": 714,
+        "completion_tokens": 236,
+        "total_tokens": 950,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 330
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-byd-2024",
+      "industry": "新能源汽车",
+      "company_name": "比亚迪",
+      "security_id": "002594.SZ/01211.HK",
+      "period": "2024Q4",
+      "source_document_id": "BYD-2024M12",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2381,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "11a6cce3-ee9f-479a-be61-2619759f8743",
+      "usage": {
+        "prompt_tokens": 714,
+        "completion_tokens": 219,
+        "total_tokens": 933,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 330
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-geely-2024",
+      "industry": "新能源汽车",
+      "company_name": "吉利汽车",
+      "security_id": "00175.HK",
+      "period": "2024Q2",
+      "source_document_id": "GEELY-2024M06",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2614,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "c5dbdfd9-9959-47d8-906d-c233345386dc",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 246,
+        "total_tokens": 955,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-geely-2024",
+      "industry": "新能源汽车",
+      "company_name": "吉利汽车",
+      "security_id": "00175.HK",
+      "period": "2024Q3",
+      "source_document_id": "GEELY-2024M09",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2261,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "b23b2b02-e40e-4e3b-aad8-0da37142c649",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 213,
+        "total_tokens": 922,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-geely-2024",
+      "industry": "新能源汽车",
+      "company_name": "吉利汽车",
+      "security_id": "00175.HK",
+      "period": "2024Q4",
+      "source_document_id": "GEELY-2024M12",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2460,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "4bfba422-08bb-4cb1-ba2f-9a5f64c74847",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 244,
+        "total_tokens": 953,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-xpeng-2024",
+      "industry": "新能源汽车",
+      "company_name": "小鹏汽车",
+      "security_id": "09868.HK/XPEV.US",
+      "period": "2024Q2",
+      "source_document_id": "XPENG-2024Q2",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.8,
+      "citation_locator_valid": true,
+      "latency_ms": 2303,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "3a53c4de-6af7-4d83-a9aa-66f4713a1ee1",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 233,
+        "total_tokens": 942,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-xpeng-2024",
+      "industry": "新能源汽车",
+      "company_name": "小鹏汽车",
+      "security_id": "09868.HK/XPEV.US",
+      "period": "2024Q3",
+      "source_document_id": "XPENG-2024Q3",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2007,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "71f5da68-3709-48c1-afee-a18180a8bac1",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 214,
+        "total_tokens": 923,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    },
+    {
+      "case_id": "nev-xpeng-2024",
+      "industry": "新能源汽车",
+      "company_name": "小鹏汽车",
+      "security_id": "09868.HK/XPEV.US",
+      "period": "2024Q4",
+      "source_document_id": "XPENG-2024Q4",
+      "gold_direction": "支持",
+      "ai_status": "候选",
+      "predicted_direction": "支持",
+      "exact_match": true,
+      "relevance": "相关",
+      "confidence": 0.9,
+      "citation_locator_valid": true,
+      "latency_ms": 2228,
+      "model_version": "deepseek-v4-flash",
+      "prompt_version": "event-impact-v2-mentor-ruling",
+      "request_id": "dd104b2f-fedd-4c16-aa7c-c296e45997da",
+      "usage": {
+        "prompt_tokens": 709,
+        "completion_tokens": 221,
+        "total_tokens": 930,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 325
+      },
+      "validation_errors": null,
+      "call_error": null
+    }
+  ]
+}

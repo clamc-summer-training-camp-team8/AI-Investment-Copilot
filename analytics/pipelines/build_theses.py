@@ -229,7 +229,7 @@ def build() -> list[ThesisSpec]:
                     expectation_value=str(template["expectation"]),
                     threshold=str(template["threshold"]),
                     direction=str(template["direction"]),
-                    required_consecutive=int(template["consecutive"]),  # type: ignore[arg-type]
+                    required_consecutive=int(str(template["consecutive"])),
                     invalidation_rule=str(template["rule"]),
                     participates_in_invalidation=bool(template["participates"]),
                 )
