@@ -28,10 +28,11 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "env": settings.env}
 
-    from app.api.routers import reviews, thesis, workbench
+    from app.api.routers import radar, reviews, thesis, workbench
 
     application.include_router(thesis.router, prefix="/api")
     application.include_router(workbench.router, prefix="/api")
+    application.include_router(radar.router, prefix="/api")
     application.include_router(reviews.router, prefix="/api")
 
     # 其余路由在各自模块实现后在此注册：

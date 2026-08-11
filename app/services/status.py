@@ -72,18 +72,22 @@ def compute_suggestion(
     today: date | None = None,
 ) -> StatusSuggestion:
     """汇总证据与指标，算出状态建议。不写库，不改状态。"""
-    evidence = uow.evidence.list_for_thesis(thesis.thesis_id)
+    # 关联是唯一状态计算来源：同一证据可关联多条逻辑，不能再读取 Evidence 的旧单关联字段。
+    relations = uow.relations.list_for_thesis(thesis.thesis_id)
+    # 增量迁移与旧单元测试尚未回填关联时，临时兼容旧字段；生产迁移完成后恒走上行。
+    legacy_evidence = uow.evidence.list_for_thesis(thesis.thesis_id) if not relations else []
 
     summaries: list[EvidenceSummary] = []
     checks: list[InvalidationCheck] = []
 
     for hypothesis in hypotheses:
-        related = [e for e in evidence if e.hypothesis_id == hypothesis.hypothesis_id]
+        related = [relation for relation in relations if relation.hypothesis_id == hypothesis.hypothesis_id]
+        legacy_related = [item for item in legacy_evidence if item.hypothesis_id == hypothesis.hypothesis_id]
         summaries.append(
             summarize_evidence(
                 hypothesis.hypothesis_id,
                 hypothesis.importance,
-                [(e.direction, e.confirmation_status) for e in related],
+                ([(relation.direction, relation.status) for relation in related] if relations else [(item.direction, item.confirmation_status) for item in legacy_related]),
             )
         )
 

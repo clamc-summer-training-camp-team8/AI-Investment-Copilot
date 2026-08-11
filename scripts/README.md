@@ -15,6 +15,38 @@
 | --- | --- |
 | `seed_sample_pack.py` | 导入 `docs/data/数据分析交付包/业务样例包/` 到本地库 |
 | `check_contracts.py` | 校验 `contracts/` 下 Schema 自身合法性 |
+| `export_openapi.py` | 从 FastAPI 路由导出 `contracts/api/openapi.yaml` |
+| `import_real_case.py` | 将人工核验后的阳光电源真实公开案例导入联调数据库 |
+| `import_industry_dataset.py` | 将 `real_data/` 中已提交的行业公开数据导入本地 PostgreSQL |
+
+## 真实案例联调
+
+阳光电源单案例资料不进入仓库。将 `scripts/templates/real_case_sg.template.json`
+复制为 `real_data/real_case_sg.json` 后，填写经研究员核验的公开摘录、来源、披露
+时间与 `https` 链接，再按以下顺序执行：
+
+```powershell
+docker compose -f deploy/docker-compose.local.yml up -d
+.\.venv\Scripts\python.exe -m alembic upgrade head
+.\.venv\Scripts\python.exe -m scripts.import_real_case
+.\.venv\Scripts\python.exe -m scripts.export_openapi
+```
+
+导入脚本拒绝缺失事实字段、无时区披露时间和非 `https` 公开链接；它不会读取
+`seed_sample_pack.py` 的虚构样例，因此可作为阳光电源前端联调的唯一数据入口。
+
+## 行业公开数据联调
+
+`real_data/dataset/` 与 `real_data/raw/` 已纳入版本控制，包含九家公司的公开公告
+索引、财务观测、投资逻辑与人工双标注结果。执行以下命令会导入 45 条逻辑、公告
+事件、候选证据和财务观测；重复执行只更新同一数据版本，不会产生重复记录。
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.import_industry_dataset
+```
+
+公告正文没有随数据包提交，证据详情中的 `fact_excerpt` 只展示逐字保存的公告标题；
+页面必须保留 `source_url` 的公开原文跳转，不能把标题误标为公告正文摘录。
 
 ## seed_sample_pack.py
 

@@ -1,0 +1,37 @@
+openapi: 3.1.0
+info:
+  title: AI Investment Copilot Error Contract
+  version: 0.1.0
+components:
+  schemas:
+    ErrorOut:
+      type: object
+      required: [code, message, retryable]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+        candidates:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+responses:
+  BadRequest:
+    description: 输入、状态流转或人工闸门字段不合法。
+  Unauthorized:
+    description: 网关或开发代理未注入身份信息；前端显示身份服务不可用。
+  ForbiddenOperation:
+    description: 对象可见但当前用户不是目标逻辑负责人。
+  NotFound:
+    description: 对象不存在或当前用户无查看权限，不区分两种原因。
+  Conflict:
+    description: 实体歧义或旧单关联接口遇到多关联数据。
+  ValidationError:
+    description: 证据详情字段不完整或请求数据无法校验。
+  ServiceUnavailable:
+    description: 模型或依赖服务暂不可用，可重试。
