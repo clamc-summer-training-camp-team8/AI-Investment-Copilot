@@ -152,3 +152,15 @@
 ### 阶段 5：真实数据 Demo 与评测
 
 目标：使用云南白药验证公告 RAG，使用储能案例验证完整投资逻辑变化闭环。
+
+### 阶段 4：补充 AI 初始 Thesis/Hypothesis 生成边界与 Agent 规划
+
+状态：规格补充完成，代码待实现。
+
+主要内容：
+- 明确初始投资逻辑和假设可以由 AI 生成，但产物是待人工审核的 Thesis Draft/Hypothesis Candidate。
+- 增加 `documents only` 输入模式，后续让 AI 可从公告/研报资料归纳初始观点。
+- 明确正式方向、预期值、失效阈值和发布状态仍需人工确认。
+- 规划 4 个业务 Agent 能力：`ThesisDraftAgent`、`InvestmentLogicChangeAgent`、`EvidenceAgent`、`ReviewAgent`；MVP 优先实现前两个。
+
+当前缺口：现有草稿接口仍要求 `view`，且尚未把 RAG 检索结果接入 Thesis 草稿生成；下一阶段补 `ThesisDraftAgent` 和 documents-only 流程。

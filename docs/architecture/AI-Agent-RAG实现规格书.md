@@ -7,6 +7,26 @@
 本文不把当前代码视为最终正确实现。现有 `LocalProvider`、规则和 Prompt 作为可替换的 MVP 实现，后续可在不改变业务契约的前提下替换。
 
 ## 2. 基线结论
+### 2.3 初始投资逻辑与假设的生成边界
+
+本项目的初始投资逻辑和假设允许由 AI 生成。这里的“生成”指生成可供研究员审核的 Thesis Draft，而不是直接形成正式投资结论。
+
+MVP 支持三种输入模式：
+
+1. `view + documents`：研究员提供简短观点，AI 结合公告/研报资料拆解为核心逻辑和候选假设（推荐模式）。
+2. `documents only`：研究员只提供资料，AI 从资料中归纳初始观点、2~5 条候选假设及其引用。
+3. `view only`：AI 只负责将观点结构化；没有资料支撑的陈述必须标记为待补充证据。
+
+AI 初始输出包括 `title`、`core_view`、2~5 条 `hypotheses`、指标建议、风险、失效条件建议和 citations。AI 不得编造预期值、正式阈值、收益率或交易指令；这些字段在人工审核阶段补充。
+
+因此，正式流程是：
+
+```text
+资料/观点 -> RAG 检索 -> AI 生成 Thesis Draft -> 引用与 Schema 校验
+        -> 人工修改确认 -> 填写预期值/失效阈值 -> 发布 Thesis V1
+```
+
+`Thesis Draft`、`Hypothesis Candidate` 和正式 `Thesis V1` 必须在数据模型和状态上明确区分。AI 可以生成前两者，但不能绕过人工确认直接发布正式版本。
 
 ### 2.1 产品主线
 
@@ -396,3 +416,22 @@ Agent 输出不是正式 Evidence，也不是正式 Thesis 状态。
 ## 11. 一句话决策
 
 `data_samples` 足够启动“单公司、单条主流程、可演示”的 Agent/RAG MVP，但不足以支撑跨公司泛化、RAG 质量和 AI 效果结论。实现应先围绕 PRD 的投资逻辑闭环建立稳定契约，再逐步补齐正文、历史期数、人工金标、权限和同业数据。
+
+## 12. 补充后的 Agent 规划
+
+MVP 计划按职责划分为 4 个 Agent 能力（不是 4 个必须同时运行的自主 Agent）：
+
+1. `ThesisDraftAgent`：接收观点和/或资料，调用 Retriever 与 Gateway，生成初始投资逻辑、2~5 条候选假设、指标建议、风险和引用。
+2. `InvestmentLogicChangeAgent`：接收新事件和已确认假设，分析支持、冲突、中性或不确定影响，输出候选 Evidence/StatusSuggestion。
+3. `EvidenceAgent`：负责引用定位、事实一致性、权限和时间边界校验；低置信度或无依据内容进入人工复核。
+4. `ReviewAgent`：汇总 AI 草稿、计算结果和历史版本，生成复盘草稿与待确认事项。
+
+其中 `Gateway/Provider`、`Retriever`、`app.calc` 和 Schema 校验属于共享基础设施，不单独算业务 Agent。MVP 第一阶段只需优先实现前两个 Agent；Evidence 校验可作为编排步骤，ReviewAgent 放在 P1。
+
+推荐执行顺序：
+
+```text
+ThesisDraftAgent -> InvestmentLogicChangeAgent -> Evidence 校验 -> ReviewAgent
+```
+
+无论 Agent 数量如何增加，正式 Thesis 发布、预期值和失效阈值确认仍由研究员完成。
