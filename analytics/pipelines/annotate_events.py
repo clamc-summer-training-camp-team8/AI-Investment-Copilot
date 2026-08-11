@@ -40,30 +40,81 @@ from app.core.enums import ImpactDirection
 RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
 OUT_DIR = PROJECT_ROOT / "real_data" / "dataset"
 
-ANNOTATION_VERSION = "pre-annotation-v1"
+ANNOTATION_VERSION = "pre-annotation-v2"
 
-# 事件类型：按监管披露语义划分，与标题关键词无关
-CATEGORY_RULES: tuple[tuple[str, str], ...] = (
-    ("定期报告", r"年度报告|半年度报告|季度报告|年报|中报"),
-    ("业绩预告", r"业绩预告|业绩快报"),
-    ("产销数据", r"产销快报|产销数据|经营数据"),
-    ("订单与合同", r"中标|签订|订单|重大合同|框架协议|战略合作|采购协议"),
-    ("投资与产能", r"对外投资|投资设立|扩产|产能|建设项目|新建|增资"),
-    ("融资", r"募集资金|定向增发|可转债|H股|存托凭证|发行.{0,6}股份|配股"),
-    ("股权激励", r"限制性股票|股票期权|员工持股"),
-    ("回购与持股变动", r"回购|增持|减持|股份.{0,4}变动|权益变动"),
-    ("担保与关联交易", r"提供担保|担保额度|关联交易"),
-    ("风险与异动", r"股价异动|风险提示|诉讼|仲裁|处罚|减值|问询|立案"),
-    ("治理", r"制度|章程|议事规则|决议公告|独立董事|监事|董事会|股东大会|换届"),
+# 港交所与交易所要求的程式化公告。它们按月按次机械发布，不含经营信息。
+# 必须**最先**排除，原因有两个：
+# 1. 「H股公告」这类前缀会被融资规则的 `H股` 命中。实测样本内 361 条「融资」里
+#    304 条含「H股」字样，其中绝大多数是证券变动月报表与翌日披露报表——
+#    把法定月报表当成融资事件，等于给 H3 假设灌了一堆假证据。
+# 2. 「月报表截至31/7/2026」是港股证券变动月报，不是销量月报。名字像销量数据，
+#    实际与经营无关，必须在产销规则之前排除。
+PROCEDURAL_NOISE = (
+    r"翌日披露报表"
+    r"|证券变动月报表"
+    r"|月报表截至"
+    r"|通知信函"
+    r"|公司通讯"
+    r"|董事名单与其角色"
+    r"|暂停办理"
+    r"|过户登记"
+    r"|股东周年大会"
+    r"|表决结果"
+    r"|受托管理事务"
+    r"|存续期"
+    r"|跟踪评级"
+    r"|付息|兑付"
 )
 
-# 与三条核心假设的对应关系。定期报告和产销数据同时影响多条假设，
-# 取业务上最直接的那条——一条证据关联多个假设会让方向判断失去可检验性。
+# 事件类型：按监管披露语义划分，与标题关键词无关。
+# 顺序敏感：越具体的行业事件放越前面，通用规则兜后。
+CATEGORY_RULES: tuple[tuple[str, str], ...] = (
+    # —— 医药行业专属：研发与准入是这个行业最主要的价值事件 ——
+    # 恒瑞样本内有 128 条临床试验批准公告，原规则全部归入「其他」，
+    # 等于把创新药公司最核心的信号丢掉。
+    ("药品研发进展", r"临床试验|临床研究|突破性治疗|优先审评|快速通道|孤儿药|IND|新药研究"),
+    ("药品注册与上市", r"注册证书|注册批准|上市许可|获准上市|生产批件|上市申请.{0,6}受理|补充申请"),
+    ("集采与准入", r"集中采购|带量采购|集采|医保目录|挂网|中选结果|谈判结果"),
+    ("药品质量与合规", r"GMP|飞行检查|药品召回|不良反应|一致性评价"),
+    # —— 半导体行业专属 ——
+    ("产能与制程进展", r"晶圆|制程|流片|封测|良率|产线|N\+1|先进封装"),
+    # —— 汽车行业专属：销量与交付是最高频的经营数据 ——
+    ("产销数据", r"产销快报|产销数据|经营数据|交付数据|销量(?!目标)|交付量|上险"),
+    # —— 通用监管类型 ——
+    ("定期报告", r"年度报告|半年度报告|季度报告|年报|中报|业绩公布|业绩公告|中期业绩"),
+    ("业绩预告", r"业绩预告|业绩快报|盈利警告|正面盈利预告"),
+    ("订单与合同", r"中标|签订|订单|重大合同|框架协议|战略合作|采购协议|供货"),
+    ("投资与产能", r"对外投资|投资设立|扩产|产能|建设项目|新建|增资|收购|合营公司"),
+    ("融资", r"募集资金|定向增发|可转债|存托凭证|发行.{0,6}股份|配股|供股|中期票据"),
+    ("股权激励", r"限制性股票|股票期权|员工持股|限制性股份单位"),
+    ("回购与持股变动", r"回购|增持|减持|股份.{0,4}变动|权益变动|质押|解除质押"),
+    ("担保与关联交易", r"提供担保|担保额度|关联交易|持续关连交易"),
+    ("风险与异动", r"股价异动|风险提示|诉讼|仲裁|处罚|减值|问询|立案|终止|撤回"),
+    (
+        "治理",
+        r"制度|章程|议事规则|决议公告|独立董事|监事|董事会|股东大会|换届|利润分配|会计政策|审计|内部控制|ESG|环境、社会",
+    ),
+)
+
+# 与三条核心假设的对应关系。一条证据只关联一个假设：
+# 关联多个假设会让方向判断失去可检验性（一条证据同时支持又冲突无法验证）。
+#
+# 跨行业时假设骨架保持一致（H1 需求与出货 / H2 盈利质量 / H3 产能与扩张），
+# 但落到各行业的事件类型不同：
+# - 医药的研发进展与注册上市是未来收入的来源，归 H1（需求与出货）而不是 H3，
+#   因为它决定的是「有没有东西可卖」，不是「能不能造出来」。
+# - 集采与准入直接压价，归 H2（盈利质量）。这是医药行业最典型的利润冲击事件。
+# - 半导体的制程与产能进展归 H3。
 CATEGORY_TO_HYPOTHESIS: dict[str, str] = {
     "定期报告": "H2-盈利质量",
     "业绩预告": "H2-盈利质量",
     "产销数据": "H1-需求与出货",
     "订单与合同": "H1-需求与出货",
+    "药品研发进展": "H1-需求与出货",
+    "药品注册与上市": "H1-需求与出货",
+    "集采与准入": "H2-盈利质量",
+    "药品质量与合规": "H2-盈利质量",
+    "产能与制程进展": "H3-产能与扩张",
     "投资与产能": "H3-产能与扩张",
     "融资": "H3-产能与扩张",
     "风险与异动": "H2-盈利质量",
@@ -71,7 +122,9 @@ CATEGORY_TO_HYPOTHESIS: dict[str, str] = {
 
 # 不影响任何核心假设的类型。这些是"无关提醒率"的分母来源，
 # 不能从样本里删掉——删掉就等于把最容易误报的部分藏起来（选择偏差）。
-NON_THESIS_CATEGORIES = frozenset({"股权激励", "回购与持股变动", "担保与关联交易", "治理", "其他"})
+NON_THESIS_CATEGORIES = frozenset(
+    {"股权激励", "回购与持股变动", "担保与关联交易", "治理", "程式化披露", "其他"}
+)
 
 # 业务动作词表，标注者 B 用。刻意与关键词基线的词表不同：
 # B 看的是方向性动作词，基线看的是主题词。
@@ -90,6 +143,14 @@ POSITIVE_ACTIONS = (
     "扭亏",
     "创新高",
 )
+# 刻意**不**加「获得/获批/批准/受理」这些词。它们看起来是正向动作词，但在医药样本里
+# 与「药品研发进展」「药品注册与上市」两个类型几乎完全重合（316 条里 315 条命中）。
+# 加进去会让 B 在这些样本上必然与 A 一致，方向 kappa 从 0.52 虚假抬到 0.89——
+# 抬上去的不是规则清晰度，是两个标注者的相关性。两名标注者必须保持独立，
+# 否则一致性指标就不再衡量任何东西（和原来 hypothesis_kappa 恒为 1.0 是同一类错误）。
+#
+# 保留这个分歧反而有价值：「拿到临床试验批准算不算支持需求假设的证据」
+# 正是需要业务导师裁决的真问题，它会出现在待裁决队列里。
 NEGATIVE_ACTIONS = (
     "下降",
     "减少",
@@ -106,6 +167,9 @@ NEGATIVE_ACTIONS = (
     "风险提示",
     "预减",
     "预亏",
+    # 港股业绩预警。这个词与类型不重合（盈利警告是定期报告/业绩预告类下的方向词），
+    # 加它不会造成 A、B 相关，反而补上了 B 原来读不出港股预警的空白。
+    "盈利警告",
 )
 
 
@@ -121,6 +185,8 @@ class EventSample:
     event_id: str
     security_id: str
     company: str
+    industry: str
+    market: str
     title: str
     disclosure_time: str
     disclosure_time_precise: bool
@@ -138,11 +204,18 @@ class EventSample:
 def classify_category(title: str) -> str:
     """按监管披露语义分类。顺序敏感：先匹配到的胜出。
 
-    「年度报告网上说明会」这类标题同时含「年度报告」和「说明会」，归定期报告是错的
-    ——它不含财务数据。因此先排除会议类。
+    两层前置排除，都是为了不让「形似」的标题污染业务类型：
+
+    1. 会议类。「年度报告网上说明会」同时含「年度报告」和「说明会」，归定期报告是错的
+       ——它不含财务数据。
+    2. 程式化披露。港交所的翌日披露报表、证券变动月报表按期机械发布，
+       不含经营信息。它们单独成类而不是塞进「其他」，因为「其他」是兜底类，
+       混进大量已知无关项会让无关提醒率的分母失去意义。
     """
     if re.search(r"说明会|网上互动|路演|接待|调研", title):
         return "治理"
+    if re.search(PROCEDURAL_NOISE, title):
+        return "程式化披露"
     for name, pattern in CATEGORY_RULES:
         if re.search(pattern, title):
             return name
@@ -160,17 +233,37 @@ def annotate_by_category(title: str, category: str) -> tuple[str, str]:
         return "", ImpactDirection.IRRELEVANT.value
 
     if category in ("定期报告", "业绩预告"):
-        if re.search(r"预增|增长|上升|扭亏|盈利", title):
+        if re.search(r"预增|增长|上升|扭亏|盈利(?!警告)|正面盈利预告", title):
             return hypothesis, ImpactDirection.SUPPORT.value
-        if re.search(r"预减|预亏|下降|下滑|亏损", title):
+        if re.search(r"预减|预亏|下降|下滑|亏损|盈利警告", title):
             return hypothesis, ImpactDirection.CONFLICT.value
         # 定期报告本身不含方向，要读正文才知道。标为中性并进人工队列。
         return hypothesis, ImpactDirection.NEUTRAL.value
 
     if category == "风险与异动":
         return hypothesis, ImpactDirection.CONFLICT.value
-    if category in ("订单与合同", "投资与产能", "产销数据"):
+
+    if category == "集采与准入":
+        # 集采是医药行业的双向事件：中选保住了销量但通常大幅降价，
+        # 落选则直接丢失院内市场。方向取决于降价幅度与放量的相对大小，
+        # 标题读不出来。这类必须进人工队列——机器替它拍方向就是制造假证据。
+        return hypothesis, ImpactDirection.NEUTRAL.value
+
+    if category == "药品质量与合规":
+        return hypothesis, ImpactDirection.CONFLICT.value
+
+    if category in ("药品研发进展", "药品注册与上市"):
+        # 获批/受理是研发管线推进，对未来收入是正向。撤回或终止另有风险类型接管。
         return hypothesis, ImpactDirection.SUPPORT.value
+
+    if category in ("订单与合同", "投资与产能", "产能与制程进展"):
+        return hypothesis, ImpactDirection.SUPPORT.value
+
+    if category == "产销数据":
+        # 「2026年7月产销快报」只说明有这份数据，说不出是增是减。
+        # 原来把产销数据一律判为支持是错的：销量下滑的月报也会被判成支持。
+        return hypothesis, ImpactDirection.NEUTRAL.value
+
     if category == "融资":
         # 融资对产能扩张是支持，对每股权益是摊薄。业务上以扩张为主判断。
         return hypothesis, ImpactDirection.SUPPORT.value
@@ -232,8 +325,11 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
     """
     raw = json.loads((RAW_DIR / "announcements.json").read_text(encoding="utf-8"))
     samples: list[EventSample] = []
+    # 序号按公司独立计数。原来用全局 enumerate，导致 event_id 里的证券代码
+    # 与序号完全无关（EVT-002594-00001 后面接 EVT-300750-00002），看着像错位。
+    counters: Counter[str] = Counter()
 
-    for index, item in enumerate(raw, start=1):
+    for item in raw:
         title = item["title"]
         category = classify_category(title)
         a_hypothesis, a_direction = annotate_by_category(title, category)
@@ -241,12 +337,16 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
 
         agreed = (a_hypothesis, a_direction) == (b_hypothesis, b_direction)
         disclosure = item["disclosure_time"]
+        security_id = item["security_id"]
+        counters[security_id] += 1
 
         samples.append(
             EventSample(
-                event_id=f"EVT-{item['security_id']}-{index:05d}",
-                security_id=item["security_id"],
+                event_id=f"EVT-{security_id}-{counters[security_id]:05d}",
+                security_id=security_id,
                 company=item["company"],
+                industry=item.get("industry", ""),
+                market=item.get("market", ""),
                 title=title,
                 disclosure_time=disclosure,
                 disclosure_time_precise=disclosure[11:16] != "00:00",
@@ -281,6 +381,33 @@ def build(split_date: str = "2025-10-01") -> tuple[list[EventSample], dict[str, 
         "category_counts": dict(Counter(s.category for s in samples).most_common()),
         "imprecise_time_count": sum(1 for s in samples if not s.disclosure_time_precise),
     }
+
+    # 分行业统计。跨行业混在一起看总数会掩盖某个行业样本不足的问题：
+    # 一致性 kappa 也要分行业看，因为标注规则的清晰程度在三个行业里并不相同。
+    by_industry: dict[str, object] = {}
+    for industry in sorted({s.industry for s in samples if s.industry}):
+        subset = [s for s in samples if s.industry == industry]
+        pairs = [(s.annotator_a_direction, s.annotator_b_direction) for s in subset]
+        by_industry[industry] = {
+            "total": len(subset),
+            "thesis_relevant": sum(1 for s in subset if s.annotator_a_hypothesis),
+            "in_sample": sum(1 for s in subset if s.split == "in_sample"),
+            "out_of_sample": sum(1 for s in subset if s.split == "out_of_sample"),
+            "needs_adjudication": sum(1 for s in subset if s.needs_adjudication),
+            "direction_kappa": round(cohen_kappa(pairs), 4),
+            "imprecise_time_count": sum(1 for s in subset if not s.disclosure_time_precise),
+        }
+    stats["by_industry"] = by_industry
+
+    by_company: dict[str, object] = {}
+    for company in sorted({s.company for s in samples}):
+        subset = [s for s in samples if s.company == company]
+        by_company[company] = {
+            "total": len(subset),
+            "thesis_relevant": sum(1 for s in subset if s.annotator_a_hypothesis),
+        }
+    stats["by_company"] = by_company
+
     return samples, stats
 
 
