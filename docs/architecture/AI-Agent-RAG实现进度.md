@@ -164,3 +164,17 @@
 - 规划 4 个业务 Agent 能力：`ThesisDraftAgent`、`InvestmentLogicChangeAgent`、`EvidenceAgent`、`ReviewAgent`；MVP 优先实现前两个。
 
 当前缺口：现有草稿接口仍要求 `view`，且尚未把 RAG 检索结果接入 Thesis 草稿生成；下一阶段补 `ThesisDraftAgent` 和 documents-only 流程。
+### 阶段 5：ThesisDraftAgent 与 RAG 草稿编排
+
+状态：Agent 核心实现完成，API 接入待继续。
+
+主要内容：
+- 新增 `ThesisDraftAgent`，支持 `view + documents`、`documents only` 和 `view only` 三种调用方式。
+- Agent 先把来源片段加入 Retriever，再按证券、时间和权限检索，向 Gateway 传递带 locator 的片段。
+- 新增 `ThesisDraftRunResult`，同时保留检索结果和 AI Schema 校验结果，便于后端保存引用和诊断。
+- Agent 不写数据库、不发布 Thesis，不填写正式预期值和失效阈值。
+- 新增资料生成草稿测试；AI 单元测试结果：7 passed。
+
+遇到的问题：现有 `/theses/drafts` 请求模型仍要求 `view`，接口内部仍传入空 `segments`，因此 documents-only 还未贯通 HTTP API。
+
+解决/下一步：下一阶段扩展 `ThesisDraftIn`，允许传入来源片段或文档 ID，并由 API/服务层构造 `RetrievalDocument` 后调用 `ThesisDraftAgent`；保留 view 作为可选人工提示。
