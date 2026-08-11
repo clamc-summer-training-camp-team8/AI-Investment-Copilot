@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Protocol
 
@@ -105,3 +105,65 @@ class KeywordRetriever:
             )
         candidates.sort(key=lambda item: (-item.score, -item.published_at.timestamp(), item.locator))
         return RetrievalResult(query=query, items=candidates[: query.top_k])
+
+
+class HybridRetriever:
+    """合并全文和向量召回结果；具体向量库由注入的 Retriever 决定。"""
+
+    def __init__(
+        self,
+        *,
+        lexical: Retriever,
+        vector: Retriever,
+        lexical_weight: float = 0.5,
+        vector_weight: float = 0.5,
+        candidate_multiplier: int = 3,
+        rrf_k: int = 60,
+    ) -> None:
+        if lexical_weight < 0 or vector_weight < 0 or lexical_weight + vector_weight == 0:
+            raise ValueError("检索权重必须非负且至少一个大于零")
+        self.lexical = lexical
+        self.vector = vector
+        total = lexical_weight + vector_weight
+        self.lexical_weight = lexical_weight / total
+        self.vector_weight = vector_weight / total
+        self.candidate_multiplier = max(candidate_multiplier, 1)
+        self.rrf_k = max(rrf_k, 1)
+
+    def add(self, documents: list[RetrievalDocument]) -> None:
+        self.lexical.add(documents)
+        if self.vector is not self.lexical:
+            self.vector.add(documents)
+
+    def search(self, query: RetrievalQuery) -> RetrievalResult:
+        if query.top_k <= 0:
+            return RetrievalResult(query=query, items=[], retrieval_version="hybrid-v1")
+        expanded = replace(query, top_k=query.top_k * self.candidate_multiplier)
+        lexical_result = self.lexical.search(expanded)
+        vector_result = self.vector.search(expanded)
+        scores: dict[str, float] = {}
+        chunks: dict[str, RetrievedChunk] = {}
+        for result, weight in (
+            (lexical_result, self.lexical_weight),
+            (vector_result, self.vector_weight),
+        ):
+            for rank, item in enumerate(result.items, start=1):
+                if query.security_id and item.security_id != query.security_id:
+                    continue
+                if item.visibility_label not in query.allowed_visibility:
+                    continue
+                if query.as_of and item.published_at > query.as_of:
+                    continue
+                chunks[item.locator] = item
+                scores[item.locator] = scores.get(item.locator, 0.0) + weight / (
+                    self.rrf_k + rank
+                )
+        ranked = sorted(
+            chunks.values(),
+            key=lambda item: (-scores[item.locator], -item.published_at.timestamp(), item.locator),
+        )
+        items = [replace(item, score=round(scores[item.locator], 8)) for item in ranked[: query.top_k]]
+        version = (
+            f"hybrid-v1[{lexical_result.retrieval_version}+{vector_result.retrieval_version}]"
+        )
+        return RetrievalResult(query=query, items=items, retrieval_version=version)

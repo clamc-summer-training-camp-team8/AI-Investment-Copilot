@@ -142,10 +142,12 @@ class EvidenceAgent:
         payload = impact.outcome.payload
         allowed = {item.locator for item in impact.retrieval.items}
         event = payload.get("event")
+        primary_locator = None
         if isinstance(event, dict) and event.get("evidence_locator"):
-            allowed.add(str(event["evidence_locator"]))
+            primary_locator = str(event["evidence_locator"])
+            allowed.add(primary_locator)
         citations = payload.get("citations")
-        cited: list[str] = []
+        cited: list[str] = [primary_locator] if primary_locator else []
         if isinstance(citations, list):
             for citation in citations:
                 if isinstance(citation, dict) and citation.get("locator"):
@@ -156,12 +158,18 @@ class EvidenceAgent:
         unsupported = payload.get("unsupported_claims")
         unsupported_claims = tuple(str(item) for item in unsupported) if isinstance(unsupported, list) else ()
         valid = bool(cited) and not missing and not unsupported_claims
+        signal = payload.get("signal")
+        model_requires_review = not isinstance(signal, dict) or bool(
+            signal.get("requires_human_review", True)
+        )
         return EvidenceValidation(
             valid=valid,
-            cited_locators=tuple(cited),
+            cited_locators=tuple(dict.fromkeys(cited)),
             missing_locators=tuple(missing),
             unsupported_claims=unsupported_claims,
-            requires_human_review=not valid or impact.outcome.ai_status.value != "候选",
+            requires_human_review=(
+                model_requires_review or not valid or impact.outcome.ai_status.value != "候选"
+            ),
         )
 
     @staticmethod

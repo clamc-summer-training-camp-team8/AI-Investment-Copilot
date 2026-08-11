@@ -8,7 +8,7 @@ from app.core.enums import AiStatus
 
 
 def _settings(**overrides: object) -> Settings:
-    return Settings(**overrides)
+    return Settings(_env_file=None, **overrides)
 
 
 def test_mock_provider_复用本地规则并通过事件契约() -> None:
