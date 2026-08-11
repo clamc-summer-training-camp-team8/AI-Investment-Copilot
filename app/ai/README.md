@@ -87,3 +87,15 @@ PRD 12.1：外部模型调用须遵循数据分类和脱敏要求，受限数据
 - `tests/unit/ai/` 用 `local` 提供者，测校验、降级、版本记录。
 - `tests/contract/` 断言输出符合 `contracts/ai/` Schema。
 - 效果评测不在 `tests/`，在 `analytics/evaluation/`。CI 不跑效果评测，跑的是契约与降级逻辑。
+
+## 后端接入入口
+
+integrated 分支的 worker 可以继续使用 `Gateway.thesis_draft()` 和
+`Gateway.event_impact()`，也可以逐步切换到 `app.ai.backend_adapter`：
+
+- `build_runtime(gateway, retriever)` 构造统一 Runtime；
+- `analyze_backend_event(...)` 适配 `ExtractedEvent`/JSON 与候选假设；
+- `draft_backend_document(...)` 适配文档切片并保留 `document_id + locator + published_at`；
+- 返回 `RuntimeExecution`，再用 `to_backend_envelope()` 交给后端持久化。
+
+适配层只读取后端对象字段，不 import `app.db` 或 `app.services`，不会替代后端路由、队列和人工确认逻辑。
