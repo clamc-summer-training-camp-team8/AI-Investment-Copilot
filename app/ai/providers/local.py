@@ -137,6 +137,7 @@ class LocalProvider:
         hypothesis_id: str | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
+        context: str = "",
     ) -> dict[str, Any]:
         """产出符合 contracts/ai/event_impact.schema.json 的载荷。"""
         verdict = judge_impact(segment_text)

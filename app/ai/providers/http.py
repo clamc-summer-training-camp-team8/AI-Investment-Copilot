@@ -79,7 +79,7 @@ class HttpLLMProvider:
                 f"hypothesis_id={kwargs.get('hypothesis_id')}; "
                 f"event_type={kwargs.get('event_type')}"
             ),
-            context="仅使用调用方提供的上下文；当前版本未额外注入事实。",
+            context=kwargs.get("context") or "仅使用调用方提供的上下文；当前版本未额外注入事实。",
         )
         payload = self._call(system=EVENT_IMPACT.system, instruction=prompt)
         payload.setdefault("document_id", kwargs["document_id"])

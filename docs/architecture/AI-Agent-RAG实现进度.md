@@ -104,6 +104,37 @@
 - 	ests/unit/ai/test_retrieval.py：2 passed；
 - 已验证证券过滤、未来信息过滤、权限过滤和 locator 返回。
 
+### 阶段 3：投资逻辑变化 Agent 最小编排
+
+状态：实现完成，测试通过，待 Git 提交。
+
+实现内容：
+
+- 新增 AgentEvent、CandidateHypothesis、AgentImpact 和 AgentRunResult；
+- 新增 InvestmentLogicChangeAgent；
+- Agent 按候选假设分别检索上下文，再调用 Gateway 的 event_impact；
+- 将检索到的段落、目标假设和 locator 作为模型上下文；
+- Gateway/Provider 增加可选 context，兼容原有 Worker 调用；
+- Agent 不写数据库、不发布 Thesis、不直接改变正式状态；
+- 新增未来信息过滤和 Agent 编排测试。
+
+遇到的问题：
+
+- 原 event_impact 接口只有单条事件文本，Prompt 中的候选逻辑和上下文没有真实传入；
+- 如果 Agent 直接依赖数据库，会破坏 pp.ai 与业务服务的分层边界。
+
+解决方法：
+
+- 以可选 context 扩展 Provider 接口，保持旧调用兼容；
+- Agent 接收候选假设和 Retriever，由后端服务负责数据库召回；
+- 输出保留 ValidationOutcome，后端继续负责保存候选 Evidence 和人工闸门。
+
+验证结果：
+
+- 	ests/unit/ai/test_gateway.py tests/unit/ai/test_retrieval.py tests/unit/ai/test_agent.py tests/unit/ingest/test_notices.py：8 passed；
+- 已验证 Agent 能将检索结果传递到事件影响调用；
+- 已验证 s_of 时间上界不会把未来文档送进上下文。
+
 ## 后续阶段占位
 
 ### 阶段 2：公告正文采集和文档标准化

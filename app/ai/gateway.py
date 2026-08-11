@@ -49,6 +49,7 @@ class Provider(Protocol):
         hypothesis_id: str | None = ...,
         event_type: str = ...,
         occurred_on: str | None = ...,
+        context: str = ...,
     ) -> dict[str, Any]: ...
 
     def draft_thesis(
@@ -93,6 +94,7 @@ class Gateway:
         hypothesis_id: str | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
+        context: str = "",
     ) -> ValidationOutcome:
         try:
             payload = self.provider.analyze_event_impact(
@@ -105,6 +107,7 @@ class Gateway:
                 hypothesis_id=hypothesis_id,
                 event_type=event_type,
                 occurred_on=occurred_on,
+                context=context,
             )
         except ProviderResponseError as exc:
             return ValidationOutcome(
