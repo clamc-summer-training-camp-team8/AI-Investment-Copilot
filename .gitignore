@@ -19,12 +19,12 @@ web/node_modules/
 web/dist/
 web/.vite/
 
-# 离线分析：只提交版本描述文件，数据本体走外部存储
-analytics/datasets/**/data/
+# 离线分析：公开、可再分发且带来源清单的数据可随数据集版本提交。
+# 受许可限制、付费或内部数据必须放到 external/，不得提交。
+analytics/datasets/**/external/
 analytics/**/*.parquet
 analytics/**/*.pkl
 .ipynb_checkpoints/
 
-# 真实投研资料不进仓库。样例数据仅限 docs/data/数据分析交付包/业务样例包/
+# 未经清洗和授权检查的上传资料不进仓库。
 /uploads/
-/real_data/

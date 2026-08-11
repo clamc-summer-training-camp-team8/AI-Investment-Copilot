@@ -1,0 +1,173 @@
+{
+  "dataset_id": "mvp-cn-nine-2024-v1",
+  "dataset_version": "1.0.0",
+  "created_at": "2026-08-11",
+  "cutoff_date": "2025-04-26",
+  "license_note": "仅收录上市公司或交易所公开披露的结构化事实、必要短摘录和来源链接，不复制完整报告。",
+  "expectation_policy": {
+    "version": "q1-scale-floor-v1",
+    "description": "在2024Q1披露日冻结一个不高于Q1实际值的整数量级下限；后续不根据Q2-Q4结果调参。该阈值用于流程验证，不代表卖方一致预期或真实研究员预测。",
+    "direction": "不低于阈值"
+  },
+  "review_policy": {
+    "version": "proxy-review-v1",
+    "reviewer": "Codex代理复核",
+    "qualification": "非持牌投顾、非项目研究员",
+    "scope": "仅复核数值与预先冻结阈值的机械映射，不能替代业务验收金标"
+  },
+  "cases": [
+    {
+      "case_id": "semi-smic-2024",
+      "industry": "芯片半导体",
+      "company_name": "中芯国际",
+      "security_id": "688981.SH/00981.HK",
+      "metric": {"id": "quarterly_revenue_usd_thousand", "name": "单季度营业收入", "unit": "千美元", "period_type": "单季度", "threshold": "1750000"},
+      "thesis": {"established_on": "2024-05-10", "title": "产能利用与需求修复应维持收入规模", "statement": "若行业需求与产能利用率继续修复，后续单季度收入不应低于1750000千美元。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://www.smics.com/uploads/67ab1245/Q4_2024%20Financials%20Presentation.pdf",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-05-10", "actual_value": "1750200", "source_document_id": "SMIC-2024Q1", "source_title": "中芯国际2024年第一季度报告", "source_url": "https://star.sse.com.cn/disclosure/listedinfo/announcement/c/new/2024-05-10/688981_20240510_F9UM.pdf", "locator": "第一季度收入", "evidence": "2024年第一季度销售收入为1,750.2百万美元。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-08-08", "actual_value": "1901276", "source_document_id": "SMIC-2024Q2", "source_title": "中芯国际发布2024Q2财报", "source_url": "https://www.smics.com/site/news_read/3648", "locator": "二零二四年第二季财务摘要", "evidence": "2024年第二季销售收入为1,901.3百万美元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-11-07", "actual_value": "2171188", "source_document_id": "SMIC-2024Q3", "source_title": "SMIC Q3 2024 Financials Presentation", "source_url": "https://www.smics.com/uploads/672c8ac5/Q3_2024%20Financials%20Presentation.pdf", "locator": "Income Statement, Revenue", "evidence": "3Q24 revenue was US$2,171.188 million.", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-02-11", "actual_value": "2207281", "source_document_id": "SMIC-2024Q4", "source_title": "SMIC Reports 2024 Fourth Quarter Results", "source_url": "https://www.smics.com/jp/site/news_read/7783", "locator": "Fourth Quarter 2024 Highlights", "evidence": "4Q24 revenue was US$2,207.3 million.", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "semi-gigadevice-2024",
+      "industry": "芯片半导体",
+      "company_name": "兆易创新",
+      "security_id": "603986.SH",
+      "metric": {"id": "quarterly_revenue_cny", "name": "单季度营业收入", "unit": "人民币元", "period_type": "单季度", "threshold": "1600000000"},
+      "thesis": {"established_on": "2024-04-20", "title": "存储周期回暖应维持收入规模", "statement": "消费与存储需求回暖后，后续单季度收入不应低于16亿元。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://static.cninfo.com.cn/finalpage/2025-04-26/1223305062.PDF",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-20", "actual_value": "1627269967.75", "source_document_id": "GIGA-2024Q1", "source_title": "兆易创新2024年第一季度报告", "source_url": "https://file.finance.sina.com.cn/211.154.219.97%3A9494/MRGG/CNSESH_STOCK/2024/2024-4/2024-04-20/10007186.PDF", "locator": "主要财务数据，第1页", "evidence": "第一季度营业收入1,627,269,967.75元。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-08-21", "actual_value": "1981767352.42", "source_document_id": "GIGA-2024H1", "source_title": "兆易创新2024年半年度报告", "source_url": "https://dataclouds.cninfo.com.cn/shgonggao/2024/2024-08-21/d1a19c6b5ece11ef8f5bfa163e26e5de.pdf", "locator": "半年度累计减第一季度；年报分季度表复核", "evidence": "第二季度营业收入1,981,767,352.42元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-26", "actual_value": "2040559511.23", "source_document_id": "GIGA-2024Q3", "source_title": "兆易创新2024年第三季度报告", "source_url": "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2024-10-26/603986_20241026_XYDF.pdf", "locator": "主要财务数据", "evidence": "第三季度营业收入2,040,559,511.23元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-04-26", "actual_value": "1706380845.71", "source_document_id": "GIGA-2024FY", "source_title": "兆易创新2024年年度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2025-04-26/1223305062.PDF", "locator": "2024年分季度主要财务数据", "evidence": "第四季度营业收入1,706,380,845.71元。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "semi-naura-2024",
+      "industry": "芯片半导体",
+      "company_name": "北方华创",
+      "security_id": "002371.SZ",
+      "metric": {"id": "quarterly_revenue_cny", "name": "单季度营业收入", "unit": "人民币元", "period_type": "单季度", "threshold": "5800000000"},
+      "thesis": {"established_on": "2024-04-30", "title": "半导体设备国产化应维持收入扩张", "statement": "订单与国产化需求延续时，后续单季度收入不应低于58亿元。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://disc.static.szse.cn/disc/disk03/finalpage/2025-04-25/4ce4041b-f90f-4ea3-a356-ea973d30f036.PDF",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-30", "actual_value": "5859163380.59", "source_document_id": "NAURA-2024Q1", "source_title": "北方华创2024年第一季度报告", "source_url": "https://disc.static.szse.cn/disc/disk03/finalpage/2024-04-30/5c44da5b-9028-4972-ba98-402fc8042fb8.PDF", "locator": "主要会计数据和财务指标", "evidence": "第一季度营业收入5,859,163,380.59元。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-08-28", "actual_value": "6475743823.69", "source_document_id": "NAURA-2024H1", "source_title": "北方华创2024年半年度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2024-08-28/1221004535.PDF", "locator": "半年度累计减第一季度；年报分季度表复核", "evidence": "第二季度营业收入6,475,743,823.69元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-30", "actual_value": "8017863754.89", "source_document_id": "NAURA-2024Q3", "source_title": "北方华创2024年第三季度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2024-10-30/1221555085.PDF", "locator": "主要财务数据；年报分季度表复核", "evidence": "第三季度营业收入8,017,863,754.89元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-04-25", "actual_value": "9485298203.09", "source_document_id": "NAURA-2024FY", "source_title": "北方华创2024年年度报告", "source_url": "https://disc.static.szse.cn/disc/disk03/finalpage/2025-04-25/4ce4041b-f90f-4ea3-a356-ea973d30f036.PDF", "locator": "分季度主要财务指标", "evidence": "第四季度营业收入9,485,298,203.09元。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "pharma-hengrui-2024",
+      "industry": "医药",
+      "company_name": "恒瑞医药",
+      "security_id": "600276.SH",
+      "metric": {"id": "quarterly_revenue_cny", "name": "单季度营业收入", "unit": "人民币元", "period_type": "单季度", "threshold": "5900000000"},
+      "thesis": {"established_on": "2024-04-18", "title": "创新药放量应支撑收入底盘", "statement": "创新药可及性提升时，后续单季度收入不应低于59亿元。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=10831657&stockid=600276",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-18", "actual_value": "5997533912.14", "source_document_id": "HENGRUI-2024Q1", "source_title": "恒瑞医药2024年第一季度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2024-04-18/1219650113.PDF", "locator": "主要财务数据", "evidence": "第一季度营业收入5,997,533,912.14元。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-08-22", "actual_value": "7603200202.63", "source_document_id": "HENGRUI-2024H1", "source_title": "恒瑞医药2024年半年度报告", "source_url": "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2024-08-22/600276_20240822_Y4KU.pdf", "locator": "半年度累计减第一季度；年报分季度表复核", "evidence": "第二季度营业收入7,603,200,202.63元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-25", "actual_value": "6588569730.33", "source_document_id": "HENGRUI-2024Q3", "source_title": "恒瑞医药2024年第三季度报告", "source_url": "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2024-10-25/600276_20241025_BW56.pdf", "locator": "主要财务数据", "evidence": "第三季度营业收入6,588,569,730.33元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-03-31", "actual_value": "7795301496.96", "source_document_id": "HENGRUI-2024FY", "source_title": "恒瑞医药2024年年度报告", "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=10831657&stockid=600276", "locator": "2024年分季度主要财务数据", "evidence": "第四季度营业收入7,795,301,496.96元。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "pharma-wuxi-2024",
+      "industry": "医药",
+      "company_name": "药明康德",
+      "security_id": "603259.SH/02359.HK",
+      "metric": {"id": "quarterly_revenue_cny", "name": "单季度营业收入", "unit": "人民币元", "period_type": "单季度", "threshold": "7900000000"},
+      "thesis": {"established_on": "2024-04-30", "title": "核心CRDMO业务应维持收入韧性", "statement": "外部政策扰动下，若核心业务有韧性，后续单季度收入不应低于79亿元。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/0317/2025031701658_c.pdf",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-30", "actual_value": "7981934236.96", "source_document_id": "WUXI-2024Q1", "source_title": "药明康德2024年第一季度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2024-04-30/1219917570.PDF", "locator": "合并利润表", "evidence": "第一季度营业收入7,981,934,236.96元。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-07-30", "actual_value": "9258984026.06", "source_document_id": "WUXI-2024H1", "source_title": "药明康德2024年半年度报告", "source_url": "https://officialsite-static.wuxiapptec.com/upload/bc/20240729/2024%E5%B9%B4%E5%8D%8A%E5%B9%B4%E5%BA%A6%E6%8A%A5%E5%91%8A.pdf", "locator": "半年度累计减第一季度；年报分季度表复核", "evidence": "第二季度营业收入9,258,984,026.06元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-29", "actual_value": "10461083991.74", "source_document_id": "WUXI-2024Q3", "source_title": "药明康德2024年第三季度报告", "source_url": "https://officialsite-static.wuxiapptec.com/upload/2024_871da4f980.pdf", "locator": "主要财务数据", "evidence": "第三季度营业收入10,461,083,991.74元。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-03-17", "actual_value": "11539429105.12", "source_document_id": "WUXI-2024FY", "source_title": "药明康德2024年年度报告摘要", "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/0317/2025031701658_c.pdf", "locator": "分季度主要财务数据", "evidence": "第四季度营业收入11,539,429,105.12元。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "pharma-yunnan-baiyao-2024",
+      "industry": "医药",
+      "company_name": "云南白药",
+      "security_id": "000538.SZ",
+      "metric": {"id": "quarterly_revenue_cny", "name": "单季度营业收入", "unit": "人民币元", "period_type": "单季度", "threshold": "10000000000"},
+      "thesis": {"established_on": "2024-04-27", "title": "品牌与流通业务应守住百亿季度收入", "statement": "核心品牌和医药流通稳定时，单季度收入不应低于100亿元；连续两季低于阈值触发重大风险。", "initial_status": "验证中"},
+      "expected_final_status": "出现分歧",
+      "fundamental_outcome": "部分",
+      "verification_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=10838403&stockid=000538",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-27", "actual_value": "10774290921.49", "source_document_id": "YNBY-2024Q1", "source_title": "云南白药2024年第一季度报告", "source_url": "https://stockn.xueqiu.com/SZ000538/20240426204171.pdf", "locator": "主要会计数据；年报分季度表复核", "evidence": "第一季度营业收入10,774,290,921.49元。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-08-27", "actual_value": "9680995366.03", "source_document_id": "YNBY-2024H1", "source_title": "云南白药2024年半年度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2024-08-27/1220987156.PDF", "locator": "半年度累计减第一季度；年报分季度表复核", "evidence": "第二季度营业收入9,680,995,366.03元。", "proxy_gold_direction": "冲突"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-30", "actual_value": "9459868782.32", "source_document_id": "YNBY-2024Q3", "source_title": "云南白药2024年第三季度报告", "source_url": "https://static.cninfo.com.cn/finalpage/2024-10-30/1221560388.PDF", "locator": "主要财务数据", "evidence": "第三季度营业收入9,459,868,782.32元。", "proxy_gold_direction": "冲突"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-04-02", "actual_value": "10118145744.88", "source_document_id": "YNBY-2024FY", "source_title": "云南白药2024年年度报告摘要", "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=10838403&stockid=000538", "locator": "分季度主要会计数据", "evidence": "第四季度营业收入10,118,145,744.88元。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "nev-byd-2024",
+      "industry": "新能源汽车",
+      "company_name": "比亚迪",
+      "security_id": "002594.SZ/01211.HK",
+      "metric": {"id": "quarterly_nev_sales_units", "name": "季度新能源汽车销量", "unit": "辆", "period_type": "单季度", "threshold": "626263"},
+      "thesis": {"established_on": "2024-04-02", "title": "产品矩阵与规模优势应维持销量", "statement": "产品矩阵与规模优势延续时，后续季度新能源汽车销量不应低于2024Q1的626,263辆。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://www.bydglobal.com/sites/Satellite?c=BydArticle&cid=1617162652697&d=Touch&pagename=BYD_CN%2FBydArticle%2FCommon%2FArticleDetails",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-02", "actual_value": "626263", "source_document_id": "BYD-2024M03", "source_title": "比亚迪2024年3月产销快报", "source_url": "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=9935253&stockid=002594", "locator": "新能源汽车销量，本年累计", "evidence": "截至2024年3月末累计新能源汽车销量626,263辆。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-07-02", "actual_value": "986720", "source_document_id": "BYD-2024M06", "source_title": "比亚迪2024年6月产销快报", "source_url": "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?CompanyCode=10002250&gather=1&id=10308088", "locator": "上半年累计1,612,983减一季度626,263", "evidence": "2024Q2新能源汽车销量986,720辆（季度累计差分）。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-08", "actual_value": "1134892", "source_document_id": "BYD-2024M09", "source_title": "比亚迪2024年9月产销快报", "source_url": "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=10511294&stockid=002594", "locator": "前三季度累计2,747,875减上半年1,612,983", "evidence": "2024Q3新能源汽车销量1,134,892辆（季度累计差分）。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-01-02", "actual_value": "1524270", "source_document_id": "BYD-2024M12", "source_title": "比亚迪2024年12月产销快报", "source_url": "https://www.bydglobal.com/sites/Satellite/BYD%20PDF%20Viewer?blobcol=urldata&blobheader=application%2Fpdf&blobkey=id&blobtable=MungoBlobs&blobwhere=1638928484684&ssbinary=true", "locator": "全年累计4,272,145减前三季度2,747,875", "evidence": "2024Q4新能源汽车销量1,524,270辆（季度累计差分）。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "nev-geely-2024",
+      "industry": "新能源汽车",
+      "company_name": "吉利汽车",
+      "security_id": "00175.HK",
+      "metric": {"id": "quarterly_vehicle_sales_units", "name": "季度汽车总销量", "unit": "辆", "period_type": "单季度", "threshold": "475720"},
+      "thesis": {"established_on": "2024-04-01", "title": "新能源产品周期应维持集团销量", "statement": "新能源产品周期延续时，后续季度集团总销量不应低于2024Q1的475,720辆。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://www.geelyauto.com.hk/wp-content/uploads/2025/01/Geely_2024_Dec_-sales_EN_Final.pdf",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-01", "actual_value": "475720", "source_document_id": "GEELY-2024M03", "source_title": "Geely March 2024 Sales", "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2024/04/Geely_2024_march_sales_CN_final.pdf", "locator": "合计，今年累计", "evidence": "2024年前三个月累计总销量475,720辆。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-07-01", "actual_value": "480010", "source_document_id": "GEELY-2024M06", "source_title": "Geely June 2024 Sales", "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2024/07/Geely_2024_June_sales_CN_final.pdf", "locator": "上半年累计955,730减一季度475,720", "evidence": "2024Q2总销量480,010辆（季度累计差分）。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-01", "actual_value": "533960", "source_document_id": "GEELY-2024M09", "source_title": "Geely September 2024 Sales", "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2024/10/Geely_2024_Sept-sales_EN_1.pdf", "locator": "前三季度累计1,489,690减上半年955,730", "evidence": "2024Q3总销量533,960辆（季度累计差分）。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-01-01", "actual_value": "686877", "source_document_id": "GEELY-2024M12", "source_title": "Geely December 2024 Sales", "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2025/01/Geely_2024_Dec_-sales_EN_Final.pdf", "locator": "全年累计2,176,567减前三季度1,489,690", "evidence": "2024Q4总销量686,877辆（季度累计差分）。", "proxy_gold_direction": "支持"}
+      ]
+    },
+    {
+      "case_id": "nev-xpeng-2024",
+      "industry": "新能源汽车",
+      "company_name": "小鹏汽车",
+      "security_id": "09868.HK/XPEV.US",
+      "metric": {"id": "quarterly_vehicle_deliveries_units", "name": "季度汽车交付量", "unit": "辆", "period_type": "单季度", "threshold": "21821"},
+      "thesis": {"established_on": "2024-04-01", "title": "新品与渠道调整应推动交付恢复", "statement": "新品和渠道调整奏效时，后续季度交付量不应低于2024Q1的21,821辆。", "initial_status": "验证中"},
+      "expected_final_status": "验证中",
+      "fundamental_outcome": "是",
+      "verification_url": "https://ir.xiaopeng.com/news-releases/news-release-details/xpeng-reports-fourth-quarter-and-fiscal-year-2024-unaudited",
+      "observations": [
+        {"role": "baseline", "period": "2024Q1", "period_end": "2024-03-31", "disclosed_at": "2024-04-01", "actual_value": "21821", "source_document_id": "XPENG-2024Q1", "source_title": "XPENG March and First Quarter 2024 Deliveries", "source_url": "https://ir.xiaopeng.com/news-releases/news-release-details/xpeng-announces-vehicle-delivery-results-march-and-first-2", "locator": "first quarter deliveries", "evidence": "2024Q1交付21,821辆。"},
+        {"role": "event", "period": "2024Q2", "period_end": "2024-06-30", "disclosed_at": "2024-07-01", "actual_value": "30207", "source_document_id": "XPENG-2024Q2", "source_title": "XPENG Second Quarter 2024 Results", "source_url": "https://ir.xiaopeng.com/zh-hant/news-releases/news-release-details/xpeng-reports-second-quarter-2024-unaudited-financial-results", "locator": "total deliveries", "evidence": "2024Q2交付30,207辆。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q3", "period_end": "2024-09-30", "disclosed_at": "2024-10-01", "actual_value": "46533", "source_document_id": "XPENG-2024Q3", "source_title": "XPENG September and Third Quarter 2024 Deliveries", "source_url": "https://ir.xiaopeng.com/zh-hans/news-releases/news-release-details/xpeng-announces-vehicle-delivery-results-september-and-third-3", "locator": "third quarter deliveries", "evidence": "2024Q3交付46,533辆。", "proxy_gold_direction": "支持"},
+        {"role": "event", "period": "2024Q4", "period_end": "2024-12-31", "disclosed_at": "2025-01-01", "actual_value": "91507", "source_document_id": "XPENG-2024Q4", "source_title": "XPENG December and Fourth Quarter 2024 Deliveries", "source_url": "https://ir.xiaopeng.com/zh-hant/news-releases/news-release-details/xpeng-announces-vehicle-delivery-results-december-and-fourth-2", "locator": "fourth quarter deliveries", "evidence": "2024Q4交付91,507辆。", "proxy_gold_direction": "支持"}
+      ]
+    }
+  ]
+}

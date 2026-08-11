@@ -1,0 +1,16 @@
+{
+  "experiment_id": "20260811-cn-nine-mvp-closure",
+  "dataset": "analytics/datasets/mvp-cn-nine-2024-v1/data/raw_observations.json",
+  "dataset_version": "1.0.0",
+  "cutoff_date": "2025-04-26",
+  "candidate_provider": "deterministic-threshold-baseline-v1",
+  "rule_version": "mvp-closure-rules-v1",
+  "annotation_version": "proxy-review-v1",
+  "expected_industries": 3,
+  "expected_companies": 9,
+  "expected_events": 27,
+  "consecutive_breach_periods": 2,
+  "divergence_min_support": 1,
+  "divergence_min_conflict": 1,
+  "investment_advice": false
+}

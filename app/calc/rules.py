@@ -13,9 +13,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from typing import Protocol
 
 from app.calc.deterministic import Observation, _d
-from app.core.config import RuleThresholds
 from app.core.enums import (
     ConfirmationStatus,
     ExpectationDirection,
@@ -23,6 +23,30 @@ from app.core.enums import (
     Importance,
     ThesisStatus,
 )
+
+
+class RuleThresholdsLike(Protocol):
+    """Structural contract required by the pure rule engine.
+
+    Keeping this protocol here avoids importing the application settings layer
+    (and its optional runtime dependencies) into deterministic calculations.
+    ``app.core.config.RuleThresholds`` satisfies this contract unchanged.
+    """
+
+    @property
+    def version(self) -> str: ...
+
+    @property
+    def consecutive_breach_periods(self) -> int: ...
+
+    @property
+    def near_invalidation_ratio(self) -> float: ...
+
+    @property
+    def divergence_min_support(self) -> int: ...
+
+    @property
+    def divergence_min_conflict(self) -> int: ...
 
 
 @dataclass(frozen=True)
@@ -83,7 +107,7 @@ def check_invalidation(
     thesis_established_on: date,
     threshold: Decimal,
     direction: ExpectationDirection,
-    thresholds: RuleThresholds,
+    thresholds: RuleThresholdsLike,
     required_consecutive: int | None = None,
 ) -> InvalidationCheck:
     """连续突破阈值判定，按建立日裁剪观察窗口。
@@ -220,7 +244,7 @@ def suggest_status(
     evidence: Sequence[EvidenceSummary],
     invalidations: Sequence[InvalidationCheck],
     *,
-    thresholds: RuleThresholds,
+    thresholds: RuleThresholdsLike,
     next_review_at: date | None = None,
     today: date | None = None,
     thesis_invalidation: ThesisInvalidation | None = None,
