@@ -471,7 +471,6 @@ export function AnalysisReviewPage() {
 export function StatusDecisionPage() {
   const id = useParams().thesisId ?? configuredThesisId
   const qc = useQueryClient()
-  const navigate = useNavigate()
   const [action, setAction] = useState<DecisionAction | null>(null)
   const [reason, setReason] = useState('')
   const [targetStatus, setTargetStatus] = useState('')
@@ -490,11 +489,11 @@ export function StatusDecisionPage() {
     onSuccess: async (result) => {
       qc.setQueryData(thesisKey(id), result)
       await Promise.all([
+        qc.invalidateQueries({ queryKey: thesisKey(id) }),
         qc.invalidateQueries({ queryKey: suggestionsKey(id) }),
         qc.invalidateQueries({ queryKey: timelineKey(id) }),
       ])
       setError('')
-      navigate(`/theses/${id}/timeline`)
     },
     onError: (value) => setError(value instanceof Error ? value.message : '决策提交失败'),
   })
