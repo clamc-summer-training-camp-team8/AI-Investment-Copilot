@@ -59,13 +59,13 @@ class EvidenceActionIn(Base):
 class StatusDecisionIn(Base):
     """状态建议处置入参。
 
-    `reason` 是必填且非空：正式状态变更必须填原因（FR-S-003）。这里就拦住，
-    不要等到服务层——但服务层也拦一次，因为 API 不是唯一入口。
+    接受既有建议时理由选填；拒绝或修改属于偏离建议，理由由服务层强制校验。
+    服务层仍保留校验，因为 API 不是唯一入口。
     """
 
     suggestion_id: int
     action: Annotated[str, Field(pattern="^(接受|拒绝|修改)$")]
-    reason: Annotated[str, Field(min_length=1, max_length=1000)]
+    reason: str = Field(default="", max_length=1000)
     target_status: str | None = None
 
 

@@ -4,8 +4,8 @@
 
 1. **规则只产生建议。** `record_suggestion` 只写 `status_suggestion_log`，
    任何情况下都不改 `thesis.status`。
-2. **正式状态变更必须由负责人确认并填原因。** `apply_decision` 的 `actor` 与
-   `reason` 都不可为空，缺任一直接拒绝。
+2. **正式状态变更必须由负责人确认。** 接受既有建议时原因选填；拒绝或修改建议
+   必须填原因，所有动作都记录操作人。
 
 绕过这条路径修改状态的代码在评审时会被驳回。
 """
@@ -28,7 +28,7 @@ from app.calc.rules import (
 from app.core.config import RuleThresholds
 from app.core.enums import ConfirmationStatus, ThesisStatus
 from app.core.timeutil import now
-from app.services import audit, version
+from app.services import audit, demo, version
 from app.services.errors import HumanGateRequired, IllegalTransition, ValidationFailed
 from app.services.ports import (
     HypothesisRecord,
@@ -189,6 +189,27 @@ def record_suggestion(
             "reasons": list(suggestion.reasons),
         },
     )
+    demo.record_timeline(
+        uow.audit,
+        thesis_id=thesis.thesis_id,
+        actor=actor,
+        action="生成状态建议",
+        dimension="logic_decision",
+        event_type="status_suggestion_created",
+        actor_type="system",
+        summary=(
+            f"规则引擎建议逻辑状态由「{thesis.status.value}」"
+            f"调整为「{suggestion.suggested_status.value}」"
+        ),
+        related_object_type="status_suggestion",
+        related_object_id=str(saved.suggestion_id),
+        after={
+            "current_status": thesis.status.value,
+            "suggested_status": suggestion.suggested_status.value,
+        },
+        reason="；".join(suggestion.reasons),
+        detail_url=f"/theses/{thesis.thesis_id}/decision",
+    )
     return saved
 
 
@@ -205,15 +226,15 @@ def apply_decision(
 ) -> ThesisRecord:
     """人工处置状态建议。这是**唯一**能改 thesis.status 的入口。
 
-    `actor` 与 `reason` 都不可为空：FR-S-003 要求负责人接受、拒绝或修改建议时
-    填写原因，并生成版本和审计记录。
+    `actor` 不可为空；接受既有建议时理由选填，拒绝或修改建议时理由必填。
+    状态变更仍生成版本和审计记录。
     """
     if not actor.strip():
         raise HumanGateRequired("状态变更必须记录操作人")
-    if not reason.strip():
-        raise HumanGateRequired("状态变更必须填写原因（FR-S-003）")
     if action not in (ACCEPT, REJECT, MODIFY):
         raise ValidationFailed(f"未知的处置动作 {action!r}")
+    if action in (REJECT, MODIFY) and not reason.strip():
+        raise HumanGateRequired(f"{action}状态建议必须填写原因")
 
     record = uow.suggestions.get(suggestion_id)
     if record is None or record.thesis_id != thesis.thesis_id:
@@ -239,6 +260,22 @@ def apply_decision(
             object_type="thesis",
             object_id=thesis.thesis_id,
             detail={"reason": reason, "suggestion_id": suggestion_id},
+        )
+        demo.record_timeline(
+            uow.audit,
+            thesis_id=thesis.thesis_id,
+            actor=actor,
+            action="拒绝状态建议",
+            dimension="logic_decision",
+            event_type="status_suggestion_rejected",
+            actor_type="human",
+            summary="负责人拒绝状态建议，正式逻辑状态保持不变",
+            related_object_type="status_suggestion",
+            related_object_id=str(suggestion_id),
+            before={"status": thesis.status.value},
+            after={"status": thesis.status.value},
+            reason=reason,
+            detail_url=f"/theses/{thesis.thesis_id}/decision",
         )
         return thesis
 
@@ -272,6 +309,22 @@ def apply_decision(
             "reason": reason,
             "suggestion_id": suggestion_id,
         },
+    )
+    demo.record_timeline(
+        uow.audit,
+        thesis_id=thesis.thesis_id,
+        actor=actor,
+        action=audit.STATUS_CHANGE,
+        dimension="logic_decision",
+        event_type="thesis_status_changed",
+        actor_type="human",
+        summary=f"负责人{action}状态建议，正式状态更新为「{new_status.value}」",
+        related_object_type="thesis",
+        related_object_id=thesis.thesis_id,
+        before={"status": thesis.status.value, "version": thesis.version},
+        after={"status": new_status.value, "version": updated.version},
+        reason=reason,
+        detail_url=f"/theses/{thesis.thesis_id}",
     )
     return updated
 

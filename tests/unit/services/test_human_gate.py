@@ -96,7 +96,7 @@ def test_状态建议不会自动改状态(thresholds: RuleThresholds) -> None:
     assert uow.suggestions.list_for_thesis(THESIS_ID)[0].human_action is None
 
 
-def test_缺原因的状态变更被拒绝(thresholds: RuleThresholds) -> None:
+def test_拒绝或修改建议缺原因时被拒绝(thresholds: RuleThresholds) -> None:
     uow = _setup()
     suggestion = suggest_status(
         ThesisStatus.VALIDATING,
@@ -109,17 +109,19 @@ def test_缺原因的状态变更被拒绝(thresholds: RuleThresholds) -> None:
     )
     assert saved.suggestion_id is not None
 
-    for bad_reason in ("", "   "):
-        with pytest.raises(HumanGateRequired):
-            status_service.apply_decision(
-                uow,
-                thesis=uow.thesis.get(THESIS_ID),
-                hypotheses=uow.thesis.list_hypotheses(THESIS_ID),
-                suggestion_id=saved.suggestion_id,
-                action=status_service.ACCEPT,
-                actor=OWNER.user_id,
-                reason=bad_reason,
-            )
+    for action in (status_service.REJECT, status_service.MODIFY):
+        for bad_reason in ("", "   "):
+            with pytest.raises(HumanGateRequired):
+                status_service.apply_decision(
+                    uow,
+                    thesis=uow.thesis.get(THESIS_ID),
+                    hypotheses=uow.thesis.list_hypotheses(THESIS_ID),
+                    suggestion_id=saved.suggestion_id,
+                    action=action,
+                    actor=OWNER.user_id,
+                    reason=bad_reason,
+                    target_status=ThesisStatus.DIVERGENT,
+                )
 
     with pytest.raises(HumanGateRequired):
         status_service.apply_decision(
@@ -133,6 +135,32 @@ def test_缺原因的状态变更被拒绝(thresholds: RuleThresholds) -> None:
         )
 
     assert uow.thesis.get(THESIS_ID).status is ThesisStatus.VALIDATING
+
+
+def test_接受建议时原因可以为空(thresholds: RuleThresholds) -> None:
+    uow = _setup()
+    suggestion = suggest_status(
+        ThesisStatus.VALIDATING,
+        [EvidenceSummary("H1", Importance.CORE, support_count=1, conflict_count=1)],
+        [],
+        thresholds=thresholds,
+    )
+    saved = status_service.record_suggestion(
+        uow, thesis=uow.thesis.get(THESIS_ID), suggestion=suggestion
+    )
+    assert saved.suggestion_id is not None
+
+    updated = status_service.apply_decision(
+        uow,
+        thesis=uow.thesis.get(THESIS_ID),
+        hypotheses=uow.thesis.list_hypotheses(THESIS_ID),
+        suggestion_id=saved.suggestion_id,
+        action=status_service.ACCEPT,
+        actor=OWNER.user_id,
+        reason="",
+    )
+
+    assert updated.status is ThesisStatus.DIVERGENT
 
 
 def test_证据可见性高于来源文档时被拒绝(thresholds: RuleThresholds) -> None:
