@@ -15,7 +15,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from app.ai.prompts.templates import EVENT_IMPACT, THESIS_DRAFT
+from app.ai.prompts.templates import EVENT_EXTRACTION, EVENT_IMPACT, THESIS_DRAFT
 from app.core.config import Settings
 from app.core.enums import AiStatus, ImpactDirection, SignalDirection
 from app.core.timeutil import now
@@ -137,10 +137,15 @@ class LocalProvider:
         hypothesis_id: str | None = None,
         thesis_context: str | None = None,
         hypothesis_context: dict[str, Any] | None = None,
+        retrieval_context: list[tuple[str, str]] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> dict[str, Any]:
         """产出符合 contracts/ai/event_impact.schema.json 的载荷。"""
+        # The deterministic provider deliberately ignores retrieval text.  It
+        # keeps the pilot's execution contract testable without pretending a
+        # lexical rule engine can consume semantic RAG context.
+        _ = retrieval_context
         verdict = judge_impact(segment_text)
         return {
             "document_id": document_id,
@@ -168,6 +173,51 @@ class LocalProvider:
             },
             "model_version": self.model_version,
             "prompt_version": EVENT_IMPACT.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
+    def extract_events(
+        self,
+        *,
+        document_id: str,
+        segments: list[tuple[str, str]],
+        disclosure_time: str,
+    ) -> dict[str, Any]:
+        """离线降级：复用确定性规则，但输出与结构化模型相同的契约。"""
+        del disclosure_time
+        events: list[dict[str, Any]] = []
+        keywords = {
+            "订单": ("订单", "中标", "合同"),
+            "政策": ("政策", "补贴", "监管", "关税"),
+            "管理层表述": ("管理层", "展望", "指引", "说明会"),
+            "业绩": ("财报", "毛利率", "收入同比", "业绩"),
+        }
+        for locator, content in segments:
+            normalized = content.strip()
+            if re.fullmatch(r"(?:[^\n]{0,80})?(?:公告|报告|通知|说明书)", normalized):
+                continue
+            event_type = next(
+                (kind for kind, cues in keywords.items() if any(cue in normalized for cue in cues)),
+                "其他",
+            )
+            if event_type == "其他" and not re.search(r"\d+(?:\.\d+)?%?|\d+", normalized):
+                continue
+            events.append(
+                {
+                    "event_type": event_type,
+                    "fact": normalized[:500],
+                    "occurred_on": None,
+                    "evidence_locator": locator,
+                    "confidence": 0.65,
+                    "security_mentions": [],
+                }
+            )
+        return {
+            "document_id": document_id,
+            "events": events,
+            "model_version": self.model_version,
+            "prompt_version": EVENT_EXTRACTION.version,
             "generated_at": now().isoformat(),
             "ai_status": AiStatus.CANDIDATE.value,
         }

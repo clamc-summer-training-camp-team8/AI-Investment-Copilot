@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 from hashlib import sha256
 
 from app.ingest.parsers.base import ParsedDocument, RawSegment
@@ -24,6 +25,12 @@ class Segment:
     ordinal: int
     content: str
     page: int | None = None
+    content_kind: str = "paragraph"
+    extraction_method: str = "native"
+    table_index: int | None = None
+    row_index: int | None = None
+    cell_range: str | None = None
+    confidence: Decimal | None = None
 
 
 def build_locator(document_id: str, ordinal: int) -> str:
@@ -70,6 +77,12 @@ def segment_document(document_id: str, parsed: ParsedDocument) -> list[Segment]:
             ordinal=seg.ordinal,
             content=seg.content,
             page=seg.page,
+            content_kind=seg.content_kind,
+            extraction_method=seg.extraction_method,
+            table_index=seg.table_index,
+            row_index=seg.row_index,
+            cell_range=seg.cell_range,
+            confidence=seg.confidence,
         )
         for seg in parsed.segments
     ]

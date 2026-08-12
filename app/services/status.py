@@ -259,6 +259,8 @@ def apply_decision(
     updated = replace(thesis, status=new_status)
     uow.thesis.update(updated)
 
+    evidence, data_cutoff_at, model_versions = version.evidence_snapshot(uow, thesis.thesis_id)
+
     version.create(
         uow.versions,
         thesis=updated,
@@ -267,6 +269,15 @@ def apply_decision(
         created_by=actor,
         change_reason=reason,
         changed_fields=["status"],
+        mappings=[
+            mapping
+            for hypothesis in hypotheses
+            for mapping in uow.thesis.list_mappings(hypothesis.hypothesis_id)
+        ],
+        evidence=evidence,
+        data_cutoff_at=data_cutoff_at,
+        rule_version=record.rule_version,
+        model_versions=model_versions,
     )
     audit.record(
         uow.audit,

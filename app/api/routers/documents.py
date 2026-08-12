@@ -29,6 +29,12 @@ def get_document_segment(
         ordinal=segment.ordinal,
         page=segment.page,
         content=segment.content,
+        content_kind=segment.content_kind,
+        extraction_method=segment.extraction_method,
+        table_index=segment.table_index,
+        row_index=segment.row_index,
+        cell_range=segment.cell_range,
+        confidence=float(segment.confidence) if segment.confidence is not None else None,
         previous_locator=previous_locator,
         next_locator=next_locator,
     )

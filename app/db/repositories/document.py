@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,6 +26,7 @@ def _document(row: Document) -> DocumentRecord:
         body=row.body,
         visibility_label=row.visibility_label,
         is_illustrative=row.is_illustrative,
+        deleted_at=row.deleted_at,
     )
 
 
@@ -74,6 +77,12 @@ class SqlDocumentRepo:
                     ordinal=item.ordinal,
                     page=item.page,
                     content=item.content,
+                    content_kind=item.content_kind,
+                    extraction_method=item.extraction_method,
+                    table_index=item.table_index,
+                    row_index=item.row_index,
+                    cell_range=item.cell_range,
+                    confidence=item.confidence,
                 )
                 for item in segments
             ]
@@ -97,6 +106,28 @@ class SqlDocumentRepo:
         )
         self._session.flush()
 
+    def update_security(self, document_id: str, security_id: str) -> None:
+        row = self._session.get(Document, document_id)
+        if row is None:
+            raise LookupError(document_id)
+        row.security_id = security_id
+        self._session.flush()
+
+    def update_visibility(self, document_id: str, visibility_label: str) -> None:
+        row = self._session.get(Document, document_id)
+        if row is None:
+            raise LookupError(document_id)
+        row.visibility_label = visibility_label
+        self._session.flush()
+
+    def mark_deleted(self, document_id: str, deleted_at: datetime) -> None:
+        row = self._session.get(Document, document_id)
+        if row is None:
+            raise LookupError(document_id)
+        row.deleted_at = deleted_at
+        row.visibility_label = "已删除"
+        self._session.flush()
+
     def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]:
         rows = self._session.scalars(
             select(DocumentSegment)
@@ -110,6 +141,12 @@ class SqlDocumentRepo:
                 ordinal=row.ordinal,
                 page=row.page,
                 content=row.content,
+                content_kind=row.content_kind,
+                extraction_method=row.extraction_method,
+                table_index=row.table_index,
+                row_index=row.row_index,
+                cell_range=row.cell_range,
+                confidence=row.confidence,
             )
             for row in rows
         ]

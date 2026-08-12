@@ -19,6 +19,16 @@
 | `import_real_case.py` | 将人工核验后的阳光电源真实公开案例导入联调数据库 |
 | `import_industry_dataset.py` | 将 `real_data/` 中已提交的行业公开数据导入本地 PostgreSQL |
 | `dev.ps1` | Windows 一键迁移、导入样例和行业联调数据，并启动/停止完整网页服务 |
+| `asset_inventory.py` | 盘点文档、修订、处理运行、衍生产物和 embedding |
+| `backfill_asset_derivatives.py` | 为历史正文追加语义切片、事实与事件运行 |
+| `rebuild_search_index.py` | 从事实表重建权限感知的切片索引 |
+| `build_embeddings.py` | 按版本增量生成 pgvector embedding，不覆盖旧版本 |
+| `backup_local.ps1` | 备份 PostgreSQL、对象版本内容及 SHA-256 清单 |
+| `restore_drill.ps1` | 在一次性隔离容器恢复数据库并逐项核验对象哈希 |
+| `p0_upload_probe.py` | 上传新 TXT 并核验归档、Worker、衍生和召回实链 |
+
+P1 效果基线与 RAG 召回评测入口在 `analytics/evaluation/`，可通过
+`make evaluate-p1` 或对应 Python 模块运行；结果写入版本化实验目录。
 
 完整本地网页闭环：
 

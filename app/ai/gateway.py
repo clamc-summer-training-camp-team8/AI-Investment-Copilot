@@ -39,6 +39,7 @@ class Provider(Protocol):
         hypothesis_id: str | None = ...,
         thesis_context: str | None = ...,
         hypothesis_context: dict[str, Any] | None = ...,
+        retrieval_context: list[tuple[str, str]] | None = ...,
         event_type: str = ...,
         occurred_on: str | None = ...,
     ) -> dict[str, Any]: ...
@@ -50,6 +51,14 @@ class Provider(Protocol):
         view: str,
         segments: list[tuple[str, str]],
         source_document_id: str | None = ...,
+    ) -> dict[str, Any]: ...
+
+    def extract_events(
+        self,
+        *,
+        document_id: str,
+        segments: list[tuple[str, str]],
+        disclosure_time: str,
     ) -> dict[str, Any]: ...
 
 
@@ -83,6 +92,7 @@ class Gateway:
         hypothesis_id: str | None = None,
         thesis_context: str | None = None,
         hypothesis_context: dict[str, Any] | None = None,
+        retrieval_context: list[tuple[str, str]] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> ValidationOutcome:
@@ -96,10 +106,25 @@ class Gateway:
             hypothesis_id=hypothesis_id,
             thesis_context=thesis_context,
             hypothesis_context=hypothesis_context,
+            retrieval_context=retrieval_context,
             event_type=event_type,
             occurred_on=occurred_on,
         )
         return validate("event_impact", payload, thresholds=self.settings.rules)
+
+    def extract_events(
+        self,
+        *,
+        document_id: str,
+        segments: list[tuple[str, str]],
+        disclosure_time: str,
+    ) -> ValidationOutcome:
+        payload = self.provider.extract_events(
+            document_id=document_id,
+            segments=segments,
+            disclosure_time=disclosure_time,
+        )
+        return validate("event_extraction", payload, thresholds=self.settings.rules)
 
     def thesis_draft(
         self,

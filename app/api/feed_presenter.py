@@ -20,12 +20,8 @@ def _validation(code: str, label: str, ok: bool, passed: str, failed: str) -> Va
 def to_feed_item(record: EvidenceFeedRecord, *, actor_id: str) -> EvidenceFeedItemOut:
     """验证项只解释已经持久化的数据，不在读取时访问外部网站。"""
     parsed = urlparse(record.source_url or "")
-    traceable = bool(
-        record.source_document_id
-        and record.source_document_title
-        and parsed.scheme in {"http", "https"}
-        and parsed.netloc
-    )
+    external_source = parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+    traceable = bool(record.source_document_id and record.source_document_title)
     complete = bool(
         record.security_id
         and record.security_name
@@ -46,8 +42,8 @@ def to_feed_item(record: EvidenceFeedRecord, *, actor_id: str) -> EvidenceFeedIt
             "source_traceable",
             "来源可追溯",
             traceable,
-            "来源文档、标题和公开链接齐全。",
-            "来源信息不完整，不能作为已核验事实使用。",
+            "来源文档及原文定位齐全。" if not external_source else "来源文档、标题和公开链接齐全。",
+            "来源文档信息不完整，无法回查原文。",
         ),
         _validation(
             "required_fields_complete",

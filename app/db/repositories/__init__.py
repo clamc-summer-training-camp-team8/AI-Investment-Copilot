@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.domain import UnitOfWork
 from app.db.repositories.adjudication import SqlAdjudicationDecisionRepo
+from app.db.repositories.assets import SqlAssetRepo
 from app.db.repositories.document import SqlDocumentRepo
 from app.db.repositories.evidence import (
     SqlAuditRepo,
@@ -21,18 +22,26 @@ from app.db.repositories.evidence import (
     SqlSuggestionRepo,
     SqlVersionRepo,
 )
+from app.db.repositories.ingestion import SqlDocumentProcessingJobRepo, SqlIngestionReviewRepo
+from app.db.repositories.master import SqlEventRepo, SqlSecurityRepo
 from app.db.repositories.review import SqlReviewTaskRepo
-from app.db.repositories.thesis import SqlThesisRepo
+from app.db.repositories.thesis import SqlMetricRepo, SqlThesisRepo
 
 __all__ = [
     "SqlAdjudicationDecisionRepo",
+    "SqlAssetRepo",
     "SqlAuditRepo",
+    "SqlDocumentProcessingJobRepo",
     "SqlDocumentRepo",
+    "SqlEventRepo",
     "SqlEvidenceFeedRepo",
     "SqlEvidenceRelationRepo",
     "SqlEvidenceRepo",
+    "SqlIngestionReviewRepo",
+    "SqlMetricRepo",
     "SqlObservationRepo",
     "SqlReviewTaskRepo",
+    "SqlSecurityRepo",
     "SqlSuggestionRepo",
     "SqlThesisRepo",
     "SqlVersionRepo",
@@ -42,7 +51,10 @@ __all__ = [
 
 def build_uow(session: Session) -> UnitOfWork:
     return UnitOfWork(
+        securities=SqlSecurityRepo(session),
+        events=SqlEventRepo(session),
         thesis=SqlThesisRepo(session),
+        metrics=SqlMetricRepo(session),
         evidence=SqlEvidenceRepo(session),
         relations=SqlEvidenceRelationRepo(session),
         feed=SqlEvidenceFeedRepo(session),
@@ -51,6 +63,9 @@ def build_uow(session: Session) -> UnitOfWork:
         versions=SqlVersionRepo(session),
         audit=SqlAuditRepo(session),
         reviews=SqlReviewTaskRepo(session),
+        processing_jobs=SqlDocumentProcessingJobRepo(session),
+        ingestion_reviews=SqlIngestionReviewRepo(session),
         documents=SqlDocumentRepo(session),
         adjudications=SqlAdjudicationDecisionRepo(session),
+        assets=SqlAssetRepo(session),
     )

@@ -5,17 +5,19 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
+from sqlalchemy.orm import Session
 
-from app.api.deps import get_settings
+from app.api.deps import get_settings, get_uow
 from app.api.main import create_app
 from app.core.config import Settings
+from app.db.repositories import build_uow
 
 pytestmark = pytest.mark.integration
 
 
 def test_api_persists_draft_and_review_task_in_postgres(engine: Engine) -> None:
     suffix = uuid4().hex[:10]
-    security_id = f"API{suffix}"
+    security_id = f"API{suffix}".upper()
     headers = {"X-User-Id": "researcher-api"}
     with engine.begin() as connection:
         connection.execute(
@@ -28,6 +30,15 @@ def test_api_persists_draft_and_review_task_in_postgres(engine: Engine) -> None:
 
     application = create_app()
     application.dependency_overrides[get_settings] = lambda: Settings(_env_file=None)
+
+    def integration_uow():
+        with (
+            engine.begin() as connection,
+            Session(bind=connection, expire_on_commit=False) as session,
+        ):
+            yield build_uow(session)
+
+    application.dependency_overrides[get_uow] = integration_uow
     thesis_id = ""
     task_id = ""
     try:

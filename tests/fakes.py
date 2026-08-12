@@ -10,26 +10,230 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from datetime import datetime
 
 from app.core.domain import (
     AdjudicationDecisionRecord,
     AuditRecord,
     DocumentFactRecord,
+    DocumentProcessingJobRecord,
     DocumentRecord,
+    DocumentRevisionRecord,
+    DocumentSecurityRelationRecord,
     DocumentSegmentRecord,
+    EventRecord,
     EvidenceFeedRecord,
     EvidenceRecord,
     EvidenceRelationRecord,
     HypothesisRecord,
+    IndustryRecord,
+    IngestionArtifactRecord,
+    IngestionReviewRecord,
+    IngestionRunRecord,
+    MetricDefinitionRecord,
     MetricMappingRecord,
     ObservationRecord,
     ReviewTaskRecord,
+    SecurityIndustryMembershipRecord,
+    SecurityRecord,
+    SourceRecord,
     SuggestionRecord,
     ThesisQuery,
     ThesisRecord,
+    ThesisRevisionDraftRecord,
     UnitOfWork,
     VersionRecord,
 )
+from app.core.enums import ExpectationDirection
+
+
+class FakeAssetRepo:
+    def __init__(self) -> None:
+        self.sources: dict[str, SourceRecord] = {}
+        self.industries: dict[str, IndustryRecord] = {}
+        self.memberships: list[SecurityIndustryMembershipRecord] = []
+        self.document_securities: list[DocumentSecurityRelationRecord] = []
+        self.revisions: dict[str, DocumentRevisionRecord] = {}
+        self.runs: dict[str, IngestionRunRecord] = {}
+        self.artifacts: list[IngestionArtifactRecord] = []
+        self.thesis_revisions: dict[str, ThesisRevisionDraftRecord] = {}
+
+    def add_source(self, record: SourceRecord) -> None:
+        self.sources[record.source_id] = record
+
+    def get_source(self, source_id: str) -> SourceRecord | None:
+        return self.sources.get(source_id)
+
+    def add_industry(self, record: IndustryRecord) -> None:
+        self.industries[record.industry_id] = record
+
+    def get_industry_by_name(self, name: str) -> IndustryRecord | None:
+        return next((item for item in self.industries.values() if item.name == name), None)
+
+    def add_membership(self, record: SecurityIndustryMembershipRecord) -> None:
+        self.memberships.append(record)
+
+    def add_document_security(self, record: DocumentSecurityRelationRecord) -> None:
+        if record not in self.document_securities:
+            self.document_securities.append(record)
+
+    def add_revision(self, record: DocumentRevisionRecord) -> None:
+        self.revisions[record.revision_id] = replace(record)
+
+    def get_revision(self, revision_id: str) -> DocumentRevisionRecord | None:
+        record = self.revisions.get(revision_id)
+        return None if record is None else replace(record)
+
+    def find_revision_by_hash(self, content_hash: str) -> DocumentRevisionRecord | None:
+        record = next((x for x in self.revisions.values() if x.content_hash == content_hash), None)
+        return None if record is None else replace(record)
+
+    def document_id_by_source_url(self, source_url: str) -> str | None:
+        record = next((x for x in self.revisions.values() if x.source_url == source_url), None)
+        return record.canonical_document_id if record else None
+
+    def update_revision(self, record: DocumentRevisionRecord) -> None:
+        self.revisions[record.revision_id] = replace(record)
+
+    def add_run(self, record: IngestionRunRecord) -> None:
+        self.runs[record.run_id] = replace(record)
+
+    def get_run(self, run_id: str) -> IngestionRunRecord | None:
+        record = self.runs.get(run_id)
+        return None if record is None else replace(record)
+
+    def update_run(self, record: IngestionRunRecord) -> None:
+        self.runs[record.run_id] = replace(record)
+
+    def latest_run(self, revision_id: str) -> IngestionRunRecord | None:
+        records = [x for x in self.runs.values() if x.revision_id == revision_id]
+        return replace(records[-1]) if records else None
+
+    def add_artifacts(self, records: list[IngestionArtifactRecord]) -> None:
+        self.artifacts.extend(records)
+
+    def index_artifacts(
+        self,
+        *,
+        run_id: str,
+        document_id: str,
+        visibility_label: str,
+        records: list[IngestionArtifactRecord],
+    ) -> None:
+        return None
+
+    def inventory(self) -> dict[str, int]:
+        return {
+            "documents": 0,
+            "revisions": len(self.revisions),
+            "ingestion_runs": len(self.runs),
+            "segments": 0,
+            "facts": 0,
+            "single_segment_documents": 0,
+            "semantic_runs": 0,
+            "artifact_segments": sum(item.artifact_type == "segment" for item in self.artifacts),
+            "artifact_facts": sum(item.artifact_type == "fact" for item in self.artifacts),
+            "artifact_events": sum(item.artifact_type == "event" for item in self.artifacts),
+            "pending_authorization": sum(
+                item.authorization_status == "待确认" for item in self.revisions.values()
+            ),
+            "missing_object_archive": sum(
+                item.object_key is None for item in self.revisions.values()
+            ),
+            "embeddings": 0,
+        }
+
+    def add_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None:
+        self.thesis_revisions[record.draft_id] = replace(record)
+
+    def get_thesis_revision(self, draft_id: str) -> ThesisRevisionDraftRecord | None:
+        record = self.thesis_revisions.get(draft_id)
+        return None if record is None else replace(record)
+
+    def active_thesis_revision(self, thesis_id: str) -> ThesisRevisionDraftRecord | None:
+        record = next(
+            (
+                x
+                for x in self.thesis_revisions.values()
+                if x.thesis_id == thesis_id and x.status == "editing"
+            ),
+            None,
+        )
+        return None if record is None else replace(record)
+
+    def update_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None:
+        self.thesis_revisions[record.draft_id] = replace(record)
+
+    def rebuild_search_index(self) -> int:
+        return 0
+
+    def sync_document_visibility(self, document_id: str, visibility_label: str) -> None:
+        return None
+
+    def remove_document_from_index(self, document_id: str) -> None:
+        return None
+
+    def tombstone_revisions(self, document_id: str, tombstoned_at) -> None:
+        for revision_id, record in list(self.revisions.items()):
+            if record.canonical_document_id == document_id:
+                self.revisions[revision_id] = replace(record, tombstoned_at=tombstoned_at)
+
+    def search_segments(self, *, query: str, visibility_labels: tuple[str, ...], limit: int):
+        return []
+
+    def pending_embedding_sources(self, *, embedding_version: str, limit: int):
+        return []
+
+    def upsert_embeddings(self, records) -> int:
+        return len(records)
+
+    def hybrid_search_segments(self, **kwargs):
+        return []
+
+
+class FakeSecurityRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, SecurityRecord] = {}
+
+    def get(self, security_id: str) -> SecurityRecord | None:
+        item = self.items.get(security_id)
+        return None if item is None else replace(item)
+
+    def add(self, record: SecurityRecord) -> None:
+        self.items[record.security_id] = replace(record)
+
+    def search(self, keyword: str | None = None, *, limit: int = 100) -> list[SecurityRecord]:
+        needle = (keyword or "").lower()
+        rows = [
+            item
+            for item in self.items.values()
+            if not needle
+            or needle in item.security_id.lower()
+            or needle in item.name.lower()
+            or needle in (item.ticker or "").lower()
+        ]
+        return [replace(item) for item in sorted(rows, key=lambda item: item.security_id)[:limit]]
+
+
+class FakeEventRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, EventRecord] = {}
+
+    def get(self, event_id: str) -> EventRecord | None:
+        item = self.items.get(event_id)
+        return None if item is None else replace(item)
+
+    def find_by_fingerprint(self, fingerprint: str) -> EventRecord | None:
+        item = next((row for row in self.items.values() if row.fingerprint == fingerprint), None)
+        return None if item is None else replace(item)
+
+    def add(self, record: EventRecord) -> None:
+        self.items[record.event_id] = replace(record)
+
+    def update(self, record: EventRecord) -> None:
+        if record.event_id not in self.items:
+            raise LookupError(record.event_id)
+        self.items[record.event_id] = replace(record)
 
 
 class FakeThesisRepo:
@@ -53,14 +257,32 @@ class FakeThesisRepo:
     def list_hypotheses(self, thesis_id: str) -> list[HypothesisRecord]:
         return [replace(h) for h in self.hypotheses if h.thesis_id == thesis_id]
 
+    def get_hypothesis(self, hypothesis_id: str) -> HypothesisRecord | None:
+        item = next((h for h in self.hypotheses if h.hypothesis_id == hypothesis_id), None)
+        return None if item is None else replace(item)
+
     def add_hypothesis(self, record: HypothesisRecord) -> None:
         self.hypotheses.append(replace(record))
+
+    def update_hypothesis(self, record: HypothesisRecord) -> None:
+        for index, item in enumerate(self.hypotheses):
+            if item.hypothesis_id == record.hypothesis_id:
+                self.hypotheses[index] = replace(record)
+                return
+        raise LookupError(record.hypothesis_id)
 
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]:
         return [replace(m) for m in self.mappings if m.hypothesis_id == hypothesis_id]
 
     def add_mapping(self, record: MetricMappingRecord) -> None:
         self.mappings.append(replace(record))
+
+    def update_mapping(self, record: MetricMappingRecord) -> None:
+        for index, item in enumerate(self.mappings):
+            if item.mapping_id == record.mapping_id:
+                self.mappings[index] = replace(record)
+                return
+        raise LookupError(record.mapping_id)
 
     def find_by_security(self, security_id: str) -> list[ThesisRecord]:
         return [replace(t) for t in self.theses.values() if t.security_id == security_id]
@@ -110,6 +332,36 @@ class FakeEvidenceRepo:
 
     def list_for_thesis(self, thesis_id: str) -> list[EvidenceRecord]:
         return [replace(e) for e in self.items.values() if e.thesis_id == thesis_id]
+
+
+class FakeMetricRepo:
+    def __init__(self) -> None:
+        self.items: dict[tuple[str, str], MetricDefinitionRecord] = {
+            ("MET-DEMO-001", "v1.0"): MetricDefinitionRecord(
+                metric_id="MET-DEMO-001",
+                version="v1.0",
+                name="营业收入同比",
+                unit="%",
+                category="经营",
+                frequency="季度",
+                expected_direction=ExpectationDirection.HIGHER_BETTER,
+                status="已确认",
+            ),
+        }
+
+    def get(self, metric_id: str, version: str = "v1.0") -> MetricDefinitionRecord | None:
+        return self.items.get((metric_id, version))
+
+    def search(
+        self, keyword: str | None = None, *, limit: int = 50
+    ) -> list[MetricDefinitionRecord]:
+        needle = (keyword or "").lower()
+        rows = [
+            item
+            for item in self.items.values()
+            if not needle or needle in item.metric_id.lower() or needle in item.name.lower()
+        ]
+        return rows[:limit]
 
 
 class FakeEvidenceRelationRepo:
@@ -275,6 +527,74 @@ class FakeReviewTaskRepo:
         return matching[:limit]
 
 
+class FakeDocumentProcessingJobRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, DocumentProcessingJobRecord] = {}
+
+    def add(self, record: DocumentProcessingJobRecord) -> None:
+        self.items[record.job_id] = replace(record)
+
+    def get(self, job_id: str) -> DocumentProcessingJobRecord | None:
+        row = self.items.get(job_id)
+        return None if row is None else replace(row)
+
+    def get_by_document(self, document_id: str) -> DocumentProcessingJobRecord | None:
+        rows = [row for row in self.items.values() if row.document_id == document_id]
+        return replace(rows[-1]) if rows else None
+
+    def update(self, record: DocumentProcessingJobRecord) -> None:
+        if record.job_id not in self.items:
+            raise LookupError(record.job_id)
+        self.items[record.job_id] = replace(record)
+
+    def list_for_owner(self, owner: str, *, status: str | None = None, limit: int = 100):
+        rows = [
+            replace(row)
+            for row in reversed(list(self.items.values()))
+            if row.owner == owner and (status is None or row.status == status)
+        ]
+        return rows[:limit]
+
+    def list_stale(self, *, before, statuses: tuple[str, ...]):
+        return [
+            replace(row)
+            for row in self.items.values()
+            if row.status in statuses
+            and (row.updated_at or row.created_at) is not None
+            and (row.updated_at or row.created_at) < before  # type: ignore[operator]
+        ]
+
+
+class FakeIngestionReviewRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, IngestionReviewRecord] = {}
+
+    def add(self, record: IngestionReviewRecord) -> IngestionReviewRecord:
+        self.items[record.review_id] = replace(record)
+        return replace(record)
+
+    def get(self, review_id: str) -> IngestionReviewRecord | None:
+        row = self.items.get(review_id)
+        return None if row is None else replace(row)
+
+    def get_by_dedupe_key(self, dedupe_key: str) -> IngestionReviewRecord | None:
+        row = next((x for x in self.items.values() if x.dedupe_key == dedupe_key), None)
+        return None if row is None else replace(row)
+
+    def update(self, record: IngestionReviewRecord) -> None:
+        if record.review_id not in self.items:
+            raise LookupError(record.review_id)
+        self.items[record.review_id] = replace(record)
+
+    def list_for_assignee(self, assignee: str, *, status: str | None = None, limit: int = 100):
+        rows = [
+            replace(row)
+            for row in self.items.values()
+            if row.assignee == assignee and (status is None or row.status == status)
+        ]
+        return rows[:limit]
+
+
 class FakeDocumentRepo:
     def __init__(self) -> None:
         self.items: dict[str, DocumentRecord] = {}
@@ -302,6 +622,24 @@ class FakeDocumentRepo:
     def list_facts(self, document_id: str) -> list[DocumentFactRecord]:
         return list(self.facts.get(document_id, []))
 
+    def update_security(self, document_id: str, security_id: str) -> None:
+        record = self.items.get(document_id)
+        if record is None:
+            raise LookupError(document_id)
+        self.items[document_id] = replace(record, security_id=security_id)
+
+    def update_visibility(self, document_id: str, visibility_label: str) -> None:
+        record = self.items.get(document_id)
+        if record is None:
+            raise LookupError(document_id)
+        self.items[document_id] = replace(record, visibility_label=visibility_label)
+
+    def mark_deleted(self, document_id: str, deleted_at: datetime) -> None:
+        record = self.items.get(document_id)
+        if record is None:
+            raise LookupError(document_id)
+        self.items[document_id] = replace(record, visibility_label="已删除", deleted_at=deleted_at)
+
 
 class FakeAdjudicationDecisionRepo:
     def __init__(self) -> None:
@@ -318,7 +656,10 @@ class FakeAdjudicationDecisionRepo:
 
 def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
     return UnitOfWork(
+        securities=FakeSecurityRepo(),
+        events=FakeEventRepo(),
         thesis=FakeThesisRepo(),
+        metrics=FakeMetricRepo(),
         evidence=FakeEvidenceRepo(),
         relations=FakeEvidenceRelationRepo(),
         feed=FakeEvidenceFeedRepo(),
@@ -327,6 +668,9 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         versions=FakeVersionRepo(),
         audit=audit or FakeAuditRepo(),
         reviews=FakeReviewTaskRepo(),
+        processing_jobs=FakeDocumentProcessingJobRepo(),
+        ingestion_reviews=FakeIngestionReviewRepo(),
         documents=FakeDocumentRepo(),
         adjudications=FakeAdjudicationDecisionRepo(),
+        assets=FakeAssetRepo(),
     )

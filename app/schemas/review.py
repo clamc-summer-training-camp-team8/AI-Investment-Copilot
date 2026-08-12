@@ -31,3 +31,23 @@ class ReviewTaskOut(BaseModel):
     resolution: str | None
     created_at: datetime | None
     resolved_at: datetime | None
+
+
+class IngestionReviewResolveIn(BaseModel):
+    resolution: str = Field(min_length=2, max_length=2000)
+    security_id: str | None = Field(default=None, max_length=64)
+
+
+class IngestionReviewOut(BaseModel):
+    review_id: str
+    review_type: str
+    document_id: str
+    job_id: str | None
+    event_id: str | None
+    reason: str
+    status: str
+    payload: dict[str, Any]
+    security_candidates: list[dict[str, Any]]
+    resolution: str | None
+    created_at: datetime | None
+    resolved_at: datetime | None

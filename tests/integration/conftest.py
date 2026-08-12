@@ -36,6 +36,56 @@ def engine() -> Iterator[Engine]:
 
     # 按 metadata 建表而非跑迁移：迁移链本身的往返由 test_migrations 单独验证。
     Base.metadata.create_all(eng)
+    # create_all 不会给已有表补新增列；本地库未先 migrate 时会让模型与表结构不一致，
+    # 随后的 API 测试才以难懂的 UndefinedColumn 失败。
+    with eng.connect() as conn:
+        thesis_columns = conn.execute(
+            text(
+                "select column_name from information_schema.columns "
+                "where table_schema='public' and table_name='thesis'"
+            )
+        ).scalars()
+        assert "draft_suggestions" in set(
+            thesis_columns
+        ), "数据库迁移落后于 ORM，请先执行 `.venv\\Scripts\\alembic.exe upgrade head`"
+        segment_columns = conn.execute(
+            text(
+                "select column_name from information_schema.columns "
+                "where table_schema='public' and table_name='document_segment'"
+            )
+        ).scalars()
+        assert {"content_kind", "extraction_method", "cell_range"}.issubset(
+            set(segment_columns)
+        ), "数据库缺少 P0-2 迁移，请先执行 `.venv\\Scripts\\alembic.exe upgrade head`"
+        assert {
+            "source",
+            "industry",
+            "document_revision",
+            "ingestion_run",
+            "ingestion_artifact",
+            "segment_search_index",
+            "segment_embedding",
+            "thesis_revision_draft",
+        }.issubset(
+            set(eng.dialect.get_table_names(conn))
+        ), "数据库缺少 P0-3 迁移，请先执行 `.venv\\Scripts\\alembic.exe upgrade head`"
+        document_columns = conn.execute(
+            text(
+                "select column_name from information_schema.columns "
+                "where table_schema='public' and table_name='document'"
+            )
+        ).scalars()
+        revision_columns = conn.execute(
+            text(
+                "select column_name from information_schema.columns "
+                "where table_schema='public' and table_name='document_revision'"
+            )
+        ).scalars()
+        assert "deleted_at" in set(document_columns)
+        assert "tombstoned_at" in set(revision_columns)
+        assert conn.execute(
+            text("select exists(select 1 from pg_extension where extname='vector')")
+        ).scalar()
     yield eng
     eng.dispose()
 

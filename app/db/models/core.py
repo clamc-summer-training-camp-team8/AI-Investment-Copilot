@@ -78,6 +78,7 @@ class Document(Base):
         comment="权限标签；证据可见性不得高于来源文档",
     )
     is_illustrative: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    deleted_at: Mapped[datetime | None] = mapped_column()
 
     __table_args__ = (
         UniqueConstraint("content_hash", "parser_version"),
@@ -86,7 +87,7 @@ class Document(Base):
 
 
 class DocumentSegment(Base):
-    """文档切片。evidence_locator 的定位基础，格式 {document_id}#paragraph-{n}。"""
+    """文档切片。保留原生/OCR、段落/表格及单元格级定位元数据。"""
 
     __tablename__ = "document_segment"
 
@@ -98,6 +99,12 @@ class DocumentSegment(Base):
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     page: Mapped[int | None] = mapped_column(Integer)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="paragraph")
+    extraction_method: Mapped[str] = mapped_column(String(16), nullable=False, default="native")
+    table_index: Mapped[int | None] = mapped_column(Integer)
+    row_index: Mapped[int | None] = mapped_column(Integer)
+    cell_range: Mapped[str | None] = mapped_column(String(64))
+    confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
 
     __table_args__ = (UniqueConstraint("document_id", "locator"),)
 
@@ -162,6 +169,10 @@ class Thesis(Base):
             "thesis 级失效条件是「全部满足」还是「任一满足」。"
             "默认 AND：把 AND 当 OR 会让单指标不达标就判失效，误报比漏报更伤信任"
         ),
+    )
+    draft_suggestions: Mapped[dict | None] = mapped_column(
+        JSONB,
+        comment="AI 草稿建议候选；未经研究员采用不得进入正式配置",
     )
 
     source_document_id: Mapped[str | None] = mapped_column(ForeignKey("document.document_id"))

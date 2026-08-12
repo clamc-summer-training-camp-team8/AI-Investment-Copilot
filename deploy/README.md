@@ -14,15 +14,19 @@ PRD 12.2 要求测试与生产隔离。试点环境与本地不共用数据库�
 ## 本地起环境
 
 ```bash
-docker compose -f deploy/docker-compose.local.yml up -d   # PostgreSQL + Redis
+docker compose -f deploy/docker-compose.local.yml up -d  # pgvector + Redis + MinIO
 make migrate
 make seed        # 导入样例包（全部 is_illustrative=true）
 uvicorn app.api.main:app --host 127.0.0.1 --port 8000
 arq app.workers.settings.WorkerSettings
 ```
 
-`GET /health` 仅表示 API 进程存活；`GET /health/ready` 会同时检查 PostgreSQL 和 Redis，
-任一不可用即返回 503。负载均衡器和部署平台应使用后者作为就绪探针。
+`GET /health` 仅表示 API 进程存活；`GET /health/ready` 会同时检查 PostgreSQL、Redis、
+Worker 心跳和 MinIO，任一不可用即返回 503。
+
+Windows 开发机推荐直接运行 `scripts/dev.ps1 up`；脚本会完成迁移、bucket 初始化、API、
+Worker 与 Web 启动，并以 `/health/ready` 作为最终验收条件。Docker Desktop 部分版本在服务
+已经启动后仍可能让 `compose --wait` CLI 悬挂，因此这里不把 CLI 退出状态当作服务就绪信号。
 
 不装 Docker 也能开发：`make check` 中的单元与契约测试不需要数据库。集成测试需要。
 
@@ -42,6 +46,11 @@ arq app.workers.settings.WorkerSettings
 | `LLM_MAX_OUTPUT_TOKENS` | 结构化 JSON 最大输出长度，默认 4096 |
 | `LLM_THINKING_MODE` | `enabled` / `disabled`；抽取任务默认关闭 |
 | `REDIS_URL` | ARQ 后台任务队列 |
+| `S3_*` | MinIO/S3 对象存储、bucket、访问凭据与安全连接配置 |
+| `EMBEDDING_VERSION` | 向量版本；切换模型时新增版本，不覆盖旧向量 |
+| `RAG_HYBRID_*_WEIGHT` | P1 混合召回的关键词/向量权重 |
+| `RAG_EVENT_PILOT_*` | 默认关闭的事件→假设试点开关、稳定采样率和召回上限 |
+| `LLM_*_COST_PER_MILLION` | 可选输入/输出 token 单价，仅用于审计成本估算 |
 | `AUTH_MODE` | 本地可用 `trusted_headers`；非本地必须为 `jwt` |
 | `AUTH_JWT_*` | JWT 签名密钥、算法、issuer、audience 与时钟偏差 |
 | `CORS_ORIGINS` | 前端允许来源的 JSON 数组，不使用 `*` |
@@ -62,7 +71,9 @@ HTTP Provider 可以接入公有云或私有兼容端点。无论端点类型，
 
 PRD 12.2：试点月度可用性 ≥ 99.5%，失败任务可重试。
 
-数据库需要定期备份。审计日志与版本快照是可追溯性的载体，丢失等于验收项 DA-AC-07 不成立，备份策略上按最高优先级处理。
+数据库和对象版本内容需要成套备份。审计日志与版本快照是可追溯性的载体，丢失等于验收项
+DA-AC-07 不成立，备份策略上按最高优先级处理。本地可用 `make backup` 后执行
+`make restore-drill`；试点仍需配置跨机器备份与 WAL/PITR。
 
 ## 部署检查清单
 

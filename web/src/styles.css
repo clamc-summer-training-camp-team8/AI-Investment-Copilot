@@ -75,6 +75,18 @@ a { color: inherit; }
 .metric-card > span { color: var(--muted); font-size: 13px; }
 .metric-card strong { display: block; margin: 6px 0; font-size: 30px; font-variant-numeric: tabular-nums; }
 .metric-card p { margin: 0; color: #8090a3; font-size: 12px; line-height: 1.5; }
+.asset-quality-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.asset-quality-grid p { display: grid; gap: 5px; margin: 0; padding: 16px; border-radius: 10px; background: #f6f8fa; }
+.asset-quality-grid strong { font-size: 24px; }
+.asset-quality-grid span { color: var(--muted); font-size: 13px; }
+.asset-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-bottom: 16px; }
+.success-note { color: var(--green); font-weight: 700; }
+.revision-editor { display: grid; gap: 14px; margin-top: 18px; }
+.revision-core-view { grid-column: 1 / -1; }
+.revision-diff { display: grid; gap: 8px; padding: 15px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafb; }
+.revision-diff p { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 10px; margin: 0; }
+.revision-diff del { color: var(--red); }
+.revision-diff ins { color: var(--green); text-decoration: none; }
 
 .evidence-list { display: grid; gap: 12px; }
 .evidence-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 22px; padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
@@ -103,8 +115,8 @@ a { color: inherit; }
 .confidence strong { color: #263951; font-size: 22px; }
 
 .filter-bar { display: flex; align-items: end; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; }
-.filter-bar label, .form-grid label, .relation-form label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
-.filter-bar select, .form-grid input, .form-grid select, .form-grid textarea, .relation-form select, .relation-form textarea, .suggestion-card select, .suggestion-card textarea, .dialog textarea { border: 1px solid #cbd6e2; border-radius: 8px; padding: 9px 11px; background: #fff; color: #253850; }
+.filter-bar label, .form-grid label, .relation-form label, .metric-search { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
+.filter-bar select, .form-grid input, .form-grid select, .form-grid textarea, .relation-form select, .relation-form textarea, .suggestion-card select, .suggestion-card textarea, .dialog textarea, .metric-search input { border: 1px solid #cbd6e2; border-radius: 8px; padding: 9px 11px; background: #fff; color: #253850; }
 .filter-count { margin-left: auto; color: var(--muted); font-size: 13px; }
 
 .thesis-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -187,7 +199,31 @@ blockquote { margin: 16px 0; padding: 3px 0 3px 18px; border-left: 3px solid #b8
 .relation-form textarea { min-height: 85px; }
 .form-grid { display: grid; gap: 12px; }
 .form-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.nested-fields { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #f6f8fa; }
 .form-grid textarea, .dialog textarea { min-height: 96px; resize: vertical; }
+.draft-config { border-top: 3px solid var(--purple); }
+.metric-search { width: min(440px, 100%); margin-bottom: 18px; }
+.hypothesis-editor-list { display: grid; gap: 16px; }
+.hypothesis-editor { border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: #fbfcfe; }
+.editor-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 13px; }
+.editor-heading > div { display: flex; align-items: center; gap: 9px; }
+.ai-suggestions, .ai-candidate-panel { display: grid; gap: 6px; padding: 12px; margin-bottom: 14px; border-radius: 9px; background: #f5f1ff; border: 1px solid #dfd7f5; }
+.ai-suggestions span { color: var(--purple); font-size: 12px; font-weight: 700; }
+.ai-suggestions em { color: #61577b; font-size: 13px; font-style: normal; }
+.ai-candidate-panel { margin-top: 16px; }
+.ai-candidate-panel p { margin: 0; color: var(--muted); }
+.editor-action { display: flex; align-items: end; justify-content: flex-end; }
+.mapping-editor { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; }
+.mapping-editor h3 { font-size: 15px; }
+.mapping-grid { grid-template-columns: 2fr 1fr 1fr 1fr 1fr 2fr; margin-bottom: 12px; }
+.publish-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
+.readiness-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 16px; }
+.readiness-list > div { display: flex; gap: 10px; padding: 11px; border-radius: 9px; border: 1px solid var(--line); }
+.readiness-list > div > span { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; color: #fff; flex: 0 0 23px; font-weight: 800; }
+.readiness-passed > span { background: var(--green); }
+.readiness-failed > span { background: var(--amber); }
+.readiness-list strong { font-size: 13px; }
+.readiness-list p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
 .technical dl { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 9px 16px; }
 .technical dt { color: var(--muted); }
 .technical dd { margin: 0; word-break: break-all; }
@@ -236,6 +272,7 @@ blockquote { margin: 16px 0; padding: 3px 0 3px 18px; border-left: 3px solid #b8
   .logic-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .logic-overview > div { border-bottom: 1px solid var(--line); }
   .hypothesis-grid { grid-template-columns: 1fr; }
+  .mapping-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .validation-chain { grid-template-columns: 1fr; gap: 12px; }
   .validation-line { display: none; }
 }
@@ -268,7 +305,8 @@ blockquote { margin: 16px 0; padding: 3px 0 3px 18px; border-left: 3px solid #b8
   .top-actions .button { width: 100%; }
   .page-title { display: block; padding-top: 26px; }
   .page-actions { margin-top: 16px; }
-  .metric-grid, .logic-overview, .form-grid.two, .review-comparison { grid-template-columns: 1fr; }
+  .metric-grid, .logic-overview, .form-grid.two, .review-comparison, .mapping-grid, .publish-fields, .readiness-list, .asset-quality-grid, .asset-search { grid-template-columns: 1fr; }
+  .revision-diff p { grid-template-columns: 1fr; }
   .filter-bar { align-items: stretch; flex-direction: column; }
   .filter-count { margin-left: 0; }
   .source-footer, .risk-callout, .relation-row { align-items: flex-start; flex-direction: column; }

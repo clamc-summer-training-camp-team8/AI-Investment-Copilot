@@ -4,15 +4,18 @@ import { NavLink, useParams, useSearchParams } from 'react-router-dom'
 import {
   createRelation, deactivateRelation, decideAdjudication, decideStatus, getAudit,
   getDocumentSegment, getEvidence, getRadarEvidence, getRelations, getSuggestions,
-  getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks,
-  listAdjudications, listReviewTasks, listTheses, publishThesis, resolveReviewTask,
-  reviewRelation, updateRelation,
+  getPublishReadiness, getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks,
+  listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listTheses,
+  publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
+  reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
+  getAssetInventory, rebuildAssetSearchIndex, searchAssets,
+  createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
 } from './api'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
-import type { Adjudication, Relation, ReviewTask, ThesisDetail } from './types'
+import type { Adjudication, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, Relation, ReviewTask, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function WorkbenchPage() {
@@ -87,17 +90,86 @@ export function ThesisPage() {
     <section className="content-section"><div className="section-heading"><div><span className="eyebrow">证据链</span><h2>最关键变化</h2></div><NavLink className="secondary-link" to={`/radar?thesisId=${thesisId}`}>查看全部 {feed.data.total} 条</NavLink></div><div className="evidence-list">{evidence.slice(0, 3).map((record) => <EvidenceEventRow item={record} key={`${record.evidenceId}-${record.relationId}`} />)}</div></section>
     <section className="content-section two-column"><div><div className="section-heading"><div><span className="eyebrow">人工闸门</span><h2>状态建议</h2></div></div>{openSuggestion ? <article className="suggestion-card"><span>规则建议</span><h3>{openSuggestion.currentStatus} → {openSuggestion.suggestedStatus}</h3><p>{openSuggestion.reasons.join('；')}</p><textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} placeholder="填写决策原因（必填）" /><select value={targetStatus} onChange={(event) => setTargetStatus(event.target.value)}><option>验证中</option><option>出现分歧</option><option>重大风险</option><option>已关闭</option></select><div className="button-row"><button disabled={!decisionReason.trim() || decision.isPending} className="button primary" onClick={() => decision.mutate({ id: openSuggestion.suggestionId, action: '接受' })}>接受建议</button><button disabled={!decisionReason.trim() || decision.isPending} className="button secondary" onClick={() => decision.mutate({ id: openSuggestion.suggestionId, action: '拒绝' })}>拒绝</button><button disabled={!decisionReason.trim() || decision.isPending} className="button secondary" onClick={() => decision.mutate({ id: openSuggestion.suggestionId, action: '修改' })}>修改状态</button></div><InlineError error={decision.error} /></article> : <EmptyState title="没有待处置建议" description="证据审核后，规则引擎会生成新的状态建议。" />}</div><div><div className="section-heading"><div><span className="eyebrow">可追溯</span><h2>关键审计记录</h2></div></div><div className="timeline">{businessAudit.length ? businessAudit.map((line, index) => <div className="timeline-item" key={`${line.action}-${index}`}><i /><div><strong>{line.action}</strong><p>{line.actor} · {formatDate(line.occurredAt)}</p></div></div>) : <p className="muted">暂无关键业务变更记录。</p>}</div></div></section>
     <details className="content-section disclosure"><summary>指标趋势与计算口径</summary><div className="trend-list">{trends.data?.map((trend) => <p key={trend.hypothesisId}><strong>{trend.statement}</strong><span>{trend.direction} · {trend.points.map((point) => `${point.period} ${point.value}${trend.unit}`).join('，') || '需人工判断'}</span></p>)}</div></details>
-    {item.status === '草稿' && <PublishPanel thesisId={thesisId} />}
+    {item.status === '草稿' ? <DraftPublishWorkspace thesis={item} /> : <PostPublicationRevisionWorkspace thesis={item} />}
   </>
+}
+
+function PostPublicationRevisionWorkspace({ thesis }: { thesis: ThesisDetail }) {
+  const [draft, setDraft] = useState<ThesisRevision | null>(null)
+  const create = useMutation({ mutationFn: () => createThesisRevision(thesis.thesisId), onSuccess: setDraft })
+  return <section className="content-section"><div className="section-heading"><div><span className="eyebrow">发布后修订</span><h2>版本化修改</h2></div>{!draft && <button className="button secondary" disabled={create.isPending} onClick={() => create.mutate()}>{create.isPending ? '创建中…' : `基于 V${thesis.version} 创建修订`}</button>}</div><p className="muted">修订保留基础版本、差异和编辑代次；发布前检查并发冲突，成功后生成新的不可变版本快照。</p><InlineError error={create.error} />{draft && <ThesisRevisionEditor initial={draft} />}</section>
+}
+
+function ThesisRevisionEditor({ initial }: { initial: ThesisRevision }) {
+  const qc = useQueryClient()
+  const [draft, setDraft] = useState(initial)
+  const thesisPayload = (draft.payload.thesis ?? {}) as Record<string, unknown>
+  const [title, setTitle] = useState(String(thesisPayload.title ?? ''))
+  const [coreView, setCoreView] = useState(String(thesisPayload.core_view ?? ''))
+  const [direction, setDirection] = useState(String(thesisPayload.direction ?? '观察'))
+  const [reason, setReason] = useState('')
+  const diff = useQuery({ queryKey: ['thesis-revision-diff', draft.draftId, draft.revision], queryFn: () => getThesisRevisionDiff(draft.draftId) })
+  const nextPayload = () => ({ ...draft.payload, thesis: { ...thesisPayload, title, core_view: coreView, direction } })
+  const save = useMutation({ mutationFn: () => updateThesisRevision(draft, nextPayload()), onSuccess: async (updated) => { setDraft(updated); await qc.invalidateQueries({ queryKey: ['thesis-revision-diff', updated.draftId] }) } })
+  const publish = useMutation({ mutationFn: async () => { const saved = await updateThesisRevision(draft, nextPayload()); setDraft(saved); return publishThesisRevision(saved, reason) }, onSuccess: async (updated) => { setDraft(updated); await Promise.all([qc.invalidateQueries({ queryKey: ['thesis', draft.thesisId] }), qc.invalidateQueries({ queryKey: ['audit', draft.thesisId] })]) } })
+  if (draft.status === 'published') return <p className="success-note">修订已发布，新版本快照已生成。</p>
+  return <div className="revision-editor"><div className="form-grid two"><label>标题<input value={title} maxLength={40} onChange={(event) => setTitle(event.target.value)} /></label><label>投资方向<select value={direction} onChange={(event) => setDirection(event.target.value)}><option>看多</option><option>看空</option><option>观察</option></select></label><label className="revision-core-view">核心观点<textarea value={coreView} maxLength={200} onChange={(event) => setCoreView(event.target.value)} /></label></div><div className="button-row"><button className="button secondary" disabled={save.isPending || !title.trim() || !coreView.trim()} onClick={() => save.mutate()}>{save.isPending ? '保存中…' : `保存草稿 r${draft.revision}`}</button></div><InlineError error={save.error} /><div className="revision-diff"><strong>相对 V{draft.baseVersion} 的差异</strong>{diff.data && Object.keys(diff.data.changes).length ? Object.entries(diff.data.changes).map(([field, values]) => <p key={field}><span>{field}</span><del>{String(values.before ?? '—')}</del><ins>{String(values.after ?? '—')}</ins></p>) : <p className="muted">保存草稿后在这里预览差异。</p>}</div><label>发布原因<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="说明为什么修改正式研究结论（必填）" /></label><button className="button primary" disabled={publish.isPending || reason.trim().length < 2} onClick={() => publish.mutate()}>{publish.isPending ? '发布中…' : '发布为新版本'}</button><InlineError error={publish.error} /></div>
+}
+
+function dateAfter(days: number) {
+  const value = new Date()
+  value.setDate(value.getDate() + days)
+  return value.toISOString().slice(0, 10)
+}
+
+function DraftPublishWorkspace({ thesis }: { thesis: ThesisDetail }) {
+  const [metricKeyword, setMetricKeyword] = useState('')
+  const metrics = useQuery({ queryKey: ['metrics', metricKeyword], queryFn: () => listMetrics(metricKeyword) })
+  return <>
+    <section className="content-section draft-config"><div className="section-heading"><div><span className="eyebrow">人工配置</span><h2>假设、指标与失效条件</h2></div><span className="muted">AI 内容均为待采用候选</span></div>
+      <label className="metric-search">搜索指标字典<input value={metricKeyword} onChange={(event) => setMetricKeyword(event.target.value)} placeholder="输入指标名称或 ID" /></label>
+      <InlineError error={metrics.error} />
+      <div className="hypothesis-editor-list">{thesis.hypotheses.map((hypothesis) => <HypothesisEditor key={hypothesis.hypothesisId} thesisId={thesis.thesisId} hypothesis={hypothesis} metrics={metrics.data ?? []} />)}</div>
+      {(thesis.riskSuggestions.length > 0 || thesis.invalidationSuggestions.length > 0) && <div className="ai-candidate-panel"><strong>AI 风险与失效建议（待人工判断）</strong>{[...thesis.riskSuggestions, ...thesis.invalidationSuggestions].map((item, index) => <p key={index}>{String(item.statement ?? '未提供建议文本')}</p>)}</div>}
+    </section>
+    <PublishPanel thesisId={thesis.thesisId} />
+  </>
+}
+
+function HypothesisEditor({ thesisId, hypothesis, metrics }: { thesisId: string; hypothesis: Hypothesis; metrics: MetricDefinition[] }) {
+  const qc = useQueryClient()
+  const current = hypothesis.mappings[0]
+  const [statement, setStatement] = useState(hypothesis.statement)
+  const [hypothesisType, setHypothesisType] = useState(hypothesis.hypothesisType)
+  const [importance, setImportance] = useState(hypothesis.importance)
+  const [observationWindow, setObservationWindow] = useState(hypothesis.observationWindow ?? '')
+  const [invalidationRule, setInvalidationRule] = useState(hypothesis.invalidationRule ?? '')
+  const [metricKey, setMetricKey] = useState(current ? `${current.metricId}@@${current.metricVersion}` : '')
+  const [expectedDirection, setExpectedDirection] = useState(current?.expectedDirection ?? '越高越好')
+  const [expectedValue, setExpectedValue] = useState(current?.expectedValue ?? '')
+  const [threshold, setThreshold] = useState(current?.invalidationThreshold ?? '')
+  const [periods, setPeriods] = useState(String(current?.invalidationConsecutivePeriods ?? 1))
+  const [source, setSource] = useState(current?.expectationSource ?? '研究员人工录入')
+  const selected = metrics.find((item) => `${item.metricId}@@${item.version}` === metricKey)
+  const refresh = async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['thesis', thesisId] }), qc.invalidateQueries({ queryKey: ['publish-readiness', thesisId] }), qc.invalidateQueries({ queryKey: ['audit', thesisId] })]) }
+  const hypothesisMutation = useMutation({ mutationFn: () => updateHypothesis(thesisId, hypothesis.hypothesisId, { statement, hypothesisType, importance, observationWindow, invalidationRule }), onSuccess: refresh })
+  const mappingMutation = useMutation({ mutationFn: () => { if (!selected) throw new Error('请从指标字典选择指标。'); if (!expectedValue && !threshold) throw new Error('预期值与失效阈值至少填写一项。'); return saveMetricMapping(thesisId, hypothesis.hypothesisId, { mappingId: current?.mappingId, metricId: selected.metricId, metricVersion: selected.version, expectedDirection, expectedValue, invalidationThreshold: threshold, invalidationConsecutivePeriods: Number(periods), expectationSource: source }) }, onSuccess: refresh })
+  const chooseMetric = (value: string) => { setMetricKey(value); const metric = metrics.find((item) => `${item.metricId}@@${item.version}` === value); if (metric?.expectedDirection) setExpectedDirection(metric.expectedDirection) }
+  return <article className="hypothesis-editor"><div className="editor-heading"><div><strong>{hypothesis.hypothesisId}</strong><span className={`badge ${importance === '核心' ? 'priority-high' : 'neutral-badge'}`}>{importance}</span></div><span className="muted">{hypothesis.mappings.length} 个验证指标</span></div>
+    {hypothesis.metricSuggestions.length > 0 && <div className="ai-suggestions"><span>AI 指标建议（待采用）</span>{hypothesis.metricSuggestions.map((item, index) => <em key={index}>{String(item.metric_name ?? '未命名指标')}{item.rationale ? ` · ${String(item.rationale)}` : ''}</em>)}</div>}
+    <div className="form-grid two"><label>假设内容<textarea value={statement} onChange={(event) => setStatement(event.target.value)} /></label><label>失效条件描述<textarea value={invalidationRule} onChange={(event) => setInvalidationRule(event.target.value)} placeholder="由研究员确认，不自动采用 AI 建议" /></label><label>假设类型<select value={hypothesisType} onChange={(event) => setHypothesisType(event.target.value)}><option>行业</option><option>公司竞争力</option><option>经营</option><option>盈利</option><option>政策</option><option>估值</option><option>其他</option></select></label><label>重要性<select value={importance} onChange={(event) => setImportance(event.target.value)}><option>核心</option><option>辅助</option></select></label><label>观察窗口<input value={observationWindow} onChange={(event) => setObservationWindow(event.target.value)} placeholder="例如：未来 4 个季度" /></label><div className="editor-action"><button className="button secondary" disabled={hypothesisMutation.isPending || !statement.trim()} onClick={() => hypothesisMutation.mutate()}>保存假设</button></div></div><InlineError error={hypothesisMutation.error} />
+    <div className="mapping-editor"><h3>验证指标与研究员预期</h3><div className="form-grid mapping-grid"><label>指标字典<select value={metricKey} onChange={(event) => chooseMetric(event.target.value)}><option value="">选择已有指标</option>{metrics.map((item) => <option key={`${item.metricId}-${item.version}`} value={`${item.metricId}@@${item.version}`}>{item.name}（{item.metricId} · {item.unit}）</option>)}</select></label><label>预期方向<select value={expectedDirection} onChange={(event) => setExpectedDirection(event.target.value)}><option>越高越好</option><option>越低越好</option><option>不低于阈值</option><option>不高于阈值</option></select></label><label>预期值<input inputMode="decimal" value={expectedValue} onChange={(event) => setExpectedValue(event.target.value)} placeholder="可选" /></label><label>失效阈值<input inputMode="decimal" value={threshold} onChange={(event) => setThreshold(event.target.value)} placeholder="可选" /></label><label>连续期数<input type="number" min="1" max="12" value={periods} onChange={(event) => setPeriods(event.target.value)} /></label><label>预期来源<input value={source} onChange={(event) => setSource(event.target.value)} placeholder="会议纪要、研究员判断等" /></label></div><button className="button primary" disabled={mappingMutation.isPending || !metricKey || !source.trim()} onClick={() => mappingMutation.mutate()}>{current ? '更新指标映射' : '采用并保存指标'}</button><InlineError error={mappingMutation.error} /></div>
+  </article>
 }
 
 function PublishPanel({ thesisId }: { thesisId: string }) {
   const qc = useQueryClient()
   const [direction, setDirection] = useState('观察')
-  const [horizonEndOn, setHorizonEndOn] = useState('2026-12-31')
-  const [nextReviewAt, setNextReviewAt] = useState('2026-09-30')
+  const [horizonEndOn, setHorizonEndOn] = useState(() => dateAfter(365))
+  const [nextReviewAt, setNextReviewAt] = useState(() => dateAfter(90))
+  const readiness = useQuery({ queryKey: ['publish-readiness', thesisId, direction, horizonEndOn, nextReviewAt], queryFn: () => getPublishReadiness(thesisId, { direction, horizonEndOn, nextReviewAt }) })
   const mutation = useMutation({ mutationFn: () => publishThesis(thesisId, { direction, horizonEndOn, nextReviewAt }), onSuccess: () => qc.invalidateQueries({ queryKey: ['thesis', thesisId] }) })
-  return <section className="content-section"><h2>人工发布逻辑</h2><div className="form-grid"><select value={direction} onChange={(event) => setDirection(event.target.value)}><option>观察</option><option>看多</option><option>看空</option></select><input type="date" value={horizonEndOn} onChange={(event) => setHorizonEndOn(event.target.value)} /><input type="date" value={nextReviewAt} onChange={(event) => setNextReviewAt(event.target.value)} /><button className="button primary" disabled={mutation.isPending} onClick={() => mutation.mutate()}>确认并发布</button><InlineError error={mutation.error} /></div></section>
+  return <section className="content-section publish-panel"><div className="section-heading"><div><span className="eyebrow">发布监控</span><h2>人工发布就绪清单</h2></div><span className={`badge ${readiness.data?.ready ? 'status-confirmed' : 'priority-medium'}`}>{readiness.data?.ready ? '可以发布' : '配置未完成'}</span></div><div className="form-grid publish-fields"><label>投资方向<select value={direction} onChange={(event) => setDirection(event.target.value)}><option>观察</option><option>看多</option><option>看空</option></select></label><label>监控期限<input type="date" value={horizonEndOn} onChange={(event) => setHorizonEndOn(event.target.value)} /></label><label>下次复核<input type="date" value={nextReviewAt} onChange={(event) => setNextReviewAt(event.target.value)} /></label></div><div className="readiness-list">{readiness.data?.items.map((item) => <div className={item.passed ? 'readiness-passed' : 'readiness-failed'} key={item.code}><span>{item.passed ? '✓' : '!'}</span><div><strong>{item.label}</strong><p>{item.message}</p></div></div>)}</div><button className="button primary" disabled={mutation.isPending || !readiness.data?.ready} onClick={() => mutation.mutate()}>确认配置并发布监控</button><InlineError error={readiness.error ?? mutation.error} /></section>
 }
 
 export function EvidencePage() {
@@ -126,7 +198,7 @@ export function EvidencePage() {
   const activeHypothesis = activeThesis?.hypotheses.find((hypothesis) => hypothesis.hypothesisId === activeRelation?.hypothesisId)
   return <>
     <PageTitle eyebrow={`${item.securityId} · 公开披露`} title={item.sourceDocumentTitle} description={`披露于 ${formatDate(item.disclosedAt)}，请核验事实来源及其对投资假设的影响。`} />
-    <section className="fact-panel"><div className="panel-label">原文回查</div><blockquote>{source.data?.content ?? item.factExcerpt}</blockquote>{source.error && <p className="inline-error">数据库原文段落暂不可用，当前展示证据摘录。</p>}<div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}{source.data?.locator ? ` · 定位 ${source.data.locator}` : ''}</span><SafeSourceLink url={item.sourceUrl} /></div></section>
+    <section className="fact-panel"><div className="panel-label">原文回查</div><blockquote>{source.data?.content ?? item.factExcerpt}</blockquote>{source.error && <p className="inline-error">数据库原文段落暂不可用，当前展示证据摘录。</p>}<div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}{source.data?.contentKind === 'table_row' ? ` · 表 ${source.data.tableIndex} / 单元格 ${source.data.cellRange}` : ''}{source.data?.extractionMethod === 'ocr' ? ` · OCR${source.data.confidence == null ? '' : ` ${Math.round(source.data.confidence * 100)}%`}` : ''}{source.data?.locator ? ` · 定位 ${source.data.locator}` : ''}</span><SafeSourceLink url={item.sourceUrl} /></div></section>
     {context && <section className="content-section"><div className="section-heading"><div><span className="eyebrow">数据验证</span><h2>这条证据是否可用于研究判断</h2></div><span className="validation-summary">{context.validationItems.filter((v) => v.status === 'passed').length}/{context.validationItems.length} 项通过</span></div><ValidationChain items={context.validationItems} /></section>}
     <section className="impact-panel"><div><span className="eyebrow">当前影响</span><h2>{activeHypothesis?.statement ?? '选择一条有效关联后进行判断'}</h2><p>{activeThesis?.title ?? '当前没有可操作的逻辑关联'}</p><div className="badge-row">{activeRelation && <><DirectionBadge direction={activeRelation.direction} /><StatusBadge state={activeRelation.status} /><span className="badge neutral-badge">{strengthText[activeRelation.strength]}强度</span><span className="badge neutral-badge">AI {Math.round(item.aiConfidence * 100)}%</span></>}</div></div>{activeRelation?.canManage && activeRelation.status !== 'deactivated' && <div className="decision-panel"><span>你的判断</span><div className="button-row"><button className="button primary" onClick={() => setDialog({ relation: activeRelation, action: '确认' })}>确认关联</button><button className="button secondary" onClick={() => setDialog({ relation: activeRelation, action: '驳回' })}>驳回</button><button className="button ghost" onClick={() => setDialog({ relation: activeRelation, action: '暂不判断' })}>暂不判断</button></div></div>}</section>
     <InlineError error={action.error} />
@@ -150,9 +222,50 @@ function RelationForm({ evidenceId, thesisList, editing, onDone }: { evidenceId:
 export function ReviewsPage() {
   const adjudications = useQuery({ queryKey: ['adjudications'], queryFn: listAdjudications })
   const tasks = useQuery({ queryKey: ['review-tasks'], queryFn: listReviewTasks })
-  if (adjudications.isLoading || tasks.isLoading) return <LoadingState />
-  if (adjudications.error || tasks.error || !adjudications.data || !tasks.data) return <ErrorState error={adjudications.error ?? tasks.error} />
-  return <><PageTitle eyebrow="质量治理" title="复核与复盘" description="完成业务复核与独立导师裁决，所有结果持久化并保留审计。" /><section className="content-section"><div className="section-heading"><div><span className="eyebrow">产品复核</span><h2>分配给我的任务</h2></div><span className="muted">{tasks.data.filter((item) => item.state === '待处理').length} 条待处理</span></div>{tasks.data.length ? <div className="review-list">{tasks.data.map((task) => <ReviewTaskCard key={task.taskId} task={task} />)}</div> : <EmptyState title="没有复核任务" description="处理失败、重大事件或人工发起的任务会显示在这里。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">独立评测</span><h2>导师裁决队列</h2></div><span className="muted">{adjudications.data.filter((item) => !item.resolved).length} 条待裁决</span></div>{adjudications.data.length ? <div className="review-list">{adjudications.data.map((item) => <AdjudicationCard key={item.eventId} item={item} />)}</div> : <EmptyState title="没有待裁决样本" description="存在独立标注分歧时会进入此队列。" />}</section></>
+  const ingestion = useQuery({ queryKey: ['ingestion-reviews'], queryFn: listIngestionReviews })
+  const jobs = useQuery({ queryKey: ['processing-jobs'], queryFn: listProcessingJobs })
+  if (adjudications.isLoading || tasks.isLoading || ingestion.isLoading || jobs.isLoading) return <LoadingState />
+  if (adjudications.error || tasks.error || ingestion.error || jobs.error || !adjudications.data || !tasks.data || !ingestion.data || !jobs.data) return <ErrorState error={adjudications.error ?? tasks.error ?? ingestion.error ?? jobs.error} />
+  const deadLetters = jobs.data.filter((item) => ['failed', 'dead_letter'].includes(item.status))
+  return <><PageTitle eyebrow="质量治理" title="复核与复盘" description="统一处理资料归属、假设匹配、低置信、失败重放与独立导师裁决。" /><section className="content-section"><div className="section-heading"><div><span className="eyebrow">资料复核</span><h2>新资料人工队列</h2></div><span className="muted">{ingestion.data.filter((item) => item.status === 'pending').length} 条待处理</span></div>{ingestion.data.length ? <div className="review-list">{ingestion.data.map((item) => <IngestionReviewCard key={item.reviewId} item={item} />)}</div> : <EmptyState title="没有资料复核项" description="未归属证券、无法匹配假设、低置信事件和处理失败会显示在这里。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">失败恢复</span><h2>死信与任务重放</h2></div><span className="muted">{deadLetters.length} 条可重放</span></div>{deadLetters.length ? <div className="review-list">{deadLetters.map((job) => <ProcessingJobCard key={job.jobId} job={job} />)}</div> : <EmptyState title="没有失败任务" description="达到重试上限的任务会持久化在这里，可在原件保留期内重放。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">产品复核</span><h2>分配给我的逻辑任务</h2></div><span className="muted">{tasks.data.filter((item) => item.state === '待处理').length} 条待处理</span></div>{tasks.data.length ? <div className="review-list">{tasks.data.map((task) => <ReviewTaskCard key={task.taskId} task={task} />)}</div> : <EmptyState title="没有复核任务" description="重大事件或人工发起的逻辑任务会显示在这里。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">独立评测</span><h2>导师裁决队列</h2></div><span className="muted">{adjudications.data.filter((item) => !item.resolved).length} 条待裁决</span></div>{adjudications.data.length ? <div className="review-list">{adjudications.data.map((item) => <AdjudicationCard key={item.eventId} item={item} />)}</div> : <EmptyState title="没有待裁决样本" description="存在独立标注分歧时会进入此队列。" />}</section></>
+}
+
+export function AssetPage() {
+  const qc = useQueryClient()
+  const [query, setQuery] = useState('')
+  const [submittedQuery, setSubmittedQuery] = useState('')
+  const inventory = useQuery({ queryKey: ['asset-inventory'], queryFn: getAssetInventory })
+  const search = useQuery({ queryKey: ['asset-search', submittedQuery], queryFn: () => searchAssets(submittedQuery), enabled: Boolean(submittedQuery) })
+  const rebuild = useMutation({ mutationFn: rebuildAssetSearchIndex, onSuccess: async () => { await qc.invalidateQueries({ queryKey: ['asset-inventory'] }); if (submittedQuery) await qc.invalidateQueries({ queryKey: ['asset-search', submittedQuery] }) } })
+  if (inventory.isLoading) return <LoadingState />
+  if (inventory.error || !inventory.data) return <ErrorState error={inventory.error} />
+  const data = inventory.data
+  const metrics = [
+    ['文档资产', data.documents, '当前数据库中的文档事实'],
+    ['不可变修订', data.revisions, '原件哈希与对象版本谱系'],
+    ['处理运行', data.ingestionRuns, `${data.semanticRuns} 次 semantic-v1 运行`],
+    ['待归档原件', data.missingObjectArchive, '历史原件待对象存储回填'],
+  ] as const
+  return <>
+    <PageTitle eyebrow="P0-3 数据资产层" title="资产治理" description="盘点原件、修订、处理运行与权限感知索引；重处理只追加新运行，不覆盖历史产物。" actions={<button className="button secondary" disabled={rebuild.isPending} onClick={() => rebuild.mutate()}>{rebuild.isPending ? '重建中…' : '重建检索索引'}</button>} />
+    <section className="metric-grid">{metrics.map(([label, value, note]) => <div className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><p>{note}</p></div>)}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">历史质量盘点</span><h2>治理状态与不可覆盖产物</h2></div></div><div className="asset-quality-grid"><p><strong>{data.singleSegmentDocuments}</strong><span>规范表中的历史单切片（保留不覆盖）</span></p><p><strong>{data.pendingAuthorization}</strong><span>来源授权待确认</span></p><p><strong>{data.artifactSegments}</strong><span>运行级切片产物</span></p><p><strong>{data.artifactFacts + data.artifactEvents}</strong><span>运行级事实与事件产物</span></p></div><InlineError error={rebuild.error} />{rebuild.data != null && <p className="success-note">索引已重建，共 {rebuild.data} 个切片。</p>}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">P1 权限感知混合召回</span><h2>验证可见切片</h2></div></div><form className="asset-search" onSubmit={(event) => { event.preventDefault(); if (query.trim()) setSubmittedQuery(query.trim()) }}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入信息需求或正文关键词" /><button className="button primary" type="submit" disabled={!query.trim()}>混合召回</button></form><InlineError error={search.error} />{search.isFetching ? <LoadingState /> : submittedQuery && (search.data?.length ? <div className="review-list">{search.data.map((item) => <article className="review-card" key={`${item.documentId}-${item.locator}`}><div className="review-header"><strong>{item.documentId}</strong><span className="badge neutral-badge">{item.visibilityLabel}</span></div><p>{item.content}</p><small className="muted">定位：{item.locator} · 综合 {item.rank.toFixed(3)} · 关键词 {(item.keywordRank ?? 0).toFixed(3)} · 向量 {(item.vectorRank ?? 0).toFixed(3)} · {item.embeddingVersion}</small></article>)}</div> : <EmptyState title="没有可见命中" description="权限、证券、行业和时间过滤在排序前执行。" />)}</section>
+  </>
+}
+
+function IngestionReviewCard({ item }: { item: IngestionReview }) {
+  const qc = useQueryClient()
+  const [securityId, setSecurityId] = useState(item.securityCandidates[0]?.securityId ?? '')
+  const [resolution, setResolution] = useState('')
+  const mutation = useMutation({ mutationFn: () => resolveIngestionReview(item.reviewId, { resolution, securityId: item.reviewType === 'security_assignment' ? securityId : undefined }), onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['ingestion-reviews'] }), qc.invalidateQueries({ queryKey: ['processing-jobs'] })]) } })
+  return <article className="review-card"><div className="review-header"><div><span className={`badge ${item.status === 'pending' ? 'priority-medium' : 'status-confirmed'}`}>{item.status === 'pending' ? '待处理' : '已完成'}</span><h2>{item.reviewType} · {item.documentId}</h2></div></div><p className="review-detail">{item.reason}</p>{item.status === 'pending' ? <div className="review-decision">{item.reviewType === 'security_assignment' && <select value={securityId} onChange={(event) => setSecurityId(event.target.value)}><option value="">不归属证券</option>{item.securityCandidates.map((candidate) => <option key={candidate.securityId} value={candidate.securityId}>{candidate.securityId} · {candidate.name}（匹配 {candidate.matchedTerms.join('、')}）</option>)}</select>}<textarea value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="填写复核结论（必填）" /><button className="button primary" disabled={resolution.trim().length < 2 || mutation.isPending} onClick={() => mutation.mutate()}>提交并继续处理</button><InlineError error={mutation.error} /></div> : <p className="review-result"><strong>复核结论：</strong>{item.resolution}</p>}</article>
+}
+
+function ProcessingJobCard({ job }: { job: ProcessingJob }) {
+  const qc = useQueryClient()
+  const mutation = useMutation({ mutationFn: () => replayProcessingJob(job.jobId), onSuccess: async () => { await qc.invalidateQueries({ queryKey: ['processing-jobs'] }) } })
+  return <article className="review-card"><div className="review-header"><div><span className="badge priority-high">{job.status === 'dead_letter' ? '死信' : '失败'}</span><h2>{job.sourceFilename}</h2></div><span className="muted">第 {job.attemptCount} 次</span></div><p className="review-detail">{job.lastError ?? '未知错误'}</p><button className="button secondary" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? '入队中…' : '重放任务'}</button><InlineError error={mutation.error} /></article>
 }
 
 function ReviewTaskCard({ task }: { task: ReviewTask }) {

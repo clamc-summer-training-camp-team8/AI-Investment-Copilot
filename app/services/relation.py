@@ -196,3 +196,40 @@ def review(
     )
     status.record_suggestion(uow, thesis=thesis, suggestion=suggestion, actor=actor.user_id)
     return updated, thesis
+
+
+def create_candidate(
+    uow: UnitOfWork,
+    *,
+    evidence_id: str,
+    thesis_id: str,
+    hypothesis_id: str,
+    direction: ImpactDirection,
+    strength: str | None,
+    reason: str,
+    actor: str,
+) -> EvidenceRelationRecord:
+    """Worker 产生待确认关联；不赋予上传者管理他人逻辑的权限。"""
+
+    _validate_target(uow, evidence_id, thesis_id, hypothesis_id)
+    record = EvidenceRelationRecord(
+        relation_id=f"REL-{uuid4().hex[:16]}",
+        evidence_id=evidence_id,
+        thesis_id=thesis_id,
+        hypothesis_id=hypothesis_id,
+        direction=direction,
+        strength=strength,
+        reason=reason,
+        status=ConfirmationStatus.PENDING,
+        created_by=actor,
+    )
+    uow.relations.add(record)
+    audit.record(
+        uow.audit,
+        actor=actor,
+        action="生成候选证据关联",
+        object_type="evidence_relation",
+        object_id=record.relation_id,
+        detail={"evidence_id": evidence_id, "thesis_id": thesis_id},
+    )
+    return record

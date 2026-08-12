@@ -70,6 +70,16 @@ def create_draft(
         status=ThesisStatus.DRAFT,
         visibility=Visibility.TEAM,
         source_document_id=draft.get("source_document_id"),
+        draft_suggestions={
+            "hypotheses": {
+                f"{thesis_id}-H{index}": {
+                    "metric_suggestions": item.get("metric_suggestions") or [],
+                }
+                for index, item in enumerate(hypotheses, start=1)
+            },
+            "risks": draft.get("risks") or [],
+            "invalidation_suggestions": draft.get("invalidation_suggestions") or [],
+        },
     )
     uow.thesis.add(record)
 
@@ -96,12 +106,61 @@ def create_draft(
     return record
 
 
+def update_hypothesis(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    hypothesis_id: str,
+    statement: str,
+    hypothesis_type: str,
+    importance: Importance,
+    observation_window: str | None,
+    invalidation_rule: str | None,
+    actor: Actor,
+) -> HypothesisRecord:
+    """人工编辑草稿假设；AI 建议不会自动采用。"""
+    thesis = _require_owned_draft(uow, thesis_id=thesis_id, actor=actor)
+    hypothesis = uow.thesis.get_hypothesis(hypothesis_id)
+    if hypothesis is None or hypothesis.thesis_id != thesis.thesis_id:
+        raise ValidationFailed(f"假设 {hypothesis_id} 不属于逻辑 {thesis_id}")
+    normalized_statement = statement.strip()
+    if not normalized_statement:
+        raise ValidationFailed("假设内容不能为空")
+    updated = replace(
+        hypothesis,
+        statement=normalized_statement,
+        hypothesis_type=hypothesis_type.strip() or "其他",
+        importance=importance,
+        observation_window=(observation_window or "").strip() or None,
+        invalidation_rule=(invalidation_rule or "").strip() or None,
+    )
+    uow.thesis.update_hypothesis(updated)
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action=audit.EDIT,
+        object_type="hypothesis",
+        object_id=hypothesis_id,
+        detail={
+            "statement": updated.statement,
+            "hypothesis_type": updated.hypothesis_type,
+            "importance": updated.importance.value,
+            "observation_window": updated.observation_window,
+            "invalidation_rule": updated.invalidation_rule,
+        },
+    )
+    return updated
+
+
 def set_expectations(
     uow: UnitOfWork,
     *,
     hypothesis_id: str,
     mapping: MetricMappingRecord,
     actor: Actor,
+    validate_metric: bool = False,
+    thesis_id: str | None = None,
+    require_draft: bool = False,
 ) -> MetricMappingRecord:
     """录入研究员预期与失效阈值。
 
@@ -112,8 +171,53 @@ def set_expectations(
         raise ValidationFailed("必须至少给出预期值或失效阈值")
     if not (mapping.expectation_source or "").strip():
         raise ValidationFailed("必须记录预期来源（GAP-002）")
+    if mapping.invalidation_consecutive_periods is not None and (
+        mapping.invalidation_consecutive_periods < 1
+        or mapping.invalidation_consecutive_periods > 12
+    ):
+        raise ValidationFailed("连续期数必须在 1 至 12 之间")
 
-    uow.thesis.add_mapping(replace(mapping, hypothesis_id=hypothesis_id))
+    hypothesis = uow.thesis.get_hypothesis(hypothesis_id)
+    if hypothesis is None:
+        raise ValidationFailed(f"假设 {hypothesis_id} 不存在")
+    thesis = uow.thesis.get(hypothesis.thesis_id)
+    if thesis is None:
+        raise ValidationFailed(f"逻辑 {hypothesis.thesis_id} 不存在")
+    if thesis_id is not None and hypothesis.thesis_id != thesis_id:
+        raise ValidationFailed(f"假设 {hypothesis_id} 不属于逻辑 {thesis_id}")
+    if require_draft and thesis.status is not ThesisStatus.DRAFT:
+        raise ValidationFailed("已发布逻辑须通过修订草稿修改")
+    permission.ensure_thesis_visible(
+        actor,
+        thesis_id=thesis.thesis_id,
+        owner=thesis.owner,
+        visibility=thesis.visibility,
+        team=thesis.team,
+    )
+    if thesis.owner != actor.user_id:
+        raise HumanGateRequired("只有负责人可以配置验证预期")
+    if validate_metric and uow.metrics.get(mapping.metric_id, mapping.metric_version) is None:
+        raise ValidationFailed(
+            f"指标 {mapping.metric_id} {mapping.metric_version} 不存在，请先从指标字典选择"
+        )
+
+    saved = replace(
+        mapping,
+        hypothesis_id=hypothesis_id,
+        expectation_source=(mapping.expectation_source or "").strip(),
+    )
+    existing = next(
+        (
+            item
+            for item in uow.thesis.list_mappings(hypothesis_id)
+            if item.mapping_id == saved.mapping_id
+        ),
+        None,
+    )
+    if existing is None:
+        uow.thesis.add_mapping(saved)
+    else:
+        uow.thesis.update_mapping(saved)
     audit.record(
         uow.audit,
         actor=actor.user_id,
@@ -126,7 +230,87 @@ def set_expectations(
             "expectation_source": mapping.expectation_source,
         },
     )
-    return mapping
+    return saved
+
+
+def publish_readiness(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    actor: Actor,
+    direction: str,
+    horizon_end_on: date,
+    next_review_at: date,
+) -> list[tuple[str, str, bool, str]]:
+    """发布约束的单一事实来源，供清单与真正发布共用。"""
+    record = uow.thesis.get(thesis_id)
+    if record is None:
+        raise ValidationFailed(f"逻辑 {thesis_id} 不存在")
+    permission.ensure_thesis_visible(
+        actor,
+        thesis_id=thesis_id,
+        owner=record.owner,
+        visibility=record.visibility,
+        team=record.team,
+    )
+    hypotheses = uow.thesis.list_hypotheses(thesis_id)
+    core = [item for item in hypotheses if item.importance is Importance.CORE]
+    missing_mappings = [
+        item.hypothesis_id for item in core if not uow.thesis.list_mappings(item.hypothesis_id)
+    ]
+    today = date.today()
+    return [
+        (
+            "owner",
+            "负责人确认",
+            record.owner == actor.user_id,
+            "当前用户是逻辑负责人" if record.owner == actor.user_id else "只有负责人可以发布",
+        ),
+        (
+            "draft",
+            "草稿状态",
+            record.status is ThesisStatus.DRAFT,
+            "逻辑仍处于可配置草稿" if record.status is ThesisStatus.DRAFT else "只有草稿可以发布",
+        ),
+        (
+            "core_hypothesis",
+            "核心假设",
+            bool(core),
+            f"已选择 {len(core)} 条核心假设" if core else "至少选择一条核心假设",
+        ),
+        (
+            "expectations",
+            "验证指标与预期",
+            bool(core) and not missing_mappings,
+            (
+                "全部核心假设已配置指标、预期或阈值"
+                if core and not missing_mappings
+                else f"待配置：{'、'.join(missing_mappings) or '先选择核心假设'}"
+            ),
+        ),
+        (
+            "direction",
+            "投资方向",
+            direction in {"看多", "看空", "观察"},
+            "方向已由研究员确认" if direction in {"看多", "看空", "观察"} else "请选择投资方向",
+        ),
+        (
+            "horizon",
+            "监控期限",
+            horizon_end_on >= today,
+            ("监控期限有效" if horizon_end_on >= today else "监控期限不能早于今天"),
+        ),
+        (
+            "review",
+            "复核日期",
+            today <= next_review_at <= horizon_end_on,
+            (
+                "复核日期有效"
+                if today <= next_review_at <= horizon_end_on
+                else "复核日期须在今天至监控期限之间"
+            ),
+        ),
+    ]
 
 
 def publish(
@@ -147,17 +331,19 @@ def publish(
     record = uow.thesis.get(thesis_id)
     if record is None:
         raise ValidationFailed(f"逻辑 {thesis_id} 不存在")
-    permission.ensure_thesis_visible(
-        actor,
+    checks = publish_readiness(
+        uow,
         thesis_id=thesis_id,
-        owner=record.owner,
-        visibility=record.visibility,
-        team=record.team,
+        actor=actor,
+        direction=direction,
+        horizon_end_on=horizon_end_on,
+        next_review_at=next_review_at,
     )
-    if record.owner != actor.user_id:
-        raise HumanGateRequired("只有负责人可以发布逻辑")
-    if record.status is not ThesisStatus.DRAFT:
-        raise ValidationFailed(f"只有草稿可以发布，当前状态 {record.status.value}")
+    failed = [message for _, _, passed, message in checks if not passed]
+    if failed:
+        if record.owner != actor.user_id:
+            raise HumanGateRequired(failed[0])
+        raise ValidationFailed("；".join(failed))
 
     hypotheses = uow.thesis.list_hypotheses(thesis_id)
     if not any(h.importance is Importance.CORE for h in hypotheses):
@@ -182,6 +368,8 @@ def publish(
     )
     uow.thesis.update(published)
 
+    evidence, data_cutoff_at, model_versions = version.evidence_snapshot(uow, thesis_id)
+
     version.create(
         uow.versions,
         thesis=published,
@@ -189,6 +377,15 @@ def publish(
         triggered_by=version.TRIGGER_PUBLISH,
         created_by=actor.user_id,
         change_reason="发布 V1",
+        mappings=[
+            mapping
+            for hypothesis in hypotheses
+            for mapping in uow.thesis.list_mappings(hypothesis.hypothesis_id)
+        ],
+        evidence=evidence,
+        data_cutoff_at=data_cutoff_at,
+        rule_version="rules-v1",
+        model_versions=model_versions,
     )
     audit.record(
         uow.audit,
@@ -199,6 +396,24 @@ def publish(
         detail={"direction": direction, "next_review_at": next_review_at.isoformat()},
     )
     return published
+
+
+def _require_owned_draft(uow: UnitOfWork, *, thesis_id: str, actor: Actor) -> ThesisRecord:
+    record = uow.thesis.get(thesis_id)
+    if record is None:
+        raise ValidationFailed(f"逻辑 {thesis_id} 不存在")
+    permission.ensure_thesis_visible(
+        actor,
+        thesis_id=thesis_id,
+        owner=record.owner,
+        visibility=record.visibility,
+        team=record.team,
+    )
+    if record.owner != actor.user_id:
+        raise HumanGateRequired("只有负责人可以编辑逻辑")
+    if record.status is not ThesisStatus.DRAFT:
+        raise ValidationFailed("已发布逻辑须通过修订草稿修改")
+    return record
 
 
 def recall_candidates(

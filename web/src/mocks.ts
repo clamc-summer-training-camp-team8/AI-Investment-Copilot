@@ -29,6 +29,8 @@ export const demoThesis: ThesisDetail = {
   version: 1,
   establishedOn: '2026-01-01',
   hypotheses: [],
+  riskSuggestions: [],
+  invalidationSuggestions: [],
 }
 
 export const demoEvidenceFeed: EvidenceFeedItem = {

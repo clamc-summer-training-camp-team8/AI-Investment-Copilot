@@ -52,18 +52,27 @@ def record_model_call(
     model_version: str,
     prompt_version: str,
     ai_status: str,
+    model_metadata: dict[str, object] | None = None,
 ) -> None:
     """模型调用留痕。
 
     不记录提示词与请求体明文（PRD 12.1）：受限文档内容会进提示词，落盘明文等于
     绕过权限控制。只记版本号和结果状态，这已足够复现与追溯。
     """
+    safe_metadata = {
+        key: value
+        for key, value in (model_metadata or {}).items()
+        if key in {"provider", "request_id", "usage", "finish_reason"}
+    }
+    detail: dict[str, object] = {"prompt_version": prompt_version, "ai_status": ai_status}
+    if safe_metadata:
+        detail["model_metadata"] = safe_metadata
     record(
         repo,
         actor=actor,
         action=MODEL_CALL,
         object_type=object_type,
         object_id=object_id,
-        detail={"prompt_version": prompt_version, "ai_status": ai_status},
+        detail=detail,
         model_version=model_version,
     )

@@ -9,8 +9,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from decimal import Decimal
 
-PARSER_VERSION = "v1"
+PARSER_VERSION = "v2-ocr-table"
 
 
 class ParseError(Exception):
@@ -33,6 +34,12 @@ class RawSegment:
     ordinal: int
     content: str
     page: int | None = None
+    content_kind: str = "paragraph"
+    extraction_method: str = "native"
+    table_index: int | None = None
+    row_index: int | None = None
+    cell_range: str | None = None
+    confidence: Decimal | None = None
 
 
 @dataclass(frozen=True)

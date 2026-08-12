@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 THESIS_DRAFT_VERSION = "thesis-draft-v3-deepseek-json-ref-null"
 EVENT_IMPACT_VERSION = "event-impact-v2-mentor-ruling"
+EVENT_EXTRACTION_VERSION = "event-extraction-v1-structured"
 METRIC_EXPLAIN_VERSION = "metric-validation-v1"
 
 
@@ -86,6 +87,14 @@ _EVENT_JSON_SHAPE = """
 impact_direction=支持/冲突/中性/无关；horizon=短期/中期/长期/null。
 """.strip()
 
+_EVENT_EXTRACTION_JSON_SHAPE = """
+只输出 JSON 对象：
+{"events":[{"event_type":"业绩","fact":"可由单一引用直接核验的事实", "occurred_on":null,
+"evidence_locator":"输入中的文档ID#paragraph-1","confidence":0.8,"security_mentions":["证券代码或公司名"]}]}
+event_type 只能是订单/政策/管理层表述/业绩/其他。没有可核验事件时 events 返回空数组。
+每条事件必须引用输入中真实存在的一个 locator；禁止合并来自不同 locator 的事实。
+""".strip()
+
 _MENTOR_EVENT_RULES = (
     "业务裁决 mentor-ruling-v1-20260811：影响方向只相对于给定假设及其可观测指标判断。"
     "无关表示不进入证据链；中性表示相关但方向不明。高频过程公告、程式化文件、"
@@ -131,6 +140,20 @@ EVENT_IMPACT = PromptTemplate(
     ),
 )
 
+EVENT_EXTRACTION = PromptTemplate(
+    version=EVENT_EXTRACTION_VERSION,
+    system=(
+        "你负责从研究资料中抽取结构化、可回溯的事实事件。"
+        f"{_NO_TRADE_ADVICE}{_CITATION_RULE}{_EVENT_EXTRACTION_JSON_SHAPE}"
+    ),
+    instruction=(
+        "文档ID：{document_id}\n披露时间：{disclosure_time}\n"
+        "资料片段（保留页码、段落或表格单元格定位）：\n{segments}\n\n"
+        "抽取订单、政策、管理层表述、业绩和其他重大可核验事件。事实与推断分离；"
+        "仅标题、程式化声明和无法引用的内容不要产出事件。"
+    ),
+)
+
 METRIC_EXPLAIN = PromptTemplate(
     version=METRIC_EXPLAIN_VERSION,
     system=(
@@ -149,5 +172,6 @@ METRIC_EXPLAIN = PromptTemplate(
 ALL_TEMPLATES = {
     THESIS_DRAFT_VERSION: THESIS_DRAFT,
     EVENT_IMPACT_VERSION: EVENT_IMPACT,
+    EVENT_EXTRACTION_VERSION: EVENT_EXTRACTION,
     METRIC_EXPLAIN_VERSION: METRIC_EXPLAIN,
 }

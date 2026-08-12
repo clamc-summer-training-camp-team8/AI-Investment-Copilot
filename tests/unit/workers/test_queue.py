@@ -35,5 +35,6 @@ async def test_enqueue_document_records_owner_and_uses_stable_job_id() -> None:
     assert job_id == "document-DOC-1"
     assert redis.enqueued is not None
     assert redis.enqueued[0] == "process_document_job"
+    assert redis.enqueued[1]["job_id"] == "document-DOC-1"
     assert redis.enqueued[1]["actor_id"] == "researcher-1"
     assert redis.owner == ("job-owner:document-DOC-1", "researcher-1")

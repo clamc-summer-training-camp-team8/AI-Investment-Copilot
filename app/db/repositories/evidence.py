@@ -478,6 +478,9 @@ class SqlVersionRepo:
                 change_reason=record.change_reason,
                 triggered_by=record.triggered_by,
                 created_by=record.created_by,
+                data_cutoff_at=record.data_cutoff_at,
+                rule_version=record.rule_version,
+                model_versions=record.model_versions or None,
             )
         )
         self._session.flush()
@@ -509,6 +512,9 @@ def _to_version(row: ThesisVersion) -> VersionRecord:
         created_by=row.created_by,
         change_reason=row.change_reason,
         changed_fields=list(row.changed_fields or []),
+        data_cutoff_at=row.data_cutoff_at,
+        rule_version=row.rule_version,
+        model_versions=list(row.model_versions or []),
     )
 
 

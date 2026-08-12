@@ -148,6 +148,11 @@ def draft_from_document(
         model_version=str(outcome.payload.get("model_version", "")),
         prompt_version=str(outcome.payload.get("prompt_version", "")),
         ai_status=outcome.ai_status.value,
+        model_metadata=(
+            outcome.payload.get("model_metadata")
+            if isinstance(outcome.payload.get("model_metadata"), dict)
+            else None
+        ),
     )
 
     if outcome.ai_status is AiStatus.PARSE_FAILED:

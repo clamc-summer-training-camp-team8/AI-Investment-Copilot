@@ -68,6 +68,13 @@ export interface ThesisSummary {
   direction?: string
 }
 
+export interface Security {
+  securityId: string
+  name: string
+  ticker?: string
+  industry?: string
+}
+
 export interface ThesisDetail extends ThesisSummary {
   direction: string
   coreView: string
@@ -75,7 +82,50 @@ export interface ThesisDetail extends ThesisSummary {
   establishedOn: string
   horizonEndOn?: string
   nextReviewAt?: string
-  hypotheses: Array<{ hypothesisId: string; statement: string; importance: string; status: string }>
+  hypotheses: Hypothesis[]
+  riskSuggestions: Array<Record<string, unknown>>
+  invalidationSuggestions: Array<Record<string, unknown>>
+}
+
+export interface MetricMapping {
+  mappingId: string
+  metricId: string
+  metricVersion: string
+  expectedDirection: string
+  expectedValue?: string
+  invalidationThreshold?: string
+  invalidationConsecutivePeriods?: number
+  expectationSource: string
+  confirmationStatus: string
+}
+
+export interface Hypothesis {
+  hypothesisId: string
+  statement: string
+  hypothesisType: string
+  importance: string
+  status: string
+  observationWindow?: string
+  invalidationRule?: string
+  metricSuggestions: Array<Record<string, unknown>>
+  mappings: MetricMapping[]
+}
+
+export interface MetricDefinition {
+  metricId: string
+  version: string
+  name: string
+  unit: string
+  category?: string
+  definition?: string
+  frequency?: string
+  expectedDirection?: string
+  status: string
+}
+
+export interface PublishReadiness {
+  ready: boolean
+  items: Array<{ code: string; label: string; passed: boolean; message: string }>
 }
 
 export interface Relation {
@@ -151,6 +201,36 @@ export interface JobStatus {
   finishTime?: string
 }
 
+export interface ProcessingJob {
+  jobId: string
+  documentId: string
+  sourceFilename: string
+  securityId?: string
+  status: string
+  attemptCount: number
+  maxAttempts: number
+  result?: Record<string, unknown>
+  lastError?: string
+  createdAt?: string
+  startedAt?: string
+  finishedAt?: string
+}
+
+export interface IngestionReview {
+  reviewId: string
+  reviewType: string
+  documentId: string
+  jobId?: string
+  eventId?: string
+  reason: string
+  status: string
+  payload: Record<string, unknown>
+  securityCandidates: Array<{ securityId: string; name: string; score: number; matchedTerms: string[] }>
+  resolution?: string
+  createdAt?: string
+  resolvedAt?: string
+}
+
 export interface ReviewTask {
   taskId: string
   thesisId: string
@@ -187,6 +267,56 @@ export interface DocumentSegment {
   ordinal: number
   page?: number
   content: string
+  contentKind: string
+  extractionMethod: string
+  tableIndex?: number
+  rowIndex?: number
+  cellRange?: string
+  confidence?: number
   previousLocator?: string
   nextLocator?: string
+}
+
+export interface AssetInventory {
+  documents: number
+  revisions: number
+  ingestionRuns: number
+  segments: number
+  facts: number
+  singleSegmentDocuments: number
+  pendingAuthorization: number
+  missingObjectArchive: number
+  semanticRuns: number
+  artifactSegments: number
+  artifactFacts: number
+  artifactEvents: number
+}
+
+export interface AssetSearchHit {
+  documentId: string
+  locator: string
+  content: string
+  visibilityLabel: string
+  rank: number
+  retrievalMode?: string
+  keywordRank?: number
+  vectorRank?: number
+  ingestionRunId?: string
+  embeddingVersion?: string
+}
+
+export interface ThesisRevision {
+  draftId: string
+  thesisId: string
+  baseVersion: number
+  revision: number
+  owner: string
+  payload: Record<string, unknown>
+  status: string
+}
+
+export interface ThesisRevisionDiff {
+  draftId: string
+  baseVersion: number
+  changes: Record<string, { before?: unknown; after?: unknown }>
 }

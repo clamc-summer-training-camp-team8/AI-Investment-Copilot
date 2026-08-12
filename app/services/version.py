@@ -21,7 +21,9 @@ from decimal import Decimal
 
 from app.services.ports import (
     HypothesisRecord,
+    MetricMappingRecord,
     ThesisRecord,
+    UnitOfWork,
     VersionRecord,
     VersionRepo,
 )
@@ -49,6 +51,11 @@ TRIGGER_REVIEW = "复核"
 def build_snapshot(
     thesis: ThesisRecord,
     hypotheses: list[HypothesisRecord],
+    mappings: list[MetricMappingRecord] | None = None,
+    evidence: list[dict[str, object]] | None = None,
+    data_cutoff_at: datetime | None = None,
+    rule_version: str | None = None,
+    model_versions: list[str] | None = None,
 ) -> dict[str, object]:
     """全字段快照。
 
@@ -58,6 +65,13 @@ def build_snapshot(
     return {
         "thesis": {k: _plain(v) for k, v in asdict(thesis).items()},
         "hypotheses": [{k: _plain(v) for k, v in asdict(h).items()} for h in hypotheses],
+        "metric_mappings": [
+            {k: _plain(v) for k, v in asdict(mapping).items()} for mapping in (mappings or [])
+        ],
+        "evidence": evidence or [],
+        "data_cutoff_at": _plain(data_cutoff_at) if data_cutoff_at else None,
+        "rule_version": rule_version,
+        "model_versions": sorted(set(model_versions or [])),
     }
 
 
@@ -90,6 +104,11 @@ def create(
     created_by: str,
     change_reason: str | None = None,
     changed_fields: list[str] | None = None,
+    mappings: list[MetricMappingRecord] | None = None,
+    evidence: list[dict[str, object]] | None = None,
+    data_cutoff_at: datetime | None = None,
+    rule_version: str | None = None,
+    model_versions: list[str] | None = None,
 ) -> VersionRecord:
     """生成新版本。版本号在 latest 基础上 +1，不接受调用方指定。"""
     latest = repo.latest(thesis.thesis_id)
@@ -98,11 +117,52 @@ def create(
     record = VersionRecord(
         thesis_id=thesis.thesis_id,
         version=next_version,
-        snapshot=build_snapshot(thesis, hypotheses),
+        snapshot=build_snapshot(
+            thesis,
+            hypotheses,
+            mappings,
+            evidence,
+            data_cutoff_at,
+            rule_version,
+            model_versions,
+        ),
         triggered_by=triggered_by,
         created_by=created_by,
         change_reason=change_reason,
         changed_fields=changed_fields or [],
+        data_cutoff_at=data_cutoff_at,
+        rule_version=rule_version,
+        model_versions=sorted(set(model_versions or [])),
     )
     repo.add(record)
     return record
+
+
+def evidence_snapshot(
+    uow: UnitOfWork, thesis_id: str
+) -> tuple[list[dict[str, object]], datetime | None, list[str]]:
+    """Freeze confirmed evidence references and their model context at version time."""
+    items: list[dict[str, object]] = []
+    cutoff: datetime | None = None
+    models: list[str] = []
+    for record in uow.evidence.list_for_thesis(thesis_id):
+        if record.confirmation_status.value != "已确认":
+            continue
+        items.append(
+            {
+                "evidence_id": record.evidence_id,
+                "hypothesis_id": record.hypothesis_id,
+                "event_id": record.event_id,
+                "direction": record.direction.value,
+                "evidence_locator": record.evidence_locator,
+                "source_document_id": record.source_document_id,
+                "disclosed_at": _plain(record.disclosed_at) if record.disclosed_at else None,
+                "model_version": record.model_version,
+                "prompt_version": record.prompt_version,
+            }
+        )
+        if record.disclosed_at and (cutoff is None or record.disclosed_at > cutoff):
+            cutoff = record.disclosed_at
+        if record.model_version:
+            models.append(record.model_version)
+    return items, cutoff, sorted(set(models))

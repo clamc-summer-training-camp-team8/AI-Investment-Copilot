@@ -102,6 +102,14 @@ def handle(
 
     if action == CONFIRM:
         updated = _confirm(uow, record=record, thesis=thesis, actor=actor, note=note)
+        _sync_active_relation_status(
+            uow,
+            evidence_id=evidence_id,
+            thesis_id=thesis.thesis_id,
+            confirmation=ConfirmationStatus.CONFIRMED,
+            actor=actor,
+            note=note,
+        )
     elif action == REJECT:
         updated = _simple_update(
             uow,
@@ -110,6 +118,14 @@ def handle(
             confirmation=ConfirmationStatus.REJECTED,
             review=ReviewStatus.REJECTED,
             action_label=audit.REJECT,
+            note=note,
+        )
+        _sync_active_relation_status(
+            uow,
+            evidence_id=evidence_id,
+            thesis_id=thesis.thesis_id,
+            confirmation=ConfirmationStatus.REJECTED,
+            actor=actor,
             note=note,
         )
     elif action == RELINK:
@@ -157,6 +173,31 @@ def handle(
     status.record_suggestion(uow, thesis=thesis, suggestion=suggestion, actor=actor.user_id)
 
     return updated, thesis
+
+
+def _sync_active_relation_status(
+    uow: UnitOfWork,
+    *,
+    evidence_id: str,
+    thesis_id: str,
+    confirmation: ConfirmationStatus,
+    actor: Actor,
+    note: str | None,
+) -> None:
+    """Legacy evidence action and the relation-based radar must observe one status."""
+
+    for relation in uow.relations.list_for_evidence(evidence_id):
+        if relation.thesis_id != thesis_id or relation.status is ConfirmationStatus.DEACTIVATED:
+            continue
+        uow.relations.update(
+            replace(
+                relation,
+                status=confirmation,
+                reason=note or relation.reason,
+                reviewed_by=actor.user_id,
+                reviewed_at=now(),
+            )
+        )
 
 
 def _confirm(

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-investment-copilot/contracts/ai/event_extraction.schema.json",
+  "title": "EventExtraction",
+  "type": "object",
+  "required": ["document_id", "events", "model_version", "prompt_version", "generated_at", "ai_status"],
+  "additionalProperties": false,
+  "properties": {
+    "document_id": {"type": "string", "minLength": 1},
+    "events": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": ["event_type", "fact", "evidence_locator", "confidence", "security_mentions"],
+        "additionalProperties": false,
+        "properties": {
+          "event_type": {"type": "string", "enum": ["订单", "政策", "管理层表述", "业绩", "其他"]},
+          "fact": {"type": "string", "minLength": 1, "maxLength": 500},
+          "occurred_on": {"type": ["string", "null"], "format": "date"},
+          "evidence_locator": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+#paragraph-[0-9]+$"
+          },
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "security_mentions": {"type": "array", "items": {"type": "string"}, "maxItems": 10}
+        }
+      }
+    },
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"type": "string", "enum": ["候选", "低置信", "解析失败"]},
+    "model_metadata": {"type": "object", "additionalProperties": true}
+  }
+}

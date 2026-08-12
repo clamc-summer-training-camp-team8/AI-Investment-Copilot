@@ -21,7 +21,8 @@ PRD 8.3 列出的两类异步任务，加上定时扫描：
 arq app.workers.settings.WorkerSettings
 ```
 
-`POST /api/jobs/documents` 将文件保存到受控 `storage/uploads/` 后入队，接口立即返回
+`POST /api/jobs/documents` 将文件短暂保存到受控 `storage/uploads/`，按 SHA-256 归档到
+S3-compatible 对象存储后删除本机副本并入队，接口立即返回
 `job_id`；同一 `document_id` 使用稳定任务 ID 防止重复入队。模型网络失败按指数间隔最多
 重试 3 次，解析失败或达到重试上限后创建高优先级人工复核任务。任务所有者映射保存在
 Redis 并带 TTL，查询接口不能跨用户读取结果。
@@ -69,7 +70,10 @@ PRD 12.2：50 页以内资料草稿生成目标 ≤ 3 分钟。
 
 - 任务幂等。同一文档重复处理不产生重复事件（靠 `content_hash` 与 `fingerprint`）。
 - 区分可重试失败（模型超时、网络）与不可重试失败（文件损坏、格式不支持）。后者不占重试次数，直接转人工。
-- 重试次数上限后返回结构化失败结果并创建复核任务；MVP 尚未另建独立死信队列表。
+- 重试次数上限后返回结构化失败结果并写入 `document_processing_job` 死信状态，同时创建
+  `ingestion_review`；复核页可重放。Worker 中断遗留的超时任务也会由定时恢复任务转为死信。
+- 重复上传命中既有 revision 时复用不可变对象；Worker 处理副本用完即删除。旧式本机失败/孤儿
+  文件仍按 `UPLOAD_RETENTION_DAYS` 与 `FAILED_UPLOAD_RETENTION_DAYS` 定时清理。
 - 失败不静默。任何丢任务的实现都会让研究员上传后无限等待。
 
 ## 时间语义

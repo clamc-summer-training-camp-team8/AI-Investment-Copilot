@@ -62,10 +62,38 @@ class Settings(BaseSettings):
     llm_max_output_tokens: int = Field(default=4096, ge=256, le=65536)
     llm_thinking_mode: str = Field(default="disabled", pattern="^(enabled|disabled)$")
     llm_reasoning_effort: str = Field(default="low", pattern="^(low|high|max)$")
+    llm_input_cost_per_million: float | None = Field(default=None, ge=0)
+    llm_output_cost_per_million: float | None = Field(default=None, ge=0)
     prompt_version: str = "prompts-v1"
 
-    redis_url: str = "redis://localhost:6379/0"
+    # Docker Desktop publishes Redis on the host IPv4 loopback.  Using
+    # ``localhost`` is unreliable on machines where it resolves to ``::1``
+    # first while the published port only listens on IPv4.
+    redis_url: str = "redis://127.0.0.1:6379/0"
     upload_max_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
+    upload_retention_days: int = Field(default=30, ge=1, le=3650)
+    failed_upload_retention_days: int = Field(default=90, ge=1, le=3650)
+
+    # 原文件事实源。上传原件先按内容哈希写入 S3-compatible 存储，再进入处理队列。
+    object_store_endpoint: str = "http://127.0.0.1:9000"
+    object_store_access_key: str = "copilot"
+    object_store_secret_key: SecretStr = SecretStr("copilot-local-only")
+    object_store_bucket: str = "copilot-documents"
+    object_store_region: str = "us-east-1"
+    object_store_secure: bool = False
+    object_store_retention_days: int = Field(default=365, ge=1, le=3650)
+    chunker_version: str = "semantic-v1"
+    extractor_version: str = "event-v1"
+    # P1 默认模型为完全离线、可复现的字符哈希 embedding。它只用于建立检索
+    # 基线；换成正式模型时必须改版本号，旧向量不覆盖。
+    embedding_version: str | None = "hash-char-2gram-v1"
+    rag_hybrid_keyword_weight: float = Field(default=0.45, ge=0, le=1)
+    rag_hybrid_vector_weight: float = Field(default=0.55, ge=0, le=1)
+    # 事件→假设 RAG 试点默认关闭。开启后仍按事件稳定采样，召回内容只进入
+    # 模型候选上下文，不参与鉴权、确定性规则或最终状态变更。
+    rag_event_pilot_enabled: bool = False
+    rag_event_pilot_sample_rate: float = Field(default=0.05, ge=0, le=1)
+    rag_event_pilot_limit: int = Field(default=3, ge=1, le=10)
 
     # 本地开发可由受信任网关注入请求头；试点/生产必须使用带签名和过期时间的 JWT。
     auth_mode: str = Field(default="trusted_headers", pattern="^(trusted_headers|jwt)$")

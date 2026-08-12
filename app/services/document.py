@@ -33,6 +33,7 @@ def persist_processed(
     security_id: str | None,
     facts: list[ExtractedFact],
     visibility_label: str = "内部",
+    raw_location: str | None = None,
 ) -> DocumentRecord:
     """持久化解析成功的文档；同内容重复上传返回既有文档并留审计。"""
     if published_at is None or content_hash is None:
@@ -60,7 +61,7 @@ def persist_processed(
         published_at=published_at,
         content_hash=content_hash,
         parser_version=parser_version,
-        raw_path=str(path),
+        raw_path=raw_location or str(path),
         body="\n".join(segment.content for segment in segments),
         visibility_label=visibility_label,
     )
@@ -73,6 +74,12 @@ def persist_processed(
                 ordinal=item.ordinal,
                 page=item.page,
                 content=item.content,
+                content_kind=item.content_kind,
+                extraction_method=item.extraction_method,
+                table_index=item.table_index,
+                row_index=item.row_index,
+                cell_range=item.cell_range,
+                confidence=item.confidence,
             )
             for item in segments
         ],
@@ -111,7 +118,11 @@ def get_segment(
     uow: UnitOfWork, *, document_id: str, ordinal: int, actor: Actor
 ) -> tuple[DocumentRecord, DocumentSegmentRecord, str | None, str | None]:
     document = uow.documents.get(document_id)
-    if document is None or document.visibility_label not in actor.document_labels:
+    if (
+        document is None
+        or document.deleted_at is not None
+        or document.visibility_label not in actor.document_labels
+    ):
         raise NotVisible("文档不存在或无访问权限")
     segments = uow.documents.list_segments(document_id)
     for index, segment in enumerate(segments):

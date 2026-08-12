@@ -36,6 +36,7 @@ class ThesisDraftIn(Base):
     security_id: Annotated[str, Field(min_length=1)]
     view: Annotated[str, Field(min_length=1, max_length=2000)]
     document_id: str | None = None
+    use_rag: bool = False
 
 
 class ThesisPublishIn(Base):
@@ -45,6 +46,25 @@ class ThesisPublishIn(Base):
     horizon_end_on: date
     next_review_at: date
     invalidation_require_all: bool = True
+
+
+class HypothesisUpdateIn(Base):
+    statement: Annotated[str, Field(min_length=1, max_length=2000)]
+    hypothesis_type: Annotated[str, Field(min_length=1, max_length=32)] = "其他"
+    importance: Annotated[str, Field(pattern="^(核心|辅助)$")]
+    observation_window: str | None = Field(default=None, max_length=128)
+    invalidation_rule: str | None = Field(default=None, max_length=2000)
+
+
+class MetricMappingIn(Base):
+    mapping_id: str | None = Field(default=None, max_length=64)
+    metric_id: Annotated[str, Field(min_length=1, max_length=64)]
+    metric_version: Annotated[str, Field(min_length=1, max_length=16)] = "v1.0"
+    expected_direction: Annotated[str, Field(pattern="^(越高越好|越低越好|不低于阈值|不高于阈值)$")]
+    expected_value: Decimal | None = None
+    invalidation_threshold: Decimal | None = None
+    invalidation_consecutive_periods: int | None = Field(default=None, ge=1, le=12)
+    expectation_source: Annotated[str, Field(min_length=1, max_length=255)]
 
 
 class EvidenceActionIn(Base):
@@ -69,12 +89,32 @@ class StatusDecisionIn(Base):
     target_status: str | None = None
 
 
+class MetricMappingOut(Base):
+    mapping_id: str
+    metric_id: str
+    metric_version: str
+    expected_direction: str
+    expected_value: Decimal | None = None
+    invalidation_threshold: Decimal | None = None
+    invalidation_consecutive_periods: int | None = None
+    expectation_source: str
+    confirmation_status: str
+
+    @field_serializer("expected_value", "invalidation_threshold")
+    def _decimal_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+
 class HypothesisOut(Base):
     hypothesis_id: str
     statement: str
     hypothesis_type: str
     importance: str
     status: str
+    observation_window: str | None = None
+    invalidation_rule: str | None = None
+    metric_suggestions: list[dict[str, object]] = Field(default_factory=list)
+    mappings: list[MetricMappingOut] = Field(default_factory=list)
 
 
 class ThesisOut(Base):
@@ -91,6 +131,20 @@ class ThesisOut(Base):
     horizon_end_on: date | None = None
     next_review_at: date | None = None
     hypotheses: list[HypothesisOut] = Field(default_factory=list)
+    risk_suggestions: list[dict[str, object]] = Field(default_factory=list)
+    invalidation_suggestions: list[dict[str, object]] = Field(default_factory=list)
+
+
+class PublishReadinessItemOut(Base):
+    code: str
+    label: str
+    passed: bool
+    message: str
+
+
+class PublishReadinessOut(Base):
+    ready: bool
+    items: list[PublishReadinessItemOut]
 
 
 class EvidenceOut(Base):

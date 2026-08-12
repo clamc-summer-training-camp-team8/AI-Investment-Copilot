@@ -10,6 +10,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     ForeignKey,
     Index,
     Integer,
@@ -20,7 +21,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, created_at_column
+from app.db.base import Base, created_at_column, updated_at_column
 
 
 class ThesisVersion(Base):
@@ -44,6 +45,9 @@ class ThesisVersion(Base):
     )
 
     created_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    data_cutoff_at: Mapped[datetime | None] = mapped_column()
+    rule_version: Mapped[str | None] = mapped_column(String(32))
+    model_versions: Mapped[list | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = created_at_column()
 
     __table_args__ = (UniqueConstraint("thesis_id", "version"),)
@@ -97,6 +101,66 @@ class ReviewTask(Base):
     resolved_at: Mapped[datetime | None] = mapped_column()
 
     __table_args__ = (Index("ix_review_task_state", "state", "assignee"),)
+
+
+class DocumentProcessingJob(Base):
+    """资料处理的持久化任务与死信记录。每次重放创建新的 job_id。"""
+
+    __tablename__ = "document_processing_job"
+
+    job_id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    document_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    owner: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    actor_teams: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    upload_path: Mapped[str | None] = mapped_column(String(1024))
+    revision_id: Mapped[str | None] = mapped_column(String(96))
+    object_key: Mapped[str | None] = mapped_column(String(1024))
+    object_version_id: Mapped[str | None] = mapped_column(String(255))
+    upload_content_hash: Mapped[str | None] = mapped_column(String(64))
+    ingestion_run_id: Mapped[str | None] = mapped_column(String(96))
+    source_filename: Mapped[str] = mapped_column(String(512), nullable=False)
+    published_at: Mapped[datetime | None] = mapped_column()
+    security_id: Mapped[str | None] = mapped_column(String(64))
+    thesis_id: Mapped[str | None] = mapped_column(String(64))
+    view: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="queued")
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    result: Mapped[dict | None] = mapped_column(JSONB)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = created_at_column()
+    started_at: Mapped[datetime | None] = mapped_column()
+    finished_at: Mapped[datetime | None] = mapped_column()
+    updated_at: Mapped[datetime] = updated_at_column()
+
+    __table_args__ = (
+        Index("ix_document_job_owner_status", "owner", "status", "created_at"),
+        CheckConstraint("attempt_count >= 1", name="document_job_attempt_positive"),
+    )
+
+
+class IngestionReview(Base):
+    """资料处理统一人工复核队列，不要求已经存在 thesis。"""
+
+    __tablename__ = "ingestion_review"
+
+    review_id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    dedupe_key: Mapped[str] = mapped_column(String(160), nullable=False, unique=True)
+    review_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    document_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    job_id: Mapped[str | None] = mapped_column(String(96))
+    event_id: Mapped[str | None] = mapped_column(String(64))
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    assignee: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    security_candidates: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    resolution: Mapped[str | None] = mapped_column(Text)
+    resolved_by: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = created_at_column()
+    resolved_at: Mapped[datetime | None] = mapped_column()
+
+    __table_args__ = (Index("ix_ingestion_review_queue", "assignee", "status", "created_at"),)
 
 
 class AdjudicationDecision(Base):

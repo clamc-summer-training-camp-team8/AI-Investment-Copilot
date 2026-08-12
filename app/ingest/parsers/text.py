@@ -1,12 +1,10 @@
-"""TXT / PDF / DOCX 解析（FR-T-001）。
-
-不做 OCR。扫描件按解析失败处理，保留文件并展示原因（ingest/README.md）。
-"""
+"""TXT / PDF / DOCX 解析（FR-T-001），包含表格和扫描页 OCR。"""
 
 from __future__ import annotations
 
 import re
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 
 from app.core.timeutil import BUSINESS_TZ, ensure_aware
@@ -85,7 +83,7 @@ def parse_sample_pack(text: str) -> list[tuple[str, ParsedDocument]]:
 
 
 def parse_pdf(path: Path) -> ParsedDocument:
-    """PDF 解析。取不到文本视为扫描件，按失败处理而不是返回空文档。"""
+    """逐页解析文本和表格；无文本的扫描页转图片后走本地 OCR。"""
     try:
         from pypdf import PdfReader
     except ImportError as exc:  # pragma: no cover - 依赖缺失属环境问题
@@ -96,18 +94,57 @@ def parse_pdf(path: Path) -> ParsedDocument:
     except Exception as exc:
         raise ParseError(f"PDF 无法打开: {exc}") from exc
 
+    try:
+        import pdfplumber
+    except ImportError as exc:  # pragma: no cover
+        raise ParseError(f"PDF 表格解析依赖缺失: {exc}", recoverable=False) from exc
+
     segments: list[RawSegment] = []
     ordinal = 0
-    for page_no, page in enumerate(reader.pages, start=1):
-        for para in re.split(r"\n\s*\n", page.extract_text() or ""):
-            cleaned = para.strip()
-            if not cleaned:
-                continue
-            ordinal += 1
-            segments.append(RawSegment(ordinal=ordinal, content=cleaned, page=page_no))
+    with pdfplumber.open(path) as plumber:
+        for page_no, page in enumerate(reader.pages, start=1):
+            native_text = page.extract_text() or ""
+            for para in re.split(r"\n\s*\n", native_text):
+                cleaned = para.strip()
+                if cleaned:
+                    ordinal += 1
+                    segments.append(RawSegment(ordinal=ordinal, content=cleaned, page=page_no))
+
+            for table_no, table in enumerate(plumber.pages[page_no - 1].extract_tables(), start=1):
+                for row_no, row in enumerate(table or [], start=1):
+                    cells = [re.sub(r"\s+", " ", cell or "").strip() for cell in row]
+                    if not any(cells):
+                        continue
+                    ordinal += 1
+                    end_column = _excel_column(len(cells))
+                    segments.append(
+                        RawSegment(
+                            ordinal=ordinal,
+                            content=" | ".join(cells),
+                            page=page_no,
+                            content_kind="table_row",
+                            extraction_method="native",
+                            table_index=table_no,
+                            row_index=row_no,
+                            cell_range=f"A{row_no}:{end_column}{row_no}",
+                        )
+                    )
+
+            if not native_text.strip():
+                for text, confidence in _ocr_pdf_page(path, page_no - 1):
+                    ordinal += 1
+                    segments.append(
+                        RawSegment(
+                            ordinal=ordinal,
+                            content=text,
+                            page=page_no,
+                            extraction_method="ocr",
+                            confidence=confidence,
+                        )
+                    )
 
     if not segments:
-        raise ParseError("PDF 未提取到文本，可能是扫描件。MVP 不做 OCR，请转为文本录入")
+        raise ParseError("PDF 原生解析和 OCR 均未提取到可用文本")
 
     return ParsedDocument(title=path.stem, segments=segments)
 
@@ -128,11 +165,20 @@ def parse_docx(path: Path) -> ParsedDocument:
     for para in document.paragraphs:
         if para.text.strip():
             segments.append(RawSegment(ordinal=len(segments) + 1, content=para.text.strip()))
-    for table in document.tables:
-        for row in table.rows:
+    for table_no, table in enumerate(document.tables, start=1):
+        for row_no, row in enumerate(table.rows, start=1):
             cells = [c.text.strip() for c in row.cells]
             if any(cells):
-                segments.append(RawSegment(ordinal=len(segments) + 1, content=" | ".join(cells)))
+                segments.append(
+                    RawSegment(
+                        ordinal=len(segments) + 1,
+                        content=" | ".join(cells),
+                        content_kind="table_row",
+                        table_index=table_no,
+                        row_index=row_no,
+                        cell_range=f"A{row_no}:{_excel_column(len(cells))}{row_no}",
+                    )
+                )
 
     if not segments:
         raise ParseError("DOCX 未提取到文本")
@@ -150,3 +196,41 @@ def parse_file(path: Path) -> ParsedDocument:
     if suffix == ".docx":
         return parse_docx(path)
     raise ParseError(f"MVP 仅支持 PDF / DOCX / TXT，收到 {suffix or '无扩展名'}", recoverable=False)
+
+
+def _excel_column(index: int) -> str:
+    value = max(index, 1)
+    result = ""
+    while value:
+        value, remainder = divmod(value - 1, 26)
+        result = chr(65 + remainder) + result
+    return result
+
+
+def _ocr_pdf_page(path: Path, page_index: int) -> list[tuple[str, Decimal | None]]:
+    """把单页渲染为图片并用 RapidOCR 提取按阅读顺序排列的文本行。"""
+    try:
+        import pypdfium2 as pdfium  # type: ignore[import-untyped]
+        from rapidocr import RapidOCR
+    except ImportError as exc:  # pragma: no cover
+        raise ParseError(f"OCR 依赖缺失: {exc}", recoverable=False) from exc
+
+    try:
+        pdf = pdfium.PdfDocument(path)
+        page = pdf[page_index]
+        bitmap = page.render(scale=2.5)
+        image = bitmap.to_pil()
+        output: object = RapidOCR()(image)
+        texts = list(getattr(output, "txts", None) or [])
+        scores = list(getattr(output, "scores", None) or [])
+        image.close()
+        bitmap.close()
+        page.close()
+        pdf.close()
+    except Exception as exc:
+        raise ParseError(f"PDF 第 {page_index + 1} 页 OCR 失败: {exc}") from exc
+    return [
+        (text.strip(), Decimal(str(scores[index])) if index < len(scores) else None)
+        for index, text in enumerate(texts)
+        if text and text.strip()
+    ]

@@ -77,14 +77,14 @@ async def test_document_job_retries_model_then_degrades_to_review(
     def fake_uow_scope():
         yield build_fake_uow()
 
-    def fail_draft(*args: object, **kwargs: object) -> None:
+    def fail_chain(*args: object, **kwargs: object) -> None:
         raise ModelUnavailable("endpoint timeout", retryable=True)
 
     monkeypatch.setattr(jobs, "Settings", lambda: conf)
     monkeypatch.setattr(jobs, "process_document", lambda **kwargs: parsed)
     monkeypatch.setattr(jobs.Gateway, "build", lambda settings: object())
     monkeypatch.setattr(jobs, "uow_scope", fake_uow_scope)
-    monkeypatch.setattr(jobs, "draft_from_document", fail_draft)
+    monkeypatch.setattr(jobs, "process_events", fail_chain)
     monkeypatch.setattr(jobs, "_create_failure_review", lambda **kwargs: reviews.append(kwargs))
 
     with pytest.raises(Retry):
@@ -97,6 +97,45 @@ async def test_document_job_retries_model_then_degrades_to_review(
         "document_id": "DOC-1",
         "reason": "endpoint timeout",
         "manual_review": True,
+        "dead_letter": True,
     }
     assert reviews[0]["thesis_id"] == "THS-1"
     assert reviews[0]["document_id"] == "DOC-1"
+
+
+@pytest.mark.asyncio
+async def test_duplicate_upload_does_not_run_change_chain_and_removes_copy(
+    tmp_path: Path, monkeypatch
+) -> None:
+    conf = Settings(_env_file=None, storage_dir=tmp_path)
+    first = tmp_path / "uploads" / "DOC-1.txt"
+    duplicate = tmp_path / "uploads" / "DOC-2.txt"
+    first.parent.mkdir()
+    first.write_text("订单同比增长20%", encoding="utf-8")
+    duplicate.write_text("订单同比增长20%", encoding="utf-8")
+    uow = build_fake_uow()
+
+    @contextmanager
+    def fake_uow_scope():
+        yield uow
+
+    monkeypatch.setattr(jobs, "Settings", lambda: conf)
+    monkeypatch.setattr(jobs, "uow_scope", fake_uow_scope)
+    first_result = await jobs.process_document_job({}, _payload(first))
+    called = False
+
+    def change_chain(*args, **kwargs):
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(jobs, "process_events", change_chain)
+    second_payload = _payload(duplicate) | {
+        "document_id": "DOC-2",
+        "security_id": "600000.SH",
+    }
+    second_result = await jobs.process_document_job({}, second_payload)
+
+    assert first_result["duplicate"] is False
+    assert second_result["duplicate"] is True
+    assert called is False
+    assert duplicate.exists() is False

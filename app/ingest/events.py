@@ -125,6 +125,8 @@ _EVENT_KEYWORDS: dict[str, tuple[str, ...]] = {
     "业绩": ("财报", "毛利率", "收入同比", "业绩"),
 }
 
+_TITLE_ONLY_PATTERN = re.compile(r"^(?:[^\n]{0,80})?(?:公告|报告|通知|说明书)$")
+
 
 def classify_event_type(text: str) -> str:
     """关键词分类。这是 local 提供者的确定性实现，不调模型。"""
@@ -235,8 +237,13 @@ def extract_events_from_segments(
     """
     results: list[ExtractedEvent] = []
     for index, (locator, content) in enumerate(segments, start=1):
-        event_type = classify_event_type(content)
-        has_number = bool(re.search(r"\d+(\.\d+)?%|\d+", content))
+        normalized = content.strip()
+        # 纯标题不是可供核验的事实。否则“XX订单公告”和它的正文
+        # 会各产生一条雷达候选，形成重复提醒。
+        if _TITLE_ONLY_PATTERN.fullmatch(normalized):
+            continue
+        event_type = classify_event_type(normalized)
+        has_number = bool(re.search(r"\d+(\.\d+)?%|\d+", normalized))
         if event_type == "其他" and not has_number:
             continue
         results.append(
@@ -245,9 +252,11 @@ def extract_events_from_segments(
                 document_id=document_id,
                 security_id=security_id,
                 event_type=event_type,
-                summary=content[:500],
+                summary=normalized[:500],
                 disclosure_time=disclosure_time,
-                fingerprint=event_fingerprint(document_id, content),
+                # 事件指纹不包含文档 ID，否则同一公告的多源转载永远
+                # 无法合并。证券维度避免不同公司的相同表述碰撞。
+                fingerprint=event_fingerprint(security_id or "unassigned", normalized),
                 evidence_locator=locator,
             )
         )

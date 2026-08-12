@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-User-Id", "X-User-Teams"],
     )
 
@@ -42,7 +42,8 @@ def create_app() -> FastAPI:
     @application.get("/health/ready", tags=["infra"])
     async def readiness() -> JSONResponse:
         from app.services.health import database_ready
-        from app.workers.queue import QueueUnavailable, open_queue
+        from app.services.object_store import S3ObjectStore
+        from app.workers.queue import QueueUnavailable, open_queue, worker_ready
 
         database_ok, database_detail = await asyncio.to_thread(database_ready)
         redis = None
@@ -50,25 +51,54 @@ def create_app() -> FastAPI:
             redis = await open_queue(settings)
             redis_ok = bool(await redis.ping())
             redis_detail = "ok" if redis_ok else "ping_failed"
+            worker_ok = redis_ok and await worker_ready(redis)
+            worker_detail = "ok" if worker_ok else "worker_sentinel_missing"
         except QueueUnavailable as exc:
             redis_ok, redis_detail = False, str(exc)
+            worker_ok, worker_detail = False, "queue_unavailable"
         except Exception as exc:
             redis_ok, redis_detail = False, type(exc).__name__
+            worker_ok, worker_detail = False, type(exc).__name__
         finally:
             if redis is not None:
                 await redis.aclose()
-        ready = database_ok and redis_ok
+        try:
+            object_store_ok = await asyncio.to_thread(S3ObjectStore(settings).ready)
+            object_store_detail = "ok"
+        except Exception as exc:
+            object_store_ok = False
+            object_store_detail = type(exc).__name__
+        ready = database_ok and redis_ok and worker_ok and object_store_ok
         return JSONResponse(
             status_code=200 if ready else 503,
             content={
                 "status": "ready" if ready else "not_ready",
                 "database": {"ready": database_ok, "detail": database_detail},
                 "queue": {"ready": redis_ok, "detail": redis_detail},
+                "worker": {"ready": worker_ok, "detail": worker_detail},
+                "object_store": {
+                    "ready": object_store_ok,
+                    "detail": object_store_detail,
+                },
             },
         )
 
-    from app.api.routers import documents, jobs, radar, review, reviews, thesis, workbench
+    from app.api.routers import (
+        assets,
+        documents,
+        jobs,
+        metrics,
+        radar,
+        review,
+        reviews,
+        securities,
+        thesis,
+        workbench,
+    )
 
+    application.include_router(securities.router, prefix="/api")
+    application.include_router(assets.router, prefix="/api")
+    application.include_router(metrics.router, prefix="/api")
     application.include_router(thesis.router, prefix="/api")
     application.include_router(workbench.router, prefix="/api")
     application.include_router(radar.router, prefix="/api")

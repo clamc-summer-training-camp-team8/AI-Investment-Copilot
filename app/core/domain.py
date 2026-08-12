@@ -26,6 +26,72 @@ from app.core.enums import (
 
 
 @dataclass
+class SecurityRecord:
+    """证券主数据。新建标的先建档，再允许逻辑和文档引用。"""
+
+    security_id: str
+    name: str
+    ticker: str | None = None
+    industry: str | None = None
+    aliases: list[str] = field(default_factory=list)
+    is_illustrative: bool = False
+
+
+@dataclass(frozen=True)
+class SourceRecord:
+    source_id: str
+    name: str
+    source_type: str
+    authorization_status: str = "待确认"
+    base_url: str | None = None
+    license_note: str | None = None
+    active: bool = True
+
+
+@dataclass(frozen=True)
+class IndustryRecord:
+    industry_id: str
+    name: str
+    parent_id: str | None = None
+
+
+@dataclass(frozen=True)
+class SecurityIndustryMembershipRecord:
+    security_id: str
+    industry_id: str
+    valid_from: date
+    valid_to: date | None = None
+    source_id: str | None = None
+
+
+@dataclass(frozen=True)
+class DocumentSecurityRelationRecord:
+    document_id: str
+    security_id: str
+    relation_type: str = "主体"
+    status: str = "已确认"
+    confidence: Decimal | None = None
+    created_by: str = "system"
+
+
+@dataclass
+class EventRecord:
+    """上传资料中持久化的结构化事件。"""
+
+    event_id: str
+    document_id: str | None
+    security_id: str | None
+    event_type: str
+    summary: str
+    disclosure_time: datetime
+    fingerprint: str
+    occurred_on: date | None = None
+    source_document_ids: list[str] = field(default_factory=list)
+    version: str = "v1.0"
+    is_illustrative: bool = False
+
+
+@dataclass
 class ThesisRecord:
     thesis_id: str
     security_id: str
@@ -49,6 +115,8 @@ class ThesisRecord:
     # 样例案例的失效条件只写了收入与毛利率两条，没提行业装机。把不在条件里的
     # 假设也算进 AND，会让一条长期达标的假设永久压住失效判定。
     invalidation_hypotheses: list[str] = field(default_factory=list)
+    # AI 生成的指标、风险与失效建议只作为待采用候选保存，不能直接改变正式配置。
+    draft_suggestions: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -84,6 +152,23 @@ class MetricMappingRecord:
     invalidation_consecutive_periods: int | None = None
     expectation_source: str | None = None
     confirmation_status: ConfirmationStatus = ConfirmationStatus.PENDING
+
+
+@dataclass(frozen=True)
+class MetricDefinitionRecord:
+    """可搜索的指标字典条目；口径按 metric_id + version 不可变。"""
+
+    metric_id: str
+    version: str
+    name: str
+    unit: str
+    category: str | None = None
+    definition: str | None = None
+    frequency: str | None = None
+    period_type: str = "单季度"
+    source_id: str | None = None
+    expected_direction: ExpectationDirection | None = None
+    status: str = "待确认"
 
 
 @dataclass
@@ -209,6 +294,9 @@ class VersionRecord:
     created_by: str
     change_reason: str | None = None
     changed_fields: list[str] = field(default_factory=list)
+    data_cutoff_at: datetime | None = None
+    rule_version: str | None = None
+    model_versions: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -258,6 +346,57 @@ class ReviewTaskRecord:
 
 
 @dataclass
+class DocumentProcessingJobRecord:
+    """可重放的资料处理任务；Redis 只承载执行，不再是任务事实源。"""
+
+    job_id: str
+    document_id: str
+    owner: str
+    upload_path: str | None
+    source_filename: str
+    published_at: datetime | None
+    revision_id: str | None = None
+    object_key: str | None = None
+    object_version_id: str | None = None
+    upload_content_hash: str | None = None
+    ingestion_run_id: str | None = None
+    actor_teams: list[str] = field(default_factory=list)
+    security_id: str | None = None
+    thesis_id: str | None = None
+    view: str = ""
+    status: str = "queued"
+    attempt_count: int = 1
+    max_attempts: int = 3
+    result: dict[str, object] | None = None
+    last_error: str | None = None
+    created_at: datetime | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
+class IngestionReviewRecord:
+    """不依赖投资逻辑的资料复核项，覆盖归属、匹配、置信度与处理失败。"""
+
+    review_id: str
+    dedupe_key: str
+    review_type: str
+    document_id: str
+    reason: str
+    assignee: str
+    job_id: str | None = None
+    event_id: str | None = None
+    status: str = "pending"
+    payload: dict[str, object] = field(default_factory=dict)
+    security_candidates: list[dict[str, object]] = field(default_factory=list)
+    resolution: str | None = None
+    resolved_by: str | None = None
+    created_at: datetime | None = None
+    resolved_at: datetime | None = None
+
+
+@dataclass
 class DocumentRecord:
     """可检索、可审计的文档元数据。正文与段落必须同事务持久化。"""
 
@@ -274,6 +413,101 @@ class DocumentRecord:
     visibility_label: str = "内部"
     is_illustrative: bool = False
     ingested_at: datetime | None = None
+    deleted_at: datetime | None = None
+
+
+@dataclass
+class DocumentRevisionRecord:
+    revision_id: str
+    document_id: str
+    content_hash: str
+    source_filename: str
+    object_key: str | None = None
+    object_version_id: str | None = None
+    canonical_document_id: str | None = None
+    media_type: str | None = None
+    byte_size: int | None = None
+    source_id: str | None = None
+    source_url: str | None = None
+    authorization_status: str = "待确认"
+    uploaded_by: str = "system"
+    published_at: datetime | None = None
+    created_at: datetime | None = None
+    tombstoned_at: datetime | None = None
+
+
+@dataclass
+class IngestionRunRecord:
+    run_id: str
+    revision_id: str
+    parser_version: str
+    chunker_version: str
+    extractor_version: str
+    embedding_version: str | None = None
+    status: str = "queued"
+    segment_count: int = 0
+    fact_count: int = 0
+    event_count: int = 0
+    quality_summary: dict[str, object] = field(default_factory=dict)
+    error: str | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class IngestionArtifactRecord:
+    run_id: str
+    artifact_type: str
+    artifact_key: str
+    payload: dict[str, object]
+    content_hash: str
+
+
+@dataclass
+class ThesisRevisionDraftRecord:
+    draft_id: str
+    thesis_id: str
+    base_version: int
+    revision: int
+    owner: str
+    payload: dict[str, object]
+    status: str = "editing"
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class AssetSearchHitRecord:
+    document_id: str
+    locator: str
+    content: str
+    visibility_label: str
+    rank: float
+    retrieval_mode: str = "keyword"
+    keyword_rank: float | None = None
+    vector_rank: float | None = None
+    ingestion_run_id: str | None = None
+    embedding_version: str | None = None
+
+
+@dataclass(frozen=True)
+class EmbeddingSourceRecord:
+    index_id: str
+    ingestion_run_id: str | None
+    document_id: str
+    locator: str
+    content: str
+
+
+@dataclass(frozen=True)
+class SegmentEmbeddingRecord:
+    index_id: str
+    ingestion_run_id: str | None
+    document_id: str
+    locator: str
+    embedding_version: str
+    embedding: list[float]
 
 
 @dataclass(frozen=True)
@@ -283,6 +517,12 @@ class DocumentSegmentRecord:
     ordinal: int
     content: str
     page: int | None = None
+    content_kind: str = "paragraph"
+    extraction_method: str = "native"
+    table_index: int | None = None
+    row_index: int | None = None
+    cell_range: str | None = None
+    confidence: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -311,14 +551,88 @@ class AdjudicationDecisionRecord:
     decided_at: datetime | None = None
 
 
+class SecurityRepo(Protocol):
+    def get(self, security_id: str) -> SecurityRecord | None: ...
+    def add(self, record: SecurityRecord) -> None: ...
+    def search(self, keyword: str | None = None, *, limit: int = 100) -> list[SecurityRecord]: ...
+
+
+class AssetRepo(Protocol):
+    def add_source(self, record: SourceRecord) -> None: ...
+    def get_source(self, source_id: str) -> SourceRecord | None: ...
+    def add_industry(self, record: IndustryRecord) -> None: ...
+    def get_industry_by_name(self, name: str) -> IndustryRecord | None: ...
+    def add_membership(self, record: SecurityIndustryMembershipRecord) -> None: ...
+    def add_document_security(self, record: DocumentSecurityRelationRecord) -> None: ...
+    def add_revision(self, record: DocumentRevisionRecord) -> None: ...
+    def get_revision(self, revision_id: str) -> DocumentRevisionRecord | None: ...
+    def find_revision_by_hash(self, content_hash: str) -> DocumentRevisionRecord | None: ...
+    def document_id_by_source_url(self, source_url: str) -> str | None: ...
+    def update_revision(self, record: DocumentRevisionRecord) -> None: ...
+    def add_run(self, record: IngestionRunRecord) -> None: ...
+    def get_run(self, run_id: str) -> IngestionRunRecord | None: ...
+    def update_run(self, record: IngestionRunRecord) -> None: ...
+    def latest_run(self, revision_id: str) -> IngestionRunRecord | None: ...
+    def add_artifacts(self, records: list[IngestionArtifactRecord]) -> None: ...
+    def index_artifacts(
+        self,
+        *,
+        run_id: str,
+        document_id: str,
+        visibility_label: str,
+        records: list[IngestionArtifactRecord],
+    ) -> None: ...
+    def inventory(self) -> dict[str, int]: ...
+    def add_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None: ...
+    def get_thesis_revision(self, draft_id: str) -> ThesisRevisionDraftRecord | None: ...
+    def active_thesis_revision(self, thesis_id: str) -> ThesisRevisionDraftRecord | None: ...
+    def update_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None: ...
+    def rebuild_search_index(self) -> int: ...
+    def sync_document_visibility(self, document_id: str, visibility_label: str) -> None: ...
+    def remove_document_from_index(self, document_id: str) -> None: ...
+    def tombstone_revisions(self, document_id: str, tombstoned_at: datetime) -> None: ...
+    def search_segments(
+        self, *, query: str, visibility_labels: tuple[str, ...], limit: int
+    ) -> list[AssetSearchHitRecord]: ...
+    def pending_embedding_sources(
+        self, *, embedding_version: str, limit: int
+    ) -> list[EmbeddingSourceRecord]: ...
+    def upsert_embeddings(self, records: list[SegmentEmbeddingRecord]) -> int: ...
+    def hybrid_search_segments(
+        self,
+        *,
+        query: str,
+        query_embedding: list[float],
+        embedding_version: str,
+        visibility_labels: tuple[str, ...],
+        security_ids: tuple[str, ...],
+        industries: tuple[str, ...],
+        published_from: datetime | None,
+        published_to: datetime | None,
+        keyword_weight: float,
+        vector_weight: float,
+        limit: int,
+    ) -> list[AssetSearchHitRecord]: ...
+
+
+class EventRepo(Protocol):
+    def get(self, event_id: str) -> EventRecord | None: ...
+    def find_by_fingerprint(self, fingerprint: str) -> EventRecord | None: ...
+    def add(self, record: EventRecord) -> None: ...
+    def update(self, record: EventRecord) -> None: ...
+
+
 class ThesisRepo(Protocol):
     def get(self, thesis_id: str) -> ThesisRecord | None: ...
     def add(self, record: ThesisRecord) -> None: ...
     def update(self, record: ThesisRecord) -> None: ...
     def list_hypotheses(self, thesis_id: str) -> list[HypothesisRecord]: ...
+    def get_hypothesis(self, hypothesis_id: str) -> HypothesisRecord | None: ...
     def add_hypothesis(self, record: HypothesisRecord) -> None: ...
+    def update_hypothesis(self, record: HypothesisRecord) -> None: ...
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]: ...
     def add_mapping(self, record: MetricMappingRecord) -> None: ...
+    def update_mapping(self, record: MetricMappingRecord) -> None: ...
     def find_by_security(self, security_id: str) -> list[ThesisRecord]: ...
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]: ...
 
@@ -327,6 +641,13 @@ class ThesisRepo(Protocol):
     总数与当页一起返回，否则前端无法渲染分页器。可见性过滤不在这里做——
     那是业务规则，属于 app/services。
     """
+
+
+class MetricRepo(Protocol):
+    def get(self, metric_id: str, version: str = "v1.0") -> MetricDefinitionRecord | None: ...
+    def search(
+        self, keyword: str | None = None, *, limit: int = 50
+    ) -> list[MetricDefinitionRecord]: ...
 
 
 class EvidenceRepo(Protocol):
@@ -392,6 +713,29 @@ class ReviewTaskRepo(Protocol):
     ) -> list[ReviewTaskRecord]: ...
 
 
+class DocumentProcessingJobRepo(Protocol):
+    def add(self, record: DocumentProcessingJobRecord) -> None: ...
+    def get(self, job_id: str) -> DocumentProcessingJobRecord | None: ...
+    def get_by_document(self, document_id: str) -> DocumentProcessingJobRecord | None: ...
+    def update(self, record: DocumentProcessingJobRecord) -> None: ...
+    def list_for_owner(
+        self, owner: str, *, status: str | None = None, limit: int = 100
+    ) -> list[DocumentProcessingJobRecord]: ...
+    def list_stale(
+        self, *, before: datetime, statuses: tuple[str, ...]
+    ) -> list[DocumentProcessingJobRecord]: ...
+
+
+class IngestionReviewRepo(Protocol):
+    def add(self, record: IngestionReviewRecord) -> IngestionReviewRecord: ...
+    def get(self, review_id: str) -> IngestionReviewRecord | None: ...
+    def get_by_dedupe_key(self, dedupe_key: str) -> IngestionReviewRecord | None: ...
+    def update(self, record: IngestionReviewRecord) -> None: ...
+    def list_for_assignee(
+        self, assignee: str, *, status: str | None = None, limit: int = 100
+    ) -> list[IngestionReviewRecord]: ...
+
+
 class DocumentRepo(Protocol):
     def get(self, document_id: str) -> DocumentRecord | None: ...
     def find_by_content_hash(
@@ -403,6 +747,9 @@ class DocumentRepo(Protocol):
         segments: list[DocumentSegmentRecord],
         facts: list[DocumentFactRecord],
     ) -> None: ...
+    def update_security(self, document_id: str, security_id: str) -> None: ...
+    def update_visibility(self, document_id: str, visibility_label: str) -> None: ...
+    def mark_deleted(self, document_id: str, deleted_at: datetime) -> None: ...
     def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]: ...
     def list_facts(self, document_id: str) -> list[DocumentFactRecord]: ...
 
@@ -420,7 +767,10 @@ class UnitOfWork:
     FR-A-003 的可追溯性是空话（db/session.py 已有 session_scope 保证）。
     """
 
+    securities: SecurityRepo
+    events: EventRepo
     thesis: ThesisRepo
+    metrics: MetricRepo
     evidence: EvidenceRepo
     relations: EvidenceRelationRepo
     feed: EvidenceFeedRepo
@@ -429,5 +779,8 @@ class UnitOfWork:
     versions: VersionRepo
     audit: AuditRepo
     reviews: ReviewTaskRepo
+    processing_jobs: DocumentProcessingJobRepo
+    ingestion_reviews: IngestionReviewRepo
     documents: DocumentRepo
     adjudications: AdjudicationDecisionRepo
+    assets: AssetRepo

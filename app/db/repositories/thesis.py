@@ -15,12 +15,13 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from app.core.domain import (
     HypothesisRecord,
+    MetricDefinitionRecord,
     MetricMappingRecord,
     ThesisQuery,
     ThesisRecord,
 )
 from app.core.enums import ConfirmationStatus, ExpectationDirection, Importance, ThesisStatus
-from app.db.models.core import Hypothesis, HypothesisMetricMap, Thesis
+from app.db.models.core import Hypothesis, HypothesisMetricMap, Metric, Thesis
 
 
 def _to_thesis(row: Thesis, *, participating: list[str] | None = None) -> ThesisRecord:
@@ -42,6 +43,7 @@ def _to_thesis(row: Thesis, *, participating: list[str] | None = None) -> Thesis
         is_illustrative=row.is_illustrative,
         invalidation_require_all=row.invalidation_require_all,
         invalidation_hypotheses=participating or [],
+        draft_suggestions=row.draft_suggestions or {},
     )
 
 
@@ -71,6 +73,7 @@ class SqlThesisRepo:
                 team=record.team,
                 status=record.status.value,
                 invalidation_require_all=record.invalidation_require_all,
+                draft_suggestions=record.draft_suggestions or None,
                 version=record.version,
                 source_document_id=record.source_document_id,
                 is_illustrative=record.is_illustrative,
@@ -92,6 +95,7 @@ class SqlThesisRepo:
         row.version = record.version
         row.horizon_end_on = record.horizon_end_on
         row.next_review_at = record.next_review_at
+        row.draft_suggestions = record.draft_suggestions or None
         self._session.flush()
 
     def list_hypotheses(self, thesis_id: str) -> list[HypothesisRecord]:
@@ -100,24 +104,11 @@ class SqlThesisRepo:
             .where(Hypothesis.thesis_id == thesis_id)
             .order_by(Hypothesis.hypothesis_id)
         ).all()
-        return [
-            HypothesisRecord(
-                hypothesis_id=r.hypothesis_id,
-                thesis_id=r.thesis_id,
-                statement=r.statement,
-                hypothesis_type=r.hypothesis_type,
-                importance=Importance(r.importance),
-                name=r.name,
-                weight=r.weight,
-                observation_window=r.observation_window,
-                expected_direction=(
-                    ExpectationDirection(r.expected_direction) if r.expected_direction else None
-                ),
-                invalidation_rule=r.invalidation_rule,
-                status=r.status,
-            )
-            for r in rows
-        ]
+        return [_to_hypothesis(row) for row in rows]
+
+    def get_hypothesis(self, hypothesis_id: str) -> HypothesisRecord | None:
+        row = self._session.get(Hypothesis, hypothesis_id)
+        return None if row is None else _to_hypothesis(row)
 
     def add_hypothesis(self, record: HypothesisRecord) -> None:
         self._session.add(
@@ -137,6 +128,23 @@ class SqlThesisRepo:
                 status=record.status,
             )
         )
+        self._session.flush()
+
+    def update_hypothesis(self, record: HypothesisRecord) -> None:
+        row = self._session.get(Hypothesis, record.hypothesis_id)
+        if row is None:
+            raise LookupError(f"hypothesis {record.hypothesis_id} 不存在")
+        row.statement = record.statement
+        row.hypothesis_type = record.hypothesis_type
+        row.importance = record.importance.value
+        row.name = record.name
+        row.weight = record.weight
+        row.observation_window = record.observation_window
+        row.expected_direction = (
+            record.expected_direction.value if record.expected_direction else None
+        )
+        row.invalidation_rule = record.invalidation_rule
+        row.status = record.status
         self._session.flush()
 
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]:
@@ -176,6 +184,20 @@ class SqlThesisRepo:
                 confirmation_status=record.confirmation_status.value,
             )
         )
+        self._session.flush()
+
+    def update_mapping(self, record: MetricMappingRecord) -> None:
+        row = self._session.get(HypothesisMetricMap, record.mapping_id)
+        if row is None:
+            raise LookupError(f"mapping {record.mapping_id} 不存在")
+        row.metric_id = record.metric_id
+        row.metric_version = record.metric_version
+        row.expected_direction = record.expected_direction.value
+        row.expected_value = record.expected_value
+        row.expectation_source = record.expectation_source
+        row.invalidation_threshold = record.invalidation_threshold
+        row.invalidation_rule = _format_periods(record.invalidation_consecutive_periods)
+        row.confirmation_status = record.confirmation_status.value
         self._session.flush()
 
     def find_by_security(self, security_id: str) -> list[ThesisRecord]:
@@ -261,3 +283,66 @@ def _parse_periods(rule: str | None) -> int | None:
 
 def _format_periods(periods: int | None) -> str | None:
     return None if periods is None else f"[连续{periods}期]"
+
+
+def _to_hypothesis(row: Hypothesis) -> HypothesisRecord:
+    return HypothesisRecord(
+        hypothesis_id=row.hypothesis_id,
+        thesis_id=row.thesis_id,
+        statement=row.statement,
+        hypothesis_type=row.hypothesis_type,
+        importance=Importance(row.importance),
+        name=row.name,
+        weight=row.weight,
+        observation_window=row.observation_window,
+        expected_direction=(
+            ExpectationDirection(row.expected_direction) if row.expected_direction else None
+        ),
+        invalidation_rule=row.invalidation_rule,
+        status=row.status,
+    )
+
+
+class SqlMetricRepo:
+    """指标字典只读仓储；受控新增留给主数据治理流程。"""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, metric_id: str, version: str = "v1.0") -> MetricDefinitionRecord | None:
+        row = self._session.get(Metric, (metric_id, version))
+        return None if row is None else _to_metric(row)
+
+    def search(
+        self, keyword: str | None = None, *, limit: int = 50
+    ) -> list[MetricDefinitionRecord]:
+        statement = select(Metric)
+        if keyword:
+            escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped}%"
+            statement = statement.where(
+                Metric.metric_id.ilike(pattern, escape="\\")
+                | Metric.name.ilike(pattern, escape="\\")
+            )
+        rows = self._session.scalars(
+            statement.order_by(Metric.name, Metric.metric_id, Metric.version).limit(limit)
+        ).all()
+        return [_to_metric(row) for row in rows]
+
+
+def _to_metric(row: Metric) -> MetricDefinitionRecord:
+    return MetricDefinitionRecord(
+        metric_id=row.metric_id,
+        version=row.version,
+        name=row.name,
+        unit=row.unit,
+        category=row.category,
+        definition=row.definition,
+        frequency=row.frequency,
+        period_type=row.period_type,
+        source_id=row.source_id,
+        expected_direction=(
+            ExpectationDirection(row.expected_direction) if row.expected_direction else None
+        ),
+        status=row.status,
+    )

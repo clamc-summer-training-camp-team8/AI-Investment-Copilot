@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 
 from app.ai.errors import ModelUnavailable
-from app.ai.prompts.templates import EVENT_IMPACT, THESIS_DRAFT
+from app.ai.prompts.templates import EVENT_EXTRACTION, EVENT_IMPACT, THESIS_DRAFT
 from app.core.config import Settings
 from app.core.enums import AiStatus
 
@@ -64,6 +64,7 @@ class HttpProvider:
         hypothesis_id: str | None = None,
         thesis_context: str | None = None,
         hypothesis_context: dict[str, Any] | None = None,
+        retrieval_context: list[tuple[str, str]] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> dict[str, Any]:
@@ -79,7 +80,17 @@ class HttpProvider:
                 },
                 ensure_ascii=False,
             ),
-            context="无额外上下文",
+            context=(
+                json.dumps(
+                    [
+                        {"locator": locator, "content": content}
+                        for locator, content in (retrieval_context or [])
+                    ],
+                    ensure_ascii=False,
+                )
+                if retrieval_context
+                else "无额外上下文"
+            ),
         )
         payload = self._complete(system=EVENT_IMPACT.system, prompt=prompt)
         relevance = payload.get("relevance")
@@ -115,6 +126,33 @@ class HttpProvider:
             if relevance == "不相关":
                 signal["direction"] = "中性"
                 signal["impact_direction"] = "无关"
+        return payload
+
+    def extract_events(
+        self,
+        *,
+        document_id: str,
+        segments: list[tuple[str, str]],
+        disclosure_time: str,
+    ) -> dict[str, Any]:
+        rendered = "\n".join(f"[{locator}] {text}" for locator, text in segments)
+        prompt = EVENT_EXTRACTION.render(
+            document_id=document_id,
+            disclosure_time=disclosure_time,
+            segments=rendered,
+        )
+        payload = self._complete(system=EVENT_EXTRACTION.system, prompt=prompt)
+        payload.update(
+            {
+                "document_id": document_id,
+                "model_version": self.model_version,
+                "prompt_version": EVENT_EXTRACTION.version,
+                "generated_at": datetime.now(UTC).isoformat(),
+                "ai_status": AiStatus.CANDIDATE.value,
+            }
+        )
+        if self._last_model_metadata:
+            payload["model_metadata"] = self._last_model_metadata
         return payload
 
     def draft_thesis(

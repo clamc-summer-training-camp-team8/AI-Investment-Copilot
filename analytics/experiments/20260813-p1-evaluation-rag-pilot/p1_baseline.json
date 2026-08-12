@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-08-12T18:22:01.143118+00:00",
+  "gold_version": "mentor-blind-gold-v2-20260811",
+  "sample_size": 59,
+  "quality": {
+    "event_extraction": {
+      "precision": {
+        "numerator": 26,
+        "denominator": 27,
+        "value": 0.963
+      },
+      "recall": {
+        "numerator": 26,
+        "denominator": 30,
+        "value": 0.8667
+      },
+      "miss_rate": {
+        "numerator": 4,
+        "denominator": 30,
+        "value": 0.1333
+      }
+    },
+    "security_assignment": {
+      "accuracy": {
+        "numerator": 59,
+        "denominator": 59,
+        "value": 1.0
+      }
+    },
+    "hypothesis_matching": {
+      "accuracy": {
+        "numerator": 42,
+        "denominator": 59,
+        "value": 0.7119
+      }
+    },
+    "direction": {
+      "accuracy_on_shared_relevant": {
+        "numerator": 8,
+        "denominator": 26,
+        "value": 0.3077
+      }
+    }
+  },
+  "operations": {
+    "candidate_evidence": 292,
+    "reviewed_evidence": 0,
+    "review_completion_rate": {
+      "numerator": 0,
+      "denominator": 292,
+      "value": 0.0
+    },
+    "adoption_rate": {
+      "numerator": 0,
+      "denominator": 292,
+      "value": 0.0
+    },
+    "rejection_rate": {
+      "numerator": 0,
+      "denominator": 292,
+      "value": 0.0
+    },
+    "adoption_rate_among_reviewed": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "rejection_rate_among_reviewed": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "mean_human_review_minutes": null,
+    "duplicate_reminder_rate": {
+      "numerator": 0,
+      "denominator": 3790,
+      "value": 0.0
+    },
+    "duplicate_event_suppression_rate": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "model_usage": {
+      "metered_calls": 5,
+      "input_tokens": 3630,
+      "output_tokens": 1174,
+      "estimated_cost": null,
+      "currency": null
+    }
+  },
+  "limitations": [
+    "独立金标为单人盲标，尚不能计算标注者间一致性。",
+    "成本只在审计记录含 token usage 且配置单价时计算。",
+    "人工耗时只统计已持久化 confirmed_at 的候选证据。",
+    "采纳率和驳回率同时给出全体候选及已复核子集口径；未复核时后者保持 null。",
+    "重复提醒率用持久化事件 fingerprint 检查，任务内已拦截的重复另报 suppression rate。"
+  ]
+}

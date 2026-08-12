@@ -7,7 +7,8 @@ name: copilot-local
 
 services:
   postgres:
-    image: postgres:16
+    # 固定 pgvector 与 PostgreSQL 大版本；P1 混合召回迁移需要 vector 扩展。
+    image: pgvector/pgvector:0.8.6-pg16-bookworm
     container_name: copilot-postgres
     environment:
       POSTGRES_USER: copilot
@@ -16,10 +17,21 @@ services:
       # 中文内容排序与比较依赖，建库时固定，避免不同开发机行为不一致
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
       TZ: Asia/Shanghai
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_timeout=60s
+      - -c
+      - archive_command=test ! -f /var/lib/postgresql/wal-archive/%f && cp %p /var/lib/postgresql/wal-archive/%f
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - postgres-wal:/var/lib/postgresql/wal-archive
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U copilot -d copilot"]
       interval: 10s
@@ -41,6 +53,26 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z
+    container_name: copilot-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: copilot
+      MINIO_ROOT_PASSWORD: copilot-local-only
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres-data:
   redis-data:
+  minio-data:
+  postgres-wal:

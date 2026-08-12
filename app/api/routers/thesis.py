@@ -18,8 +18,14 @@ from fastapi import APIRouter, HTTPException, Query
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.api.feed_presenter import to_feed_item
-from app.core.domain import ThesisQuery, ThesisRecord, UnitOfWork
-from app.core.enums import ConfirmationStatus, ImpactDirection, ThesisStatus
+from app.core.domain import MetricMappingRecord, ThesisQuery, ThesisRecord, UnitOfWork
+from app.core.enums import (
+    ConfirmationStatus,
+    ExpectationDirection,
+    ImpactDirection,
+    Importance,
+    ThesisStatus,
+)
 from app.schemas.thesis import (
     AuditOut,
     AuditPage,
@@ -34,7 +40,12 @@ from app.schemas.thesis import (
     EvidenceRelationReviewIn,
     HypothesisOut,
     HypothesisTrendOut,
+    HypothesisUpdateIn,
+    MetricMappingIn,
+    MetricMappingOut,
     PageMeta,
+    PublishReadinessItemOut,
+    PublishReadinessOut,
     StatusDecisionIn,
     SuggestionOut,
     ThesisDraftIn,
@@ -43,10 +54,12 @@ from app.schemas.thesis import (
     ThesisPublishIn,
     TrendPointOut,
 )
+from app.services import assets as asset_service
 from app.services import audit, permission
 from app.services import evidence as evidence_service
 from app.services import query as query_service
 from app.services import relation as relation_service
+from app.services import security as security_service
 from app.services import status as status_service
 from app.services import thesis as thesis_service
 from app.services.errors import (
@@ -90,6 +103,10 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
     if record is None:
         raise HTTPException(status_code=404, detail="逻辑不存在或无访问权限")
     hypotheses = uow.thesis.list_hypotheses(thesis_id)
+    suggestions = record.draft_suggestions or {}
+    hypothesis_suggestions = suggestions.get("hypotheses", {})
+    if not isinstance(hypothesis_suggestions, dict):
+        hypothesis_suggestions = {}
     return ThesisOut(
         thesis_id=record.thesis_id,
         security_id=record.security_id,
@@ -110,9 +127,39 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
                 hypothesis_type=h.hypothesis_type,
                 importance=h.importance.value,
                 status=h.status,
+                observation_window=h.observation_window,
+                invalidation_rule=h.invalidation_rule,
+                metric_suggestions=(
+                    hypothesis_suggestions.get(h.hypothesis_id, {}).get("metric_suggestions", [])
+                    if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
+                    else []
+                ),
+                mappings=[_mapping_out(item) for item in uow.thesis.list_mappings(h.hypothesis_id)],
             )
             for h in hypotheses
         ],
+        risk_suggestions=(
+            suggestions.get("risks", []) if isinstance(suggestions.get("risks"), list) else []
+        ),
+        invalidation_suggestions=(
+            suggestions.get("invalidation_suggestions", [])
+            if isinstance(suggestions.get("invalidation_suggestions"), list)
+            else []
+        ),
+    )
+
+
+def _mapping_out(record: MetricMappingRecord) -> MetricMappingOut:
+    return MetricMappingOut(
+        mapping_id=record.mapping_id,
+        metric_id=record.metric_id,
+        metric_version=record.metric_version,
+        expected_direction=record.expected_direction.value,
+        expected_value=record.expected_value,
+        invalidation_threshold=record.invalidation_threshold,
+        invalidation_consecutive_periods=record.invalidation_consecutive_periods,
+        expectation_source=record.expectation_source or "",
+        confirmation_status=record.confirmation_status.value,
     )
 
 
@@ -125,16 +172,38 @@ def create_draft(
 ) -> ThesisOut:
     """从观点生成卡片草稿（FR-T-001 / FR-T-002）。草稿不会自动发布。"""
     try:
+        security = security_service.require(uow, payload.security_id)
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    try:
         gateway = Gateway.build(conf)
     except ModelUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    segments: list[tuple[str, str]] = []
+    source_document_id = payload.document_id
+    if payload.use_rag:
+        try:
+            hits = asset_service.hybrid_retrieve(
+                uow,
+                query=payload.view,
+                actor=actor,
+                settings=conf,
+                security_ids=(security.security_id,),
+                limit=8,
+            )
+        except ValidationFailed as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        segments = [(hit.locator, hit.content) for hit in hits]
+        if hits:
+            source_document_id = hits[0].document_id
+
     try:
         outcome = gateway.thesis_draft(
-            security_id=payload.security_id,
+            security_id=security.security_id,
             view=payload.view,
-            segments=[],
-            source_document_id=payload.document_id,
+            segments=segments,
+            source_document_id=source_document_id,
         )
     except ModelUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -144,9 +213,24 @@ def create_draft(
             detail={"code": "AI_OUTPUT_INVALID", "errors": outcome.errors[:5]},
         )
 
+    audit.record_model_call(
+        uow.audit,
+        actor=actor.user_id,
+        object_type="thesis_draft",
+        object_id=security.security_id,
+        model_version=str(outcome.payload.get("model_version", "")),
+        prompt_version=str(outcome.payload.get("prompt_version", "")),
+        ai_status=outcome.ai_status.value,
+        model_metadata=(
+            outcome.payload.get("model_metadata")
+            if isinstance(outcome.payload.get("model_metadata"), dict)
+            else None
+        ),
+    )
+
     # 用 uuid4 而不是 hash(view)：CPython 的字符串 hash 按进程随机化，同一观点
     # 换个进程就变 ID；同进程内重复建卡又会撞主键，flush 抛 IntegrityError 变 500。
-    thesis_id = f"THS-{payload.security_id}-{uuid4().hex[:12]}"
+    thesis_id = f"THS-{security.security_id[:24]}-{uuid4().hex[:12]}"
     try:
         thesis_service.create_draft(uow, thesis_id=thesis_id, draft=outcome.payload, actor=actor)
     except EntityAmbiguous as exc:
@@ -240,6 +324,111 @@ def publish(
     except ValidationFailed as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_out(uow, thesis_id)
+
+
+@router.post("/theses/{thesis_id}/publish-readiness", response_model=PublishReadinessOut)
+def publish_readiness(
+    thesis_id: str,
+    payload: ThesisPublishIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> PublishReadinessOut:
+    _require_visible(uow, actor, thesis_id)
+    try:
+        checks = thesis_service.publish_readiness(
+            uow,
+            thesis_id=thesis_id,
+            actor=actor,
+            direction=payload.direction,
+            horizon_end_on=payload.horizon_end_on,
+            next_review_at=payload.next_review_at,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    items = [
+        PublishReadinessItemOut(code=code, label=label, passed=passed, message=message)
+        for code, label, passed, message in checks
+    ]
+    return PublishReadinessOut(ready=all(item.passed for item in items), items=items)
+
+
+@router.patch("/theses/{thesis_id}/hypotheses/{hypothesis_id}", response_model=ThesisOut)
+def update_hypothesis(
+    thesis_id: str,
+    hypothesis_id: str,
+    payload: HypothesisUpdateIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> ThesisOut:
+    _require_visible(uow, actor, thesis_id)
+    try:
+        thesis_service.update_hypothesis(
+            uow,
+            thesis_id=thesis_id,
+            hypothesis_id=hypothesis_id,
+            statement=payload.statement,
+            hypothesis_type=payload.hypothesis_type,
+            importance=Importance(payload.importance),
+            observation_window=payload.observation_window,
+            invalidation_rule=payload.invalidation_rule,
+            actor=actor,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_out(uow, thesis_id)
+
+
+@router.post(
+    "/theses/{thesis_id}/hypotheses/{hypothesis_id}/mappings",
+    response_model=MetricMappingOut,
+)
+def set_hypothesis_mapping(
+    thesis_id: str,
+    hypothesis_id: str,
+    payload: MetricMappingIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> MetricMappingOut:
+    _require_visible(uow, actor, thesis_id)
+    if payload.mapping_id and not any(
+        item.mapping_id == payload.mapping_id for item in uow.thesis.list_mappings(hypothesis_id)
+    ):
+        raise HTTPException(status_code=400, detail="映射不存在或不属于当前假设")
+    mapping_id = payload.mapping_id or f"MAP-{uuid4().hex[:20]}"
+    try:
+        record = thesis_service.set_expectations(
+            uow,
+            hypothesis_id=hypothesis_id,
+            mapping=MetricMappingRecord(
+                mapping_id=mapping_id,
+                hypothesis_id=hypothesis_id,
+                metric_id=payload.metric_id,
+                metric_version=payload.metric_version,
+                expected_direction=ExpectationDirection(payload.expected_direction),
+                expected_value=payload.expected_value,
+                invalidation_threshold=payload.invalidation_threshold,
+                invalidation_consecutive_periods=payload.invalidation_consecutive_periods,
+                expectation_source=payload.expectation_source,
+                confirmation_status=ConfirmationStatus.CONFIRMED,
+            ),
+            actor=actor,
+            validate_metric=True,
+            thesis_id=thesis_id,
+            require_draft=True,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _mapping_out(record)
 
 
 @router.get("/theses/{thesis_id}/evidence", response_model=list[EvidenceOut])
