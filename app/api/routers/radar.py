@@ -10,7 +10,8 @@ from app.api.deps import ActorDep, UowDep
 from app.api.feed_presenter import to_feed_item
 from app.core.enums import ConfirmationStatus, ImpactDirection
 from app.schemas.thesis import EvidenceFeedPage, PageMeta
-from app.services import permission, query as query_service
+from app.services import permission
+from app.services import query as query_service
 from app.services.errors import NotVisible
 
 router = APIRouter(tags=["radar"])
@@ -31,8 +32,11 @@ def list_radar_evidence(
         raise HTTPException(status_code=404, detail="逻辑不存在或无访问权限")
     try:
         permission.ensure_thesis_visible(
-            actor, thesis_id=thesis_id, owner=thesis.owner,
-            visibility=thesis.visibility, team=thesis.team,
+            actor,
+            thesis_id=thesis_id,
+            owner=thesis.owner,
+            visibility=thesis.visibility,
+            team=thesis.team,
         )
     except NotVisible as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -44,8 +48,11 @@ def list_radar_evidence(
         raise HTTPException(status_code=422, detail="状态或方向筛选值不合法") from exc
 
     records, total = uow.feed.search(
-        thesis_ids=(thesis_id,), statuses=statuses, direction=parsed_direction,
-        limit=limit, offset=offset,
+        thesis_ids=(thesis_id,),
+        statuses=statuses,
+        direction=parsed_direction,
+        limit=limit,
+        offset=offset,
     )
     return EvidenceFeedPage(
         items=[to_feed_item(item, actor_id=actor.user_id) for item in records],

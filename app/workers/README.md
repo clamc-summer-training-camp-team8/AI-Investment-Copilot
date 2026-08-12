@@ -37,6 +37,7 @@ workers 负责**调用顺序与重试**，不负责业务规则。业务规则�
 
 ```
 ingest.parse → ingest.segment → ingest.fingerprint
+  → services.document.persist_processed（原文、段落、正文事实）
   → ai.extract_thesis_draft → contracts 校验
   → services.thesis.save_draft
 ```

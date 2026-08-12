@@ -2,16 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { NavLink, useParams, useSearchParams } from 'react-router-dom'
 import {
-  createRelation, deactivateRelation, decideStatus, getAdjudications, getAudit,
-  getEvidence, getRadarEvidence, getRelations, getSuggestions, getThesis,
-  getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks, listTheses,
-  publishThesis, reviewRelation, updateRelation,
+  createRelation, deactivateRelation, decideAdjudication, decideStatus, getAudit,
+  getDocumentSegment, getEvidence, getRadarEvidence, getRelations, getSuggestions,
+  getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks,
+  listAdjudications, listReviewTasks, listTheses, publishThesis, resolveReviewTask,
+  reviewRelation, updateRelation,
 } from './api'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
-import type { Relation, ThesisDetail } from './types'
+import type { Adjudication, Relation, ReviewTask, ThesisDetail } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function WorkbenchPage() {
@@ -106,6 +107,7 @@ export function EvidencePage() {
   const qc = useQueryClient()
   const evidence = useQuery({ queryKey: ['evidence', evidenceId], queryFn: () => getEvidence(evidenceId) })
   const relations = useQuery({ queryKey: ['relations', evidenceId], queryFn: () => getRelations(evidenceId) })
+  const source = useQuery({ queryKey: ['source-segment', evidence.data?.evidenceLocator], queryFn: () => getDocumentSegment(evidence.data!.evidenceLocator), enabled: Boolean(evidence.data?.evidenceLocator) })
   const theses = useQuery({ queryKey: ['target-theses', evidence.data?.securityId], queryFn: () => listTheses(evidence.data!.securityId), enabled: Boolean(evidence.data?.securityId) })
   // 可编辑目标必须由后端按当前身份过滤，前端不再依赖写死的负责人账号。
   const manageableTheses = useQuery({ queryKey: ['manageable-theses', evidence.data?.securityId], queryFn: () => listTheses(evidence.data!.securityId, true), enabled: Boolean(evidence.data?.securityId) })
@@ -124,7 +126,7 @@ export function EvidencePage() {
   const activeHypothesis = activeThesis?.hypotheses.find((hypothesis) => hypothesis.hypothesisId === activeRelation?.hypothesisId)
   return <>
     <PageTitle eyebrow={`${item.securityId} · 公开披露`} title={item.sourceDocumentTitle} description={`披露于 ${formatDate(item.disclosedAt)}，请核验事实来源及其对投资假设的影响。`} />
-    <section className="fact-panel"><div className="panel-label">来源事实</div><blockquote>{item.factExcerpt}</blockquote><div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}</span><SafeSourceLink url={item.sourceUrl} /></div></section>
+    <section className="fact-panel"><div className="panel-label">原文回查</div><blockquote>{source.data?.content ?? item.factExcerpt}</blockquote>{source.error && <p className="inline-error">数据库原文段落暂不可用，当前展示证据摘录。</p>}<div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}{source.data?.locator ? ` · 定位 ${source.data.locator}` : ''}</span><SafeSourceLink url={item.sourceUrl} /></div></section>
     {context && <section className="content-section"><div className="section-heading"><div><span className="eyebrow">数据验证</span><h2>这条证据是否可用于研究判断</h2></div><span className="validation-summary">{context.validationItems.filter((v) => v.status === 'passed').length}/{context.validationItems.length} 项通过</span></div><ValidationChain items={context.validationItems} /></section>}
     <section className="impact-panel"><div><span className="eyebrow">当前影响</span><h2>{activeHypothesis?.statement ?? '选择一条有效关联后进行判断'}</h2><p>{activeThesis?.title ?? '当前没有可操作的逻辑关联'}</p><div className="badge-row">{activeRelation && <><DirectionBadge direction={activeRelation.direction} /><StatusBadge state={activeRelation.status} /><span className="badge neutral-badge">{strengthText[activeRelation.strength]}强度</span><span className="badge neutral-badge">AI {Math.round(item.aiConfidence * 100)}%</span></>}</div></div>{activeRelation?.canManage && activeRelation.status !== 'deactivated' && <div className="decision-panel"><span>你的判断</span><div className="button-row"><button className="button primary" onClick={() => setDialog({ relation: activeRelation, action: '确认' })}>确认关联</button><button className="button secondary" onClick={() => setDialog({ relation: activeRelation, action: '驳回' })}>驳回</button><button className="button ghost" onClick={() => setDialog({ relation: activeRelation, action: '暂不判断' })}>暂不判断</button></div></div>}</section>
     <InlineError error={action.error} />
@@ -146,10 +148,27 @@ function RelationForm({ evidenceId, thesisList, editing, onDone }: { evidenceId:
 }
 
 export function ReviewsPage() {
-  const query = useQuery({ queryKey: ['adjudications'], queryFn: getAdjudications })
-  if (query.isLoading) return <LoadingState />
-  if (query.error || !query.data) return <ErrorState error={query.error} />
-  return <><PageTitle eyebrow="质量治理" title="复核与复盘" description="聚焦存在标注分歧的样本，保留人工裁决与复盘记录。" />{query.data.length ? <div className="review-list">{query.data.map((item) => <article className="review-card" key={String(item.event_id)}><div><span className="badge priority-medium">待裁决</span><h2>{String(item.company)} · {String(item.title)}</h2></div><div className="review-comparison"><p><strong>标注 A</strong>{String(item.annotator_a_hypothesis)} · {String(item.annotator_a_direction)}</p><p><strong>标注 B</strong>{String(item.annotator_b_hypothesis)} · {String(item.annotator_b_direction)}</p></div></article>)}</div> : <EmptyState title="没有待裁决任务" description="存在模型或人工标注分歧时会进入此队列。" />}</>
+  const adjudications = useQuery({ queryKey: ['adjudications'], queryFn: listAdjudications })
+  const tasks = useQuery({ queryKey: ['review-tasks'], queryFn: listReviewTasks })
+  if (adjudications.isLoading || tasks.isLoading) return <LoadingState />
+  if (adjudications.error || tasks.error || !adjudications.data || !tasks.data) return <ErrorState error={adjudications.error ?? tasks.error} />
+  return <><PageTitle eyebrow="质量治理" title="复核与复盘" description="完成业务复核与独立导师裁决，所有结果持久化并保留审计。" /><section className="content-section"><div className="section-heading"><div><span className="eyebrow">产品复核</span><h2>分配给我的任务</h2></div><span className="muted">{tasks.data.filter((item) => item.state === '待处理').length} 条待处理</span></div>{tasks.data.length ? <div className="review-list">{tasks.data.map((task) => <ReviewTaskCard key={task.taskId} task={task} />)}</div> : <EmptyState title="没有复核任务" description="处理失败、重大事件或人工发起的任务会显示在这里。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">独立评测</span><h2>导师裁决队列</h2></div><span className="muted">{adjudications.data.filter((item) => !item.resolved).length} 条待裁决</span></div>{adjudications.data.length ? <div className="review-list">{adjudications.data.map((item) => <AdjudicationCard key={item.eventId} item={item} />)}</div> : <EmptyState title="没有待裁决样本" description="存在独立标注分歧时会进入此队列。" />}</section></>
+}
+
+function ReviewTaskCard({ task }: { task: ReviewTask }) {
+  const qc = useQueryClient()
+  const [resolution, setResolution] = useState('')
+  const mutation = useMutation({ mutationFn: () => resolveReviewTask(task.taskId, resolution), onSuccess: () => qc.invalidateQueries({ queryKey: ['review-tasks'] }) })
+  return <article className="review-card"><div className="review-header"><div><span className={`badge ${task.state === '待处理' ? 'priority-medium' : 'status-confirmed'}`}>{task.state}</span><h2>{task.trigger} · {task.thesisId}</h2></div><span className="muted">{task.priority}优先级</span></div>{task.detail && <p className="review-detail">{Object.entries(task.detail).map(([key, value]) => `${key}: ${String(value)}`).join(' · ')}</p>}{task.state === '待处理' ? <div className="review-decision"><textarea value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="填写复核结论（必填）" /><button className="button primary" disabled={resolution.trim().length < 2 || mutation.isPending} onClick={() => mutation.mutate()}>提交复核</button><InlineError error={mutation.error} /></div> : <p className="review-result"><strong>复核结论：</strong>{task.resolution}</p>}</article>
+}
+
+function AdjudicationCard({ item }: { item: Adjudication }) {
+  const qc = useQueryClient()
+  const [hypothesis, setHypothesis] = useState(item.annotatorAHypothesis)
+  const [direction, setDirection] = useState('中性')
+  const [reason, setReason] = useState('')
+  const mutation = useMutation({ mutationFn: () => decideAdjudication(item.eventId, { hypothesis, direction, reason }), onSuccess: () => qc.invalidateQueries({ queryKey: ['adjudications'] }) })
+  return <article className="review-card"><div className="review-header"><div><span className={`badge ${item.resolved ? 'status-confirmed' : 'priority-medium'}`}>{item.resolved ? '已裁决' : '待裁决'}</span><h2>{item.company} · {item.title}</h2></div><span className="muted">{item.category}</span></div><div className="review-comparison"><p><strong>标注 A</strong>{item.annotatorAHypothesis} · {item.annotatorADirection}</p><p><strong>标注 B</strong>{item.annotatorBHypothesis} · {item.annotatorBDirection}</p></div>{item.resolved ? <p className="review-result"><strong>独立裁决：</strong>{item.decidedHypothesis} · {item.decidedDirection}<br />{item.decisionReason}</p> : <div className="adjudication-form"><label>关联假设<input value={hypothesis} onChange={(event) => setHypothesis(event.target.value)} /></label><label>方向<select value={direction} onChange={(event) => setDirection(event.target.value)}><option>支持</option><option>冲突</option><option>中性</option><option>无关</option></select></label><label className="decision-reason">裁决理由<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="独立阅读原文后填写理由" /></label><button className="button primary" disabled={!hypothesis.trim() || reason.trim().length < 2 || mutation.isPending} onClick={() => mutation.mutate()}>提交独立裁决</button><InlineError error={mutation.error} /></div>}</article>
 }
 
 function SafeSourceLink({ url }: { url: string }) {

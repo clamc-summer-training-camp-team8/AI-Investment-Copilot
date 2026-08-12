@@ -257,6 +257,60 @@ class ReviewTaskRecord:
     resolved_at: datetime | None = None
 
 
+@dataclass
+class DocumentRecord:
+    """可检索、可审计的文档元数据。正文与段落必须同事务持久化。"""
+
+    document_id: str
+    published_at: datetime
+    content_hash: str
+    parser_version: str
+    title: str | None = None
+    source_id: str | None = None
+    doc_type: str | None = None
+    security_id: str | None = None
+    raw_path: str | None = None
+    body: str | None = None
+    visibility_label: str = "内部"
+    is_illustrative: bool = False
+    ingested_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class DocumentSegmentRecord:
+    document_id: str
+    locator: str
+    ordinal: int
+    content: str
+    page: int | None = None
+
+
+@dataclass(frozen=True)
+class DocumentFactRecord:
+    """从正文确定性抽取的最小事实；不等同于正式投资证据。"""
+
+    fact_id: str
+    document_id: str
+    locator: str
+    fact_type: str
+    metric_name: str
+    direction: str
+    raw_text: str
+    extraction_version: str
+    change_rate_low: Decimal | None = None
+    change_rate_high: Decimal | None = None
+
+
+@dataclass
+class AdjudicationDecisionRecord:
+    event_id: str
+    hypothesis: str
+    direction: str
+    reason: str
+    decided_by: str
+    decided_at: datetime | None = None
+
+
 class ThesisRepo(Protocol):
     def get(self, thesis_id: str) -> ThesisRecord | None: ...
     def add(self, record: ThesisRecord) -> None: ...
@@ -338,6 +392,26 @@ class ReviewTaskRepo(Protocol):
     ) -> list[ReviewTaskRecord]: ...
 
 
+class DocumentRepo(Protocol):
+    def get(self, document_id: str) -> DocumentRecord | None: ...
+    def find_by_content_hash(
+        self, content_hash: str, parser_version: str
+    ) -> DocumentRecord | None: ...
+    def add(
+        self,
+        record: DocumentRecord,
+        segments: list[DocumentSegmentRecord],
+        facts: list[DocumentFactRecord],
+    ) -> None: ...
+    def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]: ...
+    def list_facts(self, document_id: str) -> list[DocumentFactRecord]: ...
+
+
+class AdjudicationDecisionRepo(Protocol):
+    def get(self, event_id: str) -> AdjudicationDecisionRecord | None: ...
+    def add(self, record: AdjudicationDecisionRecord) -> AdjudicationDecisionRecord: ...
+
+
 @dataclass
 class UnitOfWork:
     """一次业务动作的仓储集合。
@@ -355,3 +429,5 @@ class UnitOfWork:
     versions: VersionRepo
     audit: AuditRepo
     reviews: ReviewTaskRepo
+    documents: DocumentRepo
+    adjudications: AdjudicationDecisionRepo

@@ -147,6 +147,7 @@ def _vocab_overlap() -> float:
     「规则复现规则」而不是「模型理解业务」。自己算出来写清楚，比等别人质疑要好。
     """
     from analytics.evaluation.candidate_v2 import _TOPIC_PATTERNS
+
     gold = {term for _, pattern in CATEGORY_RULES for term in pattern.split("|")}
     v2 = {term for _, pattern in _TOPIC_PATTERNS for term in pattern.pattern.split("|")}
     if not v2:

@@ -439,7 +439,9 @@ def main() -> None:
         "同日去重统计": vars(dedup),
         "结论等级": "探索性",
         "分行业结果": {
-            industry: vars(summarize(industry, [r for r in records if r.industry == industry], book))
+            industry: vars(
+                summarize(industry, [r for r in records if r.industry == industry], book)
+            )
             for industry in INDUSTRIES
         },
         "主要限制": (

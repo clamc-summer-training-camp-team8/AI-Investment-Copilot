@@ -11,8 +11,14 @@
 from __future__ import annotations
 
 from app.core.domain import (
+    AdjudicationDecisionRecord,
+    AdjudicationDecisionRepo,
     AuditRecord,
     AuditRepo,
+    DocumentFactRecord,
+    DocumentRecord,
+    DocumentRepo,
+    DocumentSegmentRecord,
     EvidenceRecord,
     EvidenceRelationRecord,
     EvidenceRelationRepo,
@@ -33,8 +39,14 @@ from app.core.domain import (
 )
 
 __all__ = [
+    "AdjudicationDecisionRecord",
+    "AdjudicationDecisionRepo",
     "AuditRecord",
     "AuditRepo",
+    "DocumentFactRecord",
+    "DocumentRecord",
+    "DocumentRepo",
+    "DocumentSegmentRecord",
     "EvidenceRecord",
     "EvidenceRelationRecord",
     "EvidenceRelationRepo",

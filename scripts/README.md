@@ -18,6 +18,16 @@
 | `export_openapi.py` | 从 FastAPI 路由导出 `contracts/api/openapi.yaml` |
 | `import_real_case.py` | 将人工核验后的阳光电源真实公开案例导入联调数据库 |
 | `import_industry_dataset.py` | 将 `real_data/` 中已提交的行业公开数据导入本地 PostgreSQL |
+| `dev.ps1` | Windows 一键迁移、导入样例和行业联调数据，并启动/停止完整网页服务 |
+
+完整本地网页闭环：
+
+```powershell
+.\scripts\dev.ps1 up
+# 打开 http://127.0.0.1:5173
+.\scripts\dev.ps1 status
+.\scripts\dev.ps1 down
+```
 
 ## 真实案例联调
 

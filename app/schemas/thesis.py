@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
@@ -365,6 +365,18 @@ class AdjudicationOut(Base):
     annotator_b_hypothesis: str
     annotator_b_direction: str
     disagreement: str
+    resolved: bool = False
+    decided_hypothesis: str | None = None
+    decided_direction: str | None = None
+    decision_reason: str | None = None
+    decided_by: str | None = None
+    decided_at: datetime | None = None
+
+
+class AdjudicationDecisionIn(Base):
+    hypothesis: str = Field(min_length=1, max_length=255)
+    direction: Literal["支持", "冲突", "中性", "无关"]
+    reason: str = Field(min_length=2, max_length=2000)
 
 
 class AdjudicationPage(Base):

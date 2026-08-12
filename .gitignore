@@ -11,6 +11,7 @@ venv/
 .ruff_cache/
 .import_linter_cache/
 storage/
+.runtime/
 *.sqlite3
 .DS_Store
 

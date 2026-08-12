@@ -69,7 +69,8 @@ def get_readable_evidence_tasks(
         raise HTTPException(status_code=422, detail="优先级必须是 high、medium 或 low")
     candidates, _ = uow.thesis.search(ThesisQuery(limit=query_service.MAX_LIMIT))
     visible_ids = tuple(
-        item.thesis_id for item in candidates
+        item.thesis_id
+        for item in candidates
         if can_view_thesis(actor, owner=item.owner, visibility=item.visibility, team=item.team)
     )
     records, total = uow.feed.search(

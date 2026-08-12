@@ -10,11 +10,13 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.core.domain import UnitOfWork
+from app.db.repositories.adjudication import SqlAdjudicationDecisionRepo
+from app.db.repositories.document import SqlDocumentRepo
 from app.db.repositories.evidence import (
     SqlAuditRepo,
-    SqlEvidenceRepo,
     SqlEvidenceFeedRepo,
     SqlEvidenceRelationRepo,
+    SqlEvidenceRepo,
     SqlObservationRepo,
     SqlSuggestionRepo,
     SqlVersionRepo,
@@ -23,10 +25,12 @@ from app.db.repositories.review import SqlReviewTaskRepo
 from app.db.repositories.thesis import SqlThesisRepo
 
 __all__ = [
+    "SqlAdjudicationDecisionRepo",
     "SqlAuditRepo",
-    "SqlEvidenceRepo",
+    "SqlDocumentRepo",
     "SqlEvidenceFeedRepo",
     "SqlEvidenceRelationRepo",
+    "SqlEvidenceRepo",
     "SqlObservationRepo",
     "SqlReviewTaskRepo",
     "SqlSuggestionRepo",
@@ -47,4 +51,6 @@ def build_uow(session: Session) -> UnitOfWork:
         versions=SqlVersionRepo(session),
         audit=SqlAuditRepo(session),
         reviews=SqlReviewTaskRepo(session),
+        documents=SqlDocumentRepo(session),
+        adjudications=SqlAdjudicationDecisionRepo(session),
     )

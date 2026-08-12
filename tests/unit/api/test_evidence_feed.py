@@ -24,24 +24,43 @@ def _client() -> Iterator[TestClient]:
     uow = build_fake_uow()
     uow.thesis.add(
         ThesisRecord(
-            thesis_id="THS-001", security_id="688981", title="中芯国际盈利观察",
-            direction="观察", core_view="观察产能利用率与毛利率", established_on=date(2026, 1, 1),
-            owner="analyst-a", status=ThesisStatus.VALIDATING, team="equity-research",
+            thesis_id="THS-001",
+            security_id="688981",
+            title="中芯国际盈利观察",
+            direction="观察",
+            core_view="观察产能利用率与毛利率",
+            established_on=date(2026, 1, 1),
+            owner="analyst-a",
+            status=ThesisStatus.VALIDATING,
+            team="equity-research",
         )
     )
     uow.feed.items.append(
         EvidenceFeedRecord(
-            evidence_id="EVD-001", relation_id="REL-001", security_id="688981",
-            security_name="中芯国际", thesis_id="THS-001", thesis_title="中芯国际盈利观察",
-            thesis_owner="analyst-a", thesis_status=ThesisStatus.VALIDATING,
-            thesis_established_on=date(2026, 1, 1), thesis_horizon_end_on=None,
-            hypothesis_id="H-001", hypothesis_statement="毛利率随利用率回升",
-            hypothesis_importance=Importance.CORE, source_document_id="DOC-001",
-            source_document_title="2025 年第四季度业绩快报", fact_excerpt="公司披露第四季度经营数据。",
-            disclosed_at=datetime(2026, 2, 11), occurred_at=date(2025, 12, 31),
-            source_url="https://example.com/report.pdf", direction=ImpactDirection.NEUTRAL,
-            strength="中", ai_confidence=Decimal("0.70"),
-            confirmation_status=ConfirmationStatus.PENDING, priority="medium",
+            evidence_id="EVD-001",
+            relation_id="REL-001",
+            security_id="688981",
+            security_name="中芯国际",
+            thesis_id="THS-001",
+            thesis_title="中芯国际盈利观察",
+            thesis_owner="analyst-a",
+            thesis_status=ThesisStatus.VALIDATING,
+            thesis_established_on=date(2026, 1, 1),
+            thesis_horizon_end_on=None,
+            hypothesis_id="H-001",
+            hypothesis_statement="毛利率随利用率回升",
+            hypothesis_importance=Importance.CORE,
+            source_document_id="DOC-001",
+            source_document_title="2025 年第四季度业绩快报",
+            fact_excerpt="公司披露第四季度经营数据。",
+            disclosed_at=datetime(2026, 2, 11),
+            occurred_at=date(2025, 12, 31),
+            source_url="https://example.com/report.pdf",
+            direction=ImpactDirection.NEUTRAL,
+            strength="中",
+            ai_confidence=Decimal("0.70"),
+            confirmation_status=ConfirmationStatus.PENDING,
+            priority="medium",
         )
     )
 
@@ -63,8 +82,11 @@ def test_工作台任务返回可读证据与验证链() -> None:
         assert item["hypothesis_statement"] == "毛利率随利用率回升"
         assert item["evidence_id"] == "EVD-001"
         assert {validation["code"] for validation in item["validation_items"]} == {
-            "source_traceable", "required_fields_complete", "within_observation_window",
-            "same_security", "hypothesis_belongs_to_thesis",
+            "source_traceable",
+            "required_fields_complete",
+            "within_observation_window",
+            "same_security",
+            "hypothesis_belongs_to_thesis",
         }
 
 

@@ -213,6 +213,23 @@ blockquote { margin: 16px 0; padding: 3px 0 3px 18px; border-left: 3px solid #b8
 .dialog textarea { width: 100%; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 14px; }
 .create-dialog { width: min(620px, 100%); }
+.upload-dialog { width: min(680px, 100%); }
+.job-progress { display: grid; gap: 14px; }
+.job-state { display: inline-flex; width: fit-content; padding: 7px 12px; border-radius: 999px; background: #e8f3fa; color: var(--blue); font-weight: 700; }
+.job-state.failed { color: var(--red); background: #fae9eb; }
+.job-progress dl { display: grid; grid-template-columns: 120px 1fr; gap: 9px; margin: 0; padding: 16px; background: #f6f8fa; border-radius: 10px; }
+.job-progress dt { color: var(--muted); }
+.job-progress dd { margin: 0; }
+.review-header { display: flex; justify-content: space-between; gap: 16px; }
+.review-detail, .review-result { color: var(--muted); line-height: 1.65; }
+.review-result { padding: 13px; background: #edf7f3; border-radius: 9px; }
+.review-decision { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.review-decision textarea, .adjudication-form input, .adjudication-form select, .adjudication-form textarea { width: 100%; border: 1px solid #cbd6e2; border-radius: 8px; padding: 9px 11px; background: #fff; color: #253850; }
+.review-decision textarea { min-height: 76px; resize: vertical; }
+.adjudication-form { display: grid; grid-template-columns: 1fr 150px; gap: 10px; align-items: end; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.adjudication-form label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
+.adjudication-form .decision-reason { grid-column: 1 / -1; }
+.adjudication-form textarea { min-height: 78px; resize: vertical; }
 
 @media (max-width: 1100px) {
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -256,4 +273,6 @@ blockquote { margin: 16px 0; padding: 3px 0 3px 18px; border-left: 3px solid #b8
   .filter-count { margin-left: 0; }
   .source-footer, .risk-callout, .relation-row { align-items: flex-start; flex-direction: column; }
   .technical dl { grid-template-columns: 1fr; }
+  .review-decision, .adjudication-form { grid-template-columns: 1fr; }
+  .adjudication-form .decision-reason { grid-column: auto; }
 }

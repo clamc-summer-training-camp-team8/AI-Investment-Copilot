@@ -20,12 +20,20 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
-from app.api.deps import ActorDep
+from app.api.deps import ActorDep, UowDep
 from app.core.config import PROJECT_ROOT
-from app.schemas.thesis import AdjudicationOut, AdjudicationPage, PageMeta
+from app.core.domain import AdjudicationDecisionRecord
+from app.schemas.thesis import (
+    AdjudicationDecisionIn,
+    AdjudicationOut,
+    AdjudicationPage,
+    PageMeta,
+)
+from app.services import adjudication as adjudication_service
 from app.services import query as query_service
+from app.services.errors import ValidationFailed
 
 router = APIRouter(tags=["reviews"])
 
@@ -83,6 +91,7 @@ def _load_queue() -> tuple[QueueRow, ...]:
 @router.get("/reviews/adjudications", response_model=AdjudicationPage)
 def list_adjudications(
     actor: ActorDep,
+    uow: UowDep,
     company: Annotated[str | None, Query(description="按公司过滤")] = None,
     category: Annotated[str | None, Query(description="按公告类别过滤")] = None,
     limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
@@ -101,19 +110,50 @@ def list_adjudications(
 
     window = rows[offset : offset + limit]
     return AdjudicationPage(
-        items=[
-            AdjudicationOut(
-                event_id=r.event_id,
-                company=r.company,
-                title=r.title,
-                category=r.category,
-                annotator_a_hypothesis=r.annotator_a_hypothesis,
-                annotator_a_direction=r.annotator_a_direction,
-                annotator_b_hypothesis=r.annotator_b_hypothesis,
-                annotator_b_direction=r.annotator_b_direction,
-                disagreement=r.disagreement,
-            )
-            for r in window
-        ],
+        items=[_out(r, uow.adjudications.get(r.event_id)) for r in window],
         page=PageMeta(total=len(rows), limit=limit, offset=offset),
     )
+
+
+def _out(row: QueueRow, decision: AdjudicationDecisionRecord | None) -> AdjudicationOut:
+    return AdjudicationOut(
+        event_id=row.event_id,
+        company=row.company,
+        title=row.title,
+        category=row.category,
+        annotator_a_hypothesis=row.annotator_a_hypothesis,
+        annotator_a_direction=row.annotator_a_direction,
+        annotator_b_hypothesis=row.annotator_b_hypothesis,
+        annotator_b_direction=row.annotator_b_direction,
+        disagreement=row.disagreement,
+        resolved=decision is not None,
+        decided_hypothesis=decision.hypothesis if decision else None,
+        decided_direction=decision.direction if decision else None,
+        decision_reason=decision.reason if decision else None,
+        decided_by=decision.decided_by if decision else None,
+        decided_at=decision.decided_at if decision else None,
+    )
+
+
+@router.post("/reviews/adjudications/{event_id}", response_model=AdjudicationOut)
+def decide_adjudication(
+    event_id: str,
+    payload: AdjudicationDecisionIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> AdjudicationOut:
+    row = next((item for item in _load_queue() if item.event_id == event_id), None)
+    if row is None:
+        raise HTTPException(status_code=404, detail="待裁决样本不存在")
+    try:
+        decision = adjudication_service.decide(
+            uow,
+            event_id=event_id,
+            hypothesis=payload.hypothesis,
+            direction=payload.direction,
+            reason=payload.reason,
+            actor=actor,
+        )
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _out(row, decision)

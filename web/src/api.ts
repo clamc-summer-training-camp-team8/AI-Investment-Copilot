@@ -1,11 +1,11 @@
-import { demoEvidence, demoThesis } from './mocks'
+import { demoEvidence, demoEvidenceFeed, demoThesis } from './mocks'
 import type {
   AuditItem, ConfirmationState, Direction, EvidenceDetail, EvidenceFeedItem,
-  PageResult, Relation, Strength, Suggestion, ThesisDetail, Trend,
-  ValidationItem, WorkbenchData,
+  Adjudication, DocumentSegment, JobAccepted, JobStatus, PageResult, Relation,
+  ReviewTask, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
 } from './types'
 
-export const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
+export const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 function toDirection(value: unknown): Direction {
   return value === '支持' ? 'support' : value === '冲突' ? 'conflict' : 'neutral'
@@ -21,9 +21,10 @@ function toStatus(value: unknown): ConfirmationState {
 
 /** 浏览器只走 Vite 代理；身份头由开发代理或生产网关注入。 */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isForm = init?.body instanceof FormData
   const response = await fetch(path, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+    headers: { ...(isForm ? {} : { 'Content-Type': 'application/json' }), ...(init?.headers ?? {}) },
   })
   if (response.status === 401) throw new Error('身份服务不可用，请刷新页面或联系管理员。')
   if (response.status === 403) throw new Error('当前账户可查看该对象，但没有此操作权限。')
@@ -118,10 +119,12 @@ async function getFeed(path: string): Promise<PageResult<EvidenceFeedItem>> {
 }
 
 export function getWorkbenchTasks(limit = 20): Promise<PageResult<EvidenceFeedItem>> {
+  if (useMock) return Promise.resolve({ items: [demoEvidenceFeed], total: 1, limit, offset: 0 })
   return getFeed(`/api/workbench/tasks?limit=${limit}`)
 }
 
 export function getRadarEvidence(thesisId: string, filters: { status?: string; direction?: string } = {}): Promise<PageResult<EvidenceFeedItem>> {
+  if (useMock) return Promise.resolve({ items: [demoEvidenceFeed], total: 1, limit: 50, offset: 0 })
   const params = new URLSearchParams({ thesis_id: thesisId, limit: '50' })
   if (filters.status) params.append('status', filters.status)
   if (filters.direction) params.set('direction', filters.direction)
@@ -129,6 +132,7 @@ export function getRadarEvidence(thesisId: string, filters: { status?: string; d
 }
 
 export function getThesisEvidenceFeed(thesisId: string): Promise<PageResult<EvidenceFeedItem>> {
+  if (useMock) return Promise.resolve({ items: [demoEvidenceFeed], total: 1, limit: 100, offset: 0 })
   return getFeed(`/api/theses/${thesisId}/evidence-feed?limit=100`)
 }
 
@@ -187,6 +191,61 @@ export async function publishThesis(thesisId: string, payload: { direction: stri
 
 export async function getAdjudications(): Promise<Array<Record<string, unknown>>> {
   if (useMock) return []
-  const page = await request<{ items: Array<Record<string, unknown>> }>('/api/reviews/adjudications')
+  const page = await request<{ items: Array<Record<string, unknown>> }>('/api/reviews/adjudications?limit=100')
   return page.items
+}
+
+export async function listAdjudications(): Promise<Adjudication[]> {
+  const items = await getAdjudications()
+  return items.map((item) => ({
+    eventId: String(item.event_id), company: String(item.company), title: String(item.title),
+    category: String(item.category), annotatorAHypothesis: String(item.annotator_a_hypothesis),
+    annotatorADirection: String(item.annotator_a_direction), annotatorBHypothesis: String(item.annotator_b_hypothesis),
+    annotatorBDirection: String(item.annotator_b_direction), disagreement: String(item.disagreement),
+    resolved: Boolean(item.resolved), decidedHypothesis: item.decided_hypothesis ? String(item.decided_hypothesis) : undefined,
+    decidedDirection: item.decided_direction ? String(item.decided_direction) : undefined,
+    decisionReason: item.decision_reason ? String(item.decision_reason) : undefined,
+  }))
+}
+
+export async function decideAdjudication(eventId: string, payload: { hypothesis: string; direction: string; reason: string }): Promise<void> {
+  await request(`/api/reviews/adjudications/${encodeURIComponent(eventId)}`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export async function uploadDocument(payload: { file: File; publishedAt: string; thesisId?: string; securityId?: string; view?: string }): Promise<JobAccepted> {
+  if (useMock) return { jobId: 'JOB-DEMO-UPLOAD', documentId: 'DOC-DEMO-UPLOAD', status: 'queued' }
+  const form = new FormData()
+  form.append('file', payload.file)
+  form.append('published_at', new Date(payload.publishedAt).toISOString())
+  if (payload.thesisId && payload.securityId) {
+    form.append('thesis_id', payload.thesisId)
+    form.append('security_id', payload.securityId)
+  }
+  if (payload.view) form.append('view', payload.view)
+  const item = await request<Record<string, unknown>>('/api/jobs/documents', { method: 'POST', body: form })
+  return { jobId: String(item.job_id), documentId: String(item.document_id), status: String(item.status) }
+}
+
+export async function getJob(jobId: string): Promise<JobStatus> {
+  if (useMock) return { jobId, status: 'complete', success: true, result: { persisted_document_id: 'DOC-DEMO-UPLOAD', duplicate: false, segment_count: 3, fact_count: 2 } }
+  const item = await request<Record<string, unknown>>(`/api/jobs/${encodeURIComponent(jobId)}`)
+  return { jobId: String(item.job_id), status: String(item.status), success: item.success == null ? undefined : Boolean(item.success), result: item.result as Record<string, unknown> | undefined, enqueueTime: item.enqueue_time ? String(item.enqueue_time) : undefined, startTime: item.start_time ? String(item.start_time) : undefined, finishTime: item.finish_time ? String(item.finish_time) : undefined }
+}
+
+export async function listReviewTasks(): Promise<ReviewTask[]> {
+  if (useMock) return []
+  const items = await request<Array<Record<string, unknown>>>('/api/reviews?limit=100')
+  return items.map((item) => ({ taskId: String(item.task_id), thesisId: String(item.thesis_id), trigger: String(item.trigger), priority: String(item.priority), assignee: String(item.assignee), state: String(item.state), detail: item.detail as Record<string, unknown> | undefined, resolution: item.resolution ? String(item.resolution) : undefined, createdAt: item.created_at ? String(item.created_at) : undefined, resolvedAt: item.resolved_at ? String(item.resolved_at) : undefined }))
+}
+
+export async function resolveReviewTask(taskId: string, resolution: string): Promise<void> {
+  await request(`/api/reviews/${encodeURIComponent(taskId)}/resolve`, { method: 'POST', body: JSON.stringify({ resolution }) })
+}
+
+export async function getDocumentSegment(locator: string): Promise<DocumentSegment> {
+  const matched = locator.match(/^(.+)#paragraph-(\d+)$/)
+  if (!matched) throw new Error('原文定位格式无效。')
+  if (useMock) return { documentId: matched[1], title: '演示公告正文', locator, ordinal: Number(matched[2]), content: demoEvidence.factExcerpt }
+  const item = await request<Record<string, unknown>>(`/api/documents/${encodeURIComponent(matched[1])}/segments/${matched[2]}`)
+  return { documentId: String(item.document_id), title: item.title ? String(item.title) : undefined, locator: String(item.locator), ordinal: Number(item.ordinal), page: item.page == null ? undefined : Number(item.page), content: String(item.content), previousLocator: item.previous_locator ? String(item.previous_locator) : undefined, nextLocator: item.next_locator ? String(item.next_locator) : undefined }
 }

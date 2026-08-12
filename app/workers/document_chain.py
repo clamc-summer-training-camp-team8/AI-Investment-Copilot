@@ -32,6 +32,8 @@ class DocumentResult:
     document_id: str
     ok: bool
     segments: list[Segment]
+    title: str | None = None
+    doc_type: str | None = None
     content_hash: str | None = None
     parser_version: str | None = None
     published_at: datetime | None = None
@@ -101,6 +103,8 @@ def process_document(
         document_id=document_id,
         ok=not is_blocked(issues),
         segments=segments,
+        title=parsed.title,
+        doc_type=parsed.doc_type,
         content_hash=content_hash(parsed.body),
         parser_version=parsed.parser_version,
         published_at=parsed.published_at,

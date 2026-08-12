@@ -124,9 +124,7 @@ class QuoteBook:
             if window_end is None:
                 continue
             security_return = self.period_return(security_id, window_start, window_end)
-            benchmark_return = self.period_return(
-                benchmark.security_id, window_start, window_end
-            )
+            benchmark_return = self.period_return(benchmark.security_id, window_start, window_end)
             if security_return is None or benchmark_return is None:
                 continue
             values.append(excess_return(security_return, benchmark_return))

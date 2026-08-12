@@ -1,6 +1,6 @@
 """证据详情与关联目标搜索的路由回归测试。"""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from fastapi.testclient import TestClient
 
@@ -51,7 +51,7 @@ def test_detail_hides_legacy_relation_and_search_filters_to_owner() -> None:
             fact_excerpt="公开披露的储能业务数据。",
             source_document_id="DOC-SG-001",
             source_document_title="阳光电源公开披露资料",
-            disclosed_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+            disclosed_at=datetime(2026, 8, 1, tzinfo=UTC),
             source_url="https://www.cninfo.com.cn/",
             source_visibility_label="公开",
         )
@@ -66,8 +66,9 @@ def test_detail_hides_legacy_relation_and_search_filters_to_owner() -> None:
         assert detail.status_code == 200
         assert detail.json()["security_id"] == "300274"
         assert "thesis_id" not in detail.json()
-        assert client.get("/api/theses?security_id=300274&page=1&page_size=20").json()[
-            "page"
-        ]["total"] == 1
+        assert (
+            client.get("/api/theses?security_id=300274&page=1&page_size=20").json()["page"]["total"]
+            == 1
+        )
     finally:
         app.dependency_overrides.clear()

@@ -102,6 +102,30 @@ class DocumentSegment(Base):
     __table_args__ = (UniqueConstraint("document_id", "locator"),)
 
 
+class DocumentFact(Base):
+    """正文中的确定性同比事实，供方向判断与后续检索评测使用。"""
+
+    __tablename__ = "document_fact"
+
+    fact_id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("document.document_id", ondelete="CASCADE"), nullable=False
+    )
+    locator: Mapped[str] = mapped_column(String(128), nullable=False)
+    fact_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    metric_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    change_rate_low: Mapped[Decimal | None] = mapped_column(Numeric(12, 6))
+    change_rate_high: Mapped[Decimal | None] = mapped_column(Numeric(12, 6))
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    extraction_version: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    __table_args__ = (
+        Index("ix_document_fact_document", "document_id", "fact_type"),
+        UniqueConstraint("document_id", "locator", "fact_type", "metric_name"),
+    )
+
+
 class Thesis(Base):
     """投资逻辑。产品核心业务对象，PRD 4.3 字段字典。"""
 

@@ -1,6 +1,7 @@
 from app.db.base import Base
 from app.db.models.core import (
     Document,
+    DocumentFact,
     DocumentSegment,
     Event,
     Evidence,
@@ -16,6 +17,7 @@ from app.db.models.core import (
     Thesis,
 )
 from app.db.models.governance import (
+    AdjudicationDecision,
     AuditLog,
     DataQualityResult,
     ReviewTask,
@@ -24,10 +26,12 @@ from app.db.models.governance import (
 )
 
 __all__ = [
+    "AdjudicationDecision",
     "AuditLog",
     "Base",
     "DataQualityResult",
     "Document",
+    "DocumentFact",
     "DocumentSegment",
     "Event",
     "Evidence",

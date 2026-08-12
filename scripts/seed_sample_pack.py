@@ -34,6 +34,7 @@ from app.core.config import settings
 from app.core.timeutil import BUSINESS_TZ, ensure_aware
 from app.db.models import (
     Document,
+    DocumentSegment,
     Event,
     MetricAlias,
     MetricObservation,
@@ -219,6 +220,16 @@ def load(session: Session, pack: ParsedPack) -> None:
 
     for document in pack.documents:
         session.merge(document)
+    session.flush()
+    for document in pack.documents:
+        session.merge(
+            DocumentSegment(
+                document_id=document.document_id,
+                locator=f"{document.document_id}#paragraph-1",
+                ordinal=1,
+                content=document.body or "",
+            )
+        )
     session.flush()
 
     for observation in pack.observations:

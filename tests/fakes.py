@@ -12,9 +12,13 @@ from __future__ import annotations
 from dataclasses import replace
 
 from app.core.domain import (
+    AdjudicationDecisionRecord,
     AuditRecord,
-    EvidenceRecord,
+    DocumentFactRecord,
+    DocumentRecord,
+    DocumentSegmentRecord,
     EvidenceFeedRecord,
+    EvidenceRecord,
     EvidenceRelationRecord,
     HypothesisRecord,
     MetricMappingRecord,
@@ -146,7 +150,12 @@ class FakeEvidenceFeedRepo:
         if priorities:
             rows = [item for item in rows if item.priority in priorities]
         rank = {"high": 0, "medium": 1, "low": 2}
-        rows.sort(key=lambda item: (rank[item.priority], -(item.disclosed_at.timestamp() if item.disclosed_at else 0)))
+        rows.sort(
+            key=lambda item: (
+                rank[item.priority],
+                -(item.disclosed_at.timestamp() if item.disclosed_at else 0),
+            )
+        )
         return [replace(item) for item in rows[offset : offset + limit]], len(rows)
 
 
@@ -266,6 +275,47 @@ class FakeReviewTaskRepo:
         return matching[:limit]
 
 
+class FakeDocumentRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, DocumentRecord] = {}
+        self.segments: dict[str, list[DocumentSegmentRecord]] = {}
+        self.facts: dict[str, list[DocumentFactRecord]] = {}
+
+    def get(self, document_id: str) -> DocumentRecord | None:
+        record = self.items.get(document_id)
+        return None if record is None else replace(record)
+
+    def find_by_content_hash(self, content_hash: str, parser_version: str) -> DocumentRecord | None:
+        for record in self.items.values():
+            if record.content_hash == content_hash and record.parser_version == parser_version:
+                return replace(record)
+        return None
+
+    def add(self, record, segments, facts) -> None:
+        self.items[record.document_id] = replace(record)
+        self.segments[record.document_id] = list(segments)
+        self.facts[record.document_id] = list(facts)
+
+    def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]:
+        return list(self.segments.get(document_id, []))
+
+    def list_facts(self, document_id: str) -> list[DocumentFactRecord]:
+        return list(self.facts.get(document_id, []))
+
+
+class FakeAdjudicationDecisionRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, AdjudicationDecisionRecord] = {}
+
+    def get(self, event_id: str) -> AdjudicationDecisionRecord | None:
+        item = self.items.get(event_id)
+        return None if item is None else replace(item)
+
+    def add(self, record: AdjudicationDecisionRecord) -> AdjudicationDecisionRecord:
+        self.items[record.event_id] = replace(record)
+        return replace(record)
+
+
 def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
     return UnitOfWork(
         thesis=FakeThesisRepo(),
@@ -277,4 +327,6 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         versions=FakeVersionRepo(),
         audit=audit or FakeAuditRepo(),
         reviews=FakeReviewTaskRepo(),
+        documents=FakeDocumentRepo(),
+        adjudications=FakeAdjudicationDecisionRepo(),
     )

@@ -12,6 +12,8 @@ from arq import Retry
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
 from app.core.config import Settings
+from app.ingest.facts import extract_key_facts
+from app.services import document as document_service
 from app.services.permission import Actor
 from app.services.review import create_task
 from app.services.uow import uow_scope
@@ -76,8 +78,29 @@ async def process_document_job(ctx: dict[str, Any], payload: dict[str, Any]) -> 
         )
         return {"ok": False, "document_id": document_id, "reason": reason, "manual_review": True}
 
+    facts = extract_key_facts(result.segments)
+    with uow_scope() as uow:
+        persisted = document_service.persist_processed(
+            uow,
+            document_id=result.document_id,
+            title=result.title,
+            doc_type=result.doc_type,
+            published_at=result.published_at,
+            content_hash=result.content_hash,
+            parser_version=result.parser_version,
+            segments=result.segments,
+            path=path,
+            actor=actor,
+            security_id=str(payload["security_id"]) if payload.get("security_id") else None,
+            facts=facts,
+        )
+
     draft: dict[str, object] | None = None
-    if payload.get("thesis_id") and payload.get("security_id"):
+    if (
+        payload.get("thesis_id")
+        and payload.get("security_id")
+        and persisted.document_id == document_id
+    ):
         try:
             gateway = Gateway.build(settings)
             with uow_scope() as uow:
@@ -111,7 +134,10 @@ async def process_document_job(ctx: dict[str, Any], payload: dict[str, Any]) -> 
     return {
         "ok": True,
         "document_id": document_id,
+        "persisted_document_id": persisted.document_id,
+        "duplicate": persisted.document_id != document_id,
         "segment_count": len(result.segments),
+        "fact_count": len(facts),
         "content_hash": result.content_hash,
         "parser_version": result.parser_version,
         "draft_created": draft is not None,

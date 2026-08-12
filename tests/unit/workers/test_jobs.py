@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from app.ai.errors import ModelUnavailable
 from app.core.config import Settings
 from app.workers import jobs
 from app.workers.document_chain import DocumentResult
+from tests.fakes import build_fake_uow
 
 
 def _payload(path: Path) -> dict[str, object]:
@@ -29,6 +31,13 @@ async def test_document_job_runs_real_text_parse_without_model(tmp_path: Path, m
     upload.parent.mkdir()
     upload.write_text("公告标题\n\n公司披露经营数据。", encoding="utf-8")
     monkeypatch.setattr(jobs, "Settings", lambda: conf)
+    uow = build_fake_uow()
+
+    @contextmanager
+    def fake_uow_scope():
+        yield uow
+
+    monkeypatch.setattr(jobs, "uow_scope", fake_uow_scope)
 
     result = await jobs.process_document_job({}, _payload(upload))
 
@@ -36,6 +45,9 @@ async def test_document_job_runs_real_text_parse_without_model(tmp_path: Path, m
     assert result["segment_count"] == 2
     assert result["draft_created"] is False
     assert result["content_hash"]
+    assert result["persisted_document_id"] == "DOC-1"
+    assert result["fact_count"] == 0
+    assert len(uow.documents.list_segments("DOC-1")) == 2
 
 
 @pytest.mark.asyncio
@@ -57,12 +69,13 @@ async def test_document_job_retries_model_then_degrades_to_review(
         segments=[],
         content_hash="abc",
         parser_version="v1",
+        published_at=datetime.fromisoformat("2026-08-11T09:00:00+08:00"),
     )
     reviews: list[dict[str, object]] = []
 
     @contextmanager
     def fake_uow_scope():
-        yield object()
+        yield build_fake_uow()
 
     def fail_draft(*args: object, **kwargs: object) -> None:
         raise ModelUnavailable("endpoint timeout", retryable=True)

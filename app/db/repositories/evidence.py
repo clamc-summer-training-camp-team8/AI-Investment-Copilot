@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from app.core.domain import (
     AuditRecord,
     EvidenceFeedRecord,
-    EvidenceRelationRecord,
     EvidenceRecord,
+    EvidenceRelationRecord,
     ObservationRecord,
     SuggestionRecord,
     VersionRecord,
@@ -304,9 +304,10 @@ class SqlEvidenceFeedRepo:
             .join(Security, Security.security_id == Evidence.security_id)
             .where(*conditions)
         )
-        total = self._session.scalar(
-            select(func.count()).select_from(base.order_by(None).subquery())
-        ) or 0
+        total = (
+            self._session.scalar(select(func.count()).select_from(base.order_by(None).subquery()))
+            or 0
+        )
         rows = self._session.execute(
             base.order_by(priority_rank, Evidence.disclosed_at.desc(), Evidence.evidence_id)
             .limit(limit)

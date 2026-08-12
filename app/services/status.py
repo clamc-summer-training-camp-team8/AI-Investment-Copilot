@@ -81,13 +81,21 @@ def compute_suggestion(
     checks: list[InvalidationCheck] = []
 
     for hypothesis in hypotheses:
-        related = [relation for relation in relations if relation.hypothesis_id == hypothesis.hypothesis_id]
-        legacy_related = [item for item in legacy_evidence if item.hypothesis_id == hypothesis.hypothesis_id]
+        related = [
+            relation for relation in relations if relation.hypothesis_id == hypothesis.hypothesis_id
+        ]
+        legacy_related = [
+            item for item in legacy_evidence if item.hypothesis_id == hypothesis.hypothesis_id
+        ]
         summaries.append(
             summarize_evidence(
                 hypothesis.hypothesis_id,
                 hypothesis.importance,
-                ([(relation.direction, relation.status) for relation in related] if relations else [(item.direction, item.confirmation_status) for item in legacy_related]),
+                (
+                    [(relation.direction, relation.status) for relation in related]
+                    if relations
+                    else [(item.direction, item.confirmation_status) for item in legacy_related]
+                ),
             )
         )
 

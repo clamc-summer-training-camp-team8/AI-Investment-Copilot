@@ -19,7 +19,9 @@ def _require_owner(actor: Actor, thesis: ThesisRecord) -> None:
         raise HumanGateRequired("只有目标逻辑负责人可以管理证据关联")
 
 
-def _validate_target(uow: UnitOfWork, evidence_id: str, thesis_id: str, hypothesis_id: str) -> ThesisRecord:
+def _validate_target(
+    uow: UnitOfWork, evidence_id: str, thesis_id: str, hypothesis_id: str
+) -> ThesisRecord:
     evidence = uow.evidence.get(evidence_id)
     thesis = uow.thesis.get(thesis_id)
     if evidence is None or thesis is None:
@@ -32,37 +34,81 @@ def _validate_target(uow: UnitOfWork, evidence_id: str, thesis_id: str, hypothes
 
 
 def create(
-    uow: UnitOfWork, *, evidence_id: str, thesis_id: str, hypothesis_id: str,
-    direction: ImpactDirection, strength: str | None, reason: str, actor: Actor,
+    uow: UnitOfWork,
+    *,
+    evidence_id: str,
+    thesis_id: str,
+    hypothesis_id: str,
+    direction: ImpactDirection,
+    strength: str | None,
+    reason: str,
+    actor: Actor,
 ) -> EvidenceRelationRecord:
     thesis = _validate_target(uow, evidence_id, thesis_id, hypothesis_id)
     _require_owner(actor, thesis)
     record = EvidenceRelationRecord(
-        relation_id=f"REL-{uuid4().hex[:16]}", evidence_id=evidence_id, thesis_id=thesis_id,
-        hypothesis_id=hypothesis_id, direction=direction, strength=strength,
-        reason=reason, status=ConfirmationStatus.PENDING, created_by=actor.user_id,
+        relation_id=f"REL-{uuid4().hex[:16]}",
+        evidence_id=evidence_id,
+        thesis_id=thesis_id,
+        hypothesis_id=hypothesis_id,
+        direction=direction,
+        strength=strength,
+        reason=reason,
+        status=ConfirmationStatus.PENDING,
+        created_by=actor.user_id,
     )
     uow.relations.add(record)
-    audit.record(uow.audit, actor=actor.user_id, action="新增证据关联", object_type="evidence_relation", object_id=record.relation_id, detail={"evidence_id": evidence_id, "thesis_id": thesis_id})
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="新增证据关联",
+        object_type="evidence_relation",
+        object_id=record.relation_id,
+        detail={"evidence_id": evidence_id, "thesis_id": thesis_id},
+    )
     return record
 
 
 def update(
-    uow: UnitOfWork, *, relation_id: str, hypothesis_id: str, direction: ImpactDirection,
-    strength: str | None, reason: str, actor: Actor,
+    uow: UnitOfWork,
+    *,
+    relation_id: str,
+    hypothesis_id: str,
+    direction: ImpactDirection,
+    strength: str | None,
+    reason: str,
+    actor: Actor,
 ) -> EvidenceRelationRecord:
     record = uow.relations.get(relation_id)
     if record is None:
         raise ValidationFailed("证据关联不存在")
     thesis = _validate_target(uow, record.evidence_id, record.thesis_id, hypothesis_id)
     _require_owner(actor, thesis)
-    updated = replace(record, hypothesis_id=hypothesis_id, direction=direction, strength=strength, reason=reason, status=ConfirmationStatus.PENDING, reviewed_by=None, reviewed_at=None)
+    updated = replace(
+        record,
+        hypothesis_id=hypothesis_id,
+        direction=direction,
+        strength=strength,
+        reason=reason,
+        status=ConfirmationStatus.PENDING,
+        reviewed_by=None,
+        reviewed_at=None,
+    )
     uow.relations.update(updated)
-    audit.record(uow.audit, actor=actor.user_id, action="修改证据关联", object_type="evidence_relation", object_id=relation_id, detail={"reason": reason})
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="修改证据关联",
+        object_type="evidence_relation",
+        object_id=relation_id,
+        detail={"reason": reason},
+    )
     return updated
 
 
-def deactivate(uow: UnitOfWork, *, relation_id: str, reason: str, actor: Actor) -> EvidenceRelationRecord:
+def deactivate(
+    uow: UnitOfWork, *, relation_id: str, reason: str, actor: Actor
+) -> EvidenceRelationRecord:
     record = uow.relations.get(relation_id)
     if record is None:
         raise ValidationFailed("证据关联不存在")
@@ -72,14 +118,33 @@ def deactivate(uow: UnitOfWork, *, relation_id: str, reason: str, actor: Actor) 
     _require_owner(actor, thesis)
     if not reason.strip():
         raise ValidationFailed("解除关联必须填写原因")
-    updated = replace(record, status=ConfirmationStatus.DEACTIVATED, reason=reason, deactivated_by=actor.user_id, deactivated_at=now())
+    updated = replace(
+        record,
+        status=ConfirmationStatus.DEACTIVATED,
+        reason=reason,
+        deactivated_by=actor.user_id,
+        deactivated_at=now(),
+    )
     uow.relations.update(updated)
-    audit.record(uow.audit, actor=actor.user_id, action="解除证据关联", object_type="evidence_relation", object_id=relation_id, detail={"reason": reason})
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="解除证据关联",
+        object_type="evidence_relation",
+        object_id=relation_id,
+        detail={"reason": reason},
+    )
     return updated
 
 
 def review(
-    uow: UnitOfWork, *, relation_id: str, action: str, reason: str | None, actor: Actor, thresholds: RuleThresholds,
+    uow: UnitOfWork,
+    *,
+    relation_id: str,
+    action: str,
+    reason: str | None,
+    actor: Actor,
+    thresholds: RuleThresholds,
 ) -> tuple[EvidenceRelationRecord, ThesisRecord]:
     record = uow.relations.get(relation_id)
     if record is None:
@@ -89,15 +154,45 @@ def review(
         raise ValidationFailed("目标逻辑不存在")
     _require_owner(actor, thesis)
     if action == "确认":
-        updated = replace(record, status=ConfirmationStatus.CONFIRMED, reason=reason or record.reason, reviewed_by=actor.user_id, reviewed_at=now())
+        updated = replace(
+            record,
+            status=ConfirmationStatus.CONFIRMED,
+            reason=reason or record.reason,
+            reviewed_by=actor.user_id,
+            reviewed_at=now(),
+        )
     elif action == "驳回":
-        updated = replace(record, status=ConfirmationStatus.REJECTED, reason=reason or record.reason, reviewed_by=actor.user_id, reviewed_at=now())
+        updated = replace(
+            record,
+            status=ConfirmationStatus.REJECTED,
+            reason=reason or record.reason,
+            reviewed_by=actor.user_id,
+            reviewed_at=now(),
+        )
     elif action == "暂不判断":
-        updated = replace(record, status=ConfirmationStatus.PENDING, reason=reason or record.reason, reviewed_by=None, reviewed_at=None)
+        updated = replace(
+            record,
+            status=ConfirmationStatus.PENDING,
+            reason=reason or record.reason,
+            reviewed_by=None,
+            reviewed_at=None,
+        )
     else:
         raise ValidationFailed("关联审核动作不合法")
     uow.relations.update(updated)
-    audit.record(uow.audit, actor=actor.user_id, action=f"关联{action}", object_type="evidence_relation", object_id=relation_id, detail={"reason": reason})
-    suggestion = status.compute_suggestion(uow, thesis=thesis, hypotheses=uow.thesis.list_hypotheses(thesis.thesis_id), thresholds=thresholds)
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action=f"关联{action}",
+        object_type="evidence_relation",
+        object_id=relation_id,
+        detail={"reason": reason},
+    )
+    suggestion = status.compute_suggestion(
+        uow,
+        thesis=thesis,
+        hypotheses=uow.thesis.list_hypotheses(thesis.thesis_id),
+        thresholds=thresholds,
+    )
     status.record_suggestion(uow, thesis=thesis, suggestion=suggestion, actor=actor.user_id)
     return updated, thesis

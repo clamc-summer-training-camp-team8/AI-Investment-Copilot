@@ -134,3 +134,59 @@ export interface AuditItem {
   occurredAt?: string
   detail?: Record<string, unknown>
 }
+
+export interface JobAccepted {
+  jobId: string
+  documentId: string
+  status: string
+}
+
+export interface JobStatus {
+  jobId: string
+  status: string
+  success?: boolean
+  result?: Record<string, unknown>
+  enqueueTime?: string
+  startTime?: string
+  finishTime?: string
+}
+
+export interface ReviewTask {
+  taskId: string
+  thesisId: string
+  trigger: string
+  priority: string
+  assignee: string
+  state: string
+  detail?: Record<string, unknown>
+  resolution?: string
+  createdAt?: string
+  resolvedAt?: string
+}
+
+export interface Adjudication {
+  eventId: string
+  company: string
+  title: string
+  category: string
+  annotatorAHypothesis: string
+  annotatorADirection: string
+  annotatorBHypothesis: string
+  annotatorBDirection: string
+  disagreement: string
+  resolved: boolean
+  decidedHypothesis?: string
+  decidedDirection?: string
+  decisionReason?: string
+}
+
+export interface DocumentSegment {
+  documentId: string
+  title?: string
+  locator: string
+  ordinal: number
+  page?: number
+  content: string
+  previousLocator?: string
+  nextLocator?: string
+}

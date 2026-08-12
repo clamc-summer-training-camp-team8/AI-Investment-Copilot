@@ -28,7 +28,11 @@ MVP 支持 PDF / DOCX / TXT（FR-T-001）。
 
 **不 import `app.ai`。** 解析是确定性步骤。想在解析阶段调模型补全字段是个常见冲动，但会让同一份文件两次解析得到不同结果，破坏 `parser_version` 的意义。语义抽取由 `app/workers` 在解析完成后调用 `app/ai`。
 
-**不写业务表。** 只写 `document`、`document_segment`。`thesis`、`evidence` 由 `app/services` 写。
+**不写业务表。** 解析层只返回确定性结果；由 `app/services.document` 在同一事务中写
+`document`、`document_segment` 与 `document_fact`。`thesis`、`evidence` 仍由各自服务写。
+
+P0 正文事实抽取只覆盖独立盲标确认的主要缺口：营业收入同比与销量/交付量同比。
+抽取不到方向时保持为空，不猜测；结果是候选事实，不自动进入正式证据链。
 
 **不做 OCR。** 扫描件按解析失败处理，保留文件并展示失败原因（PRD 7.4 异常流程）。OCR 是后续能力。
 

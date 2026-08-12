@@ -135,7 +135,9 @@ def _seed_metrics(session) -> None:
     )
 
 
-def _seed_theses(session, theses: list[dict]) -> tuple[dict[str, list[dict]], dict[str, dict[str, str]]]:
+def _seed_theses(
+    session, theses: list[dict]
+) -> tuple[dict[str, list[dict]], dict[str, dict[str, str]]]:
     """导入证券、逻辑、假设和假设—指标映射。"""
     theses_by_security: dict[str, list[dict]] = defaultdict(list)
     hypothesis_ids: dict[str, dict[str, str]] = {}
@@ -362,9 +364,7 @@ def _seed_events_and_evidence(
                 prompt_version="human-double-label-v1",
                 confirmation_status="待确认",
                 review_status="通过",
-                review_note=(
-                    "双标注一致；本地数据包仅保留公告标题，完整原文请通过公开链接核验。"
-                ),
+                review_note=("双标注一致；本地数据包仅保留公告标题，完整原文请通过公开链接核验。"),
             )
         )
         # 新库先跑迁移再导入时没有历史 Evidence 可回填，导入脚本需同时创建初始关联。

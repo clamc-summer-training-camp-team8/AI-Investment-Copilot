@@ -26,12 +26,12 @@ from app.schemas.thesis import (
     EvidenceActionIn,
     EvidenceDetailOut,
     EvidenceFeedPage,
-    EvidenceRelationOut,
+    EvidenceOut,
     EvidenceRelationDeactivateIn,
     EvidenceRelationIn,
     EvidenceRelationMutationOut,
+    EvidenceRelationOut,
     EvidenceRelationReviewIn,
-    EvidenceOut,
     HypothesisOut,
     HypothesisTrendOut,
     PageMeta,
@@ -45,8 +45,8 @@ from app.schemas.thesis import (
 )
 from app.services import audit, permission
 from app.services import evidence as evidence_service
-from app.services import relation as relation_service
 from app.services import query as query_service
+from app.services import relation as relation_service
 from app.services import status as status_service
 from app.services import thesis as thesis_service
 from app.services.errors import (
@@ -286,8 +286,11 @@ def list_readable_evidence(
         _parse_required_enum(ImpactDirection, direction, "影响方向") if direction else None
     )
     records, total = uow.feed.search(
-        thesis_ids=(thesis_id,), statuses=statuses, direction=parsed_direction,
-        limit=limit, offset=offset,
+        thesis_ids=(thesis_id,),
+        statuses=statuses,
+        direction=parsed_direction,
+        limit=limit,
+        offset=offset,
     )
     return EvidenceFeedPage(
         items=[to_feed_item(item, actor_id=actor.user_id) for item in records],
@@ -296,9 +299,7 @@ def list_readable_evidence(
 
 
 @router.get("/evidence/{evidence_id}", response_model=EvidenceDetailOut)
-def get_evidence_detail(
-    evidence_id: str, actor: ActorDep, uow: UowDep
-) -> EvidenceDetailOut:
+def get_evidence_detail(evidence_id: str, actor: ActorDep, uow: UowDep) -> EvidenceDetailOut:
     """读取可核验的证据本体详情，不以单一逻辑关系作为详情字段。"""
     record = uow.evidence.get(evidence_id)
     if record is None:
@@ -369,54 +370,130 @@ def list_evidence_relations(
     # 已完成迁移的数据库从关联表读取；空库/旧库保留一条兼容输出，便于增量升级。
     if not relations:
         thesis = _require_visible(uow, actor, record.thesis_id)
-        return [_relation_out(
-            relation_id=f"legacy-{record.evidence_id}", thesis_id=record.thesis_id,
-            hypothesis_id=record.hypothesis_id, direction=record.direction.value,
-            strength=record.strength, status=record.confirmation_status.value, reason=record.review_note,
-            created_by=record.confirmed_by or "系统迁移",
-            can_manage=thesis.owner == actor.user_id,
-        )]
+        return [
+            _relation_out(
+                relation_id=f"legacy-{record.evidence_id}",
+                thesis_id=record.thesis_id,
+                hypothesis_id=record.hypothesis_id,
+                direction=record.direction.value,
+                strength=record.strength,
+                status=record.confirmation_status.value,
+                reason=record.review_note,
+                created_by=record.confirmed_by or "系统迁移",
+                can_manage=thesis.owner == actor.user_id,
+            )
+        ]
     result: list[EvidenceRelationOut] = []
     for relation in relations:
-        thesis = uow.thesis.get(relation.thesis_id)
-        if thesis is None:
+        target_thesis = uow.thesis.get(relation.thesis_id)
+        if target_thesis is None:
             continue
         try:
-            permission.ensure_thesis_visible(actor, thesis_id=thesis.thesis_id, owner=thesis.owner, visibility=thesis.visibility, team=thesis.team)
+            permission.ensure_thesis_visible(
+                actor,
+                thesis_id=target_thesis.thesis_id,
+                owner=target_thesis.owner,
+                visibility=target_thesis.visibility,
+                team=target_thesis.team,
+            )
         except NotVisible:
             continue
-        result.append(_relation_out(
-            relation_id=relation.relation_id, thesis_id=relation.thesis_id,
-            hypothesis_id=relation.hypothesis_id, direction=relation.direction.value,
-            strength=relation.strength, status=relation.status.value, reason=relation.reason,
-            created_by=relation.created_by, reviewed_by=relation.reviewed_by,
-            reviewed_at=relation.reviewed_at, deactivated_by=relation.deactivated_by,
-            deactivated_at=relation.deactivated_at,
-            can_manage=thesis.owner == actor.user_id,
-        ))
+        result.append(
+            _relation_out(
+                relation_id=relation.relation_id,
+                thesis_id=relation.thesis_id,
+                hypothesis_id=relation.hypothesis_id,
+                direction=relation.direction.value,
+                strength=relation.strength,
+                status=relation.status.value,
+                reason=relation.reason,
+                created_by=relation.created_by,
+                reviewed_by=relation.reviewed_by,
+                reviewed_at=relation.reviewed_at,
+                deactivated_by=relation.deactivated_by,
+                deactivated_at=relation.deactivated_at,
+                can_manage=target_thesis.owner == actor.user_id,
+            )
+        )
     return result
 
 
-def _relation_out(*, relation_id: str, thesis_id: str, hypothesis_id: str, direction: str, strength: str | None, status: str, reason: str | None, created_by: str, reviewed_by=None, reviewed_at=None, deactivated_by=None, deactivated_at=None, can_manage: bool) -> EvidenceRelationOut:
-    return EvidenceRelationOut(relation_id=relation_id, thesis_id=thesis_id, hypothesis_id=hypothesis_id, direction=direction, strength=strength, status=status, reason=reason, created_by=created_by, reviewed_by=reviewed_by, reviewed_at=reviewed_at, deactivated_by=deactivated_by, deactivated_at=deactivated_at, can_manage=can_manage)
+def _relation_out(
+    *,
+    relation_id: str,
+    thesis_id: str,
+    hypothesis_id: str,
+    direction: str,
+    strength: str | None,
+    status: str,
+    reason: str | None,
+    created_by: str,
+    reviewed_by=None,
+    reviewed_at=None,
+    deactivated_by=None,
+    deactivated_at=None,
+    can_manage: bool,
+) -> EvidenceRelationOut:
+    return EvidenceRelationOut(
+        relation_id=relation_id,
+        thesis_id=thesis_id,
+        hypothesis_id=hypothesis_id,
+        direction=direction,
+        strength=strength,
+        status=status,
+        reason=reason,
+        created_by=created_by,
+        reviewed_by=reviewed_by,
+        reviewed_at=reviewed_at,
+        deactivated_by=deactivated_by,
+        deactivated_at=deactivated_at,
+        can_manage=can_manage,
+    )
 
 
 def _relation_mutation(record, actor: Actor, uow: UnitOfWork) -> EvidenceRelationMutationOut:
     thesis = uow.thesis.get(record.thesis_id)
     return EvidenceRelationMutationOut(
-        relation=_relation_out(relation_id=record.relation_id, thesis_id=record.thesis_id, hypothesis_id=record.hypothesis_id, direction=record.direction.value, strength=record.strength, status=record.status.value, reason=record.reason, created_by=record.created_by, reviewed_by=record.reviewed_by, reviewed_at=record.reviewed_at, deactivated_by=record.deactivated_by, deactivated_at=record.deactivated_at, can_manage=bool(thesis and thesis.owner == actor.user_id)),
+        relation=_relation_out(
+            relation_id=record.relation_id,
+            thesis_id=record.thesis_id,
+            hypothesis_id=record.hypothesis_id,
+            direction=record.direction.value,
+            strength=record.strength,
+            status=record.status.value,
+            reason=record.reason,
+            created_by=record.created_by,
+            reviewed_by=record.reviewed_by,
+            reviewed_at=record.reviewed_at,
+            deactivated_by=record.deactivated_by,
+            deactivated_at=record.deactivated_at,
+            can_manage=bool(thesis and thesis.owner == actor.user_id),
+        ),
         affected_thesis_ids=[record.thesis_id],
     )
 
 
-@router.post("/evidence/{evidence_id}/relations", response_model=EvidenceRelationMutationOut, status_code=201)
-def create_relation(evidence_id: str, payload: EvidenceRelationIn, actor: ActorDep, uow: UowDep) -> EvidenceRelationMutationOut:
+@router.post(
+    "/evidence/{evidence_id}/relations", response_model=EvidenceRelationMutationOut, status_code=201
+)
+def create_relation(
+    evidence_id: str, payload: EvidenceRelationIn, actor: ActorDep, uow: UowDep
+) -> EvidenceRelationMutationOut:
     evidence = uow.evidence.get(evidence_id)
     if evidence is None:
         raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
     _require_visible(uow, actor, evidence.thesis_id)
     try:
-        relation = relation_service.create(uow, evidence_id=evidence_id, thesis_id=payload.thesis_id, hypothesis_id=payload.hypothesis_id, direction=_parse_required_enum(ImpactDirection, payload.direction, "影响方向"), strength=payload.strength, reason=payload.reason, actor=actor)
+        relation = relation_service.create(
+            uow,
+            evidence_id=evidence_id,
+            thesis_id=payload.thesis_id,
+            hypothesis_id=payload.hypothesis_id,
+            direction=_parse_required_enum(ImpactDirection, payload.direction, "影响方向"),
+            strength=payload.strength,
+            reason=payload.reason,
+            actor=actor,
+        )
     except HumanGateRequired as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:
@@ -424,14 +501,26 @@ def create_relation(evidence_id: str, payload: EvidenceRelationIn, actor: ActorD
     return _relation_mutation(relation, actor, uow)
 
 
-@router.patch("/evidence/{evidence_id}/relations/{relation_id}", response_model=EvidenceRelationMutationOut)
-def update_relation(evidence_id: str, relation_id: str, payload: EvidenceRelationIn, actor: ActorDep, uow: UowDep) -> EvidenceRelationMutationOut:
+@router.patch(
+    "/evidence/{evidence_id}/relations/{relation_id}", response_model=EvidenceRelationMutationOut
+)
+def update_relation(
+    evidence_id: str, relation_id: str, payload: EvidenceRelationIn, actor: ActorDep, uow: UowDep
+) -> EvidenceRelationMutationOut:
     relation = uow.relations.get(relation_id)
     if relation is None or relation.evidence_id != evidence_id:
         raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
     _require_visible(uow, actor, relation.thesis_id)
     try:
-        updated = relation_service.update(uow, relation_id=relation_id, hypothesis_id=payload.hypothesis_id, direction=_parse_required_enum(ImpactDirection, payload.direction, "影响方向"), strength=payload.strength, reason=payload.reason, actor=actor)
+        updated = relation_service.update(
+            uow,
+            relation_id=relation_id,
+            hypothesis_id=payload.hypothesis_id,
+            direction=_parse_required_enum(ImpactDirection, payload.direction, "影响方向"),
+            strength=payload.strength,
+            reason=payload.reason,
+            actor=actor,
+        )
     except HumanGateRequired as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:
@@ -439,14 +528,25 @@ def update_relation(evidence_id: str, relation_id: str, payload: EvidenceRelatio
     return _relation_mutation(updated, actor, uow)
 
 
-@router.post("/evidence/{evidence_id}/relations/{relation_id}/deactivate", response_model=EvidenceRelationMutationOut)
-def deactivate_relation(evidence_id: str, relation_id: str, payload: EvidenceRelationDeactivateIn, actor: ActorDep, uow: UowDep) -> EvidenceRelationMutationOut:
+@router.post(
+    "/evidence/{evidence_id}/relations/{relation_id}/deactivate",
+    response_model=EvidenceRelationMutationOut,
+)
+def deactivate_relation(
+    evidence_id: str,
+    relation_id: str,
+    payload: EvidenceRelationDeactivateIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> EvidenceRelationMutationOut:
     relation = uow.relations.get(relation_id)
     if relation is None or relation.evidence_id != evidence_id:
         raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
     _require_visible(uow, actor, relation.thesis_id)
     try:
-        updated = relation_service.deactivate(uow, relation_id=relation_id, reason=payload.reason, actor=actor)
+        updated = relation_service.deactivate(
+            uow, relation_id=relation_id, reason=payload.reason, actor=actor
+        )
     except HumanGateRequired as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:
@@ -454,14 +554,31 @@ def deactivate_relation(evidence_id: str, relation_id: str, payload: EvidenceRel
     return _relation_mutation(updated, actor, uow)
 
 
-@router.post("/evidence/{evidence_id}/relations/{relation_id}/review", response_model=EvidenceRelationMutationOut)
-def review_relation(evidence_id: str, relation_id: str, payload: EvidenceRelationReviewIn, actor: ActorDep, uow: UowDep, conf: SettingsDep) -> EvidenceRelationMutationOut:
+@router.post(
+    "/evidence/{evidence_id}/relations/{relation_id}/review",
+    response_model=EvidenceRelationMutationOut,
+)
+def review_relation(
+    evidence_id: str,
+    relation_id: str,
+    payload: EvidenceRelationReviewIn,
+    actor: ActorDep,
+    uow: UowDep,
+    conf: SettingsDep,
+) -> EvidenceRelationMutationOut:
     relation = uow.relations.get(relation_id)
     if relation is None or relation.evidence_id != evidence_id:
         raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
     _require_visible(uow, actor, relation.thesis_id)
     try:
-        updated, _ = relation_service.review(uow, relation_id=relation_id, action=payload.action, reason=payload.reason, actor=actor, thresholds=conf.rules)
+        updated, _ = relation_service.review(
+            uow,
+            relation_id=relation_id,
+            action=payload.action,
+            reason=payload.reason,
+            actor=actor,
+            thresholds=conf.rules,
+        )
     except HumanGateRequired as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:

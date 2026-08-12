@@ -252,8 +252,18 @@ Invoke-RestMethod `
 
 ## 8. 前端联调
 
+Windows 安装并启动 Docker Desktop 后，可用一条命令启动完整网页闭环：
+
+```powershell
+.\scripts\dev.ps1 up
+```
+
+该命令应用迁移、导入样例和九公司公开联调数据，并启动 API、worker 与 Vite，访问
+<http://127.0.0.1:5173>。网页默认连接真实后端；仅做静态视觉演示时在
+`web/.env.local` 显式设置 `VITE_USE_MOCK=true`。
+
 前端以 [contracts/api/openapi.yaml](contracts/api/openapi.yaml) 生成类型或 mock，不应从
-后端源码推断字段。当前后端注册 19 条路径，覆盖工作台、逻辑卡片、证据、状态建议、
+后端源码推断字段。当前后端注册 29 条路径，覆盖工作台、逻辑卡片、证据、状态建议、
 复核中心、文档任务以及健康检查。
 
 本地前端默认允许来源为 `http://localhost:5173`。如果前端使用其他端口，在 `.env`

@@ -43,25 +43,37 @@ def to_feed_item(record: EvidenceFeedRecord, *, actor_id: str) -> EvidenceFeedIt
     )
     validations = [
         _validation(
-            "source_traceable", "来源可追溯", traceable,
-            "来源文档、标题和公开链接齐全。", "来源信息不完整，不能作为已核验事实使用。",
+            "source_traceable",
+            "来源可追溯",
+            traceable,
+            "来源文档、标题和公开链接齐全。",
+            "来源信息不完整，不能作为已核验事实使用。",
         ),
         _validation(
-            "required_fields_complete", "关键字段完整", complete,
-            "证券、事实摘录、披露时间和假设文本齐全。", "证据摘要存在缺失字段。",
+            "required_fields_complete",
+            "关键字段完整",
+            complete,
+            "证券、事实摘录、披露时间和假设文本齐全。",
+            "证据摘要存在缺失字段。",
         ),
         ValidationItemOut(
             code="within_observation_window",
             label="处于观察窗口",
             status="passed" if in_window else "warning",
-            message="披露时间处于逻辑观察窗口内。" if in_window else "披露时间不在当前逻辑观察窗口内，请人工复核。",
+            message="披露时间处于逻辑观察窗口内。"
+            if in_window
+            else "披露时间不在当前逻辑观察窗口内，请人工复核。",
         ),
         ValidationItemOut(
-            code="same_security", label="同一证券", status="passed",
+            code="same_security",
+            label="同一证券",
+            status="passed",
             message="证据与目标逻辑证券一致。",
         ),
         ValidationItemOut(
-            code="hypothesis_belongs_to_thesis", label="假设归属有效", status="passed",
+            code="hypothesis_belongs_to_thesis",
+            label="假设归属有效",
+            status="passed",
             message="目标假设属于当前投资逻辑。",
         ),
     ]

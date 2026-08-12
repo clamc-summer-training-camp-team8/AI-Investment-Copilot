@@ -1,4 +1,4 @@
-import type { EvidenceDetail, ThesisDetail } from './types'
+import type { EvidenceDetail, EvidenceFeedItem, ThesisDetail } from './types'
 
 export const demoEvidence: EvidenceDetail = {
   evidenceId: 'EVD-SG-001',
@@ -29,4 +29,17 @@ export const demoThesis: ThesisDetail = {
   version: 1,
   establishedOn: '2026-01-01',
   hypotheses: [],
+}
+
+export const demoEvidenceFeed: EvidenceFeedItem = {
+  ...demoEvidence,
+  relationId: 'REL-SG-001',
+  securityName: '阳光电源',
+  thesisId: demoThesis.thesisId,
+  thesisTitle: demoThesis.title,
+  hypothesisId: 'HYP-SG-001',
+  hypothesisStatement: '储能与海外收入保持增长',
+  priority: 'high',
+  canManage: true,
+  validationItems: [],
 }

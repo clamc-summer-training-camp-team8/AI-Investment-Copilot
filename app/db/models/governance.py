@@ -99,6 +99,19 @@ class ReviewTask(Base):
     __table_args__ = (Index("ix_review_task_state", "state", "assignee"),)
 
 
+class AdjudicationDecision(Base):
+    """导师裁决结果；与程序化预标注分开存储，作为独立评测依据。"""
+
+    __tablename__ = "adjudication_decision"
+
+    event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    hypothesis: Mapped[str] = mapped_column(String(255), nullable=False)
+    direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    decided_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    decided_at: Mapped[datetime] = created_at_column()
+
+
 class AuditLog(Base):
     """审计日志。记录查看、创建、编辑、确认、导出和模型调用（FR-A-003）。"""
 

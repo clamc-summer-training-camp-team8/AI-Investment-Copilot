@@ -84,6 +84,56 @@ def test_工作台返回四类聚合(client: TestClient) -> None:
     }
 
 
+def test_原文段落按定位回查(client: TestClient) -> None:
+    from datetime import datetime
+
+    from app.core.domain import DocumentRecord, DocumentSegmentRecord
+
+    app = create_app()
+    uow = build_fake_uow()
+    uow.documents.add(
+        DocumentRecord(
+            document_id="DOC-1",
+            title="测试公告",
+            published_at=datetime.fromisoformat("2026-08-11T09:00:00+08:00"),
+            content_hash="abc",
+            parser_version="v1",
+        ),
+        [DocumentSegmentRecord("DOC-1", "DOC-1#paragraph-1", 1, "正文同比增长25%")],
+        [],
+    )
+
+    def _uow() -> Iterator[UnitOfWork]:
+        yield uow
+
+    app.dependency_overrides[get_uow] = _uow
+    with TestClient(app) as test_client:
+        response = test_client.get("/api/documents/DOC-1/segments/1", headers=HEADERS)
+    assert response.status_code == 200
+    assert response.json()["content"] == "正文同比增长25%"
+
+
+def test_导师裁决不可重复覆盖(client: TestClient) -> None:
+    queue = client.get("/api/reviews/adjudications?limit=1", headers=HEADERS).json()
+    if not queue["items"]:
+        pytest.skip("裁决队列构建产物不存在")
+    item = queue["items"][0]
+    payload = {
+        "hypothesis": item["annotator_a_hypothesis"],
+        "direction": "中性",
+        "reason": "独立核对原文后裁决",
+    }
+    first = client.post(
+        f"/api/reviews/adjudications/{item['event_id']}", json=payload, headers=HEADERS
+    )
+    second = client.post(
+        f"/api/reviews/adjudications/{item['event_id']}", json=payload, headers=HEADERS
+    )
+    assert first.status_code == 200
+    assert first.json()["resolved"] is True
+    assert second.status_code == 400
+
+
 def test_用户标识必须可进HTTP头() -> None:
     """中文用户名进不了 HTTP 头，这是协议约束不是实现缺陷。
 

@@ -10,11 +10,18 @@ import hashlib
 import json
 from datetime import date, datetime
 from decimal import Decimal
-from pathlib import Path
 
 from app.core.config import PROJECT_ROOT
-from app.db.models.core import Document, Evidence, Hypothesis, Security, Thesis
+from app.db.models.core import (
+    Document,
+    DocumentSegment,
+    Evidence,
+    Hypothesis,
+    Security,
+    Thesis,
+)
 from app.db.session import session_scope
+from app.ingest.segmentation import parse_locator
 
 DATA_FILE = PROJECT_ROOT / "real_data" / "real_case_sg.json"
 REQUIRED_EVIDENCE = {
@@ -84,6 +91,28 @@ def main() -> None:
                     is_illustrative=False,
                 )
             )
+            locator_document_id, ordinal = parse_locator(item["evidence_locator"])
+            if locator_document_id != document_id:
+                raise ValueError("evidence_locator 与 source_document_id 不一致")
+            segment = (
+                session.query(DocumentSegment)
+                .filter(
+                    DocumentSegment.document_id == document_id,
+                    DocumentSegment.locator == item["evidence_locator"],
+                )
+                .one_or_none()
+            )
+            if segment is None:
+                session.add(
+                    DocumentSegment(
+                        document_id=document_id,
+                        locator=item["evidence_locator"],
+                        ordinal=ordinal,
+                        content=excerpt,
+                    )
+                )
+            else:
+                segment.content = excerpt
             session.merge(
                 Evidence(
                     evidence_id=item["evidence_id"],
@@ -98,11 +127,15 @@ def main() -> None:
                     source_document_id=document_id,
                     source_document_title=item["source_document_title"],
                     disclosed_at=_datetime(item["disclosed_at"]),
-                    occurred_at=(date.fromisoformat(item["occurred_at"]) if item.get("occurred_at") else None),
+                    occurred_at=(
+                        date.fromisoformat(item["occurred_at"]) if item.get("occurred_at") else None
+                    ),
                     source_url=item["source_url"],
                     strength=item.get("strength"),
                     ai_status=item.get("ai_status"),
-                    ai_confidence=Decimal(item["ai_confidence"]) if item.get("ai_confidence") else None,
+                    ai_confidence=Decimal(item["ai_confidence"])
+                    if item.get("ai_confidence")
+                    else None,
                     model_version=item.get("model_version"),
                     prompt_version=item.get("prompt_version"),
                     confirmation_status="待确认",
