@@ -119,6 +119,35 @@ components:
       - page
       title: AdjudicationPage
       type: object
+    AffectedHypothesisOut:
+      properties:
+        actual_value:
+          title: Actual Value
+          type: string
+        direction:
+          title: Direction
+          type: string
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        invalidation_threshold:
+          title: Invalidation Threshold
+          type: string
+        metric_name:
+          title: Metric Name
+          type: string
+        statement:
+          title: Statement
+          type: string
+      required:
+      - hypothesis_id
+      - statement
+      - metric_name
+      - actual_value
+      - invalidation_threshold
+      - direction
+      title: AffectedHypothesisOut
+      type: object
     AssetInventoryOut:
       properties:
         artifact_events:
@@ -277,6 +306,20 @@ components:
       - page
       title: AuditPage
       type: object
+    Body_upload_demo_material_api_demo_theses__thesis_id__documents_post:
+      properties:
+        demo_case_id:
+          title: Demo Case Id
+          type: string
+        file:
+          format: binary
+          title: File
+          type: string
+      required:
+      - file
+      - demo_case_id
+      title: Body_upload_demo_material_api_demo_theses__thesis_id__documents_post
+      type: object
     Body_upload_document_api_jobs_documents_post:
       properties:
         file:
@@ -306,6 +349,109 @@ components:
       required:
       - file
       title: Body_upload_document_api_jobs_documents_post
+      type: object
+    CitationContextOut:
+      properties:
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        document_id:
+          title: Document Id
+          type: string
+        document_title:
+          title: Document Title
+          type: string
+        document_type:
+          title: Document Type
+          type: string
+        locator:
+          title: Locator
+          type: string
+        next:
+          anyOf:
+          - $ref: '#/components/schemas/CitationSegmentOut'
+          - type: 'null'
+        page:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Page
+        previous:
+          anyOf:
+          - $ref: '#/components/schemas/CitationSegmentOut'
+          - type: 'null'
+        source_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Url
+        target:
+          $ref: '#/components/schemas/CitationSegmentOut'
+      required:
+      - document_id
+      - document_title
+      - document_type
+      - disclosed_at
+      - locator
+      - target
+      title: CitationContextOut
+      type: object
+    CitationSegmentOut:
+      properties:
+        content:
+          title: Content
+          type: string
+        locator:
+          title: Locator
+          type: string
+        ordinal:
+          title: Ordinal
+          type: integer
+        page:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Page
+      required:
+      - locator
+      - ordinal
+      - content
+      title: CitationSegmentOut
+      type: object
+    DemoUploadOut:
+      properties:
+        document_id:
+          title: Document Id
+          type: string
+        duplicate:
+          title: Duplicate
+          type: boolean
+        evidence_ids:
+          items:
+            type: string
+          title: Evidence Ids
+          type: array
+        next_url:
+          title: Next Url
+          type: string
+        relation_ids:
+          items:
+            type: string
+          title: Relation Ids
+          type: array
+        result_source:
+          const: preset_ai_result
+          title: Result Source
+          type: string
+      required:
+      - document_id
+      - evidence_ids
+      - relation_ids
+      - result_source
+      - duplicate
+      - next_url
+      title: DemoUploadOut
       type: object
     DocumentSegmentOut:
       properties:
@@ -414,6 +560,100 @@ components:
       required:
       - action
       title: EvidenceActionIn
+      type: object
+    EvidenceAnalysisOut:
+      properties:
+        affected_hypotheses:
+          items:
+            $ref: '#/components/schemas/AffectedHypothesisOut'
+          title: Affected Hypotheses
+          type: array
+        ai_confidence:
+          title: Ai Confidence
+          type: string
+        ai_status:
+          title: Ai Status
+          type: string
+        can_manage:
+          title: Can Manage
+          type: boolean
+        direction:
+          title: Direction
+          type: string
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        document_id:
+          title: Document Id
+          type: string
+        document_title:
+          title: Document Title
+          type: string
+        evidence_id:
+          title: Evidence Id
+          type: string
+        evidence_locator:
+          title: Evidence Locator
+          type: string
+        fact_excerpt:
+          title: Fact Excerpt
+          type: string
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        hypothesis_statement:
+          title: Hypothesis Statement
+          type: string
+        model_version:
+          title: Model Version
+          type: string
+        prompt_version:
+          title: Prompt Version
+          type: string
+        relation_id:
+          title: Relation Id
+          type: string
+        relation_status:
+          title: Relation Status
+          type: string
+        result_source:
+          const: preset_ai_result
+          title: Result Source
+          type: string
+        review_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Review Reason
+        strength:
+          title: Strength
+          type: string
+        transmission_path:
+          title: Transmission Path
+          type: string
+      required:
+      - evidence_id
+      - relation_id
+      - document_id
+      - document_title
+      - disclosed_at
+      - fact_excerpt
+      - hypothesis_id
+      - hypothesis_statement
+      - affected_hypotheses
+      - direction
+      - strength
+      - transmission_path
+      - ai_confidence
+      - ai_status
+      - model_version
+      - prompt_version
+      - evidence_locator
+      - result_source
+      - relation_status
+      - can_manage
+      title: EvidenceAnalysisOut
       type: object
     EvidenceDetailOut:
       description: 证据本体详情；关联对象由独立关联接口返回。
@@ -842,6 +1082,67 @@ components:
           title: Detail
           type: array
       title: HTTPValidationError
+      type: object
+    HealthMetricOut:
+      properties:
+        name:
+          title: Name
+          type: string
+        trend:
+          title: Trend
+          type: string
+        value:
+          title: Value
+          type: string
+      required:
+      - name
+      - value
+      - trend
+      title: HealthMetricOut
+      type: object
+    HypothesisHealthOut:
+      properties:
+        conflict_confirmed:
+          title: Conflict Confirmed
+          type: integer
+        health:
+          title: Health
+          type: string
+        health_reason:
+          title: Health Reason
+          type: string
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        importance:
+          title: Importance
+          type: string
+        invalidation:
+          title: Invalidation
+          type: string
+        metric:
+          $ref: '#/components/schemas/HealthMetricOut'
+        pending:
+          title: Pending
+          type: integer
+        statement:
+          title: Statement
+          type: string
+        support_confirmed:
+          title: Support Confirmed
+          type: integer
+      required:
+      - hypothesis_id
+      - statement
+      - importance
+      - support_confirmed
+      - conflict_confirmed
+      - pending
+      - health
+      - health_reason
+      - metric
+      - invalidation
+      title: HypothesisHealthOut
       type: object
     HypothesisOut:
       properties:
@@ -1639,7 +1940,7 @@ components:
 
         `reason` 是必填且非空：正式状态变更必须填原因（FR-S-003）。这里就拦住，
 
-        不要等到服务层——但服务层也拦一次，因为 API 不是唯一入口。'
+        服务层也会再拦一次，因为 API 不是唯一入口。'
       properties:
         action:
           pattern: ^(接受|拒绝|修改)$
@@ -1948,6 +2249,106 @@ components:
       - expected_revision
       - payload
       title: ThesisRevisionUpdateIn
+      type: object
+    TimelineEventOut:
+      properties:
+        actor_name:
+          title: Actor Name
+          type: string
+        actor_type:
+          enum:
+          - human
+          - system
+          - preset_ai
+          title: Actor Type
+          type: string
+        after:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: After
+        before:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Before
+        detail_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail Url
+        dimension:
+          enum:
+          - material
+          - ai_analysis
+          - human_review
+          - hypothesis_health
+          - logic_decision
+          title: Dimension
+          type: string
+        event_id:
+          title: Event Id
+          type: string
+        event_type:
+          title: Event Type
+          type: string
+        occurred_at:
+          format: date-time
+          title: Occurred At
+          type: string
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        related_object_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Related Object Id
+        related_object_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Related Object Type
+        summary:
+          title: Summary
+          type: string
+        thesis_id:
+          title: Thesis Id
+          type: string
+      required:
+      - event_id
+      - thesis_id
+      - dimension
+      - event_type
+      - occurred_at
+      - actor_type
+      - actor_name
+      - summary
+      title: TimelineEventOut
+      type: object
+    TimelinePageOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/TimelineEventOut'
+          title: Items
+          type: array
+        limit:
+          title: Limit
+          type: integer
+        offset:
+          title: Offset
+          type: integer
+        total:
+          title: Total
+          type: integer
+      required:
+      - total
+      - limit
+      - offset
+      title: TimelinePageOut
       type: object
     TrendPointOut:
       description: 趋势上的一个点。值用字符串传，理由见模块文档第 1 条。
@@ -2655,6 +3056,118 @@ paths:
       summary: Publish Thesis Revision
       tags:
       - assets
+  /api/demo/theses/{thesis_id}/documents:
+    post:
+      operationId: upload_demo_material_api_demo_theses__thesis_id__documents_post
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_demo_material_api_demo_theses__thesis_id__documents_post'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoUploadOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Upload Fixed Demo Material
+      tags:
+      - demo
+  /api/documents/{document_id}/citation:
+    get:
+      operationId: get_document_citation_api_documents__document_id__citation_get
+      parameters:
+      - in: path
+        name: document_id
+        required: true
+        schema:
+          title: Document Id
+          type: string
+      - in: query
+        name: locator
+        required: true
+        schema:
+          title: Locator
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CitationContextOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Document Citation Context
+      tags:
+      - demo
   /api/documents/{document_id}/segments/{ordinal}:
     get:
       operationId: get_document_segment_api_documents__document_id__segments__ordinal__get
@@ -2822,6 +3335,62 @@ paths:
       summary: Act On Evidence
       tags:
       - thesis
+  /api/evidence/{evidence_id}/analysis:
+    get:
+      operationId: get_evidence_analysis_api_evidence__evidence_id__analysis_get
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: query
+        name: relation_id
+        required: true
+        schema:
+          title: Relation Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceAnalysisOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Preset Evidence Analysis
+      tags:
+      - demo
   /api/evidence/{evidence_id}/relations:
     get:
       description: 兼容输出当前单关联记录；多关联迁移后保持同一路径与响应形状。
@@ -4629,6 +5198,59 @@ paths:
       summary: Set Hypothesis Mapping
       tags:
       - thesis
+  /api/theses/{thesis_id}/hypothesis-health:
+    get:
+      operationId: get_hypothesis_health_api_theses__thesis_id__hypothesis_health_get
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/HypothesisHealthOut'
+                title: Response Get Hypothesis Health Api Theses  Thesis Id  Hypothesis Health Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Derived Hypothesis Health
+      tags:
+      - demo
   /api/theses/{thesis_id}/publish:
     post:
       description: 发布，生成 V1（FR-T-005）。只有负责人可以发布。
@@ -4859,6 +5481,95 @@ paths:
       summary: List Suggestions
       tags:
       - thesis
+  /api/theses/{thesis_id}/timeline:
+    get:
+      operationId: get_thesis_timeline_api_theses__thesis_id__timeline_get
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: query
+        name: dimension
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - material
+            - ai_analysis
+            - human_review
+            - hypothesis_health
+            - logic_decision
+            type: string
+          - type: 'null'
+          title: Dimension
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      - in: query
+        name: order
+        required: false
+        schema:
+          const: asc
+          default: asc
+          title: Order
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelinePageOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Structured Thesis Timeline
+      tags:
+      - demo
   /api/theses/{thesis_id}/trends:
     get:
       description: '按假设返回趋势（FR-V-002：最近 4-8 期）。
