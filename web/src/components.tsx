@@ -3,6 +3,18 @@ import { NavLink } from 'react-router-dom'
 import type { ConfirmationState, Direction, EvidenceFeedItem, Priority, ThesisSummary, ValidationItem } from './types'
 import { directionText, formatDate, priorityText, stateText } from './ui'
 
+export function Icon({ name, size = 18 }: { name: string; size?: number }) {
+  const paths: Record<string, ReactNode> = {
+    graph: <><circle cx="5" cy="6" r="2" /><circle cx="19" cy="5" r="2" /><circle cx="17" cy="19" r="2" /><path d="M7 6l10-1M6 8l10 9m2-10-1 10" /></>,
+    grid: <><rect x="4" y="4" width="6" height="6" /><rect x="14" y="4" width="6" height="6" /><rect x="4" y="14" width="6" height="6" /><rect x="14" y="14" width="6" height="6" /></>,
+    radar: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 4v8l5 3" /></>,
+    check: <><path d="M5 12l4 4L19 6" /><path d="M4 4h16v16H4z" /></>,
+    archive: <><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6" /></>,
+    upload: <><path d="M12 16V4m0 0L7 9m5-5 5 5" /><path d="M5 15v4h14v-4" /></>,
+  }
+  return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{paths[name]}</svg>
+}
+
 export function StatusBadge({ state }: { state: ConfirmationState }) {
   return <span className={`badge status-${state}`}><i />{stateText[state]}</span>
 }

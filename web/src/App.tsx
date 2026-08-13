@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { createDraft, createSecurity, getJob, listSecurities, listTheses, uploadDocument, useMock } from './api'
-import { InlineError, ResearchContextPicker } from './components'
+import { Icon, InlineError, ResearchContextPicker } from './components'
 import type { JobAccepted, ThesisDetail } from './types'
 import { AssetPage, EvidencePage, RadarPage, ReviewsPage, ThesisListPage, ThesisPage, WorkbenchPage } from './pages'
 
@@ -22,15 +22,24 @@ export function App() {
   const currentThesisId = routeThesis ?? queryThesis
   const radarPath = currentThesisId ? `/radar?thesisId=${encodeURIComponent(currentThesisId)}` : '/radar'
   const navigation = [
-    ['工作台', '/workbench', '01'],
-    ['变化雷达', radarPath, '02'],
-    ['投资逻辑', '/theses', '03'],
-    ['复核与复盘', '/reviews', '04'],
-    ['资产治理', '/assets', '05'],
+    ['工作台', '/workbench', '01', 'grid'],
+    ['变化雷达', radarPath, '02', 'radar'],
+    ['投资逻辑', '/theses', '03', 'graph'],
+    ['复核与复盘', '/reviews', '04', 'check'],
+    ['资产治理', '/assets', '05', 'archive'],
   ] as const
+  const isNavigationActive = (label: string, path: string) => location.pathname === path || (label === '变化雷达' && location.pathname.startsWith('/radar')) || (label === '投资逻辑' && location.pathname.startsWith('/theses'))
+  const activeIndex = navigation.findIndex(([label, path]) => isNavigationActive(label, path))
   return <div className="app-shell">
-    <aside className="sidebar"><div className="brand"><span className="brand-mark">IR</span><div><strong>权益投研</strong><span>AI Copilot</span></div></div><nav>{navigation.map(([label, path, index]) => <NavLink key={label} to={path} className={({ isActive }) => isActive || (label === '变化雷达' && location.pathname.startsWith('/radar')) || (label === '投资逻辑' && location.pathname.startsWith('/theses')) ? 'active' : ''}><span>{index}</span>{label}</NavLink>)}</nav><div className="sidebar-footer"><span className="live-dot" />{useMock ? '受控 Mock 数据' : '真实公开数据'}<small>研究辅助 · 人工决策</small></div></aside>
-    <div className="workspace"><header className="topbar"><ResearchContextPicker theses={theses.data ?? []} value={currentThesisId} onChange={(id) => id ? navigate(`/radar?thesisId=${encodeURIComponent(id)}`) : navigate('/workbench')} /><div className="top-actions"><button className="button secondary" onClick={() => setShowUpload(true)}>上传研究资料</button><button className="button secondary" onClick={() => setShowCreate(true)}>＋ 新建投资逻辑</button></div></header><main className="main-content"><Routes><Route path="/workbench" element={<WorkbenchPage />} /><Route path="/radar" element={<RadarPage />} /><Route path="/radar/:evidenceId" element={<EvidencePage />} /><Route path="/theses" element={<ThesisListPage />} /><Route path="/theses/:thesisId" element={<ThesisPage />} /><Route path="/reviews" element={<ReviewsPage />} /><Route path="/assets" element={<AssetPage />} /><Route path="*" element={<Navigate to="/workbench" replace />} /></Routes></main></div>
+    <a className="skip-link" href="#main-content">跳到主要内容</a>
+    <header className="global-topbar">
+      <NavLink to="/workbench" className="brand" aria-label="返回工作台"><span className="brand-mark"><Icon name="graph" size={20} /></span><span className="brand-copy"><strong>RESEARCH GRAPH</strong><small>AI INVESTMENT COPILOT</small></span></NavLink>
+      <div className="terminal-meta"><span className="live-dot" /><span>{useMock ? 'CONTROLLED MOCK' : 'PUBLIC DATA · LIVE'}</span><span className="mono">HUMAN GATED</span></div>
+    </header>
+    <aside className="sidebar" aria-label="产品主导航"><div className="rail-heading"><span className="mono">0{Math.max(0, activeIndex) + 1}</span><small>RESEARCH DESK</small></div><nav>{navigation.map(([label, path, index, icon]) => <NavLink key={label} to={path} aria-label={label} className={() => isNavigationActive(label, path) ? 'active' : ''}><Icon name={icon} size={18} /><span className="nav-copy"><b>{label}</b><small className="mono">{index}</small></span></NavLink>)}</nav><div className="sidebar-footer"><span><i className="live-dot" />{useMock ? '受控 Mock 数据' : '真实公开数据'}</span><small>研究辅助 · 人工决策</small></div></aside>
+    <div className="workspace"><header className="workspace-bar"><ResearchContextPicker theses={theses.data ?? []} value={currentThesisId} onChange={(id) => id ? navigate(`/radar?thesisId=${encodeURIComponent(id)}`) : navigate('/workbench')} /><div className="top-actions"><button className="button secondary" onClick={() => setShowUpload(true)}><Icon name="upload" size={15} />上传研究资料</button><button className="button primary" onClick={() => setShowCreate(true)}><span aria-hidden>＋</span>新建投资逻辑</button></div></header><main className="main-content" id="main-content" tabIndex={-1}><Routes><Route path="/workbench" element={<WorkbenchPage />} /><Route path="/radar" element={<RadarPage />} /><Route path="/radar/:evidenceId" element={<EvidencePage />} /><Route path="/theses" element={<ThesisListPage />} /><Route path="/theses/:thesisId" element={<ThesisPage />} /><Route path="/reviews" element={<ReviewsPage />} /><Route path="/assets" element={<AssetPage />} /><Route path="*" element={<Navigate to="/workbench" replace />} /></Routes></main></div>
+    <nav className="mobile-nav" aria-label="移动端主导航">{navigation.map(([label, path, , icon]) => <NavLink key={label} to={path} aria-label={label} className={() => isNavigationActive(label, path) ? 'active' : ''}><Icon name={icon} size={18} /><span>{label}</span></NavLink>)}</nav>
+    <footer className="disclaimer">AI 生成内容仅作为研究候选 · 所有证据、关系与状态变更均需人工确认<span className="mono">AUDITABLE / TRACEABLE / HUMAN-GATED</span></footer>
     {showCreate && <CreateDraftDialog onClose={() => setShowCreate(false)} />}
     {showUpload && <UploadDocumentDialog theses={theses.data ?? []} initialThesisId={currentThesisId} onClose={() => setShowUpload(false)} />}
   </div>
