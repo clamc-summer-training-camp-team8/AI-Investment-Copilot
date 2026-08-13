@@ -15,6 +15,7 @@ from arq import Retry
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
 from app.ai.providers.local import LocalProvider
+from app.ai.runtime import InvestmentResearchAgent
 from app.core.config import Settings
 from app.core.domain import DocumentSecurityRelationRecord, EventRecord
 from app.core.enums import AiStatus
@@ -24,6 +25,7 @@ from app.ingest.segmentation import event_fingerprint
 from app.services import assets as asset_service
 from app.services import document as document_service
 from app.services import ingestion as ingestion_service
+from app.services.ai_runtime import SqlRuntimeRecorder
 from app.services.object_store import S3ObjectStore
 from app.services.permission import Actor
 from app.services.review import create_task
@@ -373,9 +375,13 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                         events=persisted_events,
                     )
 
+                runtime = InvestmentResearchAgent.build(
+                    gateway,
+                    recorder=SqlRuntimeRecorder(),
+                )
                 chain = process_events(
                     uow,
-                    gateway,
+                    runtime,
                     events=new_events,
                     security_id=security_id,
                     actor=actor,

@@ -294,6 +294,7 @@ class HttpProvider:
         repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         self._last_model_metadata = {}
+        started_at = time.perf_counter()
         headers = {"Content-Type": "application/json"}
         if self._settings.llm_api_key is not None:
             headers["Authorization"] = f"Bearer {self._settings.llm_api_key.get_secret_value()}"
@@ -356,6 +357,8 @@ class HttpProvider:
                     "request_id": body.get("id"),
                     "usage": body.get("usage"),
                     "finish_reason": finish_reason,
+                    "latency_ms": int((time.perf_counter() - started_at) * 1000),
+                    "attempt_count": attempt + 1,
                 }.items()
                 if value is not None
             }

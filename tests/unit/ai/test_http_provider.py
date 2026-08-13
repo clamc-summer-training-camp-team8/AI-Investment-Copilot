@@ -172,7 +172,10 @@ def test_deepseek_flash_request_is_deterministic_and_retries_empty_json() -> Non
         "request_id": "ds-valid",
         "usage": {"prompt_tokens": 100, "completion_tokens": 50},
         "finish_reason": "stop",
+        "latency_ms": outcome.payload["model_metadata"]["latency_ms"],
+        "attempt_count": 2,
     }
+    assert outcome.payload["model_metadata"]["latency_ms"] >= 0
 
 
 def test_deepseek_endpoint_requires_server_side_api_key() -> None:
