@@ -257,10 +257,16 @@ def reset_demo_case() -> dict[str, Any]:
         session.execute(delete(ThesisVersion).where(ThesisVersion.thesis_id == DEMO_THESIS_ID))
         session.execute(
             delete(AuditLog).where(
-                ((AuditLog.object_type == "thesis_timeline") & (AuditLog.object_id == DEMO_THESIS_ID))
+                (
+                    (AuditLog.object_type == "thesis_timeline")
+                    & (AuditLog.object_id == DEMO_THESIS_ID)
+                )
                 | ((AuditLog.object_type == "thesis") & (AuditLog.object_id == DEMO_THESIS_ID))
                 | ((AuditLog.object_type == "evidence") & (AuditLog.object_id == EVIDENCE_ID))
-                | ((AuditLog.object_type == "evidence_relation") & (AuditLog.object_id == RELATION_ID))
+                | (
+                    (AuditLog.object_type == "evidence_relation")
+                    & (AuditLog.object_id == RELATION_ID)
+                )
             )
         )
         session.execute(
@@ -332,7 +338,13 @@ def reset_demo_case() -> dict[str, Any]:
                 "平均产能利用率低于80%即说明新增产能未被有效消化；[连续1期]低于80%则该假设失效",
             ),
         }
-        for key, (name, statement, hypothesis_type, window, invalidation_rule) in hypothesis_specs.items():
+        for key, (
+            name,
+            statement,
+            hypothesis_type,
+            window,
+            invalidation_rule,
+        ) in hypothesis_specs.items():
             session.add(
                 Hypothesis(
                     hypothesis_id=HYPOTHESIS_IDS[key],
@@ -387,9 +399,7 @@ def reset_demo_case() -> dict[str, Any]:
                     expected_value=THRESHOLDS[key],
                     expectation_source="历史演示投资逻辑于2023-01-15设定",
                     validation_rule=f"{METRIC_NAMES[key]}不低于{THRESHOLDS[key]}%",
-                    invalidation_rule=(
-                        f"[连续1期]{METRIC_NAMES[key]}低于{THRESHOLDS[key]}%则失效"
-                    ),
+                    invalidation_rule=(f"[连续1期]{METRIC_NAMES[key]}低于{THRESHOLDS[key]}%则失效"),
                     invalidation_threshold=THRESHOLDS[key],
                     observation_frequency="年度",
                     confirmation_status="已确认",
@@ -643,10 +653,7 @@ def upload_material(
             summary="FY2023 三项指标均触发失效条件，健康投影更新为承压",
             related_object_type="document",
             related_object_id=DOCUMENT_ID,
-            after={
-                METRIC_NAMES[key]: f"{OBSERVATIONS[key]}%"
-                for key in HYPOTHESIS_IDS
-            },
+            after={METRIC_NAMES[key]: f"{OBSERVATIONS[key]}%" for key in HYPOTHESIS_IDS},
             reason="三项条件要求连续1期，本次FY2023观察均低于阈值",
         )
         session.flush()
@@ -831,12 +838,8 @@ def get_hypothesis_health(*, thesis_id: str, actor: Actor) -> list[dict[str, Any
         result = []
         for hypothesis in hypotheses:
             related = [item for item in relations if item.hypothesis_id == hypothesis.hypothesis_id]
-            support = sum(
-                item.status == "已确认" and item.direction == "支持" for item in related
-            )
-            conflict = sum(
-                item.status == "已确认" and item.direction == "冲突" for item in related
-            )
+            support = sum(item.status == "已确认" and item.direction == "支持" for item in related)
+            conflict = sum(item.status == "已确认" and item.direction == "冲突" for item in related)
             pending = sum(item.status == "待确认" for item in related)
             mapping = mappings.get(hypothesis.hypothesis_id)
             observation = (

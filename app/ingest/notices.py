@@ -22,8 +22,14 @@ from app.ingest.parsers.base import ParsedDocument, ParseError, RawSegment
 
 NOTICE_PARSER_VERSION: Final = "notice-html-v1"
 _TAG_RE = re.compile(r"<[^>]+>")
-_BLOCK_RE = re.compile(r"<(?:p|div|section|article|br|tr|li|h[1-6])\b[^>]*>|</(?:p|div|section|article|tr|li|h[1-6])>", re.I)
-_NON_CONTENT_RE = re.compile(r"<(?:head|script|style|noscript|nav|footer)\b[^>]*>.*?</(?:head|script|style|noscript|nav|footer)>", re.I | re.S)
+_BLOCK_RE = re.compile(
+    r"<(?:p|div|section|article|br|tr|li|h[1-6])\b[^>]*>|</(?:p|div|section|article|tr|li|h[1-6])>",
+    re.I,
+)
+_NON_CONTENT_RE = re.compile(
+    r"<(?:head|script|style|noscript|nav|footer)\b[^>]*>.*?</(?:head|script|style|noscript|nav|footer)>",
+    re.I | re.S,
+)
 _PDF_RE = re.compile(r"https?://[^\\x22\\x27\\s<>]+?\\.pdf(?:\\?[^\\x22\\x27\\s<>]*)?", re.I)
 
 

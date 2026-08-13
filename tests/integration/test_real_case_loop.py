@@ -21,13 +21,15 @@ from app.calc.deterministic import (
     expectation_gap,
     period_over_period,
 )
-from app.core.config import settings
+from app.core.config import Settings
 from app.core.enums import ConfirmationStatus, ExpectationDirection, ThesisStatus
 from app.core.timeutil import BUSINESS_TZ, ensure_aware, is_leakage
 from app.services import status as status_service
 from tests.fakes import build_fake_uow
 
 run_real_case = pytest.importorskip("scripts.run_real_case")
+
+settings = Settings(_env_file=None, llm_provider="local")
 
 pytestmark = pytest.mark.skipif(
     not (run_real_case.REAL_DATA_DIR / "observations.csv").is_file(),
