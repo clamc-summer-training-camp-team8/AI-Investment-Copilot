@@ -1,4 +1,5 @@
 from app.db.base import Base
+from app.db.models.ai import AiRun, ModelCallLog
 from app.db.models.assets import (
     DocumentRevision,
     DocumentSecurityRelation,
@@ -11,7 +12,6 @@ from app.db.models.assets import (
     Source,
     ThesisRevisionDraft,
 )
-from app.db.models.ai import AiRun, ModelCallLog
 from app.db.models.core import (
     Document,
     DocumentFact,

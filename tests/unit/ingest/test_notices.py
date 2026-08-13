@@ -6,7 +6,6 @@ import httpx
 
 from app.ingest.notices import NoticeFetcher, NoticeRecord, parse_notice_html
 
-
 HTML = """
 <html><head><title>测试</title><script>ignore()</script></head>
 <body><nav>导航菜单</nav><article>

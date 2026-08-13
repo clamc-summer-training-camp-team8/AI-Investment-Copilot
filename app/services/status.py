@@ -28,7 +28,7 @@ from app.calc.rules import (
 from app.core.config import RuleThresholds
 from app.core.enums import ConfirmationStatus, ThesisStatus
 from app.core.timeutil import now
-from app.services import audit, version
+from app.services import audit, demo, version
 from app.services.errors import HumanGateRequired, IllegalTransition, ValidationFailed
 from app.services.ports import (
     HypothesisRecord,
@@ -197,6 +197,27 @@ def record_suggestion(
             "reasons": list(suggestion.reasons),
         },
     )
+    demo.record_timeline(
+        uow.audit,
+        thesis_id=thesis.thesis_id,
+        actor=actor,
+        action="生成状态建议",
+        dimension="logic_decision",
+        event_type="status_suggestion_created",
+        actor_type="system",
+        summary=(
+            f"规则引擎建议逻辑状态由「{thesis.status.value}」"
+            f"调整为「{suggestion.suggested_status.value}」"
+        ),
+        related_object_type="status_suggestion",
+        related_object_id=str(saved.suggestion_id),
+        after={
+            "current_status": thesis.status.value,
+            "suggested_status": suggestion.suggested_status.value,
+        },
+        reason="；".join(suggestion.reasons),
+        detail_url=f"/theses/{thesis.thesis_id}/decision",
+    )
     return saved
 
 
@@ -248,6 +269,22 @@ def apply_decision(
             object_id=thesis.thesis_id,
             detail={"reason": reason, "suggestion_id": suggestion_id},
         )
+        demo.record_timeline(
+            uow.audit,
+            thesis_id=thesis.thesis_id,
+            actor=actor,
+            action="拒绝状态建议",
+            dimension="logic_decision",
+            event_type="status_suggestion_rejected",
+            actor_type="human",
+            summary="负责人拒绝状态建议，正式逻辑状态保持不变",
+            related_object_type="status_suggestion",
+            related_object_id=str(suggestion_id),
+            before={"status": thesis.status.value},
+            after={"status": thesis.status.value},
+            reason=reason,
+            detail_url=f"/theses/{thesis.thesis_id}/decision",
+        )
         return thesis
 
     new_status = target_status if action == MODIFY else record.suggested_status
@@ -291,6 +328,22 @@ def apply_decision(
             "reason": reason,
             "suggestion_id": suggestion_id,
         },
+    )
+    demo.record_timeline(
+        uow.audit,
+        thesis_id=thesis.thesis_id,
+        actor=actor,
+        action=audit.STATUS_CHANGE,
+        dimension="logic_decision",
+        event_type="thesis_status_changed",
+        actor_type="human",
+        summary=f"负责人{action}状态建议，正式状态更新为「{new_status.value}」",
+        related_object_type="thesis",
+        related_object_id=thesis.thesis_id,
+        before={"status": thesis.status.value, "version": thesis.version},
+        after={"status": new_status.value, "version": updated.version},
+        reason=reason,
+        detail_url=f"/theses/{thesis.thesis_id}",
     )
     return updated
 

@@ -80,7 +80,7 @@ class StatusDecisionIn(Base):
     """状态建议处置入参。
 
     `reason` 是必填且非空：正式状态变更必须填原因（FR-S-003）。这里就拦住，
-    不要等到服务层——但服务层也拦一次，因为 API 不是唯一入口。
+    服务层也会再拦一次，因为 API 不是唯一入口。
     """
 
     suggestion_id: int
