@@ -11,11 +11,18 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import Any
 
-from app.ai.prompts.templates import EVENT_EXTRACTION, EVENT_IMPACT, THESIS_DRAFT
+from app.ai.prompts.templates import (
+    EVENT_EXTRACTION,
+    EVENT_IMPACT,
+    METRIC_EXPLAIN,
+    REVIEW_DRAFT,
+    THESIS_DRAFT,
+)
 from app.core.config import Settings
 from app.core.enums import AiStatus, ImpactDirection, SignalDirection
 from app.core.timeutil import now
@@ -125,6 +132,10 @@ class LocalProvider:
     def model_version(self) -> str:
         return self._settings.llm_model_version
 
+    @property
+    def supports_repair(self) -> bool:
+        return False
+
     def analyze_event_impact(
         self,
         *,
@@ -140,12 +151,14 @@ class LocalProvider:
         retrieval_context: list[tuple[str, str]] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
+        context: str = "",
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """产出符合 contracts/ai/event_impact.schema.json 的载荷。"""
         # The deterministic provider deliberately ignores retrieval text.  It
         # keeps the pilot's execution contract testable without pretending a
         # lexical rule engine can consume semantic RAG context.
-        _ = retrieval_context
+        _ = context, repair_errors, retrieval_context
         verdict = judge_impact(segment_text)
         return {
             "document_id": document_id,
@@ -229,12 +242,16 @@ class LocalProvider:
         view: str,
         segments: list[tuple[str, str]],
         source_document_id: str | None = None,
+        investment_context: dict[str, Any] | None = None,
+        industry_metrics: list[dict[str, Any]] | None = None,
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """从资料正文生成卡片草稿。
 
         标题与核心观点截断到 PRD 4.3 的 40 / 200 字上限。假设不足两条时补一条
         兜底观察项——Schema 要求至少两条，硬性凑数不如显式标注为待补充。
         """
+        _ = investment_context, industry_metrics, repair_errors
         hypotheses = _extract_hypotheses(segments)
         return {
             "source_document_id": source_document_id,
@@ -252,6 +269,84 @@ class LocalProvider:
             "generated_at": now().isoformat(),
             "ai_status": AiStatus.CANDIDATE.value,
             "confidence": 0.7 if len(hypotheses) >= 2 else 0.5,
+        }
+
+    def explain_metric(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, Any],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """解释程序结果，不重新计算或修正输入数值。"""
+        verdict = str(calc_result.get("verdict") or calc_result.get("status") or "信息不足")
+        summary = str(
+            calc_result.get("display_text")
+            or calc_result.get("summary")
+            or json.dumps(calc_result, ensure_ascii=False, sort_keys=True)
+            or "程序没有提供可解释结果"
+        )
+        return {
+            "security_id": security_id,
+            "hypothesis_id": hypothesis_id,
+            "summary": summary[:500],
+            "meaning": f"程序规则结论为“{verdict}”，需结合假设“{hypothesis}”人工判断。",
+            "suggested_tracking": ["按相同口径跟踪下一报告期程序计算结果"],
+            "calculation_source": "app.calc",
+            "confidence": 0.8 if calc_result else 0.4,
+            "model_version": self.model_version,
+            "prompt_version": METRIC_EXPLAIN.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
+    def draft_review(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        records: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """按输入记录生成复盘草稿，不补充外部事实。"""
+        supporting: list[str] = []
+        conflicting: list[str] = []
+        open_questions: list[str] = []
+        citations: list[str] = []
+        for record in records:
+            statement = str(
+                record.get("fact") or record.get("summary") or record.get("title") or ""
+            )
+            direction = str(record.get("impact_direction") or record.get("direction") or "")
+            if direction == ImpactDirection.SUPPORT.value and statement:
+                supporting.append(statement[:300])
+            elif direction == ImpactDirection.CONFLICT.value and statement:
+                conflicting.append(statement[:300])
+            elif statement:
+                open_questions.append(statement[:300])
+            locator = str(record.get("locator") or record.get("evidence_locator") or "")
+            if re.fullmatch(r"[A-Za-z0-9_.-]+#paragraph-[0-9]+", locator):
+                citations.append(locator)
+        return {
+            "security_id": security_id,
+            "thesis_id": thesis_id,
+            "period_start": period_start,
+            "period_end": period_end,
+            "summary": f"复盘区间内收到 {len(records)} 条已有记录，结论需研究员确认。",
+            "supporting_changes": supporting,
+            "conflicting_changes": conflicting,
+            "open_questions": open_questions,
+            "citations": list(dict.fromkeys(citations)),
+            "requires_human_review": True,
+            "confidence": 0.75 if records else 0.4,
+            "model_version": self.model_version,
+            "prompt_version": REVIEW_DRAFT.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
         }
 
 

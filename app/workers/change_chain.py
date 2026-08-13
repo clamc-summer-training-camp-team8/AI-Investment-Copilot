@@ -15,11 +15,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import datetime
 from decimal import Decimal
 from hashlib import sha256
 
+from app.ai.agents import AgentEvent, CandidateHypothesis
+from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
+from app.ai.retrieval import KeywordRetriever, RetrievalDocument
+from app.ai.runtime import InvestmentResearchAgent
 from app.calc.rules import StatusSuggestion
 from app.core.config import RuleThresholds, Settings
 from app.core.enums import AiStatus, ConfirmationStatus, ImpactDirection
@@ -153,7 +156,7 @@ def _rag_context(
 
 def process_events(
     uow: UnitOfWork,
-    gateway: Gateway,
+    ai: Gateway | InvestmentResearchAgent,
     *,
     events: list[ExtractedEvent],
     security_id: str,
@@ -169,7 +172,6 @@ def process_events(
     """处理一批事件，产出候选证据与状态建议。"""
     kept, sources = dedupe_events(events)
     recalled = thesis.recall_candidates(uow, security_id=security_id, actor=actor)
-
     candidates: list[EvidenceRecord] = []
     deferred: list[tuple[str, str]] = []
     suggestions: list[tuple[str, StatusSuggestion]] = []
@@ -184,6 +186,40 @@ def process_events(
         )
         for event in kept
     }
+    retriever = KeywordRetriever()
+    retrieval_documents: list[RetrievalDocument] = []
+    for event in kept:
+        locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
+        if locator:
+            retrieval_documents.append(
+                RetrievalDocument(
+                    document_id=event.document_id,
+                    security_id=security_id,
+                    locator=locator,
+                    content=event.summary,
+                    published_at=event.disclosure_time,
+                    visibility_label=source_visibility_label,
+                    source=document_title or event.document_id,
+                )
+            )
+        retrieval_documents.extend(
+            RetrievalDocument(
+                document_id=hit_locator.split("#", maxsplit=1)[0],
+                security_id=security_id,
+                locator=hit_locator,
+                content=content,
+                published_at=event.disclosure_time,
+                visibility_label=source_visibility_label,
+                source="RAG试点召回",
+            )
+            for hit_locator, content in rag_contexts[event.event_id]
+        )
+    retriever.add(retrieval_documents)
+    if isinstance(ai, InvestmentResearchAgent):
+        runtime = ai
+        runtime.logic_change.retriever.add(retrieval_documents)
+    else:
+        runtime = InvestmentResearchAgent.build(ai, retriever=retriever)
 
     for record, hypotheses in recalled:
         touched = False
@@ -235,20 +271,41 @@ def process_events(
                 deferred.append((event.event_id, "缺少引用定位，无法进入证据链"))
                 continue
 
-            outcome = gateway.event_impact(
-                document_id=event.document_id,
-                security_id=security_id,
-                segment_locator=locator,
-                segment_text=event.summary,
-                disclosure_time=_iso(event.disclosure_time),
-                thesis_id=record.thesis_id,
-                hypothesis_id=hypothesis_id,
-                thesis_context=record.core_view,
-                hypothesis_context=hypothesis_context,
-                retrieval_context=rag_contexts[event.event_id],
-                event_type=event.event_type,
-                occurred_on=event.occurred_on.isoformat() if event.occurred_on else None,
+            execution = runtime.analyze_event(
+                AgentEvent(
+                    event_id=event.event_id,
+                    document_id=event.document_id,
+                    security_id=security_id,
+                    segment_locator=locator,
+                    segment_text=event.summary,
+                    disclosure_time=event.disclosure_time,
+                    event_type=event.event_type,
+                    occurred_on=event.occurred_on,
+                ),
+                [
+                    CandidateHypothesis(
+                        thesis_id=record.thesis_id,
+                        hypothesis_id=hypothesis_id,
+                        statement=str(target_hypothesis.statement),
+                        thesis_context=str(record.core_view) or None,
+                        hypothesis_context=hypothesis_context,
+                    )
+                ],
+                allowed_visibility=actor.document_labels,
+                top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
+                idempotency_key=(
+                    f"event:{event.event_id}:thesis:{record.thesis_id}:hypothesis:{hypothesis_id}"
+                ),
             )
+            if execution.retryable:
+                raise ModelUnavailable(
+                    execution.degraded_reason or "Runtime 暂时不可用",
+                    retryable=True,
+                )
+            if execution.result is None or not execution.result.impacts:
+                deferred.append((event.event_id, "Runtime 未生成候选影响，转人工"))
+                continue
+            outcome = execution.result.impacts[0].outcome
 
             audit.record_model_call(
                 uow.audit,
@@ -355,10 +412,6 @@ def process_events(
         deferred=deferred,
         matched_theses=[r.thesis_id for r, _ in recalled],
     )
-
-
-def _iso(value: datetime) -> str:
-    return value.isoformat()
 
 
 def _dec(value: object) -> Decimal | None:

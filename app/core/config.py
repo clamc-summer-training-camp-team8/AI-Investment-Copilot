@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     sample_pack_dir: Path = PROJECT_ROOT / "docs" / "data" / "数据分析交付包" / "业务样例包"
 
     # 模型网关。local 使用规则实现，不外发任何数据。
-    llm_provider: str = Field(default="local", pattern="^(local|http)$")
+    llm_provider: str = Field(default="local", pattern="^(local|http|mock)$")
     llm_endpoint: str | None = None
     llm_api_key: SecretStr | None = None
     llm_model_version: str = "local-rule-v1"
@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     llm_reasoning_effort: str = Field(default="low", pattern="^(low|high|max)$")
     llm_input_cost_per_million: float | None = Field(default=None, ge=0)
     llm_output_cost_per_million: float | None = Field(default=None, ge=0)
+    runtime_max_attempts: int = Field(default=3, ge=1, le=10)
     prompt_version: str = "prompts-v1"
 
     # Docker Desktop publishes Redis on the host IPv4 loopback.  Using

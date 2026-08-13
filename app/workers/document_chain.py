@@ -15,7 +15,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
+from app.ai.retrieval import RetrievalDocument
+from app.ai.runtime import InvestmentResearchAgent
 from app.core.enums import AiStatus, Severity
 from app.ingest.parsers.base import ParsedDocument, ParseError
 from app.ingest.parsers.text import parse_file
@@ -115,7 +118,7 @@ def process_document(
 
 def draft_from_document(
     uow: UnitOfWork,
-    gateway: Gateway,
+    ai: Gateway | InvestmentResearchAgent,
     *,
     thesis_id: str,
     security_id: str,
@@ -133,12 +136,34 @@ def draft_from_document(
 
     from app.services import thesis as thesis_service
 
-    outcome = gateway.thesis_draft(
+    if result.published_at is None:
+        return None
+    runtime = ai if isinstance(ai, InvestmentResearchAgent) else InvestmentResearchAgent.build(ai)
+    execution = runtime.draft_thesis(
         security_id=security_id,
         view=view,
-        segments=[(s.locator, s.content) for s in result.segments],
         source_document_id=result.document_id,
+        source_segments=[
+            RetrievalDocument(
+                document_id=result.document_id,
+                security_id=security_id,
+                locator=segment.locator,
+                content=segment.content,
+                published_at=result.published_at,
+            )
+            for segment in result.segments
+        ],
+        as_of=result.published_at,
+        idempotency_key=f"document:{result.document_id}:thesis:{thesis_id}",
     )
+    if execution.retryable:
+        raise ModelUnavailable(
+            execution.degraded_reason or "Runtime 暂时不可用",
+            retryable=True,
+        )
+    if execution.result is None:
+        return None
+    outcome = execution.result.outcome
 
     audit.record_model_call(
         uow.audit,

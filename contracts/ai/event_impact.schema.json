@@ -35,6 +35,28 @@
       "enum": ["相关", "不相关", "待定"],
       "description": "PRD 10.2 输出项『相关性』。不相关时 signal.direction 应为中性。"
     },
+    "citations": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"type": "string", "pattern": "^[A-Za-z0-9_.-]+#paragraph-[0-9]+$"},
+          {
+            "type": "object",
+            "required": ["locator"],
+            "additionalProperties": false,
+            "properties": {
+              "locator": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+#paragraph-[0-9]+$"}
+            }
+          }
+        ]
+      },
+      "description": "Supporting retrieval locators; they must be present in the input context."
+    },
+    "unsupported_claims": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Claims not supported by the input evidence."
+    },
     "event": {
       "type": "object",
       "required": ["event_type", "disclosure_time", "fact", "evidence_locator"],

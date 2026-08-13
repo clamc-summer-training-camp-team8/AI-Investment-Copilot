@@ -9,6 +9,8 @@ PRD 层级：AI 与规则层（模型侧）
 
 ```
 ai/
+├── agents/      五类业务能力及共享输入输出类型
+├── skills/      四个模型任务的版本化 SKILL.md
 ├── contracts/   契约校验器（Schema 本体在 contracts/ai/）
 ├── prompts/     提示词模板，带版本号
 └── providers/   模型网关：local 规则实现 / http 外部或私有兼容端点

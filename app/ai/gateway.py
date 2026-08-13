@@ -6,13 +6,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
 from app.ai.contracts.validator import ValidationOutcome, validate
 from app.ai.errors import ModelUnavailable
 from app.ai.providers.http import HttpProvider
 from app.ai.providers.local import LocalProvider
+from app.ai.providers.mock import MockProvider
 from app.core.config import Settings
 from app.core.config import settings as default_settings
 
@@ -26,6 +28,9 @@ class Provider(Protocol):
 
     @property
     def model_version(self) -> str: ...
+
+    @property
+    def supports_repair(self) -> bool: ...
 
     def analyze_event_impact(
         self,
@@ -42,6 +47,8 @@ class Provider(Protocol):
         retrieval_context: list[tuple[str, str]] | None = ...,
         event_type: str = ...,
         occurred_on: str | None = ...,
+        context: str = ...,
+        repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
     def draft_thesis(
@@ -51,6 +58,9 @@ class Provider(Protocol):
         view: str,
         segments: list[tuple[str, str]],
         source_document_id: str | None = ...,
+        investment_context: dict[str, Any] | None = ...,
+        industry_metrics: list[dict[str, Any]] | None = ...,
+        repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
     def extract_events(
@@ -59,6 +69,27 @@ class Provider(Protocol):
         document_id: str,
         segments: list[tuple[str, str]],
         disclosure_time: str,
+    ) -> dict[str, Any]: ...
+
+    def explain_metric(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, Any],
+        repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
+    def draft_review(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        records: list[dict[str, Any]],
+        repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
 
@@ -74,6 +105,8 @@ class Gateway:
         conf = settings or default_settings
         if conf.llm_provider == "local":
             return cls(settings=conf, provider=LocalProvider(conf))
+        if conf.llm_provider == "mock":
+            return cls(settings=conf, provider=MockProvider(conf))
         # 未配置端点时不静默退回 local：静默降级会让人以为在用真实模型，
         # 实际跑的是规则实现，进而污染模型评测结论。
         if not conf.llm_endpoint:
@@ -95,22 +128,28 @@ class Gateway:
         retrieval_context: list[tuple[str, str]] | None = None,
         event_type: str = "其他",
         occurred_on: str | None = None,
+        context: str = "",
+        repair_errors: list[str] | None = None,
     ) -> ValidationOutcome:
-        payload = self.provider.analyze_event_impact(
-            document_id=document_id,
-            security_id=security_id,
-            segment_locator=segment_locator,
-            segment_text=segment_text,
-            disclosure_time=disclosure_time,
-            thesis_id=thesis_id,
-            hypothesis_id=hypothesis_id,
-            thesis_context=thesis_context,
-            hypothesis_context=hypothesis_context,
-            retrieval_context=retrieval_context,
-            event_type=event_type,
-            occurred_on=occurred_on,
+        return self._validate_with_repair(
+            "event_impact",
+            lambda errors: self.provider.analyze_event_impact(
+                document_id=document_id,
+                security_id=security_id,
+                segment_locator=segment_locator,
+                segment_text=segment_text,
+                disclosure_time=disclosure_time,
+                thesis_id=thesis_id,
+                hypothesis_id=hypothesis_id,
+                thesis_context=thesis_context,
+                hypothesis_context=hypothesis_context,
+                retrieval_context=retrieval_context,
+                event_type=event_type,
+                occurred_on=occurred_on,
+                context=context,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
         )
-        return validate("event_impact", payload, thresholds=self.settings.rules)
 
     def extract_events(
         self,
@@ -133,11 +172,84 @@ class Gateway:
         view: str,
         segments: list[tuple[str, str]],
         source_document_id: str | None = None,
+        investment_context: dict[str, Any] | None = None,
+        industry_metrics: list[dict[str, Any]] | None = None,
+        repair_errors: list[str] | None = None,
     ) -> ValidationOutcome:
-        payload = self.provider.draft_thesis(
-            security_id=security_id,
-            view=view,
-            segments=segments,
-            source_document_id=source_document_id,
+        return self._validate_with_repair(
+            "thesis_draft",
+            lambda errors: self.provider.draft_thesis(
+                security_id=security_id,
+                view=view,
+                segments=segments,
+                source_document_id=source_document_id,
+                investment_context=investment_context,
+                industry_metrics=industry_metrics,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
         )
-        return validate("thesis_draft", payload, thresholds=self.settings.rules)
+
+    def metric_explain(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        calc_result: dict[str, Any],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        return self._validate_with_repair(
+            "metric_explain",
+            lambda errors: self.provider.explain_metric(
+                security_id=security_id,
+                hypothesis_id=hypothesis_id,
+                hypothesis=hypothesis,
+                calc_result=calc_result,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
+    def review_draft(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        records: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        return self._validate_with_repair(
+            "review_draft",
+            lambda errors: self.provider.draft_review(
+                security_id=security_id,
+                thesis_id=thesis_id,
+                period_start=period_start,
+                period_end=period_end,
+                records=records,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
+    def _validate_with_repair(
+        self,
+        schema_name: str,
+        invoke: Callable[[list[str] | None], dict[str, Any]],
+    ) -> ValidationOutcome:
+        outcome = validate(schema_name, invoke(None), thresholds=self.settings.rules)
+        if outcome.usable or not self.provider.supports_repair:
+            return outcome
+        repaired = validate(
+            schema_name,
+            invoke(outcome.errors),
+            thresholds=self.settings.rules,
+            allow_repair=False,
+        )
+        return replace(repaired, repaired=repaired.usable)
+
+
+def _merge_repair_errors(
+    requested: list[str] | None, validation: list[str] | None
+) -> list[str] | None:
+    errors = [*(requested or ()), *(validation or ())]
+    return errors or None

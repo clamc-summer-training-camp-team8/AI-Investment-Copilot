@@ -11,6 +11,7 @@ from app.db.models.assets import (
     Source,
     ThesisRevisionDraft,
 )
+from app.db.models.ai import AiRun, ModelCallLog
 from app.db.models.core import (
     Document,
     DocumentFact,
@@ -41,6 +42,7 @@ from app.db.models.governance import (
 
 __all__ = [
     "AdjudicationDecision",
+    "AiRun",
     "AuditLog",
     "Base",
     "DataQualityResult",
@@ -62,6 +64,7 @@ __all__ = [
     "Metric",
     "MetricAlias",
     "MetricObservation",
+    "ModelCallLog",
     "Outcome",
     "ReviewTask",
     "Security",
