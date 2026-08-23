@@ -5,17 +5,18 @@
 """
 
 from app.ai.agents import (
-    AgentEvent,
+    AgentEventInput,
     AgentImpact,
     AgentRunResult,
-    CandidateHypothesis,
     EvidenceAgent,
     EvidenceConsistency,
     EvidenceGrade,
     EvidenceValidation,
+    HypothesisInput,
     InvestmentLogicChangeAgent,
     MetricExplainAgent,
     MetricExplainRunResult,
+    MetricRuleInput,
     ReviewAgent,
     ReviewDraftRunResult,
     ThesisDraftAgent,
@@ -23,17 +24,18 @@ from app.ai.agents import (
 )
 
 __all__ = [
-    "AgentEvent",
+    "AgentEventInput",
     "AgentImpact",
     "AgentRunResult",
-    "CandidateHypothesis",
     "EvidenceAgent",
     "EvidenceConsistency",
     "EvidenceGrade",
     "EvidenceValidation",
+    "HypothesisInput",
     "InvestmentLogicChangeAgent",
     "MetricExplainAgent",
     "MetricExplainRunResult",
+    "MetricRuleInput",
     "ReviewAgent",
     "ReviewDraftRunResult",
     "ThesisDraftAgent",

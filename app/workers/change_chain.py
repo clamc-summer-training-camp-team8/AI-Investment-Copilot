@@ -18,7 +18,6 @@ from dataclasses import dataclass
 from decimal import Decimal
 from hashlib import sha256
 
-from app.ai.agents import AgentEvent, CandidateHypothesis
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument
@@ -33,7 +32,15 @@ from app.services import evidence as evidence_service
 from app.services import relation as relation_service
 from app.services import status as status_service
 from app.services.permission import Actor
-from app.services.ports import EvidenceRecord, UnitOfWork
+from app.services.ports import DocumentSegmentRecord, EvidenceRecord, UnitOfWork
+from app.workers.agent_input import (
+    EventAgentInputs,
+    EventEvidenceUnavailable,
+    build_event_agent_inputs,
+    build_historical_rag_context,
+    build_hypothesis_input,
+    index_current_event_segments,
+)
 
 
 @dataclass
@@ -162,6 +169,7 @@ def process_events(
     security_id: str,
     actor: Actor,
     thresholds: RuleThresholds,
+    current_event_segments: list[DocumentSegmentRecord],
     document_id: str = "",
     locator_by_event: dict[str, str] | None = None,
     document_title: str | None = None,
@@ -187,32 +195,31 @@ def process_events(
         for event in kept
     }
     retriever = KeywordRetriever()
+    segments_by_locator = index_current_event_segments(current_event_segments)
+    event_inputs: dict[str, EventAgentInputs] = {}
     retrieval_documents: list[RetrievalDocument] = []
     for event in kept:
-        locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
-        if locator:
-            retrieval_documents.append(
-                RetrievalDocument(
-                    document_id=event.document_id,
-                    security_id=security_id,
-                    locator=locator,
-                    content=event.summary,
-                    published_at=event.disclosure_time,
-                    visibility_label=source_visibility_label,
-                    source=document_title or event.document_id,
-                )
-            )
-        retrieval_documents.extend(
-            RetrievalDocument(
-                document_id=hit_locator.split("#", maxsplit=1)[0],
+        try:
+            inputs = build_event_agent_inputs(
+                event=event,
                 security_id=security_id,
-                locator=hit_locator,
-                content=content,
-                published_at=event.disclosure_time,
+                segments_by_locator=segments_by_locator,
+                locator_override=(locator_by_event or {}).get(event.event_id),
                 visibility_label=source_visibility_label,
-                source="RAG试点召回",
+                source=document_title or event.document_id,
             )
-            for hit_locator, content in rag_contexts[event.event_id]
+        except EventEvidenceUnavailable as exc:
+            deferred.append((event.event_id, str(exc)))
+            continue
+        event_inputs[event.event_id] = inputs
+        retrieval_documents.append(inputs.current_event_evidence)
+        retrieval_documents.extend(
+            build_historical_rag_context(
+                event=event,
+                security_id=security_id,
+                hits=rag_contexts[event.event_id],
+                visibility_label=source_visibility_label,
+            )
         )
     retriever.add(retrieval_documents)
     if isinstance(ai, InvestmentResearchAgent):
@@ -224,6 +231,9 @@ def process_events(
     for record, hypotheses in recalled:
         touched = False
         for event in kept:
+            inputs = event_inputs.get(event.event_id)
+            if inputs is None:
+                continue
             hypothesis_id = _pick_hypothesis(event, list(hypotheses))
             if hypothesis_id is None:
                 deferred.append((event.event_id, "未能落到具体假设，转人工判断"))
@@ -236,61 +246,15 @@ def process_events(
                 if str(getattr(hypothesis, "hypothesis_id", "")) == hypothesis_id
             )
             mappings = uow.thesis.list_mappings(hypothesis_id)
-            hypothesis_context: dict[str, object] = {
-                "statement": target_hypothesis.statement,
-                "hypothesis_type": target_hypothesis.hypothesis_type,
-                "importance": target_hypothesis.importance.value,
-                "expected_direction": (
-                    target_hypothesis.expected_direction.value
-                    if target_hypothesis.expected_direction is not None
-                    else None
-                ),
-                "invalidation_rule": target_hypothesis.invalidation_rule,
-                "metrics": [
-                    {
-                        "metric_id": mapping.metric_id,
-                        "expected_direction": mapping.expected_direction.value,
-                        "expected_value": (
-                            str(mapping.expected_value)
-                            if mapping.expected_value is not None
-                            else None
-                        ),
-                        "invalidation_threshold": (
-                            str(mapping.invalidation_threshold)
-                            if mapping.invalidation_threshold is not None
-                            else None
-                        ),
-                    }
-                    for mapping in mappings
-                ],
-            }
-
-            locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
-            if locator is None:
-                # 没有引用定位的结论不得进入正式证据链（DQ-005）
-                deferred.append((event.event_id, "缺少引用定位，无法进入证据链"))
-                continue
+            hypothesis_input = build_hypothesis_input(
+                thesis_record=record,
+                hypothesis=target_hypothesis,
+                mappings=mappings,
+            )
 
             execution = runtime.analyze_event(
-                AgentEvent(
-                    event_id=event.event_id,
-                    document_id=event.document_id,
-                    security_id=security_id,
-                    segment_locator=locator,
-                    segment_text=event.summary,
-                    disclosure_time=event.disclosure_time,
-                    event_type=event.event_type,
-                    occurred_on=event.occurred_on,
-                ),
-                [
-                    CandidateHypothesis(
-                        thesis_id=record.thesis_id,
-                        hypothesis_id=hypothesis_id,
-                        statement=str(target_hypothesis.statement),
-                        thesis_context=str(record.core_view) or None,
-                        hypothesis_context=hypothesis_context,
-                    )
-                ],
+                inputs.event,
+                hypothesis_input,
                 allowed_visibility=actor.document_labels,
                 top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
                 idempotency_key=(
@@ -354,7 +318,7 @@ def process_events(
                 hypothesis_id=hypothesis_id,
                 evidence_type=event.event_type,
                 direction=direction,
-                evidence_locator=locator,
+                evidence_locator=inputs.event.evidence_locator,
                 event_id=event.event_id,
                 strength=bucket.value if bucket is not None else None,
                 strength_score=score,

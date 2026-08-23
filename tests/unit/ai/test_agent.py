@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from decimal import Decimal
+from inspect import signature
 
 from app.ai.agent import (
-    AgentEvent,
-    CandidateHypothesis,
+    AgentEventInput,
     EvidenceAgent,
+    HypothesisInput,
     InvestmentLogicChangeAgent,
+    MetricRuleInput,
     ThesisDraftAgent,
 )
 from app.ai.contracts.validator import ValidationOutcome
@@ -59,6 +62,13 @@ class _ThesisContextGateway:
     def thesis_draft(self, **kwargs: object) -> ValidationOutcome:
         self.calls.append(kwargs)
         return self.delegate.thesis_draft(**kwargs)  # type: ignore[arg-type]
+
+
+def test_logic_change_agent_contract_is_single_hypothesis() -> None:
+    parameters = signature(InvestmentLogicChangeAgent.analyze).parameters
+
+    assert "hypothesis" in parameters
+    assert "candidates" not in parameters
 
 
 def test_thesis_draft_passes_structured_investment_context() -> None:
@@ -137,22 +147,33 @@ def test_agent_retries_invalid_citation_with_structured_context() -> None:
     )
     gateway = _CitationRetryGateway()
     result = InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever).analyze(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="new-001",
             security_id="000538.SZ",
-            segment_locator="new-001#paragraph-1",
-            segment_text="公司收入增长",
+            evidence_locator="new-001#paragraph-1",
+            fact="公司收入增长",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [
-            CandidateHypothesis(
-                thesis_id="THESIS-001",
-                hypothesis_id="H1",
-                statement="收入保持增长",
-                thesis_context="盈利增长依赖核心业务收入持续增长",
-            )
-        ],
+        HypothesisInput(
+            thesis_id="THESIS-001",
+            hypothesis_id="H1",
+            statement="收入保持增长",
+            thesis_core_view="盈利增长依赖核心业务收入持续增长",
+            hypothesis_type="经营",
+            importance="核心",
+            expected_direction="越高越好",
+            invalidation_rule="收入同比低于0%",
+            metric_rules=(
+                MetricRuleInput(
+                    metric_id="revenue_yoy",
+                    expected_direction="越高越好",
+                    expected_value=Decimal("10"),
+                    invalidation_threshold=Decimal("0"),
+                ),
+            ),
+        ),
     )
 
     assert len(gateway.calls) == 2
@@ -161,6 +182,18 @@ def test_agent_retries_invalid_citation_with_structured_context() -> None:
         "thesis_id": "THESIS-001",
         "hypothesis_id": "H1",
         "statement": "收入保持增长",
+        "hypothesis_type": "经营",
+        "importance": "核心",
+        "expected_direction": "越高越好",
+        "invalidation_rule": "收入同比低于0%",
+        "metrics": [
+            {
+                "metric_id": "revenue_yoy",
+                "expected_direction": "越高越好",
+                "expected_value": "10",
+                "invalidation_threshold": "0",
+            }
+        ],
         "retrieved_locators": ["history-001#paragraph-1"],
     }
     assert gateway.calls[1]["repair_errors"]
@@ -187,21 +220,20 @@ def test_agent_编排检索和事件影响分析() -> None:
     )
 
     result = agent.analyze(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="new-001",
             security_id="000538.SZ",
-            segment_locator="new-001#paragraph-1",
-            segment_text="公司收入增长。",
+            evidence_locator="new-001#paragraph-1",
+            fact="公司收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [
-            CandidateHypothesis(
-                thesis_id="THESIS-001",
-                hypothesis_id="THESIS-001-H1",
-                statement="核心业务收入保持增长",
-            )
-        ],
+        HypothesisInput(
+            thesis_id="THESIS-001",
+            hypothesis_id="THESIS-001-H1",
+            statement="核心业务收入保持增长",
+        ),
     )
 
     assert len(result.impacts) == 1
@@ -230,15 +262,16 @@ def test_agent_不把未来文档放入上下文() -> None:
     )
 
     result = agent.analyze(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="new-001",
             security_id="000538.SZ",
-            segment_locator="new-001#paragraph-1",
-            segment_text="公司收入增长。",
+            evidence_locator="new-001#paragraph-1",
+            fact="公司收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THESIS-001", "H1", "收入保持增长")],
+        HypothesisInput("THESIS-001", "H1", "收入保持增长"),
     )
 
     assert result.impacts[0].retrieval.items == []
@@ -287,15 +320,16 @@ def test_evidence_agent_拒绝检索结果之外的引用() -> None:
         gateway=Gateway.build(Settings(llm_provider="mock")),
         retriever=retriever,
     ).analyze(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="new-001",
             security_id="000538.SZ",
-            segment_locator="new-001#paragraph-1",
-            segment_text="收入增长。",
+            evidence_locator="new-001#paragraph-1",
+            fact="收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+        HypothesisInput("THESIS-001", "H1", "收入增长"),
     )
     impact = result.impacts[0]
     impact.outcome.payload["citations"] = [{"locator": "unknown#paragraph-9"}]
@@ -325,15 +359,16 @@ def test_evidence_agent_计算引用完整性评分() -> None:
         gateway=Gateway.build(Settings(llm_provider="mock")),
         retriever=retriever,
     ).analyze(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="new-001",
             security_id="000538.SZ",
-            segment_locator="new-001#paragraph-1",
-            segment_text="收入增长。",
+            evidence_locator="new-001#paragraph-1",
+            fact="收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+        HypothesisInput("THESIS-001", "H1", "收入增长"),
     )
     impact = result.impacts[0]
     impact.outcome.payload["citations"] = [{"locator": "history-001#paragraph-1"}]
@@ -367,15 +402,16 @@ def test_evidence_agent_检查事实与引用一致性和实体匹配() -> None:
         gateway=Gateway.build(Settings(llm_provider="mock")),
         retriever=retriever,
     ).analyze(
-        AgentEvent(
+        AgentEventInput(
             "event-001",
             "new-001",
             "000538.SZ",
             "new-001#paragraph-1",
             "收入增长。",
             datetime(2026, 8, 10, tzinfo=UTC),
+            "其他",
         ),
-        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+        HypothesisInput("THESIS-001", "H1", "收入增长"),
     )
     impact = result.impacts[0]
     impact.outcome.payload["event"]["fact"] = "另一家公司完全无关的事实"

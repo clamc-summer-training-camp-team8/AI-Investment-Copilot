@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from app.ai.agents.types import AgentEvent, CandidateHypothesis
+from app.ai.agents.types import AgentEventInput, HypothesisInput
 from app.ai.retrieval import RetrievalDocument
 from app.core.config import PROJECT_ROOT
 from app.core.enums import ImpactDirection
@@ -115,14 +115,14 @@ class RealAnnotatedEvent:
     def announcement_id(self) -> str:
         return _announcement_id(self.url, self.event_id)
 
-    def to_agent_event(self) -> AgentEvent:
+    def to_agent_event(self) -> AgentEventInput:
         document_id = f"ANN-{self.announcement_id}"
-        return AgentEvent(
+        return AgentEventInput(
             event_id=self.event_id,
             document_id=document_id,
             security_id=self.security_id,
-            segment_locator=f"{document_id}#paragraph-1",
-            segment_text=self.title,
+            evidence_locator=f"{document_id}#paragraph-1",
+            fact=self.title,
             disclosure_time=self.disclosure_time,
             event_type=map_event_type(self.category),
         )
@@ -138,7 +138,7 @@ class RealThesis:
     market: str
     title: str
     core_view: str
-    candidates: tuple[CandidateHypothesis, ...]
+    hypotheses: tuple[HypothesisInput, ...]
 
 
 @dataclass(frozen=True)
@@ -193,11 +193,12 @@ def load_events(root: Path = REAL_DATA_ROOT) -> tuple[RealAnnotatedEvent, ...]:
     )
 
 
-def _candidate(thesis_id: str, row: dict[str, Any]) -> CandidateHypothesis:
-    return CandidateHypothesis(
+def _hypothesis(thesis_id: str, core_view: str, row: dict[str, Any]) -> HypothesisInput:
+    return HypothesisInput(
         thesis_id=thesis_id,
         hypothesis_id=str(row["hypothesis_id"]),
         statement=str(row["content"]),
+        thesis_core_view=core_view,
     )
 
 
@@ -213,7 +214,10 @@ def load_theses(root: Path = REAL_DATA_ROOT) -> tuple[RealThesis, ...]:
             market=str(row["market"]),
             title=str(row["title"]),
             core_view=str(row["core_view"]),
-            candidates=tuple(_candidate(str(row["thesis_id"]), item) for item in row["hypotheses"]),
+            hypotheses=tuple(
+                _hypothesis(str(row["thesis_id"]), str(row["core_view"]), item)
+                for item in row["hypotheses"]
+            ),
         )
         for row in rows
     )

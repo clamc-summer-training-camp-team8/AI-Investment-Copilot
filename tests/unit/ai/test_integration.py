@@ -4,8 +4,8 @@ import json
 from datetime import UTC, datetime
 
 from app.ai.agent import (
-    AgentEvent,
-    CandidateHypothesis,
+    AgentEventInput,
+    HypothesisInput,
     InvestmentLogicChangeAgent,
     ThesisDraftAgent,
 )
@@ -25,22 +25,23 @@ def test_backend_envelope_is_json_serializable_and_versioned() -> None:
         logic_change=InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever),
     )
     execution = runtime.analyze_event(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="doc-001",
             security_id="000538.SZ",
-            segment_locator="doc-001#paragraph-1",
-            segment_text="收入增长",
+            evidence_locator="doc-001#paragraph-1",
+            fact="收入增长",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [],
+        HypothesisInput("THESIS-001", "H1", "收入增长"),
     )
 
     envelope = to_backend_envelope(execution)
 
     json.dumps(envelope, ensure_ascii=False)
     assert envelope["envelope_version"] == "ai-runtime-envelope-v1"
-    assert envelope["status"] == "degraded"
+    assert envelope["status"] == "needs_human_review"
     assert envelope["versions"]["schema_name"] == "event_impact"
     assert envelope["versions"]["schema_id"].endswith("event_impact.schema.json")
     assert not envelope["retryable"]
@@ -55,15 +56,16 @@ def test_provider_or_schema_failure_is_degraded_and_retryable() -> None:
         logic_change=InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever),
     )
     execution = runtime.analyze_event(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="doc-001",
             security_id="000538.SZ",
-            segment_locator="doc-001#paragraph-1",
-            segment_text="收入增长",
+            evidence_locator="doc-001#paragraph-1",
+            fact="收入增长",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+        HypothesisInput("THESIS-001", "H1", "收入增长"),
     )
 
     envelope = to_backend_envelope(execution)

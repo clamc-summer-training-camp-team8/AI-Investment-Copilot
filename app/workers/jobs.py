@@ -386,6 +386,7 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                     security_id=security_id,
                     actor=actor,
                     thresholds=settings.rules,
+                    current_event_segments=uow.documents.list_segments(persisted.document_id),
                     document_id=persisted.document_id,
                     document_title=persisted.title or path.name,
                     source_visibility_label=persisted.visibility_label,

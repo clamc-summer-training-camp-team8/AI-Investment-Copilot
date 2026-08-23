@@ -15,7 +15,7 @@ def test_real_data_adapter_loads_committed_dataset() -> None:
     assert len(bundle.announcements) == 3784
     assert len(bundle.events) == 3784
     assert len(bundle.theses) == 45
-    assert sum(len(thesis.candidates) for thesis in bundle.theses) == 135
+    assert sum(len(thesis.hypotheses) for thesis in bundle.theses) == 135
 
 
 def test_real_data_adapter_preserves_identity_and_traceability() -> None:
@@ -26,7 +26,7 @@ def test_real_data_adapter_preserves_identity_and_traceability() -> None:
 
     assert announcement.security_id.startswith("0")
     assert document.document_id == event.document_id
-    assert document.locator == event.segment_locator
+    assert document.locator == event.evidence_locator
     assert document.content == announcement.title
     assert document.source == "cninfo-title"
 
@@ -62,9 +62,12 @@ def test_real_dataset_event_runs_through_runtime_contract() -> None:
         logic_change=InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever),
     )
 
-    execution = runtime.analyze_event(event_record.to_agent_event(), list(thesis.candidates))
+    executions = [
+        runtime.analyze_event(event_record.to_agent_event(), hypothesis)
+        for hypothesis in thesis.hypotheses
+    ]
 
-    assert execution.status == "needs_human_review"
-    assert len(execution.result.impacts) == len(thesis.candidates)
-    assert all(impact.outcome.usable for impact in execution.result.impacts)
-    assert execution.retrieval_versions == ("keyword-v1",)
+    assert all(execution.status == "needs_human_review" for execution in executions)
+    assert all(len(execution.result.impacts) == 1 for execution in executions)
+    assert all(execution.result.impacts[0].outcome.usable for execution in executions)
+    assert all(execution.retrieval_versions == ("keyword-v1",) for execution in executions)

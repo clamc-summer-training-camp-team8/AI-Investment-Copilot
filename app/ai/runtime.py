@@ -13,13 +13,13 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from app.ai.agents import (
-    AgentEvent,
+    AgentEventInput,
     AgentRunResult,
-    CandidateHypothesis,
     EvidenceAgent,
     EvidenceConsistency,
     EvidenceGrade,
     EvidenceValidation,
+    HypothesisInput,
     InvestmentLogicChangeAgent,
     MetricExplainAgent,
     MetricExplainRunResult,
@@ -232,8 +232,8 @@ class InvestmentResearchAgent:
 
     def analyze_event(
         self,
-        event: AgentEvent,
-        candidates: list[CandidateHypothesis],
+        event: AgentEventInput,
+        hypothesis: HypothesisInput,
         *,
         allowed_visibility: frozenset[str] = frozenset({"公开"}),
         top_k: int = 3,
@@ -247,16 +247,11 @@ class InvestmentResearchAgent:
             attempt=attempt,
         )
         try:
-            if not candidates:
-                execution.degraded_reason = "no_candidate_hypotheses"
-                execution.errors.append("没有可分析的候选假设，需先召回或人工选择假设")
-                self._transition(execution, "degraded")
-                return execution
             self._transition(execution, "retrieving")
             self._transition(execution, "generating")
             result: AgentRunResult = self.logic_change.analyze(
                 event,
-                candidates,
+                hypothesis,
                 allowed_visibility=allowed_visibility,
                 top_k=top_k,
             )

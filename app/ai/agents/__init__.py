@@ -6,30 +6,32 @@ from app.ai.agents.metric_explain import MetricExplainAgent
 from app.ai.agents.review import ReviewAgent
 from app.ai.agents.thesis_draft import ThesisDraftAgent
 from app.ai.agents.types import (
-    AgentEvent,
+    AgentEventInput,
     AgentImpact,
     AgentRunResult,
-    CandidateHypothesis,
     EvidenceConsistency,
     EvidenceGrade,
     EvidenceValidation,
+    HypothesisInput,
     MetricExplainRunResult,
+    MetricRuleInput,
     ReviewDraftRunResult,
     ThesisDraftRunResult,
 )
 
 __all__ = [
-    "AgentEvent",
+    "AgentEventInput",
     "AgentImpact",
     "AgentRunResult",
-    "CandidateHypothesis",
     "EvidenceAgent",
     "EvidenceConsistency",
     "EvidenceGrade",
     "EvidenceValidation",
+    "HypothesisInput",
     "InvestmentLogicChangeAgent",
     "MetricExplainAgent",
     "MetricExplainRunResult",
+    "MetricRuleInput",
     "ReviewAgent",
     "ReviewDraftRunResult",
     "ThesisDraftAgent",

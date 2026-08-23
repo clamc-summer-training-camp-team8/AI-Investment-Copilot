@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from app.ai.agents import AgentEvent, CandidateHypothesis
+from app.ai.agents import AgentEventInput, HypothesisInput
 from app.ai.errors import ModelUnavailable as SharedModelUnavailable
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.ai.providers.http import HttpLLMProvider, HttpProvider, ProviderResponseError
@@ -96,15 +96,16 @@ def test_runtime_build_exposes_typed_event_analysis() -> None:
     runtime = InvestmentResearchAgent.build(_gateway())
 
     execution = runtime.analyze_event(
-        AgentEvent(
+        AgentEventInput(
             event_id="EV-001",
             document_id="DOC-001",
             security_id="000538.SZ",
-            segment_locator="DOC-001#paragraph-1",
-            segment_text="公司收入增长。",
+            evidence_locator="DOC-001#paragraph-1",
+            fact="公司收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THS-001", "THS-001-H1", "收入保持增长")],
+        HypothesisInput("THS-001", "THS-001-H1", "收入保持增长"),
     )
 
     assert execution.task == "event_impact"
