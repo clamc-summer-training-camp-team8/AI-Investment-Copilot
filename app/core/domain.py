@@ -484,6 +484,8 @@ class AssetSearchHitRecord:
     content: str
     visibility_label: str
     rank: float
+    published_at: datetime
+    source: str
     retrieval_mode: str = "keyword"
     keyword_rank: float | None = None
     vector_rank: float | None = None

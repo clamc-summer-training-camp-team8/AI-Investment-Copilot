@@ -15,10 +15,21 @@ from tests.fakes import build_fake_uow
 def test_hybrid_retrieve_passes_permission_and_business_filters() -> None:
     uow = build_fake_uow()
     captured = {}
+    published_at = datetime(2026, 8, 12, tzinfo=UTC)
 
     def search(**kwargs):
         captured.update(kwargs)
-        return [AssetSearchHitRecord("DOC-1", "DOC-1#paragraph-1", "正文", "内部", 0.8)]
+        return [
+            AssetSearchHitRecord(
+                "DOC-1",
+                "DOC-1#paragraph-1",
+                "正文",
+                "内部",
+                0.8,
+                published_at,
+                "历史公告",
+            )
+        ]
 
     uow.assets.hybrid_search_segments = search  # type: ignore[method-assign]
     result = assets.hybrid_retrieve(
@@ -32,6 +43,8 @@ def test_hybrid_retrieve_passes_permission_and_business_filters() -> None:
         limit=5,
     )
     assert result[0].document_id == "DOC-1"
+    assert result[0].published_at == published_at
+    assert result[0].source == "历史公告"
     assert captured["visibility_labels"] == ("公开", "内部")
     assert captured["security_ids"] == ("600000",)
     assert captured["industries"] == ("医药",)

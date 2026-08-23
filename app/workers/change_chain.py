@@ -24,6 +24,7 @@ from app.ai.retrieval import KeywordRetriever, RetrievalDocument
 from app.ai.runtime import InvestmentResearchAgent
 from app.calc.rules import StatusSuggestion
 from app.core.config import RuleThresholds, Settings
+from app.core.domain import AssetSearchHitRecord
 from app.core.enums import AiStatus, ConfirmationStatus, ImpactDirection
 from app.ingest.events import ExtractedEvent, dedupe_events, to_strength_bucket
 from app.services import assets as asset_service
@@ -129,7 +130,7 @@ def _rag_context(
     security_id: str,
     actor: Actor,
     settings: Settings | None,
-) -> list[tuple[str, str]]:
+) -> list[AssetSearchHitRecord]:
     if (
         settings is None
         or not settings.rag_event_pilot_enabled
@@ -158,7 +159,7 @@ def _rag_context(
             "document_ids": sorted({hit.document_id for hit in hits}),
         },
     )
-    return [(hit.locator, hit.content) for hit in hits]
+    return hits
 
 
 def process_events(
@@ -197,7 +198,8 @@ def process_events(
     retriever = KeywordRetriever()
     segments_by_locator = index_current_event_segments(current_event_segments)
     event_inputs: dict[str, EventAgentInputs] = {}
-    retrieval_documents: list[RetrievalDocument] = []
+    current_event_evidence: list[RetrievalDocument] = []
+    historical_rag_context: list[RetrievalDocument] = []
     for event in kept:
         try:
             inputs = build_event_agent_inputs(
@@ -212,19 +214,18 @@ def process_events(
             deferred.append((event.event_id, str(exc)))
             continue
         event_inputs[event.event_id] = inputs
-        retrieval_documents.append(inputs.current_event_evidence)
-        retrieval_documents.extend(
+        current_event_evidence.append(inputs.current_event_evidence)
+        historical_rag_context.extend(
             build_historical_rag_context(
-                event=event,
                 security_id=security_id,
                 hits=rag_contexts[event.event_id],
-                visibility_label=source_visibility_label,
             )
         )
-    retriever.add(retrieval_documents)
+    agent_retrieval_documents = [*historical_rag_context, *current_event_evidence]
+    retriever.add(agent_retrieval_documents)
     if isinstance(ai, InvestmentResearchAgent):
         runtime = ai
-        runtime.logic_change.retriever.add(retrieval_documents)
+        runtime.logic_change.retriever.add(agent_retrieval_documents)
     else:
         runtime = InvestmentResearchAgent.build(ai, retriever=retriever)
 

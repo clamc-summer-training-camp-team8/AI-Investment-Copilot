@@ -165,8 +165,10 @@ def test_event_rag_pilot_is_explicit_sampled_permission_filtered_context() -> No
                 document_id="DOC-HISTORY",
                 locator="DOC-HISTORY#paragraph-2",
                 content="历史订单验证材料",
-                visibility_label="内部",
+                visibility_label="team-a",
                 rank=0.8,
+                published_at=datetime.fromisoformat("2026-08-01T09:00:00+08:00"),
+                source="2026年7月订单跟踪报告",
             )
         ]
 
@@ -182,7 +184,10 @@ def test_event_rag_pilot_is_explicit_sampled_permission_filtered_context() -> No
         Gateway.build(settings),
         events=events,
         security_id="NEW001",
-        actor=Actor(user_id="researcher-1"),
+        actor=Actor(
+            user_id="researcher-1",
+            document_labels=frozenset({"公开", "内部", "team-a"}),
+        ),
         thresholds=settings.rules,
         current_event_segments=[
             DocumentSegmentRecord(
@@ -198,7 +203,7 @@ def test_event_rag_pilot_is_explicit_sampled_permission_filtered_context() -> No
     )
 
     assert len(result.candidates) == 1
-    assert captured["visibility_labels"] == ("公开", "内部")
+    assert captured["visibility_labels"] == ("team-a", "公开", "内部")
     assert captured["security_ids"] == ("NEW001",)
     assert captured["published_to"] == disclosed_at
     audits = uow.audit.list_for_object("event", events[0].event_id)

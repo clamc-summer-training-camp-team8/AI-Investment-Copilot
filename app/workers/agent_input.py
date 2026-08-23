@@ -8,6 +8,7 @@ from typing import Mapping
 from app.ai.agents import AgentEventInput, HypothesisInput, MetricRuleInput
 from app.ai.retrieval import RetrievalDocument
 from app.core.domain import (
+    AssetSearchHitRecord,
     DocumentSegmentRecord,
     HypothesisRecord,
     MetricMappingRecord,
@@ -80,23 +81,21 @@ def build_event_agent_inputs(
 
 def build_historical_rag_context(
     *,
-    event: ExtractedEvent,
     security_id: str,
-    hits: list[tuple[str, str]],
-    visibility_label: str,
+    hits: list[AssetSearchHitRecord],
 ) -> list[RetrievalDocument]:
-    """适配现有 RAG Pilot 输出；metadata 缺口留待 Step 3。"""
+    """把 DB Hybrid RAG hit 的真实 metadata 显式传入 Agent Retriever。"""
     return [
         RetrievalDocument(
-            document_id=locator.split("#", maxsplit=1)[0],
+            document_id=hit.document_id,
             security_id=security_id,
-            locator=locator,
-            content=content,
-            published_at=event.disclosure_time,
-            visibility_label=visibility_label,
-            source="RAG试点召回",
+            locator=hit.locator,
+            content=hit.content,
+            published_at=hit.published_at,
+            visibility_label=hit.visibility_label,
+            source=hit.source,
         )
-        for locator, content in hits
+        for hit in hits
     ]
 
 
