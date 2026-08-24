@@ -105,7 +105,7 @@ def test_runtime_build_exposes_typed_event_analysis() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput("THS-001", "THS-001-H1", "收入保持增长"),
+        (HypothesisInput("THS-001", "THS-001-H1", "收入保持增长"),),
     )
 
     assert execution.task == "event_impact"

@@ -60,7 +60,7 @@ def test_runtime_事件分析完成后进入人工复核状态() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput("THESIS-001", "H1", "收入增长"),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
     )
 
     assert execution.task == "event_impact"
@@ -70,7 +70,7 @@ def test_runtime_事件分析完成后进入人工复核状态() -> None:
     assert execution.evidence_grades[0].score >= 0
 
 
-def test_runtime_event_analysis_accepts_one_hypothesis() -> None:
+def test_runtime_event_analysis_accepts_multiple_hypotheses() -> None:
     runtime = _runtime()
     execution = runtime.analyze_event(
         AgentEventInput(
@@ -82,11 +82,20 @@ def test_runtime_event_analysis_accepts_one_hypothesis() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput("THESIS-001", "H1", "收入增长"),
+        (
+            HypothesisInput("THESIS-001", "H1", "收入增长"),
+            HypothesisInput("THESIS-001", "H2", "毛利率改善"),
+            HypothesisInput("THESIS-001", "H3", "产能扩张"),
+        ),
     )
 
     assert execution.status == "needs_human_review"
-    assert len(execution.result.impacts) == 1
+    assert len(execution.result.impacts) == 3
+    assert [impact.candidate.hypothesis_id for impact in execution.result.impacts] == [
+        "H1",
+        "H2",
+        "H3",
+    ]
     assert execution.finished_at is not None
 
 

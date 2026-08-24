@@ -29,10 +29,23 @@ class _CountingLocalProvider(LocalProvider):
     def __init__(self, settings: Settings) -> None:
         super().__init__(settings)
         self.event_calls = 0
+        self.calls: list[dict[str, Any]] = []
 
     def analyze_event_impact(self, **kwargs: Any) -> dict[str, Any]:
         self.event_calls += 1
+        self.calls.append(kwargs)
         return super().analyze_event_impact(**kwargs)
+
+
+class _PerHypothesisProvider(_CountingLocalProvider):
+    def __init__(self, settings: Settings, directions: dict[str, str]) -> None:
+        super().__init__(settings)
+        self.directions = directions
+
+    def analyze_event_impact(self, **kwargs: Any) -> dict[str, Any]:
+        payload = super().analyze_event_impact(**kwargs)
+        payload["signal"]["impact_direction"] = self.directions[str(kwargs["hypothesis_id"])]
+        return payload
 
 
 def test_uploaded_event_becomes_radar_visible_candidate_relation() -> None:
@@ -216,7 +229,7 @@ def test_event_rag_pilot_is_off_by_default() -> None:
     assert settings.rag_event_pilot_sample_rate == 0.05
 
 
-def test_worker_calls_agent_once_per_matched_thesis_hypothesis() -> None:
+def test_worker_analyzes_each_recalled_thesis_hypothesis() -> None:
     uow = build_fake_uow()
     uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
     for index in (1, 2):
@@ -280,7 +293,115 @@ def test_worker_calls_agent_once_per_matched_thesis_hypothesis() -> None:
     assert result.matched_theses == ["THS-MULTI-1", "THS-MULTI-2"]
 
 
-def test_worker_does_not_call_agent_when_no_hypothesis_matches() -> None:
+def test_worker_passes_all_thesis_hypotheses_and_persists_each_related_impact() -> None:
+    uow = build_fake_uow()
+    uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
+    thesis_id = "THS-BATCH"
+    uow.thesis.add(
+        ThesisRecord(
+            thesis_id=thesis_id,
+            security_id="NEW001",
+            title="经营质量逻辑",
+            direction="观察",
+            core_view="产能利用率与毛利率共同决定经营质量",
+            established_on=date(2026, 1, 1),
+            owner="researcher-1",
+            status=ThesisStatus.VALIDATING,
+        )
+    )
+    hypothesis_specs = (
+        ("H1", "产能利用率持续改善"),
+        ("H2", "毛利率持续改善"),
+        ("H3", "资本开支持续增长"),
+    )
+    for suffix, statement in hypothesis_specs:
+        uow.thesis.add_hypothesis(
+            HypothesisRecord(
+                hypothesis_id=f"{thesis_id}-{suffix}",
+                thesis_id=thesis_id,
+                statement=statement,
+                hypothesis_type="经营",
+                importance=Importance.CORE,
+            )
+        )
+    uow.thesis.add_mapping(
+        MetricMappingRecord(
+            mapping_id="MAP-CAPACITY",
+            hypothesis_id=f"{thesis_id}-H1",
+            metric_id="capacity_utilization",
+            expected_direction=ExpectationDirection.HIGHER_BETTER,
+        )
+    )
+    uow.thesis.add_mapping(
+        MetricMappingRecord(
+            mapping_id="MAP-MARGIN",
+            hypothesis_id=f"{thesis_id}-H2",
+            metric_id="gross_margin",
+            expected_direction=ExpectationDirection.HIGHER_BETTER,
+        )
+    )
+    event = ExtractedEvent(
+        event_id="EV-BATCH",
+        document_id="DOC-BATCH",
+        security_id="NEW001",
+        event_type="业绩",
+        summary="公司Q2产能利用率下降，同时毛利率同比下降",
+        disclosure_time=datetime.fromisoformat("2026-08-12T09:00:00+08:00"),
+        fingerprint="fp-batch",
+        evidence_locator="DOC-BATCH#paragraph-1",
+    )
+    settings = Settings(_env_file=None, llm_provider="local")
+    provider = _PerHypothesisProvider(
+        settings,
+        {
+            f"{thesis_id}-H1": "冲突",
+            f"{thesis_id}-H2": "冲突",
+            f"{thesis_id}-H3": "无关",
+        },
+    )
+
+    result = process_events(
+        uow,
+        Gateway(settings=settings, provider=provider),
+        events=[event],
+        security_id="NEW001",
+        actor=Actor(user_id="researcher-1"),
+        thresholds=settings.rules,
+        current_event_segments=[
+            DocumentSegmentRecord(
+                document_id="DOC-BATCH",
+                locator="DOC-BATCH#paragraph-1",
+                ordinal=1,
+                content="财报原文：公司Q2产能利用率下降，同时毛利率同比下降。",
+            )
+        ],
+        document_id="DOC-BATCH",
+    )
+
+    assert provider.event_calls == 3
+    assert [str(call["hypothesis_id"]) for call in provider.calls] == [
+        f"{thesis_id}-H1",
+        f"{thesis_id}-H2",
+        f"{thesis_id}-H3",
+    ]
+    assert [
+        item["metric_id"]
+        for item in provider.calls[0]["hypothesis_context"]["metrics"]
+    ] == ["capacity_utilization"]
+    assert [
+        item["metric_id"]
+        for item in provider.calls[1]["hypothesis_context"]["metrics"]
+    ] == ["gross_margin"]
+    assert provider.calls[2]["hypothesis_context"]["metrics"] == []
+    assert {candidate.hypothesis_id for candidate in result.candidates} == {
+        f"{thesis_id}-H1",
+        f"{thesis_id}-H2",
+    }
+    assert all(candidate.direction.value == "冲突" for candidate in result.candidates)
+    assert any("不相关" in reason for _, reason in result.deferred)
+
+
+def test_worker_does_not_call_agent_when_candidate_list_is_empty() -> None:
     uow = build_fake_uow()
     uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
     uow.thesis.add(
@@ -293,15 +414,6 @@ def test_worker_does_not_call_agent_when_no_hypothesis_matches() -> None:
             established_on=date(2026, 1, 1),
             owner="researcher-1",
             status=ThesisStatus.VALIDATING,
-        )
-    )
-    uow.thesis.add_hypothesis(
-        HypothesisRecord(
-            hypothesis_id="THS-NO-MATCH-H1",
-            thesis_id="THS-NO-MATCH",
-            statement="新签订单增长支撑营业收入提升",
-            hypothesis_type="经营",
-            importance=Importance.CORE,
         )
     )
     event = ExtractedEvent(
@@ -337,7 +449,7 @@ def test_worker_does_not_call_agent_when_no_hypothesis_matches() -> None:
 
     assert provider.event_calls == 0
     assert result.candidates == []
-    assert result.deferred == [("EV-NO-MATCH", "未能落到具体假设，转人工判断")]
+    assert result.deferred == [("EV-NO-MATCH", "候选逻辑下没有可分析假设，转人工判断")]
 
 
 def test_worker_defers_event_when_source_segment_is_missing() -> None:

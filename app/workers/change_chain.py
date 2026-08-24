@@ -13,13 +13,12 @@ ingest.extract_events → ingest.dedupe
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
-from decimal import Decimal
 from hashlib import sha256
 
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
+from app.ai.integration import to_backend_analysis_result
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument
 from app.ai.runtime import InvestmentResearchAgent
 from app.calc.rules import StatusSuggestion
@@ -53,59 +52,6 @@ class ChangeResult:
     suggestions: list[tuple[str, StatusSuggestion]]
     deferred: list[tuple[str, str]]
     matched_theses: list[str]
-
-
-def _pick_hypothesis(
-    event: ExtractedEvent,
-    hypotheses: list[object],
-) -> str | None:
-    """把事件落到具体假设上（FR-R-002）。
-
-    优先用标注里已给的 hypothesis_id；没有时按关键词匹配假设陈述。匹配不到就
-    返回 None——PRD 10.2 要求影响对象具体到核心假设，落不到假设的事件不该硬塞。
-    """
-    if event.hypothesis_id:
-        return event.hypothesis_id
-
-    best, best_score = None, 0
-    for hypothesis in hypotheses:
-        statement = str(getattr(hypothesis, "statement", ""))
-        keyword_score = sum(
-            1
-            for token in (
-                "订单",
-                "收入",
-                "毛利率",
-                "装机",
-                "需求",
-                "政策",
-                "产能",
-                "价格",
-                "成本",
-                "现金流",
-            )
-            if token in statement and token in event.summary
-        )
-        # 兼容模型自由生成的可证伪表达：用中文双字组补充固定
-        # 关键词，但仍要求存在语义交集，不把无关事件硬塞给某条假设。
-        statement_terms = _bigrams(statement)
-        event_terms = _bigrams(event.summary)
-        overlap_score = min(len(statement_terms & event_terms), 10)
-        score = keyword_score * 10 + overlap_score
-        if score > best_score:
-            best, best_score = str(getattr(hypothesis, "hypothesis_id", "")), score
-    return best
-
-
-def _bigrams(value: str) -> set[str]:
-    chunks = re.findall(r"[\u4e00-\u9fff]{2,}", value)
-    ignored = {"公司", "持续", "同比", "相关", "预期", "影响"}
-    return {
-        chunk[index : index + 2]
-        for chunk in chunks
-        for index in range(len(chunk) - 1)
-        if chunk[index : index + 2] not in ignored
-    }
 
 
 def _stable_id(prefix: str, *parts: str) -> str:
@@ -235,126 +181,119 @@ def process_events(
             inputs = event_inputs.get(event.event_id)
             if inputs is None:
                 continue
-            hypothesis_id = _pick_hypothesis(event, list(hypotheses))
-            if hypothesis_id is None:
-                deferred.append((event.event_id, "未能落到具体假设，转人工判断"))
-                continue
-            if hypothesis_id not in {str(getattr(h, "hypothesis_id", "")) for h in hypotheses}:
-                continue
-            target_hypothesis = next(
-                hypothesis
+            hypothesis_inputs = tuple(
+                build_hypothesis_input(
+                    thesis_record=record,
+                    hypothesis=hypothesis,
+                    mappings=uow.thesis.list_mappings(hypothesis.hypothesis_id),
+                )
                 for hypothesis in hypotheses
-                if str(getattr(hypothesis, "hypothesis_id", "")) == hypothesis_id
             )
-            mappings = uow.thesis.list_mappings(hypothesis_id)
-            hypothesis_input = build_hypothesis_input(
-                thesis_record=record,
-                hypothesis=target_hypothesis,
-                mappings=mappings,
-            )
+            if not hypothesis_inputs:
+                deferred.append((event.event_id, "候选逻辑下没有可分析假设，转人工判断"))
+                continue
 
             execution = runtime.analyze_event(
                 inputs.event,
-                hypothesis_input,
+                hypothesis_inputs,
                 allowed_visibility=actor.document_labels,
                 top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
-                idempotency_key=(
-                    f"event:{event.event_id}:thesis:{record.thesis_id}:hypothesis:{hypothesis_id}"
-                ),
+                idempotency_key=f"event:{event.event_id}:thesis:{record.thesis_id}",
             )
-            if execution.retryable:
+            analysis_result = to_backend_analysis_result(execution)
+            if analysis_result.retryable:
                 raise ModelUnavailable(
-                    execution.degraded_reason or "Runtime 暂时不可用",
+                    analysis_result.degraded_reason or "Runtime 暂时不可用",
                     retryable=True,
                 )
-            if execution.result is None or not execution.result.impacts:
+            if not analysis_result.impacts:
                 deferred.append((event.event_id, "Runtime 未生成候选影响，转人工"))
                 continue
-            outcome = execution.result.impacts[0].outcome
+            for impact in analysis_result.impacts:
+                hypothesis_id = impact.hypothesis_id
 
-            audit.record_model_call(
-                uow.audit,
-                actor=actor.user_id,
-                object_type="event",
-                object_id=event.event_id,
-                model_version=str(outcome.payload.get("model_version", "")),
-                prompt_version=str(outcome.payload.get("prompt_version", "")),
-                ai_status=outcome.ai_status.value,
-                model_metadata=(
-                    outcome.payload.get("model_metadata")
-                    if isinstance(outcome.payload.get("model_metadata"), dict)
-                    else None
-                ),
-            )
+                audit.record_model_call(
+                    uow.audit,
+                    actor=actor.user_id,
+                    object_type="event",
+                    object_id=event.event_id,
+                    model_version=impact.model_version or "",
+                    prompt_version=impact.prompt_version or "",
+                    ai_status=impact.ai_status.value,
+                    model_metadata=impact.model_metadata,
+                )
 
-            if outcome.ai_status is AiStatus.PARSE_FAILED:
-                deferred.append((event.event_id, "模型输出不合契约，转人工"))
-                continue
+                if impact.ai_status is AiStatus.PARSE_FAILED:
+                    deferred.append((event.event_id, "模型输出不合契约，转人工"))
+                    continue
 
-            signal = outcome.payload["signal"]
-            if not isinstance(signal, dict):
-                deferred.append((event.event_id, "模型输出缺少 signal 段，转人工"))
-                continue
+                annotated_target = event.hypothesis_id == hypothesis_id
+                direction = (
+                    event.impact_direction
+                    if annotated_target and event.impact_direction is not None
+                    else impact.impact_direction
+                )
+                if direction is ImpactDirection.IRRELEVANT:
+                    deferred.append((event.event_id, "模型判定与该假设不相关，不进入证据链"))
+                    continue
+                score = (
+                    event.strength_score
+                    if annotated_target and event.strength_score is not None
+                    else impact.strength_score
+                )
+                bucket = to_strength_bucket(score)
 
-            # 人工标注的方向优先于模型判断：标注是金标（标注规范 §10）
-            direction = event.impact_direction or ImpactDirection(
-                str(signal.get("impact_direction") or ImpactDirection.NEUTRAL.value)
-            )
-            if direction is ImpactDirection.IRRELEVANT:
-                deferred.append((event.event_id, "模型判定与该假设不相关，不进入证据链"))
-                continue
-            score = event.strength_score
-            if score is None:
-                score = _dec(signal.get("strength"))
-            bucket = to_strength_bucket(score)
+                evidence_id = _stable_id("EVD", event.event_id, impact.thesis_id, hypothesis_id)
+                if uow.evidence.get(evidence_id) is not None:
+                    deferred.append((event.event_id, "该事件与假设已生成候选证据，跳过重复提醒"))
+                    continue
 
-            evidence_id = _stable_id("EVD", event.event_id, record.thesis_id, hypothesis_id)
-            if uow.evidence.get(evidence_id) is not None:
-                deferred.append((event.event_id, "该事件与假设已生成候选证据，跳过重复提醒"))
-                continue
+                candidate = EvidenceRecord(
+                    evidence_id=evidence_id,
+                    thesis_id=impact.thesis_id,
+                    hypothesis_id=hypothesis_id,
+                    evidence_type=event.event_type,
+                    direction=direction,
+                    evidence_locator=inputs.event.evidence_locator,
+                    event_id=event.event_id,
+                    strength=bucket.value if bucket is not None else None,
+                    strength_score=score,
+                    horizon=(
+                        event.horizon
+                        if annotated_target and event.horizon
+                        else impact.horizon
+                    ),
+                    ai_status=impact.ai_status.value,
+                    ai_confidence=impact.confidence,
+                    model_version=impact.model_version,
+                    prompt_version=impact.prompt_version,
+                    confirmation_status=ConfirmationStatus.PENDING,
+                    source_visibility_label=source_visibility_label,
+                    security_id=security_id,
+                    fact_excerpt=event.summary,
+                    source_document_id=event.document_id,
+                    source_document_title=document_title or event.document_id,
+                    disclosed_at=event.disclosure_time,
+                    occurred_at=event.occurred_on,
+                    source_url=source_url,
+                )
+                evidence_service.create_candidate(uow, record=candidate, actor=actor.user_id)
+                relation_service.create_candidate(
+                    uow,
+                    evidence_id=candidate.evidence_id,
+                    thesis_id=impact.thesis_id,
+                    hypothesis_id=hypothesis_id,
+                    direction=direction,
+                    strength=candidate.strength,
+                    reason="上传资料自动召回候选关联，待逻辑负责人核验",
+                    actor=actor.user_id,
+                )
+                candidates.append(candidate)
+                touched = True
 
-            candidate = EvidenceRecord(
-                evidence_id=evidence_id,
-                thesis_id=record.thesis_id,
-                hypothesis_id=hypothesis_id,
-                evidence_type=event.event_type,
-                direction=direction,
-                evidence_locator=inputs.event.evidence_locator,
-                event_id=event.event_id,
-                strength=bucket.value if bucket is not None else None,
-                strength_score=score,
-                horizon=event.horizon or str(signal.get("horizon") or "") or None,
-                ai_status=outcome.ai_status.value,
-                ai_confidence=_dec(signal.get("confidence")),
-                model_version=str(outcome.payload.get("model_version", "")),
-                prompt_version=str(outcome.payload.get("prompt_version", "")),
-                confirmation_status=ConfirmationStatus.PENDING,
-                source_visibility_label=source_visibility_label,
-                security_id=security_id,
-                fact_excerpt=event.summary,
-                source_document_id=event.document_id,
-                source_document_title=document_title or event.document_id,
-                disclosed_at=event.disclosure_time,
-                occurred_at=event.occurred_on,
-                source_url=source_url,
-            )
-            evidence_service.create_candidate(uow, record=candidate, actor=actor.user_id)
-            relation_service.create_candidate(
-                uow,
-                evidence_id=candidate.evidence_id,
-                thesis_id=record.thesis_id,
-                hypothesis_id=hypothesis_id,
-                direction=direction,
-                strength=candidate.strength,
-                reason="上传资料自动召回候选关联，待逻辑负责人核验",
-                actor=actor.user_id,
-            )
-            candidates.append(candidate)
-            touched = True
-
-            if outcome.ai_status is AiStatus.LOW_CONFIDENCE:
-                # FR-R-007：低置信进人工队列，不升级提醒
-                deferred.append((event.event_id, "低置信，进人工复核队列，不触发风险提醒"))
+                if impact.ai_status is AiStatus.LOW_CONFIDENCE:
+                    # FR-R-007：低置信进人工队列，不升级提醒
+                    deferred.append((event.event_id, "低置信，进人工复核队列，不触发风险提醒"))
 
         if touched:
             suggestion = status_service.compute_suggestion(
@@ -377,10 +316,3 @@ def process_events(
         deferred=deferred,
         matched_theses=[r.thesis_id for r, _ in recalled],
     )
-
-
-def _dec(value: object) -> Decimal | None:
-    """转 Decimal。走字符串避免 float 二进制残留进入数据库。"""
-    if value is None:
-        return None
-    return Decimal(str(value))

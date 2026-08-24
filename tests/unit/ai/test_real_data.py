@@ -62,12 +62,9 @@ def test_real_dataset_event_runs_through_runtime_contract() -> None:
         logic_change=InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever),
     )
 
-    executions = [
-        runtime.analyze_event(event_record.to_agent_event(), hypothesis)
-        for hypothesis in thesis.hypotheses
-    ]
+    execution = runtime.analyze_event(event_record.to_agent_event(), thesis.hypotheses)
 
-    assert all(execution.status == "needs_human_review" for execution in executions)
-    assert all(len(execution.result.impacts) == 1 for execution in executions)
-    assert all(execution.result.impacts[0].outcome.usable for execution in executions)
-    assert all(execution.retrieval_versions == ("keyword-v1",) for execution in executions)
+    assert execution.status == "needs_human_review"
+    assert len(execution.result.impacts) == len(thesis.hypotheses)
+    assert all(impact.outcome.usable for impact in execution.result.impacts)
+    assert execution.retrieval_versions == ("keyword-v1",)

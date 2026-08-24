@@ -62,45 +62,48 @@ class InvestmentLogicChangeAgent:
     def analyze(
         self,
         event: AgentEventInput,
-        hypothesis: HypothesisInput,
+        hypotheses: tuple[HypothesisInput, ...],
         *,
         allowed_visibility: frozenset[str] = frozenset({"公开"}),
         top_k: int = 3,
     ) -> AgentRunResult:
-        retrieval = self.retriever.search(
-            RetrievalQuery(
-                text=f"{event.fact} {hypothesis.statement}",
-                security_id=event.security_id,
-                as_of=event.disclosure_time,
-                allowed_visibility=allowed_visibility,
-                top_k=top_k,
-            )
-        )
-
-        def request_impact(repair_errors: list[str] | None = None):
-            return self.gateway.event_impact(
-                document_id=event.document_id,
-                security_id=event.security_id,
-                segment_locator=event.evidence_locator,
-                segment_text=event.fact,
-                disclosure_time=event.disclosure_time.isoformat(),
-                thesis_id=hypothesis.thesis_id,
-                hypothesis_id=hypothesis.hypothesis_id,
-                thesis_context=(hypothesis.thesis_core_view or hypothesis.statement),
-                hypothesis_context=self._hypothesis_context(hypothesis, retrieval),
-                event_type=event.event_type,
-                occurred_on=(event.occurred_on.isoformat() if event.occurred_on else None),
-                context=self._context(hypothesis, retrieval.items),
-                repair_errors=repair_errors,
+        impacts: list[AgentImpact] = []
+        for hypothesis in hypotheses:
+            retrieval = self.retriever.search(
+                RetrievalQuery(
+                    text=f"{event.fact} {hypothesis.statement}",
+                    security_id=event.security_id,
+                    as_of=event.disclosure_time,
+                    allowed_visibility=allowed_visibility,
+                    top_k=top_k,
+                )
             )
 
-        outcome = request_impact()
-        impact = AgentImpact(hypothesis, retrieval, outcome)
-        validation = EvidenceAgent.validate_impact(impact)
-        if outcome.usable and not validation.valid:
-            outcome = request_impact(_citation_repair_errors(validation))
+            def request_impact(repair_errors: list[str] | None = None):
+                return self.gateway.event_impact(
+                    document_id=event.document_id,
+                    security_id=event.security_id,
+                    segment_locator=event.evidence_locator,
+                    segment_text=event.fact,
+                    disclosure_time=event.disclosure_time.isoformat(),
+                    thesis_id=hypothesis.thesis_id,
+                    hypothesis_id=hypothesis.hypothesis_id,
+                    thesis_context=(hypothesis.thesis_core_view or hypothesis.statement),
+                    hypothesis_context=self._hypothesis_context(hypothesis, retrieval),
+                    event_type=event.event_type,
+                    occurred_on=(event.occurred_on.isoformat() if event.occurred_on else None),
+                    context=self._context(hypothesis, retrieval.items),
+                    repair_errors=repair_errors,
+                )
+
+            outcome = request_impact()
             impact = AgentImpact(hypothesis, retrieval, outcome)
-        return AgentRunResult(event_id=event.event_id, impacts=[impact])
+            validation = EvidenceAgent.validate_impact(impact)
+            if outcome.usable and not validation.valid:
+                outcome = request_impact(_citation_repair_errors(validation))
+                impact = AgentImpact(hypothesis, retrieval, outcome)
+            impacts.append(impact)
+        return AgentRunResult(event_id=event.event_id, impacts=impacts)
 
 
 def _citation_repair_errors(validation: EvidenceValidation) -> list[str]:

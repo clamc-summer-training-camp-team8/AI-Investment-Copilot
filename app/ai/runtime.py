@@ -233,7 +233,7 @@ class InvestmentResearchAgent:
     def analyze_event(
         self,
         event: AgentEventInput,
-        hypothesis: HypothesisInput,
+        hypotheses: tuple[HypothesisInput, ...],
         *,
         allowed_visibility: frozenset[str] = frozenset({"公开"}),
         top_k: int = 3,
@@ -251,7 +251,7 @@ class InvestmentResearchAgent:
             self._transition(execution, "generating")
             result: AgentRunResult = self.logic_change.analyze(
                 event,
-                hypothesis,
+                hypotheses,
                 allowed_visibility=allowed_visibility,
                 top_k=top_k,
             )

@@ -16,7 +16,7 @@ from app.ai.contracts.validator import ValidationOutcome
 from app.ai.gateway import Gateway
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument
 from app.core.config import Settings
-from app.core.enums import AiStatus
+from app.core.enums import AiStatus, ImpactDirection
 
 
 class _CitationRetryGateway:
@@ -64,11 +64,53 @@ class _ThesisContextGateway:
         return self.delegate.thesis_draft(**kwargs)  # type: ignore[arg-type]
 
 
-def test_logic_change_agent_contract_is_single_hypothesis() -> None:
+class _BatchImpactGateway:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+        self.directions = {
+            "H1": ImpactDirection.CONFLICT,
+            "H2": ImpactDirection.CONFLICT,
+            "H3": ImpactDirection.IRRELEVANT,
+        }
+
+    def event_impact(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        hypothesis_id = str(kwargs["hypothesis_id"])
+        locator = str(kwargs["segment_locator"])
+        direction = self.directions[hypothesis_id]
+        return ValidationOutcome(
+            ai_status=AiStatus.CANDIDATE,
+            payload={
+                "document_id": kwargs["document_id"],
+                "security_id": kwargs["security_id"],
+                "thesis_id": kwargs["thesis_id"],
+                "hypothesis_id": hypothesis_id,
+                "relevance": "无关" if direction is ImpactDirection.IRRELEVANT else "相关",
+                "event": {
+                    "event_type": kwargs["event_type"],
+                    "disclosure_time": kwargs["disclosure_time"],
+                    "fact": kwargs["segment_text"],
+                    "evidence_locator": locator,
+                },
+                "signal": {
+                    "impact_direction": direction.value,
+                    "confidence": 0.8,
+                    "requires_human_review": True,
+                },
+                "citations": [locator],
+                "model_version": "batch-test-v1",
+                "prompt_version": "batch-test-v1",
+                "generated_at": "2026-08-10T00:00:00+00:00",
+                "ai_status": AiStatus.CANDIDATE.value,
+            },
+        )
+
+
+def test_logic_change_agent_contract_accepts_candidate_hypotheses() -> None:
     parameters = signature(InvestmentLogicChangeAgent.analyze).parameters
 
-    assert "hypothesis" in parameters
-    assert "candidates" not in parameters
+    assert "hypotheses" in parameters
+    assert "hypothesis" not in parameters
 
 
 def test_thesis_draft_passes_structured_investment_context() -> None:
@@ -156,21 +198,23 @@ def test_agent_retries_invalid_citation_with_structured_context() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput(
-            thesis_id="THESIS-001",
-            hypothesis_id="H1",
-            statement="收入保持增长",
-            thesis_core_view="盈利增长依赖核心业务收入持续增长",
-            hypothesis_type="经营",
-            importance="核心",
-            expected_direction="越高越好",
-            invalidation_rule="收入同比低于0%",
-            metric_rules=(
-                MetricRuleInput(
-                    metric_id="revenue_yoy",
-                    expected_direction="越高越好",
-                    expected_value=Decimal("10"),
-                    invalidation_threshold=Decimal("0"),
+        (
+            HypothesisInput(
+                thesis_id="THESIS-001",
+                hypothesis_id="H1",
+                statement="收入保持增长",
+                thesis_core_view="盈利增长依赖核心业务收入持续增长",
+                hypothesis_type="经营",
+                importance="核心",
+                expected_direction="越高越好",
+                invalidation_rule="收入同比低于0%",
+                metric_rules=(
+                    MetricRuleInput(
+                        metric_id="revenue_yoy",
+                        expected_direction="越高越好",
+                        expected_value=Decimal("10"),
+                        invalidation_threshold=Decimal("0"),
+                    ),
                 ),
             ),
         ),
@@ -198,6 +242,81 @@ def test_agent_retries_invalid_citation_with_structured_context() -> None:
     }
     assert gateway.calls[1]["repair_errors"]
     assert result.impacts[0].outcome.payload["citations"] == ["history-001#paragraph-1"]
+
+
+def test_logic_change_analyzes_every_candidate_and_keeps_metric_rules_isolated() -> None:
+    gateway = _BatchImpactGateway()
+    agent = InvestmentLogicChangeAgent(gateway=gateway, retriever=KeywordRetriever())
+    event = AgentEventInput(
+        event_id="event-batch",
+        document_id="doc-batch",
+        security_id="000538.SZ",
+        evidence_locator="doc-batch#paragraph-1",
+        fact="公司Q2产能利用率下降，毛利率同比下降",
+        disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+        event_type="业绩",
+    )
+    hypotheses = (
+        HypothesisInput(
+            "THESIS-001",
+            "H1",
+            "产能利用率持续改善",
+            metric_rules=(MetricRuleInput("capacity_utilization", "越高越好"),),
+        ),
+        HypothesisInput(
+            "THESIS-001",
+            "H2",
+            "毛利率持续改善",
+            metric_rules=(MetricRuleInput("gross_margin", "越高越好"),),
+        ),
+        HypothesisInput("THESIS-001", "H3", "资本开支持续增长"),
+    )
+
+    result = agent.analyze(event, hypotheses)
+
+    assert [impact.candidate.hypothesis_id for impact in result.impacts] == ["H1", "H2", "H3"]
+    assert [
+        impact.outcome.payload["signal"]["impact_direction"] for impact in result.impacts
+    ] == ["冲突", "冲突", "无关"]
+    assert len(gateway.calls) == 3
+    assert gateway.calls[0]["hypothesis_context"]["metrics"] == [
+        {
+            "metric_id": "capacity_utilization",
+            "expected_direction": "越高越好",
+            "expected_value": None,
+            "invalidation_threshold": None,
+        }
+    ]
+    assert gateway.calls[1]["hypothesis_context"]["metrics"] == [
+        {
+            "metric_id": "gross_margin",
+            "expected_direction": "越高越好",
+            "expected_value": None,
+            "invalidation_threshold": None,
+        }
+    ]
+    assert gateway.calls[2]["hypothesis_context"]["metrics"] == []
+
+
+def test_logic_change_empty_candidates_do_not_call_gateway() -> None:
+    gateway = _BatchImpactGateway()
+    event = AgentEventInput(
+        event_id="event-empty",
+        document_id="doc-empty",
+        security_id="000538.SZ",
+        evidence_locator="doc-empty#paragraph-1",
+        fact="没有候选假设",
+        disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+        event_type="其他",
+    )
+
+    result = InvestmentLogicChangeAgent(
+        gateway=gateway,
+        retriever=KeywordRetriever(),
+    ).analyze(event, ())
+
+    assert result.impacts == []
+    assert gateway.calls == []
 
 
 def test_agent_编排检索和事件影响分析() -> None:
@@ -229,10 +348,12 @@ def test_agent_编排检索和事件影响分析() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput(
-            thesis_id="THESIS-001",
-            hypothesis_id="THESIS-001-H1",
-            statement="核心业务收入保持增长",
+        (
+            HypothesisInput(
+                thesis_id="THESIS-001",
+                hypothesis_id="THESIS-001-H1",
+                statement="核心业务收入保持增长",
+            ),
         ),
     )
 
@@ -271,7 +392,7 @@ def test_agent_不把未来文档放入上下文() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput("THESIS-001", "H1", "收入保持增长"),
+        (HypothesisInput("THESIS-001", "H1", "收入保持增长"),),
     )
 
     assert result.impacts[0].retrieval.items == []
@@ -329,7 +450,7 @@ def test_evidence_agent_拒绝检索结果之外的引用() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput("THESIS-001", "H1", "收入增长"),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
     )
     impact = result.impacts[0]
     impact.outcome.payload["citations"] = [{"locator": "unknown#paragraph-9"}]
@@ -368,7 +489,7 @@ def test_evidence_agent_计算引用完整性评分() -> None:
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
             event_type="其他",
         ),
-        HypothesisInput("THESIS-001", "H1", "收入增长"),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
     )
     impact = result.impacts[0]
     impact.outcome.payload["citations"] = [{"locator": "history-001#paragraph-1"}]
@@ -411,7 +532,7 @@ def test_evidence_agent_检查事实与引用一致性和实体匹配() -> None:
             datetime(2026, 8, 10, tzinfo=UTC),
             "其他",
         ),
-        HypothesisInput("THESIS-001", "H1", "收入增长"),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
     )
     impact = result.impacts[0]
     impact.outcome.payload["event"]["fact"] = "另一家公司完全无关的事实"
