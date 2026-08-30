@@ -89,9 +89,10 @@ Graph RAG 同样遵守该边界：图是关系库正式对象按来源、观测�
 路径解释，不创建或确认任何业务关系。实现与验收口径见
 [`../../docs/architecture/Graph-RAG实现说明.md`](../../docs/architecture/Graph-RAG实现说明.md)。
 
-下一发布候选使用 `graph-assist-rank-stable-v1`：文本候选保持原相对次序，Graph 只附加路径、
-图分和快照，并在文本不足 K 条时补位。评测查询可携带候选文档白名单，所有文本与图路径均须
-留在白名单内；`RAG_GRAPH_ENABLED` 默认关闭，v5 独立盲测通过前不得绕过质量报告开启。
+默认发布策略使用 `graph-evidence-fusion-v1`：在候选池、证券、权限和时间边界内确定性融合文本、
+中文 BM25 与 Graph 路径排序，并保留路径、图分、快照和分支排名。v6 专业研究员一次性盲测已
+14/14 通过，因此 `RAG_GRAPH_ENABLED` 默认开启、`RAG_GRAPH_ASSIST_ONLY` 默认关闭；需要保序
+兼容时仍可显式启用 assist 模式，运行时异常继续回退到文本检索。
 
 ## 测试
 

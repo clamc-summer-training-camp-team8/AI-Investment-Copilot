@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 
 from app.ai.gateway import Gateway
-from app.ai.graph_rag import RankStableGraphAssistRetriever
+from app.ai.graph_rag import EvidenceFusionGraphRetriever
 from app.ai.retrieval import KeywordRetriever
 from app.ai.runtime import InvestmentResearchAgent
 from app.core.config import RuleThresholds, Settings
@@ -178,14 +178,15 @@ def test_event_rag_pilot_is_explicit_sampled_permission_filtered_context() -> No
     assert any(item.action == "RAG事件假设召回" for item in audits)
 
 
-def test_event_rag_pilot_is_off_by_default() -> None:
+def test_event_rag_pilot_is_off_and_graph_rag_is_on_by_default() -> None:
     settings = Settings(_env_file=None, llm_provider="local")
     assert settings.rag_event_pilot_enabled is False
     assert settings.rag_event_pilot_sample_rate == 0.05
-    assert settings.rag_graph_enabled is False
+    assert settings.rag_graph_enabled is True
+    assert settings.rag_graph_assist_only is False
 
 
-def test_graph_rag_显式开启后包装现有_runtime_retriever() -> None:
+def test_graph_rag_默认用_evidence_fusion_包装现有_runtime_retriever() -> None:
     uow = build_fake_uow()
     uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
     uow.thesis.add(
@@ -216,7 +217,7 @@ def test_graph_rag_显式开启后包装现有_runtime_retriever() -> None:
         [("DOC-GRAPH#paragraph-1", "公司披露新签订单同比增长35%。")],
         disclosure_time=disclosed_at,
     )
-    settings = Settings(_env_file=None, llm_provider="local", rag_graph_enabled=True)
+    settings = Settings(_env_file=None, llm_provider="local")
     runtime = InvestmentResearchAgent.build(Gateway.build(settings), retriever=KeywordRetriever())
 
     result = process_events(
@@ -230,11 +231,11 @@ def test_graph_rag_显式开启后包装现有_runtime_retriever() -> None:
         rag_settings=settings,
     )
 
-    assert isinstance(runtime.logic_change.retriever, RankStableGraphAssistRetriever)
+    assert isinstance(runtime.logic_change.retriever, EvidenceFusionGraphRetriever)
     assert len(result.candidates) == 1
     trace = result.candidates[0].retrieval_trace
     assert trace is not None
-    assert trace["retrieval_mode"] == "graph_assist"
+    assert trace["retrieval_mode"] == "graph_evidence_fusion"
     assert "investment-graph-rag-v2-layered" in str(trace["retrieval_version"])
     snapshot = trace["graph_snapshot"]
     assert isinstance(snapshot, dict)
@@ -250,10 +251,10 @@ def test_graph_rag_显式开启后包装现有_runtime_retriever() -> None:
         document_id="DOC-GRAPH",
         rag_settings=settings,
     )
-    assert isinstance(runtime.logic_change.retriever, RankStableGraphAssistRetriever)
+    assert isinstance(runtime.logic_change.retriever, EvidenceFusionGraphRetriever)
     assert not isinstance(
         runtime.logic_change.retriever.text_retriever,
-        RankStableGraphAssistRetriever,
+        EvidenceFusionGraphRetriever,
     )
 
 

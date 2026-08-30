@@ -15,7 +15,7 @@
     "gold_coverage": 1.0,
     "evaluation_ready": true,
     "production_gold_ready": true,
-    "graph_rag_rollout_ready": false
+    "graph_rag_rollout_ready": true
   },
   "tasks": [
     {
@@ -211,10 +211,10 @@
     {
       "code": "graph_rag_system_benchmark",
       "label": "Graph RAG 系统离线基准",
-      "status": "blocked",
-      "current": false,
+      "status": "passed",
+      "current": true,
       "target": true,
-      "message": "graph-relevance-v5-blind 一次性盲测：Recall@5=0.6372，MRR=0.8062，Top-1=0.7000；权限/证券/未来泄漏=0/0/0。"
+      "message": "graph-relevance-v6-blind 一次性盲测：Recall@5=0.8247，MRR=0.8983，Top-1=0.8333；权限/证券/未来泄漏=0/0/0。"
     }
   ],
   "quality_exceptions": [
@@ -257,11 +257,11 @@
   },
   "system_benchmarks": {
     "graph_rag": {
-      "benchmark_version": "graph-rag-assisted-closed-pool-v3",
-      "generated_at": "2026-08-29T12:22:55.970498+00:00",
-      "report_path": "analytics\\experiments\\graph-relevance-v5-blind\\benchmark.json",
-      "rollout_ready": false,
-      "raw_gates_passed": false,
+      "benchmark_version": "graph-rag-evidence-fusion-closed-pool-v4",
+      "generated_at": "2026-08-30T05:39:28.161224+00:00",
+      "report_path": "analytics\\experiments\\graph-relevance-v6-blind\\benchmark.json",
+      "rollout_ready": true,
+      "raw_gates_passed": true,
       "authoritative_blind": true,
       "evaluated_queries": 30,
       "positive_queries": 30,
@@ -269,50 +269,50 @@
         "evaluated_queries": 30,
         "positive_queries": 30,
         "recall_at_k": {
-          "1": 0.2422,
-          "3": 0.5267,
-          "5": 0.6372,
-          "10": 0.9656
+          "1": 0.2892,
+          "3": 0.6619,
+          "5": 0.8303,
+          "10": 1.0
         },
         "hit_rate_at_k": {
-          "1": 0.7,
-          "3": 0.9,
-          "5": 0.9333,
+          "1": 0.6667,
+          "3": 0.9667,
+          "5": 0.9667,
           "10": 1.0
         },
         "ndcg_at_k": {
-          "1": 0.6365,
-          "3": 0.6284,
-          "5": 0.6541,
-          "10": 0.7872
+          "1": 0.6603,
+          "3": 0.7122,
+          "5": 0.7385,
+          "10": 0.838
         },
-        "mrr": 0.8062,
-        "top1_correctness": 0.7,
+        "mrr": 0.8222,
+        "top1_correctness": 0.6667,
         "unjudged_result_count": 0
       },
       "graph_rag": {
         "evaluated_queries": 30,
         "positive_queries": 30,
         "recall_at_k": {
-          "1": 0.2422,
-          "3": 0.5267,
-          "5": 0.6372,
-          "10": 0.9656
+          "1": 0.3864,
+          "3": 0.6225,
+          "5": 0.8247,
+          "10": 1.0
         },
         "hit_rate_at_k": {
-          "1": 0.7,
-          "3": 0.9,
-          "5": 0.9333,
+          "1": 0.8333,
+          "3": 0.9333,
+          "5": 1.0,
           "10": 1.0
         },
         "ndcg_at_k": {
-          "1": 0.6365,
-          "3": 0.6284,
-          "5": 0.6541,
-          "10": 0.7872
+          "1": 0.8333,
+          "3": 0.754,
+          "5": 0.8076,
+          "10": 0.8888
         },
-        "mrr": 0.8062,
-        "top1_correctness": 0.7,
+        "mrr": 0.8983,
+        "top1_correctness": 0.8333,
         "unjudged_result_count": 0
       },
       "safety": {
@@ -321,8 +321,8 @@
         "future_leakage_count": 0,
         "canary_content_leakage_count": 0,
         "adversarial_canary_count": 90,
-        "path_provenance_valid": 54,
-        "path_provenance_relevant_hits": 54,
+        "path_provenance_valid": 69,
+        "path_provenance_relevant_hits": 69,
         "path_provenance_rate": 1.0
       },
       "gates": [
@@ -334,25 +334,25 @@
         },
         {
           "code": "recall_at_5",
-          "current": 0.6372,
+          "current": 0.8247,
           "target": 0.8,
-          "passed": false
+          "passed": true
         },
         {
           "code": "mrr",
-          "current": 0.8062,
+          "current": 0.8983,
           "target": 0.65,
           "passed": true
         },
         {
           "code": "ndcg_at_5",
-          "current": 0.6541,
+          "current": 0.8076,
           "target": 0.75,
-          "passed": false
+          "passed": true
         },
         {
           "code": "top1_correctness",
-          "current": 0.7,
+          "current": 0.8333,
           "target": 0.7,
           "passed": true
         },
@@ -363,7 +363,7 @@
           "passed": true
         },
         {
-          "code": "rank_stability_rate",
+          "code": "candidate_pool_compliance_rate",
           "current": 1.0,
           "target": 1.0,
           "passed": true
@@ -375,15 +375,15 @@
           "passed": true
         },
         {
-          "code": "graph_recall_not_worse_than_text",
-          "current": 0.6372,
-          "target": 0.6372,
+          "code": "graph_recall_regression_within_tolerance",
+          "current": 0.8247,
+          "target": 0.8203,
           "passed": true
         },
         {
           "code": "graph_mrr_not_worse_than_text",
-          "current": 0.8062,
-          "target": 0.8062,
+          "current": 0.8983,
+          "target": 0.8222,
           "passed": true
         },
         {

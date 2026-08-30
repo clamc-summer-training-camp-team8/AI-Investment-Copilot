@@ -364,7 +364,7 @@
 
 ### 阶段 20：Graph RAG 结构化关系检索
 
-状态：实现完成，默认关闭，等待真实问题金标对照评测后决定试点流量。
+状态：实现完成；最初默认关闭，后续已由 v6 独立盲测授权开启。
 
 主要内容：
 
@@ -373,14 +373,14 @@
 - 支持从假设沿“变量—指标—事实—原文”路径召回词面不重合的文本，并融合原文本检索分数。
 - 每个结果返回节点类型、关系方向、边的原文定位和可读路径解释；事实或图节点不能冒充引用。
 - 路径上的每个节点都执行证券、权限标签和披露时间过滤，未确认边默认不可遍历。
-- Worker 通过 `RAG_GRAPH_ENABLED` 显式启用，默认关闭；Graph Retriever 可包装任意现有 Retriever，不实现 Agentic RAG 的循环或任务规划。
+- Worker 通过 `RAG_GRAPH_ENABLED` 控制启用；Graph Retriever 可包装任意现有 Retriever，不实现 Agentic RAG 的循环或任务规划。
 - 新增本地复现命令 `python -m scripts.run_graph_rag` 和完整实现说明。
 
 验证结果见 `tests/unit/ai/test_graph_rag.py` 与 `tests/unit/services/test_graph_rag.py`；全量门禁结果以本次最终验证记录为准。
 
 ### 阶段 21：Graph RAG 分层知识库
 
-状态：实现完成，沿用默认关闭的灰度策略。
+状态：实现完成；安全边界保持，运行策略已在 v6 通过后切换为默认开启。
 
 主要内容：
 
@@ -473,3 +473,18 @@
   误报为可放量。
 - Docker 本地环境完成 `0012_evidence_retrieval_trace` 迁移，PostgreSQL/pgvector、Redis、
   MinIO、API、Worker 与前端 readiness 全部通过；真实数据页面和实际 Graph Snapshot 查询完成验收。
+
+### 阶段 28：Evidence Fusion 与 v6 正式启用
+
+状态：完成；`graph-relevance-v6-blind` 唯一一次正式评测 14/14 通过，Graph RAG 默认开启。
+
+主要内容：
+
+- 30 个全新查询、300 条同公司共享候选关系由专业研究员独立完成；冻结题面、关系 ID、模型锁、
+  枚举和时间格式全部通过回收校验。
+- `graph-evidence-fusion-v1` 在封闭候选池内融合文本、中文 BM25、Graph 路径和财报先验。
+- 正式结果为 Recall@5 0.8247、MRR 0.8983、NDCG@5 0.8076、Top-1 0.8333；路径来源和候选池
+  合规率均为 1.0，未判断结果和四类泄漏均为 0。
+- 质量中心更新为 READY；默认配置为 `RAG_GRAPH_ENABLED=true`、
+  `RAG_GRAPH_ASSIST_ONLY=false`，异常时继续回退文本检索。
+- Graph 输出仍只生成候选上下文，正式证据关系、投资逻辑状态和发布动作继续由人工确认。

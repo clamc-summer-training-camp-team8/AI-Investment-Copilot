@@ -84,8 +84,8 @@
 
 ## 5. 安全边界
 
-- 默认 `RAG_GRAPH_ENABLED=false`，完成离线对照评测前不改变现有流量。
-- 默认 `RAG_GRAPH_ASSIST_ONLY=true`，未来开启后仍保持文本排序稳定，不让 Graph 静默改写首位。
+- v6 专业研究员一次性盲测 14/14 通过后，默认 `RAG_GRAPH_ENABLED=true`。
+- 默认 `RAG_GRAPH_ASSIST_ONLY=false`，使用已授权的 Evidence Fusion；保序 assist 仍作为兼容开关。
 - 默认只纳入已确认指标映射和已确认证据关系。
 - 权限和时间过滤作用于路径上的每一个节点，而不只检查最终文档。
 - 证券过滤阻止通过共享指标节点串到其他公司的研究对象。
@@ -102,8 +102,8 @@ Graph RAG 提供的是一次确定性 `search(query)`：输入查询，输出原
 ## 7. 配置
 
 ```dotenv
-RAG_GRAPH_ENABLED=false
-RAG_GRAPH_ASSIST_ONLY=true
+RAG_GRAPH_ENABLED=true
+RAG_GRAPH_ASSIST_ONLY=false
 RAG_GRAPH_TEXT_WEIGHT=0.35
 RAG_GRAPH_RELATION_WEIGHT=0.65
 RAG_GRAPH_MAX_HOPS=5
@@ -171,7 +171,7 @@ python -m scripts.run_graph_rag `
 - 原有关键词、混合检索、Agent Runtime 和上传变化链路保持兼容。
 
 最终独立金标系统基准与 P0 回归见 [Graph RAG 系统评测基准](Graph-RAG系统评测基准.md)。
-assist 候选在 v4 揭盲回归中 Recall@5=0.8196、MRR=0.8750、NDCG@5=0.7834、Top-1=0.7333，
-排序稳定率 1.0、未判断返回 0、四类泄漏 0，14 项回归门禁全部通过。该结果只证明实现具备
-提交新盲测的工程条件，不是放量证据；全新的 `graph-relevance-v5-blind` 已锁定，必须由专业
-研究员独立完成 300 行标注并执行唯一一次评测。v5 通过前 Graph RAG 继续默认关闭。
+`graph-relevance-v6-blind` 的 300 行专业研究员独立标注与唯一一次评测已完成：Recall@5
+0.8247、MRR 0.8983、NDCG@5 0.8076、Top-1 0.8333，路径来源与候选池合规率均为 1.0，
+未判断返回和四类泄漏均为 0，14/14 门禁全部通过。质量中心已标记 READY，默认启用 Evidence
+Fusion；历史 v4/v5 未通过结论仍保留且不可覆盖。

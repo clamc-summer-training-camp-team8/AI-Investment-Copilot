@@ -95,12 +95,11 @@ class Settings(BaseSettings):
     rag_event_pilot_enabled: bool = False
     rag_event_pilot_sample_rate: float = Field(default=0.05, ge=0, le=1)
     rag_event_pilot_limit: int = Field(default=3, ge=1, le=10)
-    # Graph RAG 只扩展已确认的“逻辑—假设—变量—指标—事实—原文”关系。
-    # 默认关闭，避免在完成离线评测前改变现有候选上下文分布。
-    rag_graph_enabled: bool = False
-    # P0 下一迭代默认采用保序辅助：文本候选顺序不变，Graph 只附加路径并在
-    # 文本候选不足时回填。通过新的独立盲测后才允许关闭此保护进入全量重排。
-    rag_graph_assist_only: bool = True
+    # v6 专业研究员一次性盲测 14/14 通过后默认开启 Graph RAG。图仍只扩展已确认的
+    # “逻辑—假设—变量—指标—事实—原文”关系，并受证券、权限与披露时间边界约束。
+    rag_graph_enabled: bool = True
+    # v6 已授权 Evidence Fusion 参与正式排序；需要兼容保序模式时可显式改为 true。
+    rag_graph_assist_only: bool = False
     rag_graph_text_weight: float = Field(default=0.35, ge=0, le=1)
     rag_graph_relation_weight: float = Field(default=0.65, ge=0, le=1)
     rag_graph_max_hops: int = Field(default=5, ge=1, le=8)

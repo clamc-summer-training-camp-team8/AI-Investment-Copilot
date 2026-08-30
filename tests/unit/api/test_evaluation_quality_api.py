@@ -24,14 +24,14 @@ def test_质量中心返回冻结金标与门禁() -> None:
     assert payload["summary"]["gold_samples"] == 360
     assert payload["summary"]["evaluation_eligible_samples"] == 358
     assert payload["summary"]["production_gold_ready"] is True
-    assert payload["summary"]["graph_rag_rollout_ready"] is False
+    assert payload["summary"]["graph_rag_rollout_ready"] is True
     graph_benchmark = payload["system_benchmarks"]["graph_rag"]
     assert graph_benchmark["authoritative_blind"] is True
     assert graph_benchmark["evaluated_queries"] == 30
-    assert graph_benchmark["graph_rag"]["recall_at_k"]["5"] == 0.6372
-    assert graph_benchmark["graph_rag"]["mrr"] == 0.8062
+    assert graph_benchmark["graph_rag"]["recall_at_k"]["5"] == 0.8247
+    assert graph_benchmark["graph_rag"]["mrr"] == 0.8983
     assert graph_benchmark["safety"]["permission_leakage_count"] == 0
-    assert graph_benchmark["rollout_ready"] is False
+    assert graph_benchmark["rollout_ready"] is True
     assert {item["task"] for item in payload["tasks"]} == {
         "event",
         "body_fact",
