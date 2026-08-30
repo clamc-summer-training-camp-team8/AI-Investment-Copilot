@@ -463,6 +463,10 @@ async def process_events_async(
             )
             for impact in analysis_result.impacts:
                 hypothesis_id = impact.hypothesis_id
+                # 人工标注或上游已确认了目标假设时，它就是本事件的金标；批量模型仍需
+                # 为契约完整性返回全部假设，但非金标结果不能扩散成额外候选证据。
+                if event.hypothesis_id and hypothesis_id != event.hypothesis_id:
+                    continue
 
                 audit.record_model_call(
                     uow.audit,

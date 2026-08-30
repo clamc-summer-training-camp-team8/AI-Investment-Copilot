@@ -8,7 +8,6 @@ from app.ai.tools.threshold import (
     ThresholdSuggestion,
     ThresholdSuggestionTool,
 )
-from app.ai.tools.company_metrics import CompanyMetricObservation, fetch_byd_periodic_metrics
 
 __all__ = [
     "MetricCandidate",
@@ -18,6 +17,4 @@ __all__ = [
     "ThresholdReference",
     "ThresholdSuggestion",
     "ThresholdSuggestionTool",
-    "CompanyMetricObservation",
-    "fetch_byd_periodic_metrics",
 ]

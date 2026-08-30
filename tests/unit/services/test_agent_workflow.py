@@ -89,9 +89,7 @@ def test_metric_recommendation_adds_auditable_threshold_without_saving_mapping()
     )
 
     recommendation = next(
-        item
-        for item in candidate.payload["recommendations"]
-        if item["metric_id"] == "AUTO-SALES-M"
+        item for item in candidate.payload["recommendations"] if item["metric_id"] == "AUTO-SALES-M"
     )
     threshold = recommendation["threshold_suggestion"]
     assert threshold["method"] == "historical_quantile"
@@ -206,9 +204,7 @@ def test_major_risk_revision_stays_editing_and_keeps_existing_hypothesis_ids() -
     metadata = cast(dict[str, Any], candidate.revision.payload["ai_revision_candidate"])
     revised = cast(list[dict[str, Any]], candidate.revision.payload["hypotheses"])
     assert metadata["requires_human_review"] is True
-    assert [item["hypothesis_id"] for item in revised] == [
-        hypothesis.hypothesis_id
-    ]
+    assert [item["hypothesis_id"] for item in revised] == [hypothesis.hypothesis_id]
     stored = uow.thesis.get(thesis.thesis_id)
     assert stored is not None
     assert stored.core_view == thesis.core_view

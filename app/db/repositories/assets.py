@@ -380,7 +380,8 @@ class SqlAssetRepo:
                           d.visibility_label,to_tsvector('simple',coalesce(s.content,''))
                    FROM document_segment s JOIN document d ON d.document_id=s.document_id
                    WHERE d.deleted_at IS NULL AND NOT EXISTS (
-                     SELECT 1 FROM segment_search_index i WHERE i.document_id=d.document_id
+                     SELECT 1 FROM segment_search_index i
+                     WHERE i.document_id=d.document_id AND i.locator=s.locator
                    )"""
             )
         )
@@ -518,6 +519,14 @@ class SqlAssetRepo:
     ) -> list[AssetSearchHitRecord]:
         if not query.strip() or not visibility_labels:
             return []
+        normalized_query = "".join(query.lower().split())
+        literal_terms = sorted(
+            {
+                normalized_query[index : index + 2]
+                for index in range(max(0, len(normalized_query) - 1))
+                if any("\u4e00" <= char <= "\u9fff" for char in normalized_query[index : index + 2])
+            }
+        )
         vector = "[" + ",".join(f"{value:.9g}" for value in query_embedding) + "]"
         rows = self._session.execute(
             text(
@@ -549,11 +558,19 @@ class SqlAssetRepo:
                            AND ind.name = ANY(CAST(:industries AS text[]))
                            AND sim.valid_from <= d.published_at::date
                            AND (sim.valid_to IS NULL OR sim.valid_to >= d.published_at::date)))
-                   ), scored AS (
+                   ), raw_scored AS (
                      SELECT *,
-                       ts_rank_cd(search_vector,plainto_tsquery('simple',:query)) AS keyword_rank,
+                       ts_rank_cd(search_vector,plainto_tsquery('simple',:query)) AS ts_rank,
+                       CASE WHEN cardinality(CAST(:literal_terms AS text[]))=0 THEN 0
+                            ELSE (SELECT count(*)::float
+                                  FROM unnest(CAST(:literal_terms AS text[])) AS term
+                                  WHERE content ILIKE ('%' || term || '%'))
+                                 / cardinality(CAST(:literal_terms AS text[])) END AS literal_rank,
                        1-(embedding <=> CAST(:embedding AS vector)) AS vector_rank
                      FROM filtered
+                   ), scored AS (
+                     SELECT *, GREATEST(ts_rank, literal_rank) AS keyword_rank
+                     FROM raw_scored
                    )
                    SELECT document_id,locator,content,visibility_label,published_at,source,
                           ingestion_run_id,
@@ -564,6 +581,7 @@ class SqlAssetRepo:
             ),
             {
                 "query": query.strip(),
+                "literal_terms": literal_terms,
                 "embedding": vector,
                 "embedding_version": embedding_version,
                 "labels": list(visibility_labels),

@@ -10,15 +10,15 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 from typing import Annotated, TypeVar
-from dataclasses import replace
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.ai.gateway import Gateway, ModelUnavailable
 from app.ai.agents.hypothesis_quality import HypothesisQualityAgent
+from app.ai.gateway import Gateway, ModelUnavailable
 from app.ai.quality.hypothesis_structure import inspect_hypotheses
 from app.ai.runtime import InvestmentResearchAgent
 from app.api.deps import ActorDep, SettingsDep, UowDep
@@ -100,7 +100,6 @@ def _require_visible(uow: UnitOfWork, actor: Actor, thesis_id: str) -> ThesisRec
     record = uow.thesis.get(thesis_id)
     if record is None:
         raise HTTPException(status_code=404, detail="逻辑不存在或无访问权限")
-    ai_questions: list[str] = []
     try:
         permission.ensure_thesis_visible(
             actor,
@@ -114,6 +113,11 @@ def _require_visible(uow: UnitOfWork, actor: Actor, thesis_id: str) -> ThesisRec
     return record
 
 
+def _source_published_on(uow: UnitOfWork, source_document_id: str | None, fallback: date) -> date:
+    document = uow.documents.get(source_document_id) if source_document_id else None
+    return document.published_at.date() if document else fallback
+
+
 def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
     record = uow.thesis.get(thesis_id)
     if record is None:
@@ -123,7 +127,11 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
     hypothesis_suggestions = suggestions.get("hypotheses", {})
     if not isinstance(hypothesis_suggestions, dict):
         hypothesis_suggestions = {}
-    dimension_alias = {"原因层": "需求/行业维度", "机制层": "竞争力/执行维度", "结果层": "财务结果维度"}
+    dimension_alias = {
+        "原因层": "需求/行业维度",
+        "机制层": "竞争力/执行维度",
+        "结果层": "财务结果维度",
+    }
     return ThesisOut(
         thesis_id=record.thesis_id,
         security_id=record.security_id,
@@ -148,9 +156,27 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
                 status=h.status,
                 observation_window=h.observation_window,
                 invalidation_rule=h.invalidation_rule,
-                causal_level=(dimension_alias.get(hypothesis_suggestions.get(h.hypothesis_id, {}).get("causal_level"), hypothesis_suggestions.get(h.hypothesis_id, {}).get("causal_level")) if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict) else None),
-                logic_dimension=(dimension_alias.get(hypothesis_suggestions.get(h.hypothesis_id, {}).get("logic_dimension"), hypothesis_suggestions.get(h.hypothesis_id, {}).get("logic_dimension")) if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict) else None),
-                quality_warning=(hypothesis_suggestions.get(h.hypothesis_id, {}).get("quality_warning") if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict) else None),
+                causal_level=(
+                    dimension_alias.get(
+                        hypothesis_suggestions.get(h.hypothesis_id, {}).get("causal_level"),
+                        hypothesis_suggestions.get(h.hypothesis_id, {}).get("causal_level"),
+                    )
+                    if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
+                    else None
+                ),
+                logic_dimension=(
+                    dimension_alias.get(
+                        hypothesis_suggestions.get(h.hypothesis_id, {}).get("logic_dimension"),
+                        hypothesis_suggestions.get(h.hypothesis_id, {}).get("logic_dimension"),
+                    )
+                    if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
+                    else None
+                ),
+                quality_warning=(
+                    hypothesis_suggestions.get(h.hypothesis_id, {}).get("quality_warning")
+                    if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
+                    else None
+                ),
                 metric_suggestions=(
                     hypothesis_suggestions.get(h.hypothesis_id, {}).get("metric_suggestions", [])
                     if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
@@ -251,7 +277,9 @@ def create_draft(
             source_document_id = hits[0].document_id
 
     if not payload.view.strip() and not segments:
-        raise HTTPException(status_code=422, detail="未检索到可用历史资料，请先输入研究问题或补充资料。")
+        raise HTTPException(
+            status_code=422, detail="未检索到可用历史资料，请先输入研究问题或补充资料。"
+        )
 
     try:
         outcome = gateway.thesis_draft(
@@ -1036,11 +1064,10 @@ def list_trends(
                         TrendPointOut(
                             period=period,
                             value=value,
-                            published_on=(
-                                uow.documents.get(source_by_period[period].source_document_id).published_at.date()
-                                if source_by_period[period].source_document_id
-                                and uow.documents.get(source_by_period[period].source_document_id)
-                                else source_by_period[period].observation_date
+                            published_on=_source_published_on(
+                                uow,
+                                source_by_period[period].source_document_id,
+                                source_by_period[period].observation_date,
                             ),
                             acquired_at=source_by_period[period].ingested_at,
                             source_document_id=source_by_period[period].source_document_id,
@@ -1053,10 +1080,10 @@ def list_trends(
                         TrendPointOut(
                             period=row.period,
                             value=row.actual_value,
-                            published_on=(
-                                uow.documents.get(row.source_document_id).published_at.date()
-                                if row.source_document_id and uow.documents.get(row.source_document_id)
-                                else row.observation_date
+                            published_on=_source_published_on(
+                                uow,
+                                row.source_document_id,
+                                row.observation_date,
                             ),
                             acquired_at=row.ingested_at,
                             source_document_id=row.source_document_id,
@@ -1066,18 +1093,25 @@ def list_trends(
                         if row.actual_value is not None
                     ]
                 ),
-                note=(item.note + "；页面值为历史参考，不参与正式判定" if not result and item.source_rows else item.note),
+                note=(
+                    item.note + "；页面值为历史参考，不参与正式判定"
+                    if not result and item.source_rows
+                    else item.note
+                ),
             )
         )
     return out
 
 
 @router.post("/theses/{thesis_id}/quality-check", response_model=ThesisOut)
-def recheck_thesis_quality(thesis_id: str, actor: ActorDep, uow: UowDep, settings: SettingsDep) -> ThesisOut:
+def recheck_thesis_quality(
+    thesis_id: str, actor: ActorDep, uow: UowDep, settings: SettingsDep
+) -> ThesisOut:
     """用 AI 复核草稿逻辑，确定性规则负责兜底维度和重复检查。"""
     record = _require_visible(uow, actor, thesis_id)
     suggestions = dict(record.draft_suggestions or {})
-    grouped = dict(suggestions.get("hypotheses") or {})
+    raw_grouped = suggestions.get("hypotheses")
+    grouped = dict(raw_grouped) if isinstance(raw_grouped, dict) else {}
     hypotheses = uow.thesis.list_hypotheses(thesis_id)
     try:
         ai_review = HypothesisQualityAgent(gateway=Gateway.build(settings)).inspect(
@@ -1086,8 +1120,7 @@ def recheck_thesis_quality(thesis_id: str, actor: ActorDep, uow: UowDep, setting
             title=record.title,
             core_view=record.core_view,
             hypotheses=[
-                {"hypothesis_id": h.hypothesis_id, "statement": h.statement}
-                for h in hypotheses
+                {"hypothesis_id": h.hypothesis_id, "statement": h.statement} for h in hypotheses
             ],
         )
         suggestions["ai_quality_review"] = ai_review.payload
@@ -1103,7 +1136,13 @@ def recheck_thesis_quality(thesis_id: str, actor: ActorDep, uow: UowDep, setting
     for h, fallback in zip(hypotheses, checked, strict=True):
         current = dict(grouped.get(h.hypothesis_id) or {})
         result = ai_by_id.get(h.hypothesis_id) or fallback
-        current.update({"logic_dimension": result.get("logic_dimension") or fallback.get("logic_dimension"), "causal_level": result.get("logic_dimension") or fallback.get("causal_level"), "quality_warning": result.get("quality_warning") or ""})
+        current.update(
+            {
+                "logic_dimension": result.get("logic_dimension") or fallback.get("logic_dimension"),
+                "causal_level": result.get("logic_dimension") or fallback.get("causal_level"),
+                "quality_warning": result.get("quality_warning") or "",
+            }
+        )
         grouped[h.hypothesis_id] = current
     suggestions["hypotheses"] = grouped
     uow.thesis.update(replace(record, draft_suggestions=suggestions))

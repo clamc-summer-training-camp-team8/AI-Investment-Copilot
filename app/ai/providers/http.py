@@ -216,7 +216,14 @@ class HttpProvider:
         events: list[dict[str, Any]],
     ) -> dict[str, Any]:
         generated_at = datetime.now(UTC).isoformat()
-        payload.update({"model_version": self.model_version, "prompt_version": f"{EVENT_IMPACT.version}-batch-v1", "generated_at": generated_at, "ai_status": AiStatus.CANDIDATE.value})
+        payload.update(
+            {
+                "model_version": self.model_version,
+                "prompt_version": f"{EVENT_IMPACT.version}-batch-v1",
+                "generated_at": generated_at,
+                "ai_status": AiStatus.CANDIDATE.value,
+            }
+        )
         if self._last_model_metadata:
             payload["model_metadata"] = self._last_model_metadata
         inputs_by_id = {str(item["event_id"]): item for item in events}
@@ -294,9 +301,7 @@ class HttpProvider:
         )
         return self._decorate_extraction(payload, document_id=document_id)
 
-    def _decorate_extraction(
-        self, payload: dict[str, Any], *, document_id: str
-    ) -> dict[str, Any]:
+    def _decorate_extraction(self, payload: dict[str, Any], *, document_id: str) -> dict[str, Any]:
         payload.update(
             {
                 "document_id": document_id,
@@ -624,17 +629,17 @@ class HttpProvider:
                 retryable=False,
             )
         self._last_model_metadata = {
-                key: value
-                for key, value in {
-                    "provider": "deepseek" if self._is_deepseek else "openai-compatible",
-                    "request_id": body.get("id"),
-                    "usage": body.get("usage"),
-                    "finish_reason": finish_reason,
-                    "latency_ms": int((time.perf_counter() - started_at) * 1000),
-                    "attempt_count": attempt + 1,
-                }.items()
-                if value is not None
-            }
+            key: value
+            for key, value in {
+                "provider": "deepseek" if self._is_deepseek else "openai-compatible",
+                "request_id": body.get("id"),
+                "usage": body.get("usage"),
+                "finish_reason": finish_reason,
+                "latency_ms": int((time.perf_counter() - started_at) * 1000),
+                "attempt_count": attempt + 1,
+            }.items()
+            if value is not None
+        }
         if isinstance(content, dict):
             return content
         if not isinstance(content, str):

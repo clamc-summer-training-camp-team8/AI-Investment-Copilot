@@ -169,9 +169,9 @@ def test_multi_impact_mapping_keeps_identity_and_unrelated() -> None:
 
 
 def test_change_chain_does_not_read_agent_internal_payload() -> None:
-    source = (
-        Path(__file__).parents[3] / "app" / "workers" / "change_chain.py"
-    ).read_text(encoding="utf-8")
+    source = (Path(__file__).parents[3] / "app" / "workers" / "change_chain.py").read_text(
+        encoding="utf-8"
+    )
 
     assert 'payload["signal"]' not in source
     assert ".outcome.payload" not in source

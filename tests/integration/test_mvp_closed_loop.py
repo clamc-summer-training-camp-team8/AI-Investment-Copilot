@@ -21,7 +21,7 @@ from decimal import Decimal
 import pytest
 
 from app.ai.gateway import Gateway
-from app.core.config import RuleThresholds, settings
+from app.core.config import RuleThresholds, Settings
 from app.core.domain import (
     DocumentSegmentRecord,
     HypothesisRecord,
@@ -53,6 +53,7 @@ THESIS_ID = "THS-DEMO-001"
 SECURITY_ID = "DEMO001"
 ESTABLISHED_ON = date(2026, 1, 15)
 RESEARCHER = Actor(user_id="示例研究员", teams=frozenset({"权益研究"}))
+TEST_SETTINGS = Settings(_env_file=None, llm_provider="local")
 
 
 @pytest.fixture
@@ -208,7 +209,7 @@ def test_闭环跑通且落在关注而非失效(
 
     result = change_chain.process_events(
         uow,
-        Gateway.build(settings),
+        Gateway.build(TEST_SETTINGS),
         events=annotated_events,
         security_id=SECURITY_ID,
         actor=RESEARCHER,
@@ -268,7 +269,7 @@ def test_人工确认后状态才变更并生成版本与时间线(
     }
     change_chain.process_events(
         uow,
-        Gateway.build(settings),
+        Gateway.build(TEST_SETTINGS),
         events=annotated_events,
         security_id=SECURITY_ID,
         actor=RESEARCHER,
@@ -337,7 +338,7 @@ def test_确认证据前状态计算不受待确认证据影响(
     }
     result = change_chain.process_events(
         uow,
-        Gateway.build(settings),
+        Gateway.build(TEST_SETTINGS),
         events=annotated_events,
         security_id=SECURITY_ID,
         actor=RESEARCHER,

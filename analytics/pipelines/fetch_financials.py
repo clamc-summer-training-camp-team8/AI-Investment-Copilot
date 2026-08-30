@@ -270,9 +270,7 @@ def to_single_quarter(reports: list[RawReport]) -> list[QuarterMetric]:
 def run(*, refresh: bool = False, security_id: str | None = None) -> Path:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     destination = RAW_DIR / "financials.json"
-    existing = (
-        json.loads(destination.read_text(encoding="utf-8")) if destination.exists() else {}
-    )
+    existing = json.loads(destination.read_text(encoding="utf-8")) if destination.exists() else {}
     payload: dict[str, object] = {"data_version": DATA_VERSION, "metrics": {}}
     metrics_map: dict[str, list[dict[str, object]]] = dict(existing.get("metrics") or {})
     # 年报披露的累计营业收入。留着它是为了让测试能验证差分正确性：

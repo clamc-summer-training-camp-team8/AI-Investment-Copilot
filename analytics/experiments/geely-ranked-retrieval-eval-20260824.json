@@ -1,0 +1,986 @@
+{
+  "security_id": "00175",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "snapshot_id": "RPS-e450947c5cb52e69d3bde11a",
+  "top_k": 5,
+  "cases": [
+    {
+      "case_id": "GEELY-RET-01",
+      "query": "吉利2025年第三季度收入和销量增长是否有官方重述口径证据？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-33988aadaba3d45eace58a9a"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-financial-highlights",
+          "keyword_score": 0.98765432,
+          "vector_score": 0.99,
+          "retrieval_score": 0.9892963,
+          "prior_score": 0.933,
+          "final_score": 0.96677778,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 0.97530864,
+          "vector_score": 0.94,
+          "retrieval_score": 0.95059259,
+          "prior_score": 0.9365,
+          "final_score": 0.94495556,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-3fe5f8f88463e19aa434c043",
+          "locator": "DOC-STG-3fe5f8f88463e19aa434c043#body-fy2025-revenue-reconciliation",
+          "keyword_score": 0.9382716,
+          "vector_score": 0.92,
+          "retrieval_score": 0.92548148,
+          "prior_score": 0.945,
+          "final_score": 0.93328889,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025年报｜第191页】2025年来自客户合约的收入为345,232,201千元；2024年重述收入为275,910,484千元。其中2025年汽车及相关服务收入310,979,986千元、汽车零部件19,846,725千元、合作制造6,511,519千元、研发服务及许可7,893,971千元。该全年收入与本地2025四个季度收入合计一致。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-scope-note",
+          "keyword_score": 0.9382716,
+          "vector_score": 1.0,
+          "retrieval_score": 0.98148148,
+          "prior_score": 0.851,
+          "final_score": 0.92928889,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜口径提示】公告的2024年比较数字采用重述口径；本知识库将该来源用于验证2024Q1重述比较数。2025Q1当期初次公告收入为72,495百万元，与后续2026Q1披露的2025同期重述数72,692百万元不同，检索时不得混用两者。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#paragraph-1",
+          "keyword_score": 1.0,
+          "vector_score": 0.96,
+          "retrieval_score": 0.972,
+          "prior_score": 0.865,
+          "final_score": 0.9292,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "Geely Automobile Holdings Limited Third Quarterly Results 2025 — growth and profitability 2025年第三季度收入891.92亿元，同比增加27%；销量76.10万辆，同比增长43%。同期2024年比较数已按重述口径列示。 截至2025年9月30日止九个月收入2,394."
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-02",
+      "query": "吉利2026年一季度毛利率改善，但归母利润表现如何？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-b07023bf1def3341aeffb1b5"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 1.0,
+          "vector_score": 0.99,
+          "retrieval_score": 0.993,
+          "prior_score": 0.9365,
+          "final_score": 0.9704,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk",
+          "keyword_score": 0.96825397,
+          "vector_score": 1.0,
+          "retrieval_score": 0.99047619,
+          "prior_score": 0.927,
+          "final_score": 0.96508571,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】同期归母净利润约90.91亿元，同比约下降1.8%；经营现金流约199.24亿元，同比明显下降。收入、毛利和核心利润改善并不自动代表归母利润及现金转化同步改善，该矛盾必须在主投资逻辑检索中保留。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+          "keyword_score": 0.98412698,
+          "vector_score": 0.97,
+          "retrieval_score": 0.9742381,
+          "prior_score": 0.937,
+          "final_score": 0.95934286,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-latest-summary",
+          "keyword_score": 0.96825397,
+          "vector_score": 0.94,
+          "retrieval_score": 0.94847619,
+          "prior_score": 0.941,
+          "final_score": 0.94548571,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】截至2026年6月30日止六个月，收入约1,736亿元，同比增长约15%；毛利约311.5亿元，同比增长约25.7%，毛利率约17.9%；核心归母净利润约96.8亿元，同比增长约46%。该记录仅作为最新候选上下文，待法定PDF页码抽取后复核精确金额。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#paragraph-1",
+          "keyword_score": 0.96825397,
+          "vector_score": 0.98,
+          "retrieval_score": 0.97647619,
+          "prior_score": 0.865,
+          "final_score": 0.93188571,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "Geely Automobile Holdings Limited First Quarterly Results 2026 2026年第一季度收入837.76亿元，2025年同期为726.92亿元；毛利146.64亿元，2025年同期为114.46亿元。 2026年第一季度毛利率约17.5%，高于2025年同期约15.7%。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-03",
+      "query": "吉利前三季度核心利润改善与归母利润的差异是什么？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-33988aadaba3d45eace58a9a"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk",
+          "keyword_score": 1.0,
+          "vector_score": 0.99,
+          "retrieval_score": 0.993,
+          "prior_score": 0.927,
+          "final_score": 0.9666,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】同期归母净利润约90.91亿元，同比约下降1.8%；经营现金流约199.24亿元，同比明显下降。收入、毛利和核心利润改善并不自动代表归母利润及现金转化同步改善，该矛盾必须在主投资逻辑检索中保留。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-profit-quality",
+          "keyword_score": 1.0,
+          "vector_score": 1.0,
+          "retrieval_score": 1.0,
+          "prior_score": 0.855,
+          "final_score": 0.942,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025Q3港交所公告｜第2页】公告称规模经济、成本控制和品牌整合协同带来Q3归母净利润38亿元；但前三季度报告归母净利润131.10亿元，较2024年重述比较数132.13亿元略降。剔除汇兑、减值和处置等项目后的前三季度核心归母净利润为106.20亿元，同比增59%。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-latest-summary",
+          "keyword_score": 0.77777778,
+          "vector_score": 0.84,
+          "retrieval_score": 0.82133333,
+          "prior_score": 0.941,
+          "final_score": 0.8692,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】截至2026年6月30日止六个月，收入约1,736亿元，同比增长约15%；毛利约311.5亿元，同比增长约25.7%，毛利率约17.9%；核心归母净利润约96.8亿元，同比增长约46%。该记录仅作为最新候选上下文，待法定PDF页码抽取后复核精确金额。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-00175-00396",
+          "locator": "DOC-EVT-00175-00396#paragraph-1",
+          "keyword_score": 0.38888889,
+          "vector_score": 0.86,
+          "retrieval_score": 0.71866667,
+          "prior_score": 0.8805,
+          "final_score": 0.7834,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "公告标题：截至二零二六年三月三十一日止三个月之第一季度业绩公布"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-00175-00180",
+          "locator": "DOC-EVT-00175-00180#paragraph-1",
+          "keyword_score": 0.38888889,
+          "vector_score": 0.94,
+          "retrieval_score": 0.77466667,
+          "prior_score": 0.7945,
+          "final_score": 0.7826,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关连交易出售吉利欣旺达之股权"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-04",
+      "query": "吉利共同控制下合并导致的重述口径应如何处理？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-33988aadaba3d45eace58a9a"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-377e0d9e7c6f773d8ba4cc26",
+          "locator": "DOC-STG-377e0d9e7c6f773d8ba4cc26#paragraph-1",
+          "keyword_score": 0.95238095,
+          "vector_score": 0.97560976,
+          "retrieval_score": 0.96864111,
+          "prior_score": 0.945,
+          "final_score": 0.95918467,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "Geely Automobile Holdings Limited Annual Report 2025 — restated comparative scope 2025年收入3452.32亿元；2024年重述比较收入2759.10亿元，同比增长25%。 2024年原始收入2401.94亿元，经共同控制下企业合并、领克及目标公司收购和合并抵销调整后重述为2"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-restatement-policy",
+          "keyword_score": 1.0,
+          "vector_score": 1.0,
+          "retrieval_score": 1.0,
+          "prior_score": 0.841,
+          "final_score": 0.9364,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025Q3港交所公告｜第7页】公司自2025年1月1日起，对共同控制下企业合并采用合并会计法，并对所有共同控制下合并追溯重述比较数字。该政策变更旨在反映内部重组的经济实质；任何跨期比较必须优先采用公告所列重述数。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-scope-note",
+          "keyword_score": 0.9047619,
+          "vector_score": 0.98780488,
+          "retrieval_score": 0.96289199,
+          "prior_score": 0.851,
+          "final_score": 0.91813519,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜口径提示】公告的2024年比较数字采用重述口径；本知识库将该来源用于验证2024Q1重述比较数。2025Q1当期初次公告收入为72,495百万元，与后续2026Q1披露的2025同期重述数72,692百万元不同，检索时不得混用两者。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-q2-derivation-boundary",
+          "keyword_score": 0.85714286,
+          "vector_score": 0.96341463,
+          "retrieval_score": 0.9315331,
+          "prior_score": 0.8445,
+          "final_score": 0.89671986,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜口径边界】公告直接披露的是H1累计数和2024H1经重述比较数。结合后续2026Q1公告中的2025Q1重述比较数，可精确复核本地2025Q2收入；该结果属于同口径派生，不属于本公告对Q2单季的直接披露。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-financial-highlights",
+          "keyword_score": 0.66666667,
+          "vector_score": 0.95121951,
+          "retrieval_score": 0.86585366,
+          "prior_score": 0.9355,
+          "final_score": 0.8937122,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q3港交所公告｜第1页】2025Q3销量76.10万辆，2024Q3重述比较数53.40万辆，同比增长43%；Q3收入89,192百万元，2024Q3重述比较数70,486百万元，同比增长27%；归母净利润3,820百万元，较重述比较数2,398百万元增长59%。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-05",
+      "query": "吉利2025年第三季度的流动性和流动负债风险是什么？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-33988aadaba3d45eace58a9a"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-liquidity-risk",
+          "keyword_score": 1.0,
+          "vector_score": 1.0,
+          "retrieval_score": 1.0,
+          "prior_score": 0.927,
+          "final_score": 0.9708,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q3港交所公告｜第6页】截至2025年9月30日，集团流动负债净额约7,874百万元。管理层判断不构成持续经营重大不确定性，依据包括盈利业务现金流、金融机构备用融资以及优化资产负债表和加速收款的计划；该流动性约束仍须作为反证保留。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-financial-highlights",
+          "keyword_score": 0.97101449,
+          "vector_score": 0.94,
+          "retrieval_score": 0.94930435,
+          "prior_score": 0.933,
+          "final_score": 0.94278261,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#paragraph-1",
+          "keyword_score": 0.94202899,
+          "vector_score": 0.97,
+          "retrieval_score": 0.9616087,
+          "prior_score": 0.865,
+          "final_score": 0.92296522,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "Geely Automobile Holdings Limited First Quarterly Results 2025 2025年第一季度收入724.95亿元，同比增长25%；2024年同期重述收入582.25亿元。 2025年第一季度销量70.38万辆，同比增长48%；归母净利润56.72亿元，同比增长264%。 该公告以2024年未经审计且重述的可"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#paragraph-1",
+          "keyword_score": 0.98550725,
+          "vector_score": 0.92,
+          "retrieval_score": 0.93965217,
+          "prior_score": 0.865,
+          "final_score": 0.9097913,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "Geely Automobile Holdings Limited Third Quarterly Results 2025 — growth and profitability 2025年第三季度收入891.92亿元，同比增加27%；销量76.10万辆，同比增长43%。同期2024年比较数已按重述口径列示。 截至2025年9月30日止九个月收入2,394."
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-scope-note",
+          "keyword_score": 0.79710145,
+          "vector_score": 0.99,
+          "retrieval_score": 0.93213043,
+          "prior_score": 0.851,
+          "final_score": 0.89967826,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜口径提示】公告的2024年比较数字采用重述口径；本知识库将该来源用于验证2024Q1重述比较数。2025Q1当期初次公告收入为72,495百万元，与后续2026Q1披露的2025同期重述数72,692百万元不同，检索时不得混用两者。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-06",
+      "query": "吉利2025年海外收入的地区结构如何？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-3fe5f8f88463e19aa434c043"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-3fe5f8f88463e19aa434c043",
+          "locator": "DOC-STG-3fe5f8f88463e19aa434c043#body-fy2025-revenue-reconciliation",
+          "keyword_score": 0.98630137,
+          "vector_score": 0.98,
+          "retrieval_score": 0.98189041,
+          "prior_score": 0.945,
+          "final_score": 0.96713425,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025年报｜第191页】2025年来自客户合约的收入为345,232,201千元；2024年重述收入为275,910,484千元。其中2025年汽车及相关服务收入310,979,986千元、汽车零部件19,846,725千元、合作制造6,511,519千元、研发服务及许可7,893,971千元。该全年收入与本地2025四个季度收入合计一致。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+          "keyword_score": 0.98630137,
+          "vector_score": 0.97,
+          "retrieval_score": 0.97489041,
+          "prior_score": 0.937,
+          "final_score": 0.95973425,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 0.98630137,
+          "vector_score": 0.96,
+          "retrieval_score": 0.96789041,
+          "prior_score": 0.9365,
+          "final_score": 0.95533425,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-financial-highlights",
+          "keyword_score": 0.98630137,
+          "vector_score": 0.94,
+          "retrieval_score": 0.95389041,
+          "prior_score": 0.945,
+          "final_score": 0.95033425,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】截至2025年6月30日止六个月，收入150,284,734千元；2024年同期收入118,792,689千元（未经审核及经重述），同比增长27%。归属公司权益持有人利润9,289,807千元，低于2024年经重述的10,789,540千元；总销量1,409,180辆，同比增长47%。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-financial-highlights",
+          "keyword_score": 0.98630137,
+          "vector_score": 0.93,
+          "retrieval_score": 0.94689041,
+          "prior_score": 0.933,
+          "final_score": 0.94133425,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-07",
+      "query": "吉利2025年全年收入与本地季度序列是否一致？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-3fe5f8f88463e19aa434c043"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-3fe5f8f88463e19aa434c043",
+          "locator": "DOC-STG-3fe5f8f88463e19aa434c043#body-fy2025-revenue-reconciliation",
+          "keyword_score": 1.0,
+          "vector_score": 0.98,
+          "retrieval_score": 0.986,
+          "prior_score": 0.945,
+          "final_score": 0.9696,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025年报｜第191页】2025年来自客户合约的收入为345,232,201千元；2024年重述收入为275,910,484千元。其中2025年汽车及相关服务收入310,979,986千元、汽车零部件19,846,725千元、合作制造6,511,519千元、研发服务及许可7,893,971千元。该全年收入与本地2025四个季度收入合计一致。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+          "keyword_score": 0.92753623,
+          "vector_score": 0.95,
+          "retrieval_score": 0.94326087,
+          "prior_score": 0.937,
+          "final_score": 0.94075652,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-financial-highlights",
+          "keyword_score": 0.95652174,
+          "vector_score": 0.91,
+          "retrieval_score": 0.92395652,
+          "prior_score": 0.933,
+          "final_score": 0.92757391,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 0.95652174,
+          "vector_score": 0.89,
+          "retrieval_score": 0.90995652,
+          "prior_score": 0.9365,
+          "final_score": 0.92057391,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-q2-derivation-boundary",
+          "keyword_score": 0.92753623,
+          "vector_score": 0.96,
+          "retrieval_score": 0.95026087,
+          "prior_score": 0.8445,
+          "final_score": 0.90795652,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜口径边界】公告直接披露的是H1累计数和2024H1经重述比较数。结合后续2026Q1公告中的2025Q1重述比较数，可精确复核本地2025Q2收入；该结果属于同口径派生，不属于本公告对Q2单季的直接披露。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-08",
+      "query": "截至2026年8月，吉利最新中期业绩的收入、毛利和现金流有哪些相反信号？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-80d17e3173ffb179e04e906e"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk",
+          "keyword_score": 1.0,
+          "vector_score": 0.98,
+          "retrieval_score": 0.986,
+          "prior_score": 0.927,
+          "final_score": 0.9624,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】同期归母净利润约90.91亿元，同比约下降1.8%；经营现金流约199.24亿元，同比明显下降。收入、毛利和核心利润改善并不自动代表归母利润及现金转化同步改善，该矛盾必须在主投资逻辑检索中保留。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 0.97619048,
+          "vector_score": 0.93,
+          "retrieval_score": 0.94385714,
+          "prior_score": 0.9365,
+          "final_score": 0.94091429,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-liquidity-risk",
+          "keyword_score": 0.95238095,
+          "vector_score": 0.94,
+          "retrieval_score": 0.94371429,
+          "prior_score": 0.927,
+          "final_score": 0.93702857,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q3港交所公告｜第6页】截至2025年9月30日，集团流动负债净额约7,874百万元。管理层判断不构成持续经营重大不确定性，依据包括盈利业务现金流、金融机构备用融资以及优化资产负债表和加速收款的计划；该流动性约束仍须作为反证保留。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#paragraph-1",
+          "keyword_score": 0.89285714,
+          "vector_score": 0.97,
+          "retrieval_score": 0.94685714,
+          "prior_score": 0.865,
+          "final_score": 0.91411429,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "Geely Automobile Holdings Limited First Quarterly Results 2026 2026年第一季度收入837.76亿元，2025年同期为726.92亿元；毛利146.64亿元，2025年同期为114.46亿元。 2026年第一季度毛利率约17.5%，高于2025年同期约15.7%。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+          "keyword_score": 0.85714286,
+          "vector_score": 0.91,
+          "retrieval_score": 0.89414286,
+          "prior_score": 0.937,
+          "final_score": 0.91128571,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-09",
+      "query": "吉利2024年二季度收入如何在经重述的H1口径下进行复核？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-1b9447a02df600b7043bf833"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+          "keyword_score": 0.94117647,
+          "vector_score": 0.98,
+          "retrieval_score": 0.96835294,
+          "prior_score": 0.937,
+          "final_score": 0.95581176,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-financial-highlights",
+          "keyword_score": 0.98529412,
+          "vector_score": 0.95,
+          "retrieval_score": 0.96058824,
+          "prior_score": 0.945,
+          "final_score": 0.95435294,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】截至2025年6月30日止六个月，收入150,284,734千元；2024年同期收入118,792,689千元（未经审核及经重述），同比增长27%。归属公司权益持有人利润9,289,807千元，低于2024年经重述的10,789,540千元；总销量1,409,180辆，同比增长47%。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-financial-highlights",
+          "keyword_score": 0.98529412,
+          "vector_score": 0.96,
+          "retrieval_score": 0.96758824,
+          "prior_score": 0.933,
+          "final_score": 0.95375294,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-3fe5f8f88463e19aa434c043",
+          "locator": "DOC-STG-3fe5f8f88463e19aa434c043#body-fy2025-revenue-reconciliation",
+          "keyword_score": 0.94117647,
+          "vector_score": 0.93,
+          "retrieval_score": 0.93335294,
+          "prior_score": 0.945,
+          "final_score": 0.93801176,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025年报｜第191页】2025年来自客户合约的收入为345,232,201千元；2024年重述收入为275,910,484千元。其中2025年汽车及相关服务收入310,979,986千元、汽车零部件19,846,725千元、合作制造6,511,519千元、研发服务及许可7,893,971千元。该全年收入与本地2025四个季度收入合计一致。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 0.85294118,
+          "vector_score": 0.97,
+          "retrieval_score": 0.93488235,
+          "prior_score": 0.9365,
+          "final_score": 0.93552941,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        }
+      ]
+    },
+    {
+      "case_id": "GEELY-RET-10",
+      "query": "吉利2025年二季度收入是否有同口径的H1和Q1重述数据可以验证？",
+      "expected_source_hit": true,
+      "expected_document_ids": [
+        "DOC-STG-1b9447a02df600b7043bf833",
+        "DOC-STG-b07023bf1def3341aeffb1b5"
+      ],
+      "top_k": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-financial-highlights",
+          "keyword_score": 0.95833333,
+          "vector_score": 0.98,
+          "retrieval_score": 0.9735,
+          "prior_score": 0.933,
+          "final_score": 0.9573,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。"
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "keyword_score": 0.95833333,
+          "vector_score": 0.96,
+          "retrieval_score": 0.9595,
+          "prior_score": 0.9365,
+          "final_score": 0.9503,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。"
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-3fe5f8f88463e19aa434c043",
+          "locator": "DOC-STG-3fe5f8f88463e19aa434c043#body-fy2025-revenue-reconciliation",
+          "keyword_score": 0.93055556,
+          "vector_score": 0.95,
+          "retrieval_score": 0.94416667,
+          "prior_score": 0.945,
+          "final_score": 0.9445,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025年报｜第191页】2025年来自客户合约的收入为345,232,201千元；2024年重述收入为275,910,484千元。其中2025年汽车及相关服务收入310,979,986千元、汽车零部件19,846,725千元、合作制造6,511,519千元、研发服务及许可7,893,971千元。该全年收入与本地2025四个季度收入合计一致。"
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+          "keyword_score": 0.88888889,
+          "vector_score": 0.97,
+          "retrieval_score": 0.94566667,
+          "prior_score": 0.937,
+          "final_score": 0.9422,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。"
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#body-q1-2025-scope-note",
+          "keyword_score": 0.98611111,
+          "vector_score": 1.0,
+          "retrieval_score": 0.99583333,
+          "prior_score": 0.851,
+          "final_score": 0.9379,
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "【吉利汽车2025Q1官方业绩｜口径提示】公告的2024年比较数字采用重述口径；本知识库将该来源用于验证2024Q1重述比较数。2025Q1当期初次公告收入为72,495百万元，与后续2026Q1披露的2025同期重述数72,692百万元不同，检索时不得混用两者。"
+        }
+      ]
+    }
+  ],
+  "source_hit_rate": 1.0,
+  "gate": {
+    "minimum_source_hit_rate": 0.875,
+    "passed": true
+  }
+}

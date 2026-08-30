@@ -72,6 +72,12 @@ class Settings(BaseSettings):
     llm_reasoning_effort: str = Field(default="low", pattern="^(low|high|max)$")
     llm_input_cost_per_million: float | None = Field(default=None, ge=0)
     llm_output_cost_per_million: float | None = Field(default=None, ge=0)
+    # 排序检查员与生成链路分开开关；默认禁用，避免误将投研材料外发。
+    ranking_judge_enabled: bool = False
+    ranking_judge_endpoint: str = "https://api.openai.com/v1/responses"
+    ranking_judge_model_version: str = "gpt-5.6-terra"
+    ranking_judge_candidate_limit: int = Field(default=40, ge=5, le=100)
+    ranking_judge_weight: float = Field(default=0.3, ge=0, le=0.5)
     runtime_max_attempts: int = Field(default=3, ge=1, le=10)
     prompt_version: str = "prompts-v1"
 

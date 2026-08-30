@@ -15,9 +15,10 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date
-import re
+from decimal import Decimal
 
 from app.calc.deterministic import Observation, TrendResult, trend
 from app.core.config import RuleThresholds
@@ -171,9 +172,11 @@ def _trend_for(
     # 窗口裁剪：早于建立日可得的观测不算对这条逻辑的验证。
     # 草稿阶段需要展示历史参考，供研究员校准预期；正式逻辑仍只用建立日后的
     # 观测参与验证，避免把事前数据误判为已验证结果。
-    in_window = list(rows) if thesis.status is ThesisStatus.DRAFT else [
-        r for r in rows if r.observation_date >= thesis.established_on
-    ]
+    in_window = (
+        list(rows)
+        if thesis.status is ThesisStatus.DRAFT
+        else [r for r in rows if r.observation_date >= thesis.established_on]
+    )
     window_match = re.search(r"(\d+)\s*(?:个)?(季度|季|月)", hypothesis.observation_window or "")
     if window_match and in_window:
         count = int(window_match.group(1))
@@ -210,7 +213,11 @@ def _trend_for(
 
     latest = max(in_window, key=lambda r: r.observation_date, default=None)
     display_rows = rows[-8:]
-    display_latest = latest or max(display_rows, key=lambda r: r.observation_date, default=None)
+    display_latest = latest or max(
+        display_rows,
+        key=lambda row: row.observation_date if row is not None else date.min,
+        default=None,
+    )
     excluded = len(rows) - len(in_window)
     note = ""
     if thesis.status is ThesisStatus.DRAFT:
@@ -223,11 +230,12 @@ def _trend_for(
         f"连续：{mapping.invalidation_consecutive_periods or '—'} 期"
     )
     note = f"{note}；{expectation_note}" if note else expectation_note
+    metric_definition = uow.metrics.get(mapping.metric_id, mapping.metric_version)
     return HypothesisTrend(
         hypothesis_id=hypothesis.hypothesis_id,
         statement=hypothesis.statement,
         metric_id=mapping.metric_id,
-        metric_name=(uow.metrics.get(mapping.metric_id, mapping.metric_version).name if uow.metrics.get(mapping.metric_id, mapping.metric_version) else mapping.metric_id),
+        metric_name=metric_definition.name if metric_definition else mapping.metric_id,
         expected_value=mapping.expected_value,
         invalidation_threshold=mapping.invalidation_threshold,
         invalidation_consecutive_periods=mapping.invalidation_consecutive_periods,

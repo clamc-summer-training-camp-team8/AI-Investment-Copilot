@@ -10,7 +10,7 @@
 app.api
 app.workers
 app.services
-app.ai | app.ingest | app.calc      （同层，互不依赖）
+app.ai | app.ingest | app.calc | app.ranking      （同层，互不依赖）
 app.db
 app.core
 ```
@@ -27,6 +27,7 @@ app.core
 | `app.api` | `app.db` | 绕过 services 会丢掉权限过滤与审计留痕（FR-A-003） |
 | `app.*` | `analytics` | 线上代码不依赖离线实验代码 |
 | `app.ingest` | `app.ai` | 解析是确定性步骤，不得在解析阶段调模型 |
+| `app.ranking` | `app.ai`、`app.db`、`app.services`、`app.api`、`app.workers` | 排序特征与融合公式保持纯函数；模型和持久化由上层适配 |
 
 ## 常见违规与正确写法
 

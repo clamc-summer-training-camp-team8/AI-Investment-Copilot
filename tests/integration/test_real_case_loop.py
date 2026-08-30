@@ -71,7 +71,11 @@ def test_组合条件是这个结论的决定因素(seeded) -> None:  # type: ig
     hypotheses = seeded.thesis.list_hypotheses(run_real_case.THESIS_ID)
 
     and_result = status_service.compute_suggestion(
-        seeded, thesis=thesis, hypotheses=hypotheses, thresholds=settings.rules
+        seeded,
+        thesis=thesis,
+        hypotheses=hypotheses,
+        thresholds=settings.rules,
+        today=date(2026, 4, 1),
     )
     assert and_result.suggested_status is ThesisStatus.VALIDATING
 
@@ -81,6 +85,7 @@ def test_组合条件是这个结论的决定因素(seeded) -> None:  # type: ig
         thesis=seeded.thesis.get(run_real_case.THESIS_ID),
         hypotheses=hypotheses,
         thresholds=settings.rules,
+        today=date(2026, 4, 1),
     )
     assert or_result.suggested_status is ThesisStatus.MAJOR_RISK
 

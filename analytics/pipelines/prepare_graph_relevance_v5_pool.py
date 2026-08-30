@@ -45,10 +45,7 @@ V3_GOLD = (
     / "final_graph_relevance_gold_v3.csv"
 )
 V4_GOLD = (
-    PROJECT_ROOT
-    / "outputs"
-    / "graph-relevance-v4-final"
-    / "final_graph_relevance_gold_v4.csv"
+    PROJECT_ROOT / "outputs" / "graph-relevance-v4-final" / "final_graph_relevance_gold_v4.csv"
 )
 DEFAULT_OUTPUT = (
     PROJECT_ROOT
@@ -112,9 +109,7 @@ def _exclusions() -> Exclusions:
     )
 
 
-def _load_documents(
-    security_id: str, excluded_urls: frozenset[str]
-) -> list[CandidateDocument]:
+def _load_documents(security_id: str, excluded_urls: frozenset[str]) -> list[CandidateDocument]:
     statement = text(
         """
         SELECT d.document_id, d.security_id, d.title, d.published_at,
@@ -168,13 +163,15 @@ def _shared_candidate_order(
     scores: dict[str, float] = defaultdict(float)
     by_id = {document.document_id: document for document in documents}
     for spec in specs:
-        for rank, candidate in enumerate(
-            _ordered_candidates(spec, documents, retriever), start=1
-        ):
+        for rank, candidate in enumerate(_ordered_candidates(spec, documents, retriever), start=1):
             scores[candidate.document_id] += 1 / (rank + 4)
     ranked = sorted(
         by_id.values(),
-        key=lambda item: (-scores[item.document_id], -item.published_at.timestamp(), item.document_id),
+        key=lambda item: (
+            -scores[item.document_id],
+            -item.published_at.timestamp(),
+            item.document_id,
+        ),
     )
     recent = sorted(documents, key=lambda item: (-item.published_at.timestamp(), item.document_id))
     financial = [
@@ -189,7 +186,13 @@ def _shared_candidate_order(
     ]
     ordered: list[CandidateDocument] = []
     seen: set[str] = set()
-    for group, limit in ((ranked, 6), (financial, 2), (governance, 1), (recent, None), (ranked, None)):
+    for group, limit in (
+        (ranked, 6),
+        (financial, 2),
+        (governance, 1),
+        (recent, None),
+        (ranked, None),
+    ):
         added = 0
         for item in group:
             if item.document_id in seen:
@@ -243,9 +246,7 @@ def prepare_pool(output_path: Path, cache_dir: Path) -> dict[str, Any]:
                         }
                     )
             if len(accepted) < CANDIDATES_PER_QUERY:
-                raise RuntimeError(
-                    f"{security_id} 仅取得 {len(accepted)} 个可核验共享候选"
-                )
+                raise RuntimeError(f"{security_id} 仅取得 {len(accepted)} 个可核验共享候选")
             selected_by_security[security_id] = accepted
 
         for spec in QUERY_SPECS:

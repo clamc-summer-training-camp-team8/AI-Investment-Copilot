@@ -1,0 +1,36 @@
+{
+  "dataset_version": "p1-geely-restatement-official-source-seed-20260824",
+  "status": "staged_requires_human_review",
+  "records": [
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited Annual Report 2025 — restated comparative scope",
+      "published_at": "2026-04-27T00:00:00+08:00",
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/e00175_2025-annual-report.pdf",
+      "facts": [
+        "2025年收入3452.32亿元；2024年重述比较收入2759.10亿元，同比增长25%。",
+        "2024年原始收入2401.94亿元，经共同控制下企业合并、领克及目标公司收购和合并抵销调整后重述为2759.10亿元。",
+        "公司说明，相关共同控制下企业合并按合并会计法处理，并按香港会计准则对2024年比较期间进行重述。"
+      ],
+      "hypothesis_targets": ["需求与出货", "产能与扩张"],
+      "evidence_direction": "支持",
+      "review_note": "此记录主要服务于数据口径追溯：本地2024年度序列与重述口径一致。它不授权将旧范围的季度披露日回填到重述季度值。"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited Annual Report 2025 — comparability risk",
+      "published_at": "2026-04-27T00:00:00+08:00",
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/e00175_2025-annual-report.pdf",
+      "facts": [
+        "2024年比较数因共同控制下企业合并、收购领克及目标公司和合并抵销调整而重述，原始收入2401.94亿元与重述收入2759.10亿元不可直接混用。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "该反证针对跨期比较的可比性风险，而非把会计重述直接定性为经营恶化。"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from app.ai.gateway import Gateway
-from app.core.config import PROJECT_ROOT, settings
+from app.core.config import PROJECT_ROOT, Settings
 from app.core.domain import (
     DocumentRecord,
     DocumentSegmentRecord,
@@ -58,6 +58,7 @@ from app.workers import change_chain
 from tests.fakes import build_fake_uow
 
 REAL_DATA_DIR = PROJECT_ROOT / "real_data"
+CASE_SETTINGS = Settings(_env_file=None, llm_provider="local")
 
 THESIS_ID = "THS-SG-001"
 SECURITY_ID = "300274"
@@ -257,11 +258,11 @@ def run() -> Result:
 
     change = change_chain.process_events(
         uow,
-        Gateway.build(settings),
+        Gateway.build(CASE_SETTINGS),
         events=events,
         security_id=SECURITY_ID,
         actor=RESEARCHER,
-        thresholds=settings.rules,
+        thresholds=CASE_SETTINGS.rules,
         current_event_segments=current_event_segments,
         locator_by_event=locator_by_event,
     )
@@ -275,7 +276,7 @@ def run() -> Result:
             actor=RESEARCHER,
             thesis=uow.thesis.get(THESIS_ID),
             hypotheses=uow.thesis.list_hypotheses(THESIS_ID),
-            thresholds=settings.rules,
+            thresholds=CASE_SETTINGS.rules,
             note="依据公开披露确认",
         )
 
@@ -283,7 +284,7 @@ def run() -> Result:
         uow,
         thesis=uow.thesis.get(THESIS_ID),
         hypotheses=uow.thesis.list_hypotheses(THESIS_ID),
-        thresholds=settings.rules,
+        thresholds=CASE_SETTINGS.rules,
         today=date(2026, 4, 1),
     )
     saved = status_service.record_suggestion(
@@ -330,9 +331,20 @@ def persist_db(*, dry_run: bool = False, build_vectors: bool = True) -> dict[str
     """将 300274 的基础案例写入真实 PostgreSQL；不写入人工确认结果。"""
     _require_data()
     observations = _load_observations(REAL_DATA_DIR / "observations.csv")
-    documents = dict(parse_sample_pack((REAL_DATA_DIR / "documents.txt").read_text(encoding="utf-8")))
-    segments_total = sum(len(segment_document(doc_id, parsed)) for doc_id, parsed in documents.items())
-    summary: dict[str, int | str] = {"security": 1, "thesis": 1, "hypotheses": len(HYPOTHESES), "observations": len(observations), "documents": len(documents), "segments": segments_total}
+    documents = dict(
+        parse_sample_pack((REAL_DATA_DIR / "documents.txt").read_text(encoding="utf-8"))
+    )
+    segments_total = sum(
+        len(segment_document(doc_id, parsed)) for doc_id, parsed in documents.items()
+    )
+    summary: dict[str, int | str] = {
+        "security": 1,
+        "thesis": 1,
+        "hypotheses": len(HYPOTHESES),
+        "observations": len(observations),
+        "documents": len(documents),
+        "segments": segments_total,
+    }
     if dry_run:
         return summary
 
@@ -341,7 +353,9 @@ def persist_db(*, dry_run: bool = False, build_vectors: bool = True) -> dict[str
         if uow.thesis.get(THESIS_ID) is not None:
             raise SystemExit(f"案例已存在：{THESIS_ID}；脚本不会自动删除已有数据。")
         if uow.securities.get(SECURITY_ID) is None:
-            uow.securities.add(SecurityRecord(SECURITY_ID, "阳光电源", "300274.SZ", "电力设备", [], False))
+            uow.securities.add(
+                SecurityRecord(SECURITY_ID, "阳光电源", "300274.SZ", "电力设备", [], False)
+            )
         metric_names = {
             "MET-001": ("储能分部收入同比增速", "储能分部收入同比变化"),
             "MET-002": ("储能业务毛利率", "储能业务收入与成本计算的毛利率"),
@@ -349,11 +363,51 @@ def persist_db(*, dry_run: bool = False, build_vectors: bool = True) -> dict[str
         }
         for metric_id, (name, definition) in metric_names.items():
             if session.get(Metric, (metric_id, "v1.0")) is None:
-                session.add(Metric(metric_id=metric_id, version="v1.0", name=name, unit="%", definition=definition, frequency="季度", period_type="季度", status="待确认"))
+                session.add(
+                    Metric(
+                        metric_id=metric_id,
+                        version="v1.0",
+                        name=name,
+                        unit="%",
+                        definition=definition,
+                        frequency="季度",
+                        period_type="季度",
+                        status="待确认",
+                    )
+                )
         session.flush()
-        uow.thesis.add(ThesisRecord(thesis_id=THESIS_ID, security_id=SECURITY_ID, title="海外储能需求增长推动收入与利润改善", direction="看多", core_view="海外大型储能需求持续增长，将在未来四个季度推动储能分部收入和利润改善。", established_on=ESTABLISHED_ON, owner="analyst-mvp", status=ThesisStatus.VALIDATING, visibility="团队", team="权益研究", version=1, horizon_end_on=date(2026, 1, 10), next_review_at=date(2026, 4, 15), source_document_id=None, is_illustrative=False, invalidation_require_all=True, invalidation_hypotheses=INVALIDATION_HYPOTHESES))
+        uow.thesis.add(
+            ThesisRecord(
+                thesis_id=THESIS_ID,
+                security_id=SECURITY_ID,
+                title="海外储能需求增长推动收入与利润改善",
+                direction="看多",
+                core_view="海外大型储能需求持续增长，将在未来四个季度推动储能分部收入和利润改善。",
+                established_on=ESTABLISHED_ON,
+                owner="analyst-mvp",
+                status=ThesisStatus.VALIDATING,
+                visibility="团队",
+                team="权益研究",
+                version=1,
+                horizon_end_on=date(2026, 1, 10),
+                next_review_at=date(2026, 4, 15),
+                source_document_id=None,
+                is_illustrative=False,
+                invalidation_require_all=True,
+                invalidation_hypotheses=INVALIDATION_HYPOTHESES,
+            )
+        )
         for hid, statement, htype, _metric, direction, _threshold, _periods in HYPOTHESES:
-            uow.thesis.add_hypothesis(HypothesisRecord(hypothesis_id=hid, thesis_id=THESIS_ID, statement=statement, hypothesis_type=htype, importance=Importance.CORE, expected_direction=direction))
+            uow.thesis.add_hypothesis(
+                HypothesisRecord(
+                    hypothesis_id=hid,
+                    thesis_id=THESIS_ID,
+                    statement=statement,
+                    hypothesis_type=htype,
+                    importance=Importance.CORE,
+                    expected_direction=direction,
+                )
+            )
         for observation in observations:
             uow.observations.add(observation)
         for doc_id, parsed in documents.items():
@@ -361,13 +415,47 @@ def persist_db(*, dry_run: bool = False, build_vectors: bool = True) -> dict[str
                 raise ValueError(f"文档缺少披露时间：{doc_id}")
             segments = segment_document(doc_id, parsed)
             body = "\n\n".join(item.content for item in segments)
-            uow.documents.add(DocumentRecord(document_id=doc_id, title=parsed.title, doc_type=parsed.doc_type, security_id=SECURITY_ID, published_at=parsed.published_at, content_hash=content_hash(body), parser_version="sample-v1", body=body, visibility_label="团队", is_illustrative=False), [DocumentSegmentRecord(document_id=item.document_id, locator=item.locator, ordinal=item.ordinal, content=item.content, page=item.page, content_kind=item.content_kind, extraction_method=item.extraction_method, table_index=item.table_index, row_index=item.row_index, cell_range=item.cell_range, confidence=item.confidence) for item in segments], [])
+            uow.documents.add(
+                DocumentRecord(
+                    document_id=doc_id,
+                    title=parsed.title,
+                    doc_type=parsed.doc_type,
+                    security_id=SECURITY_ID,
+                    published_at=parsed.published_at,
+                    content_hash=content_hash(body),
+                    parser_version="sample-v1",
+                    body=body,
+                    visibility_label="团队",
+                    is_illustrative=False,
+                ),
+                [
+                    DocumentSegmentRecord(
+                        document_id=item.document_id,
+                        locator=item.locator,
+                        ordinal=item.ordinal,
+                        content=item.content,
+                        page=item.page,
+                        content_kind=item.content_kind,
+                        extraction_method=item.extraction_method,
+                        table_index=item.table_index,
+                        row_index=item.row_index,
+                        cell_range=item.cell_range,
+                        confidence=item.confidence,
+                    )
+                    for item in segments
+                ],
+                [],
+            )
         session.get(Thesis, THESIS_ID).source_document_id = "DOC-SG-001"
         summary["indexed_segments"] = uow.assets.rebuild_search_index()
         if build_vectors:
             embedded = 0
             while True:
-                created = assets_service.embed_pending_assets(uow, embedding_version=settings.embedding_version or "hash-char-2gram-v1", batch_size=500)
+                created = assets_service.embed_pending_assets(
+                    uow,
+                    embedding_version=CASE_SETTINGS.embedding_version or "hash-char-2gram-v1",
+                    batch_size=500,
+                )
                 embedded += created
                 if created == 0:
                     break
@@ -402,7 +490,9 @@ def _metric_findings(uow: Any) -> list[dict[str, str]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true", help="输出 JSON")
-    parser.add_argument("--persist-db", action="store_true", help="将 300274 基础案例写入 PostgreSQL")
+    parser.add_argument(
+        "--persist-db", action="store_true", help="将 300274 基础案例写入 PostgreSQL"
+    )
     parser.add_argument("--dry-run", action="store_true", help="仅统计持久化模式将写入的数据")
     parser.add_argument("--no-vectors", action="store_true", help="不生成 pgvector")
     args = parser.parse_args()

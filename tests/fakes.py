@@ -33,6 +33,8 @@ from app.core.domain import (
     MetricDefinitionRecord,
     MetricMappingRecord,
     ObservationRecord,
+    RankingPriorItemRecord,
+    RankingPriorSnapshotRecord,
     ReviewTaskRecord,
     SecurityIndustryMembershipRecord,
     SecurityRecord,
@@ -189,6 +191,83 @@ class FakeAssetRepo:
 
     def hybrid_search_segments(self, **kwargs):
         return []
+
+
+class FakeRankingPriorRepo:
+    def __init__(self) -> None:
+        self.snapshots: dict[str, RankingPriorSnapshotRecord] = {}
+        self.items: dict[tuple[str, str, str], RankingPriorItemRecord] = {}
+        self.logic_topics = {}
+        self.logic_topic_relations = {}
+
+    def upsert_topics(self, records) -> None:
+        for row in records:
+            self.logic_topics[row.topic_id] = replace(row)
+
+    def upsert_topic_relations(self, records) -> None:
+        for row in records:
+            self.logic_topic_relations[row.relation_id] = replace(row)
+
+    def topics(self, *, security_id, direction, horizon):
+        return [
+            replace(row)
+            for row in self.logic_topics.values()
+            if row.security_id == security_id
+            and row.direction == direction
+            and row.horizon == horizon
+            and row.status == "active"
+        ]
+
+    def topic_relations(self, topic_id):
+        return [
+            replace(row)
+            for row in self.logic_topic_relations.values()
+            if row.topic_id == topic_id and row.status == "active"
+        ]
+
+    def add_snapshot(self, record: RankingPriorSnapshotRecord) -> None:
+        self.snapshots[record.snapshot_id] = replace(record)
+
+    def get_snapshot(self, snapshot_id: str) -> RankingPriorSnapshotRecord | None:
+        record = self.snapshots.get(snapshot_id)
+        return replace(record) if record else None
+
+    def update_snapshot_status(self, snapshot_id: str, status: str) -> None:
+        self.snapshots[snapshot_id] = replace(self.snapshots[snapshot_id], status=status)
+
+    def active_snapshot(self, *, security_id, direction, horizon, as_of):
+        rows = [
+            row
+            for row in self.snapshots.values()
+            if row.security_id == security_id
+            and row.direction == direction
+            and row.horizon == horizon
+            and row.status in {"provisional", "active", "active_experimental"}
+            and (as_of is None or row.as_of <= as_of)
+        ]
+        return replace(max(rows, key=lambda row: row.as_of)) if rows else None
+
+    def add_items(self, records: list[RankingPriorItemRecord]) -> None:
+        for row in records:
+            self.items[(row.snapshot_id, row.object_type, row.object_id)] = replace(row)
+
+    def items_for_objects(self, snapshot_id, *, object_type, object_ids):
+        return [
+            replace(row)
+            for object_id in object_ids
+            if (row := self.items.get((snapshot_id, object_type, object_id))) is not None
+            and row.status == "active"
+        ]
+
+    def ranked_items(self, snapshot_id, *, object_type, limit):
+        rows = [
+            replace(row)
+            for row in self.items.values()
+            if row.snapshot_id == snapshot_id
+            and row.object_type == object_type
+            and row.status == "active"
+        ]
+        return sorted(rows, key=lambda row: row.final_rank)[:limit]
 
 
 class FakeSecurityRepo:
@@ -678,4 +757,5 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         documents=FakeDocumentRepo(),
         adjudications=FakeAdjudicationDecisionRepo(),
         assets=FakeAssetRepo(),
+        ranking=FakeRankingPriorRepo(),
     )

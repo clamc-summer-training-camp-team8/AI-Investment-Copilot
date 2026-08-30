@@ -99,9 +99,6 @@ class MetricMappingOut(Base):
     invalidation_consecutive_periods: int | None = None
     metric_version: str
     expected_direction: str
-    expected_value: Decimal | None = None
-    invalidation_threshold: Decimal | None = None
-    invalidation_consecutive_periods: int | None = None
     expectation_source: str
     confirmation_status: str
 

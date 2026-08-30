@@ -1,0 +1,30 @@
+{
+  "dataset_version": "p1-geely-h1-2025-reviewed-body-chunks-20260824",
+  "status": "staged_requires_human_review",
+  "chunks": [
+    {
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+      "chunk_key": "h1-2025-financial-highlights",
+      "ordinal": 101,
+      "page": 1,
+      "content": "【吉利汽车2025H1港交所公告｜第1页】截至2025年6月30日止六个月，收入150,284,734千元；2024年同期收入118,792,689千元（未经审核及经重述），同比增长27%。归属公司权益持有人利润9,289,807千元，低于2024年经重述的10,789,540千元；总销量1,409,180辆，同比增长47%。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+      "chunk_key": "h1-2025-gross-profit-and-one-off",
+      "ordinal": 102,
+      "page": 1,
+      "content": "【吉利汽车2025H1港交所公告｜第1页】2025H1毛利24,718,739千元，2024年同期经重述毛利19,868,348千元。2024年同期包含7,726,187千元的视同出售附属公司收益及待售资产减值相关项目，2025年同期为零；比较归母利润时必须区分经营改善与一次性项目影响。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+      "chunk_key": "h1-2025-q2-derivation-boundary",
+      "ordinal": 103,
+      "page": 1,
+      "content": "【吉利汽车2025H1港交所公告｜口径边界】公告直接披露的是H1累计数和2024H1经重述比较数。结合后续2026Q1公告中的2025Q1重述比较数，可精确复核本地2025Q2收入；该结果属于同口径派生，不属于本公告对Q2单季的直接披露。",
+      "confidence": 0.95
+    }
+  ]
+}

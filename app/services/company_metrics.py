@@ -1,4 +1,4 @@
-"""公司定期经营数据工具；当前支持比亚迪月度产销快报。"""
+"""公司定期经营数据采集服务；当前支持比亚迪月度产销快报。"""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def fetch_byd_periodic_metrics(
     """抓取并解析比亚迪产销快报，结果缓存在 cache_dir，不生成缺失值。"""
     if security_id != "002594":
         return []
-    source = Path(__file__).resolve().parents[3] / "real_data" / "raw" / "announcements.json"
+    source = Path(__file__).resolve().parents[2] / "real_data" / "raw" / "announcements.json"
     if not source.exists():
         return []
     announcements = json.loads(source.read_text(encoding="utf-8"))

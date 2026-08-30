@@ -440,9 +440,7 @@ def main() -> None:
         events = [item for item in events if item["security_id"] == args.security]
         financials = {
             **financials,
-            "metrics": {
-                args.security: (financials.get("metrics") or {}).get(args.security, [])
-            },
+            "metrics": {args.security: (financials.get("metrics") or {}).get(args.security, [])},
         }
         if not theses:
             raise ValueError(f"证券不在行业数据集中：{args.security}")

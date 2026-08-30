@@ -114,13 +114,16 @@ def test_retriever_候选池约束与证券权限时间共同生效() -> None:
     )
 
     assert [item.document_id for item in result.items] == ["DOC-ALLOW"]
-    assert retriever.search(
-        RetrievalQuery(
-            text="核心业务收入增长",
-            security_id="000538.SZ",
-            allowed_document_ids=frozenset(),
-        )
-    ).items == []
+    assert (
+        retriever.search(
+            RetrievalQuery(
+                text="核心业务收入增长",
+                security_id="000538.SZ",
+                allowed_document_ids=frozenset(),
+            )
+        ).items
+        == []
+    )
 
 
 class _FixedRetriever:

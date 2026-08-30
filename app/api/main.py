@@ -93,6 +93,7 @@ def create_app() -> FastAPI:
         metrics,
         quant,
         radar,
+        retrieval,
         review,
         reviews,
         securities,
@@ -115,6 +116,7 @@ def create_app() -> FastAPI:
     application.include_router(reviews.router, prefix="/api")
     application.include_router(review.router, prefix="/api")
     application.include_router(jobs.router, prefix="/api")
+    application.include_router(retrieval.router, prefix="/api")
     application.include_router(demo.router, prefix="/api")
 
     # 其余路由在各自模块实现后在此注册：

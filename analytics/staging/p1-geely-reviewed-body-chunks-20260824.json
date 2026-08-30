@@ -1,0 +1,102 @@
+{
+  "dataset_version": "p1-geely-reviewed-body-chunks-20260824",
+  "status": "staged_requires_human_review",
+  "chunks": [
+    {
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2025/05/2025051500213.pdf",
+      "chunk_key": "q1-2025-financial-highlights",
+      "ordinal": 101,
+      "page": 1,
+      "content": "【吉利汽车2025Q1官方业绩｜第1页】2025年第一季度收入人民币72,495百万元，同比增长25%；销量70.38万辆，同比增长48%。2024年同期比较收入为人民币58,225百万元，公告标注为未经审核及经重述。归母净利润为人民币5,672百万元，同比增长264%。",
+      "confidence": 0.95
+    },
+    {
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2025/05/2025051500213.pdf",
+      "chunk_key": "q1-2025-scope-note",
+      "ordinal": 102,
+      "page": 6,
+      "content": "【吉利汽车2025Q1官方业绩｜口径提示】公告的2024年比较数字采用重述口径；本知识库将该来源用于验证2024Q1重述比较数。2025Q1当期初次公告收入为72,495百万元，与后续2026Q1披露的2025同期重述数72,692百万元不同，检索时不得混用两者。",
+      "confidence": 0.9
+    },
+    {
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/2026042900391.pdf",
+      "chunk_key": "q1-2026-financial-highlights",
+      "ordinal": 101,
+      "page": 1,
+      "content": "【吉利汽车2026Q1官方业绩｜第1页】2026年第一季度收入人民币83,776百万元，2025年同期重述收入人民币72,692百万元；毛利分别为14,664百万元和11,446百万元，毛利率约17.5%和15.7%。归母净利润为4,166百万元，低于2025年同期的5,673百万元。",
+      "confidence": 0.95
+    },
+    {
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "chunk_key": "q3-2025-financial-highlights",
+      "ordinal": 101,
+      "page": 1,
+      "content": "【吉利汽车2025Q3港交所公告｜第1页】2025Q3销量76.10万辆，2024Q3重述比较数53.40万辆，同比增长43%；Q3收入89,192百万元，2024Q3重述比较数70,486百万元，同比增长27%；归母净利润3,820百万元，较重述比较数2,398百万元增长59%。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "chunk_key": "q3-2025-nine-month-results",
+      "ordinal": 102,
+      "page": 3,
+      "content": "【吉利汽车2025Q3港交所公告｜第3页】截至2025年9月30日止九个月：收入239,477百万元，2024年重述比较数189,534百万元；销售成本199,965百万元；毛利39,512百万元，重述比较数30,786百万元；归母净利润13,110百万元，重述比较数13,213百万元。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "chunk_key": "q3-2025-profit-quality",
+      "ordinal": 103,
+      "page": 2,
+      "content": "【吉利汽车2025Q3港交所公告｜第2页】公告称规模经济、成本控制和品牌整合协同带来Q3归母净利润38亿元；但前三季度报告归母净利润131.10亿元，较2024年重述比较数132.13亿元略降。剔除汇兑、减值和处置等项目后的前三季度核心归母净利润为106.20亿元，同比增59%。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "chunk_key": "q3-2025-liquidity-risk",
+      "ordinal": 104,
+      "page": 6,
+      "content": "【吉利汽车2025Q3港交所公告｜第6页】截至2025年9月30日，集团流动负债净额约7,874百万元。管理层判断不构成持续经营重大不确定性，依据包括盈利业务现金流、金融机构备用融资以及优化资产负债表和加速收款的计划；该流动性约束仍须作为反证保留。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "chunk_key": "q3-2025-restatement-policy",
+      "ordinal": 105,
+      "page": 7,
+      "content": "【吉利汽车2025Q3港交所公告｜第7页】公司自2025年1月1日起，对共同控制下企业合并采用合并会计法，并对所有共同控制下合并追溯重述比较数字。该政策变更旨在反映内部重组的经济实质；任何跨期比较必须优先采用公告所列重述数。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf",
+      "chunk_key": "fy2025-revenue-reconciliation",
+      "ordinal": 101,
+      "page": 191,
+      "content": "【吉利汽车2025年报｜第191页】2025年来自客户合约的收入为345,232,201千元；2024年重述收入为275,910,484千元。其中2025年汽车及相关服务收入310,979,986千元、汽车零部件19,846,725千元、合作制造6,511,519千元、研发服务及许可7,893,971千元。该全年收入与本地2025四个季度收入合计一致。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf",
+      "chunk_key": "fy2025-geographic-revenue",
+      "ordinal": 102,
+      "page": 192,
+      "content": "【吉利汽车2025年报｜第192页】2025年外部客户收入按地区包括：中国271,312,369千元、东欧29,220,482千元、泛欧17,690,647千元、亚太（不含中国）14,685,375千元、中东8,174,495千元。海外收入结构可作为全球化主逻辑的背景，但不等同于单独的销量或利润贡献。",
+      "confidence": 0.98
+    },
+    {
+      "source_url": "https://www.geelyauto.com.hk/announcement-of-interim-results-for-the-six-months-ended-30-june-2026/",
+      "chunk_key": "h1-2026-latest-summary",
+      "ordinal": 101,
+      "page": null,
+      "content": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】截至2026年6月30日止六个月，收入约1,736亿元，同比增长约15%；毛利约311.5亿元，同比增长约25.7%，毛利率约17.9%；核心归母净利润约96.8亿元，同比增长约46%。该记录仅作为最新候选上下文，待法定PDF页码抽取后复核精确金额。",
+      "confidence": 0.8
+    },
+    {
+      "source_url": "https://www.geelyauto.com.hk/announcement-of-interim-results-for-the-six-months-ended-30-june-2026/",
+      "chunk_key": "h1-2026-cash-risk",
+      "ordinal": 102,
+      "page": null,
+      "content": "【吉利汽车2026H1公开业绩摘要｜待PDF页码复核】同期归母净利润约90.91亿元，同比约下降1.8%；经营现金流约199.24亿元，同比明显下降。收入、毛利和核心利润改善并不自动代表归母利润及现金转化同步改善，该矛盾必须在主投资逻辑检索中保留。",
+      "confidence": 0.8
+    }
+  ]
+}

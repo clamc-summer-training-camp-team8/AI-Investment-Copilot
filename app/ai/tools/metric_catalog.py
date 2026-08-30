@@ -158,12 +158,8 @@ class MetricCatalogTool:
                     polling_frequency=_join_distinct(
                         str(item["polling_frequency"]) for item in availability
                     ),
-                    source_ids=tuple(
-                        sorted({str(item["source_id"]) for item in availability})
-                    ),
-                    availability_note=_join_distinct(
-                        str(item["note"]) for item in availability
-                    ),
+                    source_ids=tuple(sorted({str(item["source_id"]) for item in availability})),
+                    availability_note=_join_distinct(str(item["note"]) for item in availability),
                     matching_reasons=tuple(reasons),
                     retrieval_score=float(retrieval_score),
                 )
@@ -193,9 +189,7 @@ class MetricCatalogTool:
     def catalog_summary(self) -> dict[str, Any]:
         """返回目录规模与验证日期，不返回观测数据。"""
         counts = {
-            table: int(
-                self._connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-            )
+            table: int(self._connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
             for table in ("company", "source", "metric", "availability")
         }
         verified = self._connection.execute(
@@ -211,9 +205,7 @@ class MetricCatalogTool:
         """关闭 SQLite 连接。"""
         self._connection.close()
 
-    def _availability_for(
-        self, *, metric_id: str, security_id: str | None
-    ) -> list[sqlite3.Row]:
+    def _availability_for(self, *, metric_id: str, security_id: str | None) -> list[sqlite3.Row]:
         """优先返回公司专属配置，不存在时退回 ``*`` 通用配置。"""
         if security_id:
             exact = self._connection.execute(

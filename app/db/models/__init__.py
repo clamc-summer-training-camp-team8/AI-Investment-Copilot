@@ -39,6 +39,12 @@ from app.db.models.governance import (
     StatusSuggestionLog,
     ThesisVersion,
 )
+from app.db.models.ranking import (
+    LogicTopic,
+    LogicTopicRelation,
+    RankingPriorItem,
+    RankingPriorSnapshot,
+)
 
 __all__ = [
     "AdjudicationDecision",
@@ -61,11 +67,15 @@ __all__ = [
     "IngestionArtifact",
     "IngestionReview",
     "IngestionRun",
+    "LogicTopic",
+    "LogicTopicRelation",
     "Metric",
     "MetricAlias",
     "MetricObservation",
     "ModelCallLog",
     "Outcome",
+    "RankingPriorItem",
+    "RankingPriorSnapshot",
     "ReviewTask",
     "Security",
     "SecurityIndustryMembership",

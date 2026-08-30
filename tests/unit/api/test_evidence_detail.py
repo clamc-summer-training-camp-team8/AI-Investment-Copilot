@@ -51,8 +51,8 @@ def test_detail_hides_legacy_relation_and_search_filters_to_owner() -> None:
             fact_excerpt="公开披露的储能业务数据。",
             source_document_id="DOC-SG-001",
             source_document_title="阳光电源公开披露资料",
-                disclosed_at=datetime(2026, 8, 1, tzinfo=UTC),
-                ingested_at=datetime(2026, 8, 2, tzinfo=UTC),
+            disclosed_at=datetime(2026, 8, 1, tzinfo=UTC),
+            ingested_at=datetime(2026, 8, 2, tzinfo=UTC),
             source_url="https://www.cninfo.com.cn/",
             source_visibility_label="公开",
             retrieval_trace={

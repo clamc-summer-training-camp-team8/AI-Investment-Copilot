@@ -246,7 +246,9 @@ async def reanalyze_job(
     except NotVisible as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (QueueUnavailable, ValidationFailed) as exc:
-        raise HTTPException(status_code=400 if isinstance(exc, ValidationFailed) else 503, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=400 if isinstance(exc, ValidationFailed) else 503, detail=str(exc)
+        ) from exc
     finally:
         if "redis" in locals():
             await redis.aclose()

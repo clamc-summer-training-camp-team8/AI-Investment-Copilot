@@ -378,9 +378,7 @@ class LocalProvider:
                     "confidence": min(0.9, max(0.55, 0.5 + score / 40)),
                 }
             )
-        confidence = (
-            min(item["confidence"] for item in recommendations) if recommendations else 0.4
-        )
+        confidence = min(item["confidence"] for item in recommendations) if recommendations else 0.4
         return {
             "security_id": security_id,
             "hypothesis_id": hypothesis_id,
@@ -526,6 +524,7 @@ def _extract_hypotheses(segments: list[tuple[str, str]]) -> list[dict[str, Any]]
             }
         )
     from app.ai.quality.hypothesis_structure import inspect_hypotheses
+
     return inspect_hypotheses(candidates)
 
 

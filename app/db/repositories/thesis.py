@@ -245,10 +245,11 @@ class SqlThesisRepo:
 
         total = self._session.scalar(select(func.count()).select_from(Thesis).where(*conditions))
 
+        statement = select(Thesis).where(*conditions)
+        if not query.include_snapshots:
+            statement = statement.where(Thesis.thesis_kind == "canonical")
         rows = self._session.scalars(
-            select(Thesis)
-            .where(*conditions)
-            .where(True if query.include_snapshots else Thesis.thesis_kind == "canonical")
+            statement
             # established_on 倒序让最新的卡片在前；thesis_id 兜底保证分页稳定，
             # 否则同一天建立的卡片在翻页时可能重复或漏掉。
             .order_by(Thesis.established_on.desc(), Thesis.thesis_id)

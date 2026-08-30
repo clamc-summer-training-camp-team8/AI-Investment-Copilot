@@ -407,6 +407,8 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                     visibility_label=persisted.visibility_label,
                 )
 
+    assert persisted is not None
+
     with uow_scope() as uow:
         ingestion_service.mark_progress(
             uow,
@@ -463,7 +465,9 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
             "fact_count": len(facts),
             "content_hash": result.content_hash,
             "parser_version": result.parser_version,
-            "requires_analysis": bool(security_id and (not duplicate_document or assignment_replay)),
+            "requires_analysis": bool(
+                security_id and (not duplicate_document or assignment_replay)
+            ),
             "security_candidates": security_candidates,
             "draft_created": False,
         }
@@ -622,7 +626,11 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
             )
             with uow_scope() as uow:
                 ingestion_service.mark_progress(
-                    uow, job_id, stage="analysis_timeout" if isinstance(exc, TimeoutError) else "analysis_failed"
+                    uow,
+                    job_id,
+                    stage="analysis_timeout"
+                    if isinstance(exc, TimeoutError)
+                    else "analysis_failed",
                 )
             _create_failure_review(
                 thesis_id=str(payload["thesis_id"]) if payload.get("thesis_id") else None,

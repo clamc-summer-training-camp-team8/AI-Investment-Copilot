@@ -173,9 +173,7 @@ class BM25Retriever:
         if query.top_k <= 0:
             return RetrievalResult(query=query, items=[], retrieval_version=self.retrieval_version)
         allowed = [
-            document
-            for document in self._documents.values()
-            if document_allowed(document, query)
+            document for document in self._documents.values() if document_allowed(document, query)
         ]
         if not allowed:
             return RetrievalResult(query=query, items=[], retrieval_version=self.retrieval_version)

@@ -493,13 +493,13 @@ class AssetSearchHitRecord:
     content: str
     visibility_label: str
     rank: float
-    published_at: datetime
-    source: str
     retrieval_mode: str = "keyword"
     keyword_rank: float | None = None
     vector_rank: float | None = None
     ingestion_run_id: str | None = None
     embedding_version: str | None = None
+    published_at: datetime | None = None
+    source: str = ""
 
 
 @dataclass(frozen=True)
@@ -560,6 +560,102 @@ class AdjudicationDecisionRecord:
     reason: str
     decided_by: str
     decided_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RankingPriorSnapshotRecord:
+    snapshot_id: str
+    security_id: str
+    direction: str
+    horizon: str
+    as_of: datetime
+    ranker_version: str
+    feature_version: str
+    status: str = "generated"
+    generator_model_version: str | None = None
+    judge_model_version: str | None = None
+    prompt_version: str | None = None
+    metadata: dict[str, object] = field(default_factory=dict)
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RankingPriorItemRecord:
+    snapshot_id: str
+    object_type: str
+    object_id: str
+    base_rank: int
+    base_score: Decimal
+    final_rank: int
+    final_score: Decimal
+    feature_scores: dict[str, float] = field(default_factory=dict)
+    reason_codes: list[str] = field(default_factory=list)
+    citation_locators: list[str] = field(default_factory=list)
+    status: str = "active"
+    judge_rank: int | None = None
+    judge_score: Decimal | None = None
+    judge_confidence: Decimal | None = None
+
+
+@dataclass(frozen=True)
+class LogicTopicRecord:
+    topic_id: str
+    security_id: str
+    name: str
+    normalized_statement: str
+    direction: str
+    horizon: str
+    status: str = "active"
+    topic_version: str = "v1"
+    source_thesis_ids: list[str] = field(default_factory=list)
+    metadata: dict[str, object] = field(default_factory=dict)
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class LogicTopicRelationRecord:
+    relation_id: str
+    topic_id: str
+    object_type: str
+    object_id: str
+    relation: str
+    confidence: Decimal
+    source: str
+    reason: str | None = None
+    citation_locators: list[str] = field(default_factory=list)
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+    model_version: str | None = None
+    prompt_version: str | None = None
+    status: str = "active"
+    created_at: datetime | None = None
+
+
+class RankingPriorRepo(Protocol):
+    def upsert_topics(self, records: list[LogicTopicRecord]) -> None: ...
+    def upsert_topic_relations(self, records: list[LogicTopicRelationRecord]) -> None: ...
+    def topics(
+        self, *, security_id: str, direction: str, horizon: str
+    ) -> list[LogicTopicRecord]: ...
+    def topic_relations(self, topic_id: str) -> list[LogicTopicRelationRecord]: ...
+    def add_snapshot(self, record: RankingPriorSnapshotRecord) -> None: ...
+    def get_snapshot(self, snapshot_id: str) -> RankingPriorSnapshotRecord | None: ...
+    def update_snapshot_status(self, snapshot_id: str, status: str) -> None: ...
+    def active_snapshot(
+        self,
+        *,
+        security_id: str,
+        direction: str,
+        horizon: str,
+        as_of: datetime | None,
+    ) -> RankingPriorSnapshotRecord | None: ...
+    def add_items(self, records: list[RankingPriorItemRecord]) -> None: ...
+    def items_for_objects(
+        self, snapshot_id: str, *, object_type: str, object_ids: tuple[str, ...]
+    ) -> list[RankingPriorItemRecord]: ...
+    def ranked_items(
+        self, snapshot_id: str, *, object_type: str, limit: int
+    ) -> list[RankingPriorItemRecord]: ...
 
 
 class SecurityRepo(Protocol):
@@ -795,3 +891,4 @@ class UnitOfWork:
     documents: DocumentRepo
     adjudications: AdjudicationDecisionRepo
     assets: AssetRepo
+    ranking: RankingPriorRepo

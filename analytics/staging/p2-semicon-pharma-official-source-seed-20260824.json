@@ -1,0 +1,96 @@
+{
+  "dataset_version": "p2-semicon-pharma-official-source-seed-20260824",
+  "status": "staged_requires_human_review",
+  "records": [
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "source_type": "exchange_designated_disclosure",
+      "title": "中芯国际集成电路制造有限公司2025年年度报告",
+      "published_at": "2026-03-26T00:00:00+08:00",
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2026/0326/2026032601638_c.pdf",
+      "facts": [
+        "2025年销售收入673.23亿元，同比增长16.5%；产能利用率93.5%，同比提升8个百分点。",
+        "2025年毛利率22%，同比提升3个百分点；折合8英寸标准逻辑的月产能规模超过100万片。",
+        "公司披露持续推进产能扩建，并推进中芯北方少数股权收购和中芯南方增资扩股。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量", "产能与扩张"],
+      "evidence_direction": "支持",
+      "review_note": "港交所年报的经营数据；产能扩建和股权交易属于扩张事实，项目回报仍需后续数据确认。"
+    },
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "source_type": "exchange_designated_disclosure",
+      "title": "中芯国际集成电路制造有限公司2025年年度报告 — capital-intensity risk",
+      "published_at": "2026-03-26T00:00:00+08:00",
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2026/0326/2026032601638_c.pdf",
+      "facts": [
+        "2025年投资活动所用现金净额为64.95亿元，高于2024年的45.18亿元。"
+      ],
+      "hypothesis_targets": ["产能与扩张"],
+      "evidence_direction": "冲突",
+      "review_note": "资本开支现金流扩大是产能扩张质量的约束候选，不把投入本身自动判断为逻辑失效。"
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "source_type": "exchange_designated_disclosure",
+      "title": "无锡药明康德新药开发股份有限公司2025年年度报告",
+      "published_at": "2026-03-23T00:00:00+08:00",
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0323/2026032300974_c.pdf",
+      "facts": [
+        "2025年营业收入454.56亿元，2024年为392.41亿元。",
+        "2025年归属于母公司股东的净利润191.51亿元，2024年为94.50亿元。",
+        "2025年持续经营净利润179.78亿元，终止经营净利润13.55亿元。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量"],
+      "evidence_direction": "支持",
+      "review_note": "港交所年报原始财务表数据；持续经营与终止经营利润分开保存，避免以合并净利润掩盖业务口径变化。"
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "source_type": "exchange_designated_disclosure",
+      "title": "无锡药明康德新药开发股份有限公司2025年年度报告 — profit-comparability constraint",
+      "published_at": "2026-03-23T00:00:00+08:00",
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0323/2026032300974_c.pdf",
+      "facts": [
+        "2025年年度报告分别披露持续经营净利润179.78亿元和终止经营净利润13.55亿元，利润评价需要拆分持续经营与终止经营口径。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "口径可比性约束候选；仅提示终止经营会影响利润解释，不把终止经营利润本身判断为经营恶化。"
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "source_type": "company_ir_disclosure",
+      "title": "恒瑞医药2025年年度报告",
+      "published_at": "2026-03-26T00:00:00+08:00",
+      "source_url": "https://www.hengrui.com/investor/regularAnnouncement.html",
+      "facts": [
+        "2025年营业收入316.29亿元，2024年为279.85亿元。",
+        "2025年营业成本43.63亿元，2024年为38.48亿元；研发费用69.61亿元，2024年为65.83亿元。",
+        "2025年归属于母公司股东的净利润77.11亿元，2024年为63.37亿元。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量"],
+      "evidence_direction": "支持",
+      "review_note": "公司投资者关系页面公开的年度报告；来源正文需在下一轮下载到本地并定位页码后才可升级为已确认。"
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "source_type": "company_ir_disclosure",
+      "title": "恒瑞医药2025年年度报告 — R&D cost constraint",
+      "published_at": "2026-03-26T00:00:00+08:00",
+      "source_url": "https://www.hengrui.com/investor/regularAnnouncement.html",
+      "facts": [
+        "2025年研发费用69.61亿元，高于2024年的65.83亿元；营业成本43.63亿元，高于2024年的38.48亿元。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "研发与营业成本上升是盈利兑现的约束候选；保留为反向校验，不把研发投入增加直接判断为逻辑失效。"
+    }
+  ]
+}

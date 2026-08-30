@@ -1,0 +1,19 @@
+{
+  "security_id": "00175",
+  "metric": "revenue",
+  "period": "2024FY",
+  "status": "annual_scope_reconciled_quarterly_disclosure_pending",
+  "local_quarter_sum_rmb_thousand": 275910484,
+  "original_2024_annual_report_rmb_thousand": 240194270,
+  "restated_2024_comparative_rmb_thousand": 275910484,
+  "authoritative_source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/e00175_2025-annual-report.pdf",
+  "authoritative_locator": "Annual Report 2025, page 142, Note 4(a)(i)",
+  "restatement_components_rmb_thousand": {
+    "original_amount": 240194270,
+    "common_control_business_combinations": 5441997,
+    "lynk_co_and_target_companies": 46228046,
+    "consolidation_adjustments": -15953829,
+    "restated_amount": 275910484
+  },
+  "rule": "Do not populate 2024 quarterly disclosure_date from old-scope Q1/H1 releases. Keep quarterly values as restated-series records until matching restated-scope quarterly disclosures are located."
+}

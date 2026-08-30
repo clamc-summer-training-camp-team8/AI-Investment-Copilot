@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from app.ai.agents import AgentEventInput, HypothesisInput, MetricRuleInput
 from app.ai.retrieval import RetrievalDocument
@@ -48,11 +48,7 @@ def build_event_agent_inputs(
     if locator is None:
         raise EventEvidenceUnavailable("缺少引用定位，无法进入证据链")
     segment = segments_by_locator.get(locator)
-    if (
-        segment is None
-        or segment.document_id != event.document_id
-        or not segment.content.strip()
-    ):
+    if segment is None or segment.document_id != event.document_id or not segment.content.strip():
         raise EventEvidenceUnavailable("引用定位无法回查原文，转人工判断")
 
     event_input = AgentEventInput(
@@ -96,6 +92,7 @@ def build_historical_rag_context(
             source=hit.source,
         )
         for hit in hits
+        if hit.published_at is not None
     ]
 
 

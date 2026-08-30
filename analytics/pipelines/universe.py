@@ -111,7 +111,15 @@ def company_for_financials(security_id: str) -> Company:
     if len(security_id) == 6 and security_id[0] == "6":
         return Company(security_id, security_id, "", f"1.{security_id}", "未分类", "通用财务")
     if len(security_id) == 5 and security_id.isdigit():
-        return Company(security_id, security_id, "", f"116.{security_id}", "未分类", "通用财务", market=MARKET_HK)
+        return Company(
+            security_id,
+            security_id,
+            "",
+            f"116.{security_id}",
+            "未分类",
+            "通用财务",
+            market=MARKET_HK,
+        )
     raise ValueError(f"暂不支持自动识别该证券市场：{security_id}")
 
 

@@ -102,9 +102,7 @@ def _enforce_catalog_grounding(
     """校验模型是否忠实复制候选目录字段，阻断编造或偷偷改写。"""
     if outcome.ai_status is AiStatus.PARSE_FAILED:
         return outcome
-    allowed = {
-        (item.metric_id, item.metric_version): item.to_prompt_dict() for item in candidates
-    }
+    allowed = {(item.metric_id, item.metric_version): item.to_prompt_dict() for item in candidates}
     recommendations = outcome.payload.get("recommendations")
     if not isinstance(recommendations, list):
         return outcome

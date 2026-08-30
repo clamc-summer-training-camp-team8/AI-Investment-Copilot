@@ -355,11 +355,17 @@ class InvestmentResearchAgent:
                 execution.retrieval_versions = tuple(
                     sorted({impact.retrieval.retrieval_version for impact in result.impacts})
                 )
-                self._record_payloads(execution, [result.impacts[0].outcome.payload] if result.impacts else [])
+                self._record_payloads(
+                    execution, [result.impacts[0].outcome.payload] if result.impacts else []
+                )
                 self._transition(execution, "verifying")
                 execution.evidence_checks = EvidenceAgent.validate_run(result)
-                execution.evidence_grades = [EvidenceAgent.grade_impact(item) for item in result.impacts]
-                execution.consistency_checks = [EvidenceAgent.check_consistency(item) for item in result.impacts]
+                execution.evidence_grades = [
+                    EvidenceAgent.grade_impact(item) for item in result.impacts
+                ]
+                execution.consistency_checks = [
+                    EvidenceAgent.check_consistency(item) for item in result.impacts
+                ]
                 if any(item.outcome.ai_status is AiStatus.PARSE_FAILED for item in result.impacts):
                     execution.retryable = False
                     execution.degraded_reason = "provider_or_schema_failure"
@@ -427,9 +433,7 @@ class InvestmentResearchAgent:
                 execution.consistency_checks = [
                     EvidenceAgent.check_consistency(item) for item in result.impacts
                 ]
-                if any(
-                    item.outcome.ai_status is AiStatus.PARSE_FAILED for item in result.impacts
-                ):
+                if any(item.outcome.ai_status is AiStatus.PARSE_FAILED for item in result.impacts):
                     execution.retryable = False
                     execution.degraded_reason = "provider_or_schema_failure"
                     self._transition(execution, "degraded")

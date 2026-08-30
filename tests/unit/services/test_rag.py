@@ -21,13 +21,13 @@ def test_hybrid_retrieve_passes_permission_and_business_filters() -> None:
         captured.update(kwargs)
         return [
             AssetSearchHitRecord(
-                "DOC-1",
-                "DOC-1#paragraph-1",
-                "正文",
-                "内部",
-                0.8,
-                published_at,
-                "历史公告",
+                document_id="DOC-1",
+                locator="DOC-1#paragraph-1",
+                content="正文",
+                visibility_label="内部",
+                rank=0.8,
+                published_at=published_at,
+                source="历史公告",
             )
         ]
 

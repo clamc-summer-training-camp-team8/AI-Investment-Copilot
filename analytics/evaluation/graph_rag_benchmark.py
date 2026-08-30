@@ -455,9 +455,7 @@ def _build_retrievers(
         if variant.chinese_vector:
             supplemental.append(ChineseVectorRetriever())
         return (
-            CandidateUnionRetriever(
-                primary=KeywordRetriever(), supplemental=tuple(supplemental)
-            )
+            CandidateUnionRetriever(primary=KeywordRetriever(), supplemental=tuple(supplemental))
             if supplemental
             else KeywordRetriever()
         )
@@ -547,11 +545,7 @@ def _build_retrievers(
 
 def _event_ids(items: list[Any]) -> list[str]:
     return [
-        str(
-            item.metadata.get("candidate_document_id")
-            or item.metadata.get("canary_token")
-            or ""
-        )
+        str(item.metadata.get("candidate_document_id") or item.metadata.get("canary_token") or "")
         for item in items
     ]
 
@@ -780,10 +774,7 @@ def run_benchmark(
         sample = query_rows[0]
         allowed_document_ids = {
             *(row.document_id for row in query_rows),
-            *(
-                f"BENCH-CANARY-{kind}-{query_id}"
-                for kind in ("PERMISSION", "SECURITY", "FUTURE")
-            ),
+            *(f"BENCH-CANARY-{kind}-{query_id}" for kind in ("PERMISSION", "SECURITY", "FUTURE")),
         }
         query = RetrievalQuery(
             text=sample.hypothesis,
@@ -874,15 +865,13 @@ def run_benchmark(
             "candidate_pool_compliance_rate",
             candidate_pool_compliance_rate,
             QUALITY_THRESHOLDS["candidate_pool_compliance_rate"],
-            candidate_pool_compliance_rate
-            >= QUALITY_THRESHOLDS["candidate_pool_compliance_rate"],
+            candidate_pool_compliance_rate >= QUALITY_THRESHOLDS["candidate_pool_compliance_rate"],
         ),
         _gate(
             "closed_pool_no_unjudged",
             graph_metrics["unjudged_result_count"],
             QUALITY_THRESHOLDS["maximum_unjudged_results"],
-            graph_metrics["unjudged_result_count"]
-            <= QUALITY_THRESHOLDS["maximum_unjudged_results"]
+            graph_metrics["unjudged_result_count"] <= QUALITY_THRESHOLDS["maximum_unjudged_results"]
             and text_metrics["unjudged_result_count"]
             <= QUALITY_THRESHOLDS["maximum_unjudged_results"],
         ),

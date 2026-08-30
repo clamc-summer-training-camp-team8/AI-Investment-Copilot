@@ -18,13 +18,14 @@ from app.ai.gateway import Gateway
 from app.ai.integration import to_backend_envelope
 from app.ai.retrieval import RetrievalDocument
 from app.ai.runtime import InvestmentResearchAgent, RuntimeExecution
-from app.ai.tools import ThresholdObservation, fetch_byd_periodic_metrics
+from app.ai.tools import ThresholdObservation
 from app.core.config import Settings
 from app.core.domain import ObservationRecord, ThesisRevisionDraftRecord, UnitOfWork
 from app.core.enums import ConfirmationStatus, ThesisStatus
 from app.core.timeutil import now
 from app.services import assets, audit, permission, query, version
 from app.services.ai_runtime import SqlRuntimeRecorder
+from app.services.company_metrics import CompanyMetricObservation, fetch_byd_periodic_metrics
 from app.services.errors import HumanGateRequired, NotVisible, ValidationFailed
 from app.services.permission import Actor
 
@@ -274,7 +275,11 @@ def draft_review(
     if period_end < period_start:
         raise ValidationFailed("复盘结束日期不能早于开始日期")
     thesis = _visible_thesis(uow, thesis_id, actor)
-    records = records_override if records_override is not None else _review_records(uow, thesis_id, period_start, period_end)
+    records = (
+        records_override
+        if records_override is not None
+        else _review_records(uow, thesis_id, period_start, period_end)
+    )
     execution = (runtime or build_runtime(settings)).draft_review(
         security_id=thesis.security_id,
         thesis_id=thesis_id,
@@ -341,6 +346,7 @@ def draft_revision(
             source=item.source,
         )
         for item in hits
+        if item.published_at is not None
     ]
     active_runtime = runtime or build_runtime(settings)
     execution = active_runtime.draft_thesis(
@@ -402,11 +408,25 @@ def _recommendation_with_threshold(
     metric_id = str(result.get("metric_id") or "")
     # 目录是关系类型的唯一事实来源；模型若返回不一致的标签，以目录口径校正，
     # 避免整批候选因一个 relation_type 拼写偏差被判为解析失败。
-    catalog_relation = {"AUTO-SALES-M": "直接指标", "AUTO-EXPORT-SALES-M": "直接指标", "AUTO-BATTERY-INSTALL-M": "直接指标", "FIN-REVENUE-Q": "代理指标", "FIN-REVENUE-YOY-Q": "直接指标", "FIN-GROSS-MARGIN-Q": "直接指标", "FIN-NET-PROFIT-Q": "直接指标"}
+    catalog_relation = {
+        "AUTO-SALES-M": "直接指标",
+        "AUTO-EXPORT-SALES-M": "直接指标",
+        "AUTO-BATTERY-INSTALL-M": "直接指标",
+        "FIN-REVENUE-Q": "代理指标",
+        "FIN-REVENUE-YOY-Q": "直接指标",
+        "FIN-GROSS-MARGIN-Q": "直接指标",
+        "FIN-NET-PROFIT-Q": "直接指标",
+    }
     if metric_id in catalog_relation:
         result["relation_type"] = catalog_relation[metric_id]
     if not result.get("unit"):
-        result["unit"] = {"AUTO-SALES-M": "辆", "AUTO-EXPORT-SALES-M": "辆", "AUTO-BATTERY-INSTALL-M": "GWh", "FIN-REVENUE-Q": "元", "FIN-GROSS-MARGIN-Q": "%"}.get(metric_id, "")
+        result["unit"] = {
+            "AUTO-SALES-M": "辆",
+            "AUTO-EXPORT-SALES-M": "辆",
+            "AUTO-BATTERY-INSTALL-M": "GWh",
+            "FIN-REVENUE-Q": "元",
+            "FIN-GROSS-MARGIN-Q": "%",
+        }.get(metric_id, "")
     direction = result.get("expected_direction")
     if not metric_id or not direction:
         result["threshold_suggestion"] = {
@@ -430,13 +450,29 @@ def _recommendation_with_threshold(
         and item.observation_date <= as_of
     ]
     latest_before_refresh = max(source_rows, key=lambda item: item.observation_date, default=None)
-    needs_refresh = latest_before_refresh is None or latest_before_refresh.observation_date < as_of - timedelta(days=180)
+    needs_refresh = (
+        latest_before_refresh is None
+        or latest_before_refresh.observation_date < as_of - timedelta(days=180)
+    )
     if (
         needs_refresh
-        and metric_id in {"FIN-REVENUE-Q", "FIN-REVENUE-YOY-Q", "FIN-GROSS-MARGIN-Q", "AUTO-SALES-M", "AUTO-EXPORT-SALES-M", "AUTO-BATTERY-INSTALL-M"}
+        and metric_id
+        in {
+            "FIN-REVENUE-Q",
+            "FIN-REVENUE-YOY-Q",
+            "FIN-GROSS-MARGIN-Q",
+            "AUTO-SALES-M",
+            "AUTO-EXPORT-SALES-M",
+            "AUTO-BATTERY-INSTALL-M",
+        }
         and uow.observations.__class__.__module__.startswith("app.db.")
     ):
-        _refresh_metric_history(uow, security_id=security_id, metric_id=metric_id, force_refresh=latest_before_refresh is not None)
+        _refresh_metric_history(
+            uow,
+            security_id=security_id,
+            metric_id=metric_id,
+            force_refresh=latest_before_refresh is not None,
+        )
         source_rows = [
             item
             for item in uow.observations.list_for_metric(security_id, metric_id)
@@ -481,7 +517,9 @@ def _recommendation_with_threshold(
     return result
 
 
-def _refresh_metric_history(uow: UnitOfWork, *, security_id: str, metric_id: str, force_refresh: bool = False) -> None:
+def _refresh_metric_history(
+    uow: UnitOfWork, *, security_id: str, metric_id: str, force_refresh: bool = False
+) -> None:
     """缺少历史时调用受控真实数据工具并写回观测表。
 
     采集失败不伪造数值；本次推荐仍返回 missing/stale，供研究员判断。
@@ -490,47 +528,66 @@ def _refresh_metric_history(uow: UnitOfWork, *, security_id: str, metric_id: str
         if metric_id in {"AUTO-SALES-M", "AUTO-EXPORT-SALES-M", "AUTO-BATTERY-INSTALL-M"}:
             candidates = fetch_byd_periodic_metrics(
                 security_id=security_id,
-                cache_dir=__import__("pathlib").Path(__file__).resolve().parents[2] / ".runtime" / "metric-notices",
+                cache_dir=__import__("pathlib").Path(__file__).resolve().parents[2]
+                / ".runtime"
+                / "metric-notices",
             )
         else:
-            cache_path = __import__("pathlib").Path(__file__).resolve().parents[2] / "real_data" / "raw" / "financials.json"
-            payload = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
-            cached_rows = (payload.get("metrics") or {}).get(security_id) or []
-            # 总缓存文件存在不代表当前企业已有数据；当前企业缺失或明确过期时按证券刷新。
-            if not cached_rows or force_refresh:
-                from analytics.pipelines.fetch_financials import run
-                run(security_id=security_id, refresh=force_refresh)
-            payload = json.loads(cache_path.read_text(encoding="utf-8"))
+            cache_path = (
+                __import__("pathlib").Path(__file__).resolve().parents[2]
+                / "real_data"
+                / "raw"
+                / "financials.json"
+            )
+            payload = (
+                json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
+            )
             rows = (payload.get("metrics") or {}).get(security_id) or []
+            # 在线服务只消费已审核的本地快照；刷新由 analytics 离线管道负责，
+            # 避免请求链路写项目数据或依赖离线分析包。
             data_version = str(payload.get("data_version") or "eastmoney-financial-v1")
-            field = {"FIN-REVENUE-Q": "revenue", "FIN-REVENUE-YOY-Q": "revenue_yoy", "FIN-GROSS-MARGIN-Q": "gross_margin"}.get(metric_id)
+            field = {
+                "FIN-REVENUE-Q": "revenue",
+                "FIN-REVENUE-YOY-Q": "revenue_yoy",
+                "FIN-GROSS-MARGIN-Q": "gross_margin",
+            }.get(metric_id)
             if field is None:
                 return
             unit = "元" if field == "revenue" else "%"
             candidates = []
             for row in rows:
                 if row.get("disclosure_date") and row.get(field) is not None:
-                    candidates.append({"period": str(row.get("period")), "value": str(row.get(field)), "unit": unit, "observation_date": date.fromisoformat(str(row["disclosure_date"])), "source_document_id": f"EM-FIN-{security_id}-{row['period']}", "data_version": data_version})
-        existing = {item.period for item in uow.observations.list_for_metric(security_id, metric_id)}
+                    candidates.append(
+                        CompanyMetricObservation(
+                            metric_id=metric_id,
+                            metric_version="v1.0",
+                            period=str(row.get("period")),
+                            value=str(row.get(field)),
+                            unit=unit,
+                            observation_date=date.fromisoformat(str(row["disclosure_date"])),
+                            source_document_id=f"EM-FIN-{security_id}-{row['period']}",
+                            source_url="",
+                            data_version=data_version,
+                        )
+                    )
+        existing = {
+            item.period for item in uow.observations.list_for_metric(security_id, metric_id)
+        }
         for item in candidates:
-            if hasattr(item, "metric_id"):
-                if item.metric_id != metric_id or item.period in existing:
-                    continue
-                period, value, unit, observation_date, source_document_id, data_version = item.period, item.value, item.unit, item.observation_date, item.source_document_id, item.data_version
-            else:
-                period, value, unit, observation_date, source_document_id, data_version = item["period"], item["value"], item["unit"], item["observation_date"], item["source_document_id"], item["data_version"]
+            if item.metric_id != metric_id or item.period in existing:
+                continue
             uow.observations.add(
                 ObservationRecord(
                     security_id=security_id,
                     metric_id=metric_id,
                     metric_version="v1.0",
-                    period=period,
-                    period_type="单月" if unit in {"辆", "GWh"} else "单季度",
-                    observation_date=observation_date,
-                    actual_value=Decimal(str(value)),
-                    unit=unit,
-                    source_document_id=source_document_id,
-                    data_version=data_version,
+                    period=item.period,
+                    period_type="单月" if item.unit in {"辆", "GWh"} else "单季度",
+                    observation_date=item.observation_date,
+                    actual_value=Decimal(str(item.value)),
+                    unit=item.unit,
+                    source_document_id=item.source_document_id,
+                    data_version=item.data_version,
                 )
             )
     except Exception:
@@ -665,7 +722,11 @@ def _revision_payload(
     revised: list[dict[str, Any]] = []
     for index, current in enumerate(current_hypotheses):
         item = by_id.get(current.hypothesis_id, _jsonable(asdict(current)))
-        suggestion = generated[index] if index < len(generated) and isinstance(generated[index], dict) else {}
+        suggestion = (
+            generated[index]
+            if index < len(generated) and isinstance(generated[index], dict)
+            else {}
+        )
         if suggestion.get("statement"):
             item["statement"] = str(suggestion["statement"])
         if suggestion.get("hypothesis_type"):
