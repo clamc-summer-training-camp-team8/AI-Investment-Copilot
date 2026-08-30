@@ -1,0 +1,29 @@
+{
+  "schema_version": "graph-relevance-blind-package-v1",
+  "gold_version": "graph-relevance-v6-blind",
+  "state": "candidate_pool_frozen",
+  "frozen_at": "2026-08-30T04:19:13.589911+00:00",
+  "random_seed": 20260826,
+  "queries": 30,
+  "rows": 300,
+  "minimum_candidates_per_query": 10,
+  "requirements": {
+    "minimum_queries": 30,
+    "minimum_candidates_per_query": 8
+  },
+  "blindness": {
+    "tuner_package_contains_labels": false,
+    "forbidden_tuner_columns": [
+      "相关性等级",
+      "关系路径可成立",
+      "标注理由",
+      "标注员",
+      "标注时间"
+    ],
+    "researcher_package_separate": true
+  },
+  "files": {
+    "tuner/candidate_pool.csv": "b571032e06b895b9239499fe8c91c279149d352dcbe7ef2dfe04b7901678b5cc",
+    "researcher/annotation.csv": "5efaabd22e6e13da49708d2e7778499dbbd2f271d6d7c913b4ed3e0b92f8fd45"
+  }
+}

@@ -75,7 +75,12 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
 def _write_csv(path: Path, rows: list[dict[str, str]], columns: tuple[str, ...]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8-sig", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=columns, extrasaction="ignore")
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=columns,
+            extrasaction="ignore",
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
 
@@ -115,9 +120,7 @@ def merge_extracted_labels(
     frozen evaluation questions during import.
     """
 
-    blind_manifest = json.loads(
-        (package_dir / "blind_manifest.json").read_text(encoding="utf-8")
-    )
+    blind_manifest = json.loads((package_dir / "blind_manifest.json").read_text(encoding="utf-8"))
     annotation_path = package_dir / "researcher" / "annotation.csv"
     if _sha256(annotation_path) != blind_manifest["files"]["researcher/annotation.csv"]:
         raise ValueError("研究员空白标注表哈希不匹配")
@@ -410,9 +413,7 @@ def _validate_model_lock(package_dir: Path, candidate_pool_sha256: str) -> dict[
     if not model_lock_path.is_file():
         raise ValueError("必须先冻结调参版本 model_lock.json，再导入标签")
     model_lock = json.loads(model_lock_path.read_text(encoding="utf-8"))
-    blind_manifest = json.loads(
-        (package_dir / "blind_manifest.json").read_text(encoding="utf-8")
-    )
+    blind_manifest = json.loads((package_dir / "blind_manifest.json").read_text(encoding="utf-8"))
     if model_lock.get("gold_version") != blind_manifest.get("gold_version"):
         raise ValueError("模型锁与盲测版本不一致")
     if model_lock.get("candidate_pool_sha256") != candidate_pool_sha256:

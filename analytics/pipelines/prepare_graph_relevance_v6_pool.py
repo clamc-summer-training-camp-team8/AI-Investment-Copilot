@@ -43,14 +43,8 @@ PRIOR_GOLDS = (
     / "datasets"
     / "final-gold-v3-20260826"
     / "final_graph_relevance_gold_v3.csv",
-    PROJECT_ROOT
-    / "outputs"
-    / "graph-relevance-v4-final"
-    / "final_graph_relevance_gold_v4.csv",
-    PROJECT_ROOT
-    / "outputs"
-    / "graph-relevance-v5-final"
-    / "final_graph_relevance_gold_v5.csv",
+    PROJECT_ROOT / "outputs" / "graph-relevance-v4-final" / "final_graph_relevance_gold_v4.csv",
+    PROJECT_ROOT / "outputs" / "graph-relevance-v5-final" / "final_graph_relevance_gold_v5.csv",
 )
 DEFAULT_OUTPUT = (
     PROJECT_ROOT
@@ -193,7 +187,11 @@ def prepare_pool(output_path: Path, cache_dir: Path) -> dict[str, Any]:
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8-sig", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=BASE_COLUMNS)
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=BASE_COLUMNS,
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
     manifest: dict[str, Any] = {

@@ -1,0 +1,30 @@
+{
+  "schema_version": "graph-rag-model-lock-v1",
+  "gold_version": "graph-relevance-v6-blind",
+  "locked_at": "2026-08-30T04:19:14.164302+00:00",
+  "git_revision": "a29d5d342bccfefd2753b6247db6fcdb31b1bbcd",
+  "candidate_pool_sha256": "b571032e06b895b9239499fe8c91c279149d352dcbe7ef2dfe04b7901678b5cc",
+  "implementation_sha256": {
+    "app/ai/retrieval.py": "47d6dbd1bb89a749c780164a24dbfa59af2b07c6167d8fbba249918add1f88e5",
+    "app/ai/graph_rag.py": "62b281fd40c93c20a2e7a453da54acf11ae3f254165cd5a97b77683e00d905e5",
+    "app/services/graph_rag.py": "b680be25308be13a731d71d980ba339d44a6bed9cc8b687990d356cd1b7bbf20",
+    "analytics/evaluation/graph_rag_benchmark.py": "be146f135c867f454b372f3f815da30ace81639b4a07b03489edbfe12e55a4ee"
+  },
+  "weights": {
+    "fusion_text": 0.25,
+    "fusion_bm25": 0.5,
+    "fusion_graph": 1.0,
+    "fusion_report_prior": 1.0,
+    "fusion_rrf_k": 1,
+    "graph_internal_text": 0.35,
+    "graph_internal_relation": 0.65
+  },
+  "threshold_policy": {
+    "version": "graph-rag-v6-gates-v1",
+    "absolute_quality_thresholds_frozen": true,
+    "candidate_pool_compliance_rate": 1.0,
+    "maximum_recall_regression_vs_text": 0.01,
+    "rationale": "允许最多 1 个百分点 Recall@5 相对波动，但仍要求绝对 Recall@5>=0.80，并保留 NDCG@5、MRR、Top1、路径引用、候选池与零泄漏硬门。"
+  },
+  "thresholds_changed_after_v5": true
+}

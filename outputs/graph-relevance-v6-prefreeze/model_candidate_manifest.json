@@ -1,10 +1,11 @@
 {
   "schema_version": "graph-rag-v6-prefreeze-v1",
   "gold_version": "graph-relevance-v6-blind",
-  "state": "implementation_and_thresholds_ready_candidate_pool_pending",
+  "state": "candidate_pool_frozen_researcher_annotation_pending",
   "prepared_at": "2026-08-29T21:00:00+08:00",
+  "frozen_at": "2026-08-30T04:19:13.589911+00:00",
   "release_candidate": "graph-evidence-fusion-v1",
-  "candidate_pool_sha256": null,
+  "candidate_pool_sha256": "b571032e06b895b9239499fe8c91c279149d352dcbe7ef2dfe04b7901678b5cc",
   "implementation_sha256": {
     "app/ai/retrieval.py": "47d6dbd1bb89a749c780164a24dbfa59af2b07c6167d8fbba249918add1f88e5",
     "app/ai/graph_rag.py": "62b281fd40c93c20a2e7a453da54acf11ae3f254165cd5a97b77683e00d905e5",
@@ -66,9 +67,18 @@
     "v6_one_time_blind_required": true,
     "graph_rag_remains_disabled": true
   },
-  "pending_external_dependency": {
-    "code": "local_postgresql_unavailable",
-    "detail": "Docker Desktop cannot start because a protected stale dockerInference socket prevents backend initialization.",
-    "required_action": "Restore the local PostgreSQL service, then run scripts/prepare_graph_rag_v6_blind.ps1."
+  "frozen_candidate_summary": {
+    "queries": 30,
+    "rows": 300,
+    "candidates_per_query": 10,
+    "source_documents": 90,
+    "companies": 9,
+    "v3_v4_v5_query_reuse": 0,
+    "v3_v4_v5_candidate_url_reuse": 0
+  },
+  "next_step": {
+    "code": "professional_researcher_annotation_required",
+    "detail": "The v6 candidate pool, model lock, workbook, and researcher package are frozen and ready.",
+    "required_action": "A professional researcher must independently label all 300 rows before the one-time v6 evaluation is consumed."
   }
 }

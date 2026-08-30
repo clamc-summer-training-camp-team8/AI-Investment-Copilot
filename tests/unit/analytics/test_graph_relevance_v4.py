@@ -83,6 +83,9 @@ def test_blind_workflow_can_freeze_v5_version(tmp_path: Path) -> None:
 
     assert manifest["gold_version"] == "graph-relevance-v5-blind"
     assert lock["gold_version"] == "graph-relevance-v5-blind"
+    assert b"\r\n" not in (package / "tuner" / "candidate_pool.csv").read_bytes()
+    assert b"\r\n" not in (package / "researcher" / "annotation.csv").read_bytes()
+
 
 def test_v4_tuner_package_has_no_labels_and_model_is_locked_before_finalize(
     tmp_path: Path,
