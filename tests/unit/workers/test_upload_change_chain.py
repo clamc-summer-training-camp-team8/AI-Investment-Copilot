@@ -29,12 +29,17 @@ class _CountingLocalProvider(LocalProvider):
     def __init__(self, settings: Settings) -> None:
         super().__init__(settings)
         self.event_calls = 0
+        self.batch_calls = 0
         self.calls: list[dict[str, Any]] = []
 
     def analyze_event_impact(self, **kwargs: Any) -> dict[str, Any]:
         self.event_calls += 1
         self.calls.append(kwargs)
         return super().analyze_event_impact(**kwargs)
+
+    def analyze_event_impacts(self, **kwargs: Any) -> dict[str, Any]:
+        self.batch_calls += 1
+        return super().analyze_event_impacts(**kwargs)
 
 
 class _PerHypothesisProvider(_CountingLocalProvider):
@@ -44,7 +49,10 @@ class _PerHypothesisProvider(_CountingLocalProvider):
 
     def analyze_event_impact(self, **kwargs: Any) -> dict[str, Any]:
         payload = super().analyze_event_impact(**kwargs)
-        payload["signal"]["impact_direction"] = self.directions[str(kwargs["hypothesis_id"])]
+        for impact in payload["impacts"]:
+            impact["signal"]["impact_direction"] = self.directions[str(impact["hypothesis_id"])]
+            if impact["signal"]["impact_direction"] == "无关":
+                impact["relevance"] = "不相关"
         return payload
 
 
@@ -76,7 +84,12 @@ def test_uploaded_event_becomes_radar_visible_candidate_relation() -> None:
     events = extract_events_from_segments(
         "DOC-UPLOAD-1",
         "NEW001",
-        [("DOC-UPLOAD-1#paragraph-1", "公司披露新签订单金额同比增长35%，收入展望改善。")],
+        [
+            (
+                "DOC-UPLOAD-1#paragraph-1",
+                "公司披露新签订单金额同比增长35%，收入展望改善。",
+            )
+        ],
         disclosure_time=disclosed_at,
     )
     for event in events:
@@ -293,6 +306,71 @@ def test_worker_analyzes_each_recalled_thesis_hypothesis() -> None:
     assert result.matched_theses == ["THS-MULTI-1", "THS-MULTI-2"]
 
 
+def test_worker_analyzes_multiple_events_in_one_batch_per_thesis() -> None:
+    uow = build_fake_uow()
+    uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
+    uow.thesis.add(
+        ThesisRecord(
+            thesis_id="THS-CONCURRENT",
+            security_id="NEW001",
+            title="经营数据逻辑",
+            direction="观察",
+            core_view="销量增长支撑收入",
+            established_on=date(2026, 1, 1),
+            owner="researcher-1",
+            status=ThesisStatus.VALIDATING,
+        )
+    )
+    uow.thesis.add_hypothesis(
+        HypothesisRecord(
+            hypothesis_id="THS-CONCURRENT-H1",
+            thesis_id="THS-CONCURRENT",
+            statement="销量增长支撑营业收入提升",
+            hypothesis_type="经营",
+            importance=Importance.CORE,
+        )
+    )
+    disclosed_at = datetime.fromisoformat("2026-08-12T09:00:00+08:00")
+    events = [
+        ExtractedEvent(
+            event_id=f"EV-CONCURRENT-{index}",
+            document_id="DOC-CONCURRENT",
+            security_id="NEW001",
+            event_type="业绩",
+            summary=f"第{index}项销量同比增长",
+            disclosure_time=disclosed_at,
+            fingerprint=f"fp-concurrent-{index}",
+            evidence_locator=f"DOC-CONCURRENT#paragraph-{index}",
+        )
+        for index in (1, 2)
+    ]
+    settings = Settings(_env_file=None, llm_provider="local")
+    provider = _CountingLocalProvider(settings)
+
+    result = process_events(
+        uow,
+        Gateway(settings=settings, provider=provider),
+        events=events,
+        security_id="NEW001",
+        actor=Actor(user_id="researcher-1"),
+        thresholds=settings.rules,
+        current_event_segments=[
+            DocumentSegmentRecord(
+                document_id="DOC-CONCURRENT",
+                locator=f"DOC-CONCURRENT#paragraph-{index}",
+                ordinal=index,
+                content=f"第{index}项销量同比增长。",
+            )
+            for index in (1, 2)
+        ],
+        document_id="DOC-CONCURRENT",
+    )
+
+    assert provider.batch_calls == 1
+    assert provider.event_calls == 2  # local provider deterministically expands the batch
+    assert len(result.candidates) == 2
+
+
 def test_worker_passes_all_thesis_hypotheses_and_persists_each_related_impact() -> None:
     uow = build_fake_uow()
     uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
@@ -378,21 +456,16 @@ def test_worker_passes_all_thesis_hypotheses_and_persists_each_related_impact() 
         document_id="DOC-BATCH",
     )
 
-    assert provider.event_calls == 3
-    assert [str(call["hypothesis_id"]) for call in provider.calls] == [
+    assert provider.event_calls == 1
+    candidates = provider.calls[0]["candidates"]
+    assert [str(candidate["hypothesis_id"]) for candidate in candidates] == [
         f"{thesis_id}-H1",
         f"{thesis_id}-H2",
         f"{thesis_id}-H3",
     ]
-    assert [
-        item["metric_id"]
-        for item in provider.calls[0]["hypothesis_context"]["metrics"]
-    ] == ["capacity_utilization"]
-    assert [
-        item["metric_id"]
-        for item in provider.calls[1]["hypothesis_context"]["metrics"]
-    ] == ["gross_margin"]
-    assert provider.calls[2]["hypothesis_context"]["metrics"] == []
+    assert [item["metric_id"] for item in candidates[0]["metric_rules"]] == ["capacity_utilization"]
+    assert [item["metric_id"] for item in candidates[1]["metric_rules"]] == ["gross_margin"]
+    assert candidates[2]["metric_rules"] == []
     assert {candidate.hypothesis_id for candidate in result.candidates} == {
         f"{thesis_id}-H1",
         f"{thesis_id}-H2",
@@ -502,9 +575,7 @@ def test_worker_defers_event_when_source_segment_is_missing() -> None:
 
     assert provider.event_calls == 0
     assert result.candidates == []
-    assert result.deferred == [
-        ("EV-MISSING-SEGMENT", "引用定位无法回查原文，转人工判断")
-    ]
+    assert result.deferred == [("EV-MISSING-SEGMENT", "引用定位无法回查原文，转人工判断")]
 
 
 def test_worker_maps_metric_rules_to_typed_agent_contract() -> None:

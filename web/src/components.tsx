@@ -32,7 +32,9 @@ export function PageTitle({ eyebrow, title, description, actions }: { eyebrow?: 
 }
 
 export function ResearchContextPicker({ theses, value, onChange }: { theses: ThesisSummary[]; value?: string; onChange: (id: string) => void }) {
-  return <label className="context-picker"><span>当前研究逻辑</span><select value={value ?? ''} onChange={(event) => onChange(event.target.value)}><option value="">选择投资逻辑</option>{theses.map((item) => <option key={item.thesisId} value={item.thesisId}>{item.title} · {item.status}</option>)}</select></label>
+  const canonical = theses.filter((item) => item.thesisKind !== 'observation' && item.thesisKind !== 'snapshot')
+  const snapshots = theses.filter((item) => item.thesisKind === 'observation' || item.thesisKind === 'snapshot')
+  return <label className="context-picker"><span>当前研究逻辑</span><select value={value ?? ''} onChange={(event) => onChange(event.target.value)}><option value="">选择主投资逻辑</option>{canonical.map((item) => <option key={item.thesisId} value={item.thesisId}>{item.title} · {item.status}</option>)}{snapshots.length > 0 && <optgroup label="历史观察 / 评测快照">{snapshots.map((item) => <option key={item.thesisId} value={item.thesisId}>{item.title} · {item.status}</option>)}</optgroup>}</select></label>
 }
 
 export function EvidenceEventRow({ item, featured = false }: { item: EvidenceFeedItem; featured?: boolean }) {

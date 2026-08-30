@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import time
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -14,14 +15,13 @@ from arq import Retry
 
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
-from app.ai.providers.local import LocalProvider
 from app.ai.runtime import InvestmentResearchAgent
 from app.core.config import Settings
 from app.core.domain import DocumentSecurityRelationRecord, EventRecord
 from app.core.enums import AiStatus
-from app.ingest.events import ExtractedEvent, extract_events_from_segments
+from app.ingest.events import ExtractedEvent
 from app.ingest.facts import extract_key_facts
-from app.ingest.segmentation import event_fingerprint
+from app.ingest.segmentation import Segment, event_fingerprint
 from app.services import assets as asset_service
 from app.services import document as document_service
 from app.services import ingestion as ingestion_service
@@ -30,8 +30,11 @@ from app.services.object_store import S3ObjectStore
 from app.services.permission import Actor
 from app.services.review import create_task
 from app.services.uow import uow_scope
-from app.workers.change_chain import process_events
-from app.workers.document_chain import process_document
+from app.workers.change_chain import ChangeResult, process_events_async
+from app.workers.document_chain import DocumentResult, process_document
+
+# Compatibility seam used by existing worker tests and integrations.
+process_events = process_events_async
 
 
 def _published_at(raw: str | None) -> datetime | None:
@@ -68,7 +71,7 @@ def _create_failure_review(
 
 
 async def process_document_job(ctx: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    """解析资料，并在已建档证券上运行变化处理链。"""
+    """第一阶段：解析并落库；真实 worker 随后投递独立 AI 任务。"""
     document_id = str(payload["document_id"])
     job_id = str(payload.get("job_id") or f"document-{document_id}")
     job_try = int(ctx.get("job_try", payload.get("attempt_count", 1)))
@@ -78,9 +81,27 @@ async def process_document_job(ctx: dict[str, Any], payload: dict[str, Any]) -> 
             await _wait_until_job_is_visible(job_id)
         with uow_scope() as uow:
             ingestion_service.mark_running(uow, job_id, attempt_count=attempt_count)
+            ingestion_service.mark_progress(
+                uow, job_id, stage="reusing_parsed" if payload.get("analysis_only") else "parsing"
+            )
             if payload.get("ingestion_run_id"):
                 asset_service.mark_run_running(uow, str(payload["ingestion_run_id"]))
-        result = await _process_document(ctx, payload)
+        split_stage = ctx.get("redis") is not None and not payload.get("analysis_only")
+        result = await _process_document(ctx, payload | {"parse_only": split_stage})
+        if split_stage and result.get("ok") and result.get("requires_analysis"):
+            with uow_scope() as uow:
+                ingestion_service.mark_progress(
+                    uow,
+                    job_id,
+                    stage="analysis_queued",
+                    detail={key: value for key, value in result.items() if key != "stage"},
+                )
+            await ctx["redis"].enqueue_job(
+                "analyze_document_job",
+                payload | {"analysis_only": True},
+                _job_id=f"{job_id}:analysis",
+            )
+            return result | {"stage": "analysis_queued"}
         with uow_scope() as uow:
             ingestion_service.mark_complete(
                 uow,
@@ -144,6 +165,57 @@ async def process_document_job(ctx: dict[str, Any], payload: dict[str, Any]) -> 
         return failure
 
 
+async def analyze_document_job(ctx: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    """第二阶段：复用已落库分段/事件运行 AI，不再读取原 PDF。"""
+    document_id = str(payload["document_id"])
+    job_id = str(payload.get("job_id") or f"document-{document_id}")
+    actor = _actor(payload)
+    try:
+        with uow_scope() as uow:
+            ingestion_service.mark_progress(uow, job_id, stage="analysis_started")
+        result = await _process_document(ctx, payload | {"analysis_only": True})
+    except Exception as exc:
+        result = {
+            "ok": False,
+            "document_id": document_id,
+            "reason": str(exc),
+            "stage": "analysis_failed",
+            "parsed": True,
+            "manual_review": True,
+            "dead_letter": True,
+        }
+        _create_failure_review(
+            thesis_id=str(payload["thesis_id"]) if payload.get("thesis_id") else None,
+            actor=actor,
+            document_id=document_id,
+            reason=str(exc),
+        )
+    with uow_scope() as uow:
+        previous = uow.processing_jobs.get(job_id)
+        if previous is not None and previous.result:
+            preserved = {
+                key: previous.result[key]
+                for key in ("segment_count", "fact_count", "content_hash", "parser_version")
+                if key in previous.result
+            }
+            result = preserved | result
+        ingestion_service.mark_complete(
+            uow,
+            job_id,
+            result=result,
+            success=bool(result.get("ok")),
+            dead_letter=bool(result.get("dead_letter")),
+        )
+        if payload.get("ingestion_run_id"):
+            asset_service.complete_run(
+                uow,
+                str(payload["ingestion_run_id"]),
+                success=bool(result.get("ok")),
+                result=result,
+            )
+    return result
+
+
 async def _wait_until_job_is_visible(job_id: str, *, timeout_seconds: float = 2.0) -> None:
     """Bridge the short interval between Redis enqueue and API transaction commit."""
 
@@ -164,12 +236,81 @@ def _actor(payload: dict[str, Any]) -> Actor:
     )
 
 
+async def _run_change_chain(
+    *,
+    gateway: Gateway,
+    events: list[ExtractedEvent],
+    security_id: str,
+    actor: Actor,
+    settings: Settings,
+    document_id: str,
+    document_title: str,
+    source_visibility_label: str,
+    source_url: str | None,
+) -> ChangeResult:
+    """异步完成模型关系分析；远程超时会取消底层 HTTP 请求。"""
+    with uow_scope() as uow:
+        runtime = InvestmentResearchAgent.build(
+            gateway,
+            recorder=SqlRuntimeRecorder(),
+        )
+        result = process_events(
+            uow,
+            runtime,
+            events=events,
+            security_id=security_id,
+            actor=actor,
+            thresholds=settings.rules,
+            current_event_segments=uow.documents.list_segments(document_id),
+            document_id=document_id,
+            document_title=document_title,
+            source_visibility_label=source_visibility_label,
+            source_url=source_url,
+            rag_settings=settings,
+        )
+        return await result if inspect.isawaitable(result) else result
+
+
 async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     settings = Settings()
     document_id = str(payload["document_id"])
     job_id = str(payload.get("job_id") or f"document-{document_id}")
     downloaded_from_object = False
-    if payload.get("object_key"):
+    analysis_only = bool(payload.get("analysis_only"))
+    actor = _actor(payload)
+    if analysis_only:
+        with uow_scope() as uow:
+            persisted = uow.documents.get(document_id)
+            cached_segments = uow.documents.list_segments(document_id)
+        if persisted is None or not cached_segments:
+            raise ValueError("已入库资料或分段不存在，无法只重新分析")
+        path = Path(str(payload.get("source_filename") or document_id))
+        result = DocumentResult(
+            document_id=document_id,
+            ok=True,
+            segments=[
+                Segment(
+                    document_id=item.document_id,
+                    locator=item.locator,
+                    ordinal=item.ordinal,
+                    content=item.content,
+                    page=item.page,
+                    content_kind=item.content_kind,
+                    extraction_method=item.extraction_method,
+                    table_index=item.table_index,
+                    row_index=item.row_index,
+                    cell_range=item.cell_range,
+                    confidence=item.confidence,
+                )
+                for item in cached_segments
+            ],
+            title=persisted.title,
+            doc_type=persisted.doc_type,
+            content_hash=persisted.content_hash,
+            parser_version=persisted.parser_version,
+            published_at=persisted.published_at,
+        )
+    elif payload.get("object_key"):
         suffix = Path(str(payload.get("source_filename") or "source.bin")).suffix.lower()
         path = (settings.storage_dir / "processing" / f"{job_id}{suffix}").resolve()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -185,13 +326,13 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
         downloaded_from_object = True
     else:
         path = _safe_upload_path(str(payload["path"]), settings)
-    actor = _actor(payload)
-    result = await asyncio.to_thread(
-        process_document,
-        document_id=document_id,
-        path=path,
-        published_at=_published_at(payload.get("published_at")),
-    )
+    if not analysis_only:
+        result = await asyncio.to_thread(
+            process_document,
+            document_id=document_id,
+            path=path,
+            published_at=_published_at(payload.get("published_at")),
+        )
     if not result.ok:
         reason = result.failure_reason or "文档处理失败"
         _create_failure_review(
@@ -220,55 +361,64 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
         }
 
     facts = extract_key_facts(result.segments)
-    with uow_scope() as uow:
-        persisted = document_service.persist_processed(
-            uow,
-            document_id=result.document_id,
-            title=result.title,
-            doc_type=result.doc_type,
-            published_at=result.published_at,
-            content_hash=result.content_hash,
-            parser_version=result.parser_version,
-            segments=result.segments,
-            path=path,
-            actor=actor,
-            security_id=str(payload["security_id"]) if payload.get("security_id") else None,
-            facts=facts,
-            raw_location=(
-                f"s3://{settings.object_store_bucket}/{payload['object_key']}"
-                if payload.get("object_key")
-                else None
-            ),
-        )
-        if payload.get("revision_id"):
-            revision = uow.assets.get_revision(str(payload["revision_id"]))
-            if revision:
-                uow.assets.update_revision(
-                    replace(revision, canonical_document_id=persisted.document_id)
-                )
-        if security_id := (str(payload["security_id"]) if payload.get("security_id") else None):
-            uow.assets.add_document_security(
-                DocumentSecurityRelationRecord(
-                    document_id=persisted.document_id,
-                    security_id=security_id,
-                    created_by=actor.user_id,
-                )
-            )
-        if payload.get("ingestion_run_id"):
-            uow.assets.remove_document_from_index(persisted.document_id)
-            asset_service.persist_artifacts(
+    if not analysis_only:
+        with uow_scope() as uow:
+            persisted = document_service.persist_processed(
                 uow,
-                run_id=str(payload["ingestion_run_id"]),
+                document_id=result.document_id,
+                title=result.title,
+                doc_type=result.doc_type,
+                published_at=result.published_at,
+                content_hash=result.content_hash,
+                parser_version=result.parser_version,
                 segments=result.segments,
+                path=path,
+                actor=actor,
+                security_id=str(payload["security_id"]) if payload.get("security_id") else None,
                 facts=facts,
-                document_id=persisted.document_id,
-                visibility_label=persisted.visibility_label,
+                raw_location=(
+                    f"s3://{settings.object_store_bucket}/{payload['object_key']}"
+                    if payload.get("object_key")
+                    else None
+                ),
             )
+            if payload.get("revision_id"):
+                revision = uow.assets.get_revision(str(payload["revision_id"]))
+                if revision:
+                    uow.assets.update_revision(
+                        replace(revision, canonical_document_id=persisted.document_id)
+                    )
+            if security_id := (str(payload["security_id"]) if payload.get("security_id") else None):
+                uow.assets.add_document_security(
+                    DocumentSecurityRelationRecord(
+                        document_id=persisted.document_id,
+                        security_id=security_id,
+                        created_by=actor.user_id,
+                    )
+                )
+            if payload.get("ingestion_run_id"):
+                uow.assets.remove_document_from_index(persisted.document_id)
+                asset_service.persist_artifacts(
+                    uow,
+                    run_id=str(payload["ingestion_run_id"]),
+                    segments=result.segments,
+                    facts=facts,
+                    document_id=persisted.document_id,
+                    visibility_label=persisted.visibility_label,
+                )
 
-    duplicate_document = persisted.document_id != document_id
+    with uow_scope() as uow:
+        ingestion_service.mark_progress(
+            uow,
+            job_id,
+            stage="indexed",
+            detail={"segment_count": len(result.segments), "fact_count": len(facts)},
+        )
+
+    duplicate_document = False if analysis_only else persisted.document_id != document_id
     security_id = str(payload["security_id"]) if payload.get("security_id") else None
     assignment_replay = bool(
-        "-assignment-" in job_id
+        "-a-" in job_id
         and security_id
         and duplicate_document
         and persisted.security_id == security_id
@@ -294,49 +444,85 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                 actor=actor,
                 security_candidates=security_candidates,
             )
+    if payload.get("parse_only"):
+        if downloaded_from_object or (
+            duplicate_document and path.resolve() != Path(persisted.raw_path or "").resolve()
+        ):
+            path.unlink(missing_ok=True)
+        return {
+            "ok": True,
+            "parsed": True,
+            "stage": "indexed",
+            "document_id": document_id,
+            "persisted_document_id": persisted.document_id,
+            "duplicate": duplicate_document,
+            "segment_count": len(result.segments),
+            "fact_count": len(facts),
+            "content_hash": result.content_hash,
+            "parser_version": result.parser_version,
+            "requires_analysis": bool(security_id and (not duplicate_document or assignment_replay)),
+            "security_candidates": security_candidates,
+            "draft_created": False,
+        }
     if security_id and (not duplicate_document or assignment_replay):
         try:
-            try:
-                gateway = Gateway.build(settings)
-                model_events: list[dict[str, Any]] = []
-                source_segments = [
-                    (segment.locator, segment.content) for segment in result.segments
-                ]
-                for batch in _segment_batches(source_segments):
-                    extraction = gateway.extract_events(
-                        document_id=persisted.document_id,
-                        segments=batch,
-                        disclosure_time=persisted.published_at.isoformat(),
-                    )
-                    if extraction.ai_status is AiStatus.PARSE_FAILED:
-                        raise ValueError("结构化事件抽取输出不符合契约")
-                    model_events.extend(extraction.payload.get("events", []))
-                extracted = _events_from_model(
-                    persisted.document_id,
-                    security_id,
-                    persisted.published_at,
-                    {"events": model_events},
-                )
-                extraction_mode = "model" if settings.llm_provider == "http" else "rule_fallback"
-            except (AttributeError, ModelUnavailable, ValueError):
-                gateway = Gateway(settings=settings, provider=LocalProvider(settings))
-                extracted = extract_events_from_segments(
-                    persisted.document_id,
-                    security_id,
-                    [(segment.locator, segment.content) for segment in result.segments],
-                    disclosure_time=persisted.published_at,
-                )
-                extraction_mode = "rule_fallback"
+            with uow_scope() as uow:
+                ingestion_service.mark_progress(uow, job_id, stage="extracting_events")
+            gateway = Gateway.build(settings)
+            model_events: list[dict[str, Any]] = []
+            source_segments = [(segment.locator, segment.content) for segment in result.segments]
+            for batch in _segment_batches(source_segments):
+                async with asyncio.timeout(settings.llm_analysis_timeout_seconds):
+                    if hasattr(gateway, "extract_events_async"):
+                        extraction = await gateway.extract_events_async(
+                            document_id=persisted.document_id,
+                            segments=batch,
+                            disclosure_time=persisted.published_at.isoformat(),
+                        )
+                    else:
+                        extraction = gateway.extract_events(
+                            document_id=persisted.document_id,
+                            segments=batch,
+                            disclosure_time=persisted.published_at.isoformat(),
+                        )
+                if extraction.ai_status is AiStatus.PARSE_FAILED:
+                    raise ModelUnavailable("结构化事件抽取输出不符合契约", retryable=False)
+                model_events.extend(extraction.payload.get("events", []))
+            extracted = _events_from_model(
+                persisted.document_id,
+                security_id,
+                persisted.published_at,
+                {"events": model_events},
+            )
+            extraction_mode = "model" if settings.llm_provider == "http" else "configured_local"
             with uow_scope() as uow:
                 new_events: list[ExtractedEvent] = []
                 persisted_events: list[EventRecord] = []
+                seen_event_ids: set[str] = set()
                 for event in extracted:
+                    if event.event_id in seen_event_ids:
+                        # 同一批模型输出可能重复返回同一个稳定编号；只保留一次。
+                        duplicate_event_count += 1
+                        continue
+                    seen_event_ids.add(event.event_id)
+                    existing_by_id = uow.events.get(event.event_id)
+                    if existing_by_id is not None:
+                        # 模型重放可能改变摘要，从而改变 fingerprint，但同一文档的
+                        # 稳定事件编号仍必须复用，不能再次插入主键。
+                        duplicate_event_count += 1
+                        new_events.append(replace(event, event_id=existing_by_id.event_id))
+                        continue
                     existing = uow.events.find_by_fingerprint(event.fingerprint)
                     if existing is not None:
+                        same_document = event.document_id in existing.source_document_ids
                         sources = sorted({*existing.source_document_ids, event.document_id})
                         if sources != existing.source_document_ids:
                             uow.events.update(replace(existing, source_document_ids=sources))
                         duplicate_event_count += 1
+                        # 同一文档的分析重放必须复用既有事件继续做假设关联；
+                        # 其他文档的重复事实只合并来源，避免重复候选证据。
+                        if same_document:
+                            new_events.append(replace(event, event_id=existing.event_id))
                         continue
                     persisted_event = EventRecord(
                         event_id=event.event_id,
@@ -375,27 +561,30 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                         events=persisted_events,
                     )
 
-                runtime = InvestmentResearchAgent.build(
-                    gateway,
-                    recorder=SqlRuntimeRecorder(),
-                )
-                chain = process_events(
+            event_count = len(new_events)
+            with uow_scope() as uow:
+                ingestion_service.mark_progress(
                     uow,
-                    runtime,
+                    job_id,
+                    stage="matching_hypotheses",
+                    detail={"event_count": event_count},
+                )
+            async with asyncio.timeout(settings.llm_analysis_timeout_seconds):
+                chain = await _run_change_chain(
+                    gateway=gateway,
                     events=new_events,
                     security_id=security_id,
                     actor=actor,
-                    thresholds=settings.rules,
-                    current_event_segments=uow.documents.list_segments(persisted.document_id),
+                    settings=settings,
                     document_id=persisted.document_id,
                     document_title=persisted.title or path.name,
                     source_visibility_label=persisted.visibility_label,
-                    rag_settings=settings,
+                    source_url=None,
                 )
-                event_count = len(new_events)
-                candidate_count = len(chain.candidates)
-                matched_theses = chain.matched_theses
-                deferred_count = len(chain.deferred)
+            candidate_count = len(chain.candidates)
+            matched_theses = chain.matched_theses
+            deferred_count = len(chain.deferred)
+            with uow_scope() as uow:
                 if new_events and not chain.matched_theses:
                     for event in new_events:
                         ingestion_service.create_review(
@@ -418,23 +607,30 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                         reason=reason,
                         actor=actor,
                     )
-        except ModelUnavailable as exc:
-            job_try = int(ctx.get("job_try", 1))
-            max_tries = int(ctx.get("max_tries", 3))
-            if exc.retryable and job_try < max_tries:
-                raise Retry(defer=min(5 * (2 ** (job_try - 1)), 60)) from exc
+        except (ModelUnavailable, TimeoutError) as exc:
+            reason = (
+                f"AI 分析超过 {settings.llm_analysis_timeout_seconds:g} 秒，已停止；可重新分析"
+                if isinstance(exc, TimeoutError)
+                else str(exc)
+            )
+            with uow_scope() as uow:
+                ingestion_service.mark_progress(
+                    uow, job_id, stage="analysis_timeout" if isinstance(exc, TimeoutError) else "analysis_failed"
+                )
             _create_failure_review(
                 thesis_id=str(payload["thesis_id"]) if payload.get("thesis_id") else None,
                 actor=actor,
                 document_id=document_id,
-                reason=str(exc),
+                reason=reason,
             )
             if downloaded_from_object:
                 path.unlink(missing_ok=True)
             return {
                 "ok": False,
                 "document_id": document_id,
-                "reason": str(exc),
+                "reason": reason,
+                "stage": "analysis_timeout" if isinstance(exc, TimeoutError) else "analysis_failed",
+                "parsed": True,
                 "manual_review": True,
                 "dead_letter": True,
             }
@@ -447,6 +643,8 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
 
     return {
         "ok": True,
+        "parsed": True,
+        "stage": "completed",
         "document_id": document_id,
         "persisted_document_id": persisted.document_id,
         "duplicate": duplicate_document,

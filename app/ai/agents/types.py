@@ -8,6 +8,7 @@ from decimal import Decimal
 
 from app.ai.contracts.validator import ValidationOutcome
 from app.ai.retrieval import RetrievalResult
+from app.ai.tools.metric_catalog import MetricCandidate
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,17 @@ class EvidenceConsistency:
 class MetricExplainRunResult:
     security_id: str
     hypothesis_id: str
+    outcome: ValidationOutcome
+
+
+@dataclass(frozen=True)
+class MetricRecommendRunResult:
+    """指标目录召回与模型推荐的完整内部结果。"""
+
+    security_id: str
+    hypothesis_id: str
+    catalog_version: str
+    candidates: tuple[MetricCandidate, ...]
     outcome: ValidationOutcome
 
 

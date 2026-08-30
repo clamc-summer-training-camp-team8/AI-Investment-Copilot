@@ -187,6 +187,38 @@ def test_趋势必带口径字段() -> None:
     assert trend_view.data_version == "em-f10-gincome-v2"
 
 
+def test_一个假设的全部指标映射都返回趋势() -> None:
+    """多指标是假设的一等关系，不能只展示排序后的第一条。"""
+    uow = build_fake_uow()
+    thesis = _seed_trend(uow, include_before=False)
+    uow.thesis.add_mapping(
+        MetricMappingRecord(
+            mapping_id="MAP-2",
+            hypothesis_id="H2-盈利质量",
+            metric_id="MET-001",
+            expected_direction=ExpectationDirection.HIGHER_BETTER,
+            expected_value=Decimal("10"),
+            expectation_source="研究员人工确认",
+            confirmation_status=ConfirmationStatus.CONFIRMED,
+        )
+    )
+    uow.observations.add(
+        ObservationRecord(
+            security_id=thesis.security_id,
+            metric_id="MET-001",
+            period="2025Q4",
+            observation_date=date(2026, 3, 27),
+            unit="%",
+            actual_value=Decimal("12"),
+            data_version="em-f10-gincome-v2",
+        )
+    )
+
+    trends = query_service.hypothesis_trends(uow, thesis)
+
+    assert {item.metric_id for item in trends} == {"MET-001", "MET-002"}
+
+
 def test_无指标映射的假设也返回一行() -> None:
     """H3 产能与扩张没有量化指标，静默跳过会让界面少一条假设。"""
     uow = build_fake_uow()

@@ -68,6 +68,34 @@ docker compose -f deploy/docker-compose.local.yml up -d
 公告正文没有随数据包提交，证据详情中的 `fact_excerpt` 只展示逐字保存的公告标题；
 页面必须保留 `source_url` 的公开原文跳转，不能把标题误标为公告正文摘录。
 
+### P1.5 比亚迪（002594）Agent + 人工闭环
+
+只初始化比亚迪数据，不影响数据库里其他证券：
+
+```powershell
+python -m alembic upgrade head
+python -m scripts.import_industry_dataset --security 002594
+```
+
+默认复用已缓存的东方财富财务分片和腾讯行情分片；需要主动刷新时：
+
+```powershell
+python -m analytics.pipelines.fetch_financials --security 002594 --refresh
+python -m analytics.pipelines.fetch_quotes --refresh
+python -m scripts.import_industry_dataset --security 002594
+```
+
+启动完整服务后打开 `http://127.0.0.1:5173`。使用 `002594 · 比亚迪` 新建逻辑，
+在草稿假设中点击“重新推荐相关指标”，将候选填入人工确认区；同一假设可重复新增
+多条指标映射。Agent 只给关联理由、事前阈值依据和数据状态，正式映射、阈值、证据
+关系及状态变化都必须由研究员在页面确认。
+
+无需数据库的确定性验收可只跑比亚迪：
+
+```powershell
+python -m scripts.run_industry_case --security 002594
+```
+
 ## seed_sample_pack.py
 
 导入样例包用于本地联调与演示。

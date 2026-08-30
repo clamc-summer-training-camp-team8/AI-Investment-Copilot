@@ -107,7 +107,7 @@ async def upload_document(
         )
         if duplicate_revision:
             document_id = revision.canonical_document_id or revision.document_id
-            job_id = f"document-{document_id}-replay-{uuid4().hex[:12]}"
+            job_id = f"document-{document_id}-r-{uuid4().hex[:12]}"
         run = asset_service.create_run(uow, revision_id=revision.revision_id, settings=conf)
         ingestion_service.create_job(
             uow,
@@ -227,6 +227,32 @@ async def replay_job(
     return JobAcceptedOut(job_id=replay.job_id, document_id=replay.document_id)
 
 
+@router.post("/{job_id}/reanalyze", response_model=JobAcceptedOut, status_code=202)
+async def reanalyze_job(
+    job_id: str, actor: ActorDep, conf: SettingsDep, uow: UowDep
+) -> JobAcceptedOut:
+    """复用已入库段落重新执行 AI 阶段，不重新下载或解析原文件。"""
+    try:
+        source = ingestion_service.get_job(uow, job_id=job_id, actor=actor)
+        if uow.documents.get(source.document_id) is None or not uow.documents.list_segments(
+            source.document_id
+        ):
+            raise ValidationFailed("该任务尚未完成资料解析，不能只重新分析")
+        replay = ingestion_service.build_replay(uow, source=source, actor=actor)
+        redis = await open_queue(conf)
+        if not await worker_ready(redis):
+            raise QueueUnavailable("任务处理器不可用，请先启动 ARQ worker")
+        await enqueue_job_record(redis, replay, analysis_only=True)
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (QueueUnavailable, ValidationFailed) as exc:
+        raise HTTPException(status_code=400 if isinstance(exc, ValidationFailed) else 503, detail=str(exc)) from exc
+    finally:
+        if "redis" in locals():
+            await redis.aclose()
+    return JobAcceptedOut(job_id=replay.job_id, document_id=replay.document_id)
+
+
 @router.get("/{job_id}", response_model=JobStatusOut)
 async def get_job(job_id: str, actor: ActorDep, conf: SettingsDep, uow: UowDep) -> JobStatusOut:
     persisted = uow.processing_jobs.get(job_id)
@@ -242,10 +268,22 @@ async def get_job(job_id: str, actor: ActorDep, conf: SettingsDep, uow: UowDep) 
                 start_time=persisted.started_at,
                 finish_time=persisted.finished_at,
             )
+        # 解析与 AI 分析是两个 ARQ 任务；数据库里的阶段状态才是对前端可见的事实源。
+        if persisted.result is not None:
+            return JobStatusOut(
+                job_id=job_id,
+                status=persisted.status,
+                success=None,
+                result=persisted.result,
+                start_time=persisted.started_at,
+                finish_time=None,
+            )
     redis = None
     try:
         redis = await open_queue(conf)
         snapshot = await job_snapshot(redis, job_id, actor_id=actor.user_id)
+        if persisted is not None and persisted.result and snapshot.get("result") is None:
+            snapshot["result"] = persisted.result
     except QueueUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except JobNotVisible as exc:

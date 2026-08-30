@@ -85,7 +85,12 @@ async def enqueue_document(
     return job_id
 
 
-async def enqueue_job_record(redis: ArqRedis, record: DocumentProcessingJobRecord) -> str:
+async def enqueue_job_record(
+    redis: ArqRedis,
+    record: DocumentProcessingJobRecord,
+    *,
+    analysis_only: bool = False,
+) -> str:
     """把 PostgreSQL 中的任务投递到执行队列；重放使用新的 job_id。"""
     payload = {
         "job_id": record.job_id,
@@ -105,8 +110,10 @@ async def enqueue_job_record(redis: ArqRedis, record: DocumentProcessingJobRecor
         "upload_content_hash": record.upload_content_hash,
         "ingestion_run_id": record.ingestion_run_id,
         "source_filename": record.source_filename,
+        "analysis_only": analysis_only,
     }
-    await redis.enqueue_job("process_document_job", payload, _job_id=record.job_id)
+    function = "analyze_document_job" if analysis_only else "process_document_job"
+    await redis.enqueue_job(function, payload, _job_id=record.job_id)
     await redis.set(f"job-owner:{record.job_id}", record.owner, ex=86400, nx=True)
     return record.job_id
 

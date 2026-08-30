@@ -5,10 +5,11 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-from arq import Retry
 
+from app.ai.contracts.validator import ValidationOutcome
 from app.ai.errors import ModelUnavailable
 from app.core.config import Settings
+from app.core.enums import AiStatus
 from app.workers import jobs
 from app.workers.document_chain import DocumentResult
 from tests.fakes import build_fake_uow
@@ -51,7 +52,7 @@ async def test_document_job_runs_real_text_parse_without_model(tmp_path: Path, m
 
 
 @pytest.mark.asyncio
-async def test_document_job_retries_model_then_degrades_to_review(
+async def test_document_job_does_not_retry_and_degrades_to_review(
     tmp_path: Path, monkeypatch
 ) -> None:
     conf = Settings(_env_file=None, storage_dir=tmp_path)
@@ -80,17 +81,21 @@ async def test_document_job_retries_model_then_degrades_to_review(
     def fail_chain(*args: object, **kwargs: object) -> None:
         raise ModelUnavailable("endpoint timeout", retryable=True)
 
+    class FakeGateway:
+        def extract_events(self, **kwargs: object) -> ValidationOutcome:
+            return ValidationOutcome(
+                ai_status=AiStatus.CANDIDATE,
+                payload={"events": []},
+            )
+
     monkeypatch.setattr(jobs, "Settings", lambda: conf)
     monkeypatch.setattr(jobs, "process_document", lambda **kwargs: parsed)
-    monkeypatch.setattr(jobs.Gateway, "build", lambda settings: object())
+    monkeypatch.setattr(jobs.Gateway, "build", lambda settings: FakeGateway())
     monkeypatch.setattr(jobs, "uow_scope", fake_uow_scope)
     monkeypatch.setattr(jobs, "process_events", fail_chain)
     monkeypatch.setattr(jobs, "_create_failure_review", lambda **kwargs: reviews.append(kwargs))
 
-    with pytest.raises(Retry):
-        await jobs.process_document_job({"job_try": 1, "max_tries": 3}, payload)
-
-    result = await jobs.process_document_job({"job_try": 3, "max_tries": 3}, payload)
+    result = await jobs.process_document_job({"job_try": 1, "max_tries": 1}, payload)
 
     assert result == {
         "ok": False,
@@ -98,6 +103,8 @@ async def test_document_job_retries_model_then_degrades_to_review(
         "reason": "endpoint timeout",
         "manual_review": True,
         "dead_letter": True,
+        "stage": "analysis_failed",
+        "parsed": True,
     }
     assert reviews[0]["thesis_id"] == "THS-1"
     assert reviews[0]["document_id"] == "DOC-1"

@@ -74,6 +74,9 @@
             "enum": ["行业", "公司竞争力", "经营", "盈利", "政策", "估值", "其他"]
           },
           "importance": { "type": "string", "enum": ["核心", "辅助"] },
+          "causal_level": { "type": "string", "enum": ["需求/行业维度", "竞争力/执行维度", "财务结果维度", "待确认"] },
+          "logic_dimension": { "type": "string", "enum": ["需求/行业维度", "竞争力/执行维度", "财务结果维度", "待确认"] },
+          "quality_warning": { "type": "string" },
           "observation_window": { "type": "string" },
           "expected_direction": {
             "type": ["string", "null"],

@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
@@ -17,6 +17,7 @@ from app.ai.providers.local import LocalProvider
 from app.ai.providers.mock import MockProvider
 from app.core.config import Settings
 from app.core.config import settings as default_settings
+from app.core.enums import AiStatus
 
 
 class Provider(Protocol):
@@ -40,14 +41,19 @@ class Provider(Protocol):
         segment_locator: str,
         segment_text: str,
         disclosure_time: str,
-        thesis_id: str | None = ...,
-        hypothesis_id: str | None = ...,
-        thesis_context: str | None = ...,
-        hypothesis_context: dict[str, Any] | None = ...,
-        retrieval_context: list[tuple[str, str]] | None = ...,
+        candidates: list[dict[str, Any]],
+        evidence_contexts: list[dict[str, Any]],
         event_type: str = ...,
         occurred_on: str | None = ...,
-        context: str = ...,
+        repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
+    def analyze_event_impacts(
+        self,
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
         repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
@@ -81,6 +87,19 @@ class Provider(Protocol):
         repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
+    def recommend_metrics(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        industry: str,
+        catalog_version: str,
+        candidates: list[dict[str, Any]],
+        top_k: int,
+        repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
     def draft_review(
         self,
         *,
@@ -89,6 +108,17 @@ class Provider(Protocol):
         period_start: str,
         period_end: str,
         records: list[dict[str, Any]],
+        repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
+    def hypothesis_quality(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        title: str,
+        core_view: str,
+        hypotheses: list[dict[str, Any]],
         repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
@@ -121,14 +151,10 @@ class Gateway:
         segment_locator: str,
         segment_text: str,
         disclosure_time: str,
-        thesis_id: str | None = None,
-        hypothesis_id: str | None = None,
-        thesis_context: str | None = None,
-        hypothesis_context: dict[str, Any] | None = None,
-        retrieval_context: list[tuple[str, str]] | None = None,
+        candidates: list[dict[str, Any]],
+        evidence_contexts: list[dict[str, Any]],
         event_type: str = "其他",
         occurred_on: str | None = None,
-        context: str = "",
         repair_errors: list[str] | None = None,
     ) -> ValidationOutcome:
         return self._validate_with_repair(
@@ -139,17 +165,62 @@ class Gateway:
                 segment_locator=segment_locator,
                 segment_text=segment_text,
                 disclosure_time=disclosure_time,
-                thesis_id=thesis_id,
-                hypothesis_id=hypothesis_id,
-                thesis_context=thesis_context,
-                hypothesis_context=hypothesis_context,
-                retrieval_context=retrieval_context,
+                candidates=candidates,
+                evidence_contexts=evidence_contexts,
                 event_type=event_type,
                 occurred_on=occurred_on,
-                context=context,
                 repair_errors=_merge_repair_errors(repair_errors, errors),
             ),
         )
+
+    def event_impacts(
+        self,
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> list[ValidationOutcome]:
+        """一次模型请求分析多个事件；每个子结果仍按 event_impact 契约校验。"""
+        aggregate = self._validate_with_repair(
+            "event_impact_batch",
+            lambda errors: self.provider.analyze_event_impacts(
+                document_id=document_id,
+                security_id=security_id,
+                events=events,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+        return self._split_batch_outcomes(events, aggregate)
+
+    async def event_impacts_async(
+        self,
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> list[ValidationOutcome]:
+        """Worker 异步入口；HTTP 取消会传递到底层连接。"""
+
+        async def invoke(errors: list[str] | None) -> dict[str, Any]:
+            merged = _merge_repair_errors(repair_errors, errors)
+            if isinstance(self.provider, HttpProvider):
+                return await self.provider.analyze_event_impacts_async(
+                    document_id=document_id,
+                    security_id=security_id,
+                    events=events,
+                    repair_errors=merged,
+                )
+            return self.provider.analyze_event_impacts(
+                document_id=document_id,
+                security_id=security_id,
+                events=events,
+                repair_errors=merged,
+            )
+
+        aggregate = await self._validate_with_repair_async("event_impact_batch", invoke)
+        return self._split_batch_outcomes(events, aggregate)
 
     def extract_events(
         self,
@@ -163,6 +234,27 @@ class Gateway:
             segments=segments,
             disclosure_time=disclosure_time,
         )
+        return validate("event_extraction", payload, thresholds=self.settings.rules)
+
+    async def extract_events_async(
+        self,
+        *,
+        document_id: str,
+        segments: list[tuple[str, str]],
+        disclosure_time: str,
+    ) -> ValidationOutcome:
+        if isinstance(self.provider, HttpProvider):
+            payload = await self.provider.extract_events_async(
+                document_id=document_id,
+                segments=segments,
+                disclosure_time=disclosure_time,
+            )
+        else:
+            payload = self.provider.extract_events(
+                document_id=document_id,
+                segments=segments,
+                disclosure_time=disclosure_time,
+            )
         return validate("event_extraction", payload, thresholds=self.settings.rules)
 
     def thesis_draft(
@@ -209,6 +301,33 @@ class Gateway:
             ),
         )
 
+    def metric_recommend(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        industry: str,
+        catalog_version: str,
+        candidates: list[dict[str, Any]],
+        top_k: int = 5,
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        """让模型只能从受控指标目录的候选集合中选择。"""
+        return self._validate_with_repair(
+            "metric_recommend",
+            lambda errors: self.provider.recommend_metrics(
+                security_id=security_id,
+                hypothesis_id=hypothesis_id,
+                hypothesis=hypothesis,
+                industry=industry,
+                catalog_version=catalog_version,
+                candidates=candidates,
+                top_k=max(1, min(top_k, 20)),
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
     def review_draft(
         self,
         *,
@@ -231,6 +350,28 @@ class Gateway:
             ),
         )
 
+    def hypothesis_quality(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        title: str,
+        core_view: str,
+        hypotheses: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        return self._validate_with_repair(
+            "hypothesis_quality",
+            lambda errors: self.provider.hypothesis_quality(
+                security_id=security_id,
+                thesis_id=thesis_id,
+                title=title,
+                core_view=core_view,
+                hypotheses=hypotheses,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
     def _validate_with_repair(
         self,
         schema_name: str,
@@ -246,6 +387,51 @@ class Gateway:
             allow_repair=False,
         )
         return replace(repaired, repaired=repaired.usable)
+
+    async def _validate_with_repair_async(
+        self,
+        schema_name: str,
+        invoke: Callable[[list[str] | None], Awaitable[dict[str, Any]]],
+    ) -> ValidationOutcome:
+        outcome = validate(schema_name, await invoke(None), thresholds=self.settings.rules)
+        if outcome.usable or not self.provider.supports_repair:
+            return outcome
+        repaired = validate(
+            schema_name,
+            await invoke(outcome.errors),
+            thresholds=self.settings.rules,
+            allow_repair=False,
+        )
+        return replace(repaired, repaired=repaired.usable)
+
+    def _split_batch_outcomes(
+        self, events: list[dict[str, Any]], aggregate: ValidationOutcome
+    ) -> list[ValidationOutcome]:
+        raw_results = aggregate.payload.get("results")
+        by_id = (
+            {
+                str(item.get("event_id")): item.get("analysis")
+                for item in raw_results
+                if isinstance(item, dict)
+            }
+            if isinstance(raw_results, list)
+            else {}
+        )
+        outcomes: list[ValidationOutcome] = []
+        for item in events:
+            event_id = str(item["event_id"])
+            analysis = by_id.get(event_id)
+            if aggregate.usable and isinstance(analysis, dict):
+                outcomes.append(validate("event_impact", analysis, thresholds=self.settings.rules))
+            else:
+                outcomes.append(
+                    ValidationOutcome(
+                        ai_status=AiStatus.PARSE_FAILED,
+                        payload=analysis if isinstance(analysis, dict) else {},
+                        errors=[*aggregate.errors, f"批量结果缺少事件 {event_id}"],
+                    )
+                )
+        return outcomes
 
 
 def _merge_repair_errors(

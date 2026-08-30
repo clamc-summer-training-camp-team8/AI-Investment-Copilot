@@ -9,6 +9,7 @@
 | --- | --- |
 | `openapi.yaml` | 接口定义。**由 `make openapi` 从 `app/api` 生成，不要手改** |
 | `errors.yaml` | 统一错误码表 |
+| `frontend-client.ts` | 新前端可直接复用的 TypeScript 类型与业务接口门面；底层契约仍以 `openapi.yaml` 为准 |
 
 前端依此开发，不读后端源码。接口未就绪时用契约生成 mock。
 
@@ -41,6 +42,11 @@
 | GET | `/api/jobs/{job_id}` | 查询后台任务状态 |
 | POST | `/api/reviews` | 创建复核任务 |
 | POST | `/api/reviews/{task_id}/resolve` | 解决复核任务 |
+| POST | `/api/agent/theses/{id}/hypotheses/{hypothesis_id}/metric-recommendations` | 生成受控指标与确定性阈值候选 |
+| POST | `/api/agent/theses/{id}/hypotheses/{hypothesis_id}/metric-explanations` | 解释 `app.calc` 的确定性指标结果 |
+| POST | `/api/agent/theses/{id}/review-drafts` | 基于区间内已确认记录生成复盘候选 |
+| POST | `/api/agent/theses/{id}/revision-drafts` | 重大风险后生成版本化逻辑修订候选 |
+| POST | `/api/reviews/theses/{id}/drafts` | 从复核中心业务入口生成复盘候选 |
 
 ## 身份传递
 

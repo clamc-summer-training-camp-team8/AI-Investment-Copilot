@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sqlalchemy import delete, func, select, text, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.domain import (
@@ -194,7 +195,17 @@ class SqlAssetRepo:
         return None if row is None else _run(row)
 
     def add_artifacts(self, records: list[IngestionArtifactRecord]) -> None:
-        self._session.add_all([IngestionArtifact(**record.__dict__) for record in records])
+        if not records:
+            return
+        statement = insert(IngestionArtifact).values([record.__dict__ for record in records])
+        statement = statement.on_conflict_do_update(
+            index_elements=["run_id", "artifact_type", "artifact_key"],
+            set_={
+                "payload": statement.excluded.payload,
+                "content_hash": statement.excluded.content_hash,
+            },
+        )
+        self._session.execute(statement)
         self._session.flush()
 
     def index_artifacts(
@@ -206,19 +217,30 @@ class SqlAssetRepo:
         records: list[IngestionArtifactRecord],
     ) -> None:
         segments = [record for record in records if record.artifact_type == "segment"]
-        self._session.add_all(
-            [
-                SegmentSearchIndex(
-                    index_id=f"{run_id}:{record.artifact_key}",
-                    ingestion_run_id=run_id,
-                    document_id=document_id,
-                    locator=record.artifact_key,
-                    content=str(record.payload.get("content", "")),
-                    visibility_label=visibility_label,
-                )
-                for record in segments
-            ]
+        if not segments:
+            return
+        values = [
+            {
+                "index_id": f"{run_id}:{record.artifact_key}",
+                "ingestion_run_id": run_id,
+                "document_id": document_id,
+                "locator": record.artifact_key,
+                "content": str(record.payload.get("content", "")),
+                "visibility_label": visibility_label,
+            }
+            for record in segments
+        ]
+        statement = insert(SegmentSearchIndex).values(values)
+        statement = statement.on_conflict_do_update(
+            index_elements=["index_id"],
+            set_={
+                "document_id": statement.excluded.document_id,
+                "locator": statement.excluded.locator,
+                "content": statement.excluded.content,
+                "visibility_label": statement.excluded.visibility_label,
+            },
         )
+        self._session.execute(statement)
         self._session.flush()
         self._session.execute(
             text(

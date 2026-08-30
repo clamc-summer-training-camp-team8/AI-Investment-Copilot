@@ -26,26 +26,38 @@ class _CitationRetryGateway:
     def event_impact(self, **kwargs: object) -> ValidationOutcome:
         self.calls.append(kwargs)
         citation = "history-001#paragraph-1" if len(self.calls) == 2 else "unknown#paragraph-9"
+        candidate = kwargs["candidates"][0]  # type: ignore[index]
         return ValidationOutcome(
             ai_status=AiStatus.CANDIDATE,
             payload={
                 "document_id": "new-001",
                 "security_id": "000538.SZ",
-                "thesis_id": "THESIS-001",
-                "hypothesis_id": "H1",
-                "relevance": "相关",
                 "event": {
                     "event_type": "其他",
                     "disclosure_time": "2026-08-10T00:00:00+00:00",
                     "fact": "公司收入增长",
                     "evidence_locator": "new-001#paragraph-1",
                 },
-                "signal": {
-                    "direction": "正向",
-                    "confidence": 0.8,
-                    "requires_human_review": True,
-                },
-                "citations": [citation],
+                "impacts": [
+                    {
+                        "thesis_id": candidate["thesis_id"],
+                        "hypothesis_id": candidate["hypothesis_id"],
+                        "relevance": "相关",
+                        "inference": "收入增长支持目标假设",
+                        "signal": {
+                            "direction": "正向",
+                            "impact_direction": "支持",
+                            "strength": 0.8,
+                            "confidence": 0.8,
+                            "rationale": "收入增长支持目标假设",
+                            "transmission_path": "收入增长 → 盈利改善 → 假设增强",
+                            "suggested_tracking": [],
+                            "requires_human_review": True,
+                        },
+                        "citations": [citation],
+                        "unsupported_claims": [],
+                    }
+                ],
                 "model_version": "test-model",
                 "prompt_version": "test-prompt",
                 "generated_at": "2026-08-10T00:00:00+00:00",
@@ -75,35 +87,61 @@ class _BatchImpactGateway:
 
     def event_impact(self, **kwargs: object) -> ValidationOutcome:
         self.calls.append(kwargs)
-        hypothesis_id = str(kwargs["hypothesis_id"])
         locator = str(kwargs["segment_locator"])
-        direction = self.directions[hypothesis_id]
+        candidates = kwargs["candidates"]
+        assert isinstance(candidates, list)
         return ValidationOutcome(
             ai_status=AiStatus.CANDIDATE,
             payload={
                 "document_id": kwargs["document_id"],
                 "security_id": kwargs["security_id"],
-                "thesis_id": kwargs["thesis_id"],
-                "hypothesis_id": hypothesis_id,
-                "relevance": "无关" if direction is ImpactDirection.IRRELEVANT else "相关",
                 "event": {
                     "event_type": kwargs["event_type"],
                     "disclosure_time": kwargs["disclosure_time"],
                     "fact": kwargs["segment_text"],
                     "evidence_locator": locator,
                 },
-                "signal": {
-                    "impact_direction": direction.value,
-                    "confidence": 0.8,
-                    "requires_human_review": True,
-                },
-                "citations": [locator],
+                "impacts": [
+                    {
+                        "thesis_id": candidate["thesis_id"],
+                        "hypothesis_id": candidate["hypothesis_id"],
+                        "relevance": (
+                            "无关"
+                            if self.directions[str(candidate["hypothesis_id"])]
+                            is ImpactDirection.IRRELEVANT
+                            else "相关"
+                        ),
+                        "inference": "批量测试判断",
+                        "signal": {
+                            "direction": "中性",
+                            "impact_direction": self.directions[
+                                str(candidate["hypothesis_id"])
+                            ].value,
+                            "strength": 0.8,
+                            "confidence": 0.8,
+                            "rationale": "批量测试判断",
+                            "transmission_path": "事件 → 指标变化 → 假设重估",
+                            "suggested_tracking": [],
+                            "requires_human_review": True,
+                        },
+                        "citations": [locator],
+                        "unsupported_claims": [],
+                    }
+                    for candidate in candidates
+                ],
                 "model_version": "batch-test-v1",
                 "prompt_version": "batch-test-v1",
                 "generated_at": "2026-08-10T00:00:00+00:00",
                 "ai_status": AiStatus.CANDIDATE.value,
             },
         )
+
+
+class _MissingImpactGateway(_BatchImpactGateway):
+    def event_impact(self, **kwargs: object) -> ValidationOutcome:
+        outcome = super().event_impact(**kwargs)
+        outcome.payload["impacts"] = outcome.payload["impacts"][:1]
+        return outcome
 
 
 def test_logic_change_agent_contract_accepts_candidate_hypotheses() -> None:
@@ -221,25 +259,27 @@ def test_agent_retries_invalid_citation_with_structured_context() -> None:
     )
 
     assert len(gateway.calls) == 2
-    assert gateway.calls[0]["thesis_context"] == "盈利增长依赖核心业务收入持续增长"
-    assert gateway.calls[0]["hypothesis_context"] == {
-        "thesis_id": "THESIS-001",
-        "hypothesis_id": "H1",
-        "statement": "收入保持增长",
-        "hypothesis_type": "经营",
-        "importance": "核心",
-        "expected_direction": "越高越好",
-        "invalidation_rule": "收入同比低于0%",
-        "metrics": [
-            {
-                "metric_id": "revenue_yoy",
-                "expected_direction": "越高越好",
-                "expected_value": "10",
-                "invalidation_threshold": "0",
-            }
-        ],
-        "retrieved_locators": ["history-001#paragraph-1"],
-    }
+    assert gateway.calls[0]["candidates"] == [
+        {
+            "thesis_id": "THESIS-001",
+            "hypothesis_id": "H1",
+            "statement": "收入保持增长",
+            "thesis_core_view": "盈利增长依赖核心业务收入持续增长",
+            "hypothesis_type": "经营",
+            "importance": "核心",
+            "expected_direction": "越高越好",
+            "invalidation_rule": "收入同比低于0%",
+            "metric_rules": [
+                {
+                    "metric_id": "revenue_yoy",
+                    "expected_direction": "越高越好",
+                    "expected_value": "10",
+                    "invalidation_threshold": "0",
+                }
+            ],
+            "retrieved_locators": ["history-001#paragraph-1"],
+        }
+    ]
     assert gateway.calls[1]["repair_errors"]
     assert result.impacts[0].outcome.payload["citations"] == ["history-001#paragraph-1"]
 
@@ -274,12 +314,19 @@ def test_logic_change_analyzes_every_candidate_and_keeps_metric_rules_isolated()
 
     result = agent.analyze(event, hypotheses)
 
-    assert [impact.candidate.hypothesis_id for impact in result.impacts] == ["H1", "H2", "H3"]
-    assert [
-        impact.outcome.payload["signal"]["impact_direction"] for impact in result.impacts
-    ] == ["冲突", "冲突", "无关"]
-    assert len(gateway.calls) == 3
-    assert gateway.calls[0]["hypothesis_context"]["metrics"] == [
+    assert [impact.candidate.hypothesis_id for impact in result.impacts] == [
+        "H1",
+        "H2",
+        "H3",
+    ]
+    assert [impact.outcome.payload["signal"]["impact_direction"] for impact in result.impacts] == [
+        "冲突",
+        "冲突",
+        "无关",
+    ]
+    assert len(gateway.calls) == 1
+    candidates = gateway.calls[0]["candidates"]
+    assert candidates[0]["metric_rules"] == [
         {
             "metric_id": "capacity_utilization",
             "expected_direction": "越高越好",
@@ -287,7 +334,7 @@ def test_logic_change_analyzes_every_candidate_and_keeps_metric_rules_isolated()
             "invalidation_threshold": None,
         }
     ]
-    assert gateway.calls[1]["hypothesis_context"]["metrics"] == [
+    assert candidates[1]["metric_rules"] == [
         {
             "metric_id": "gross_margin",
             "expected_direction": "越高越好",
@@ -295,7 +342,7 @@ def test_logic_change_analyzes_every_candidate_and_keeps_metric_rules_isolated()
             "invalidation_threshold": None,
         }
     ]
-    assert gateway.calls[2]["hypothesis_context"]["metrics"] == []
+    assert candidates[2]["metric_rules"] == []
 
 
 def test_logic_change_empty_candidates_do_not_call_gateway() -> None:
@@ -317,6 +364,34 @@ def test_logic_change_empty_candidates_do_not_call_gateway() -> None:
 
     assert result.impacts == []
     assert gateway.calls == []
+
+
+def test_logic_change_does_not_silently_accept_missing_batch_results() -> None:
+    gateway = _MissingImpactGateway()
+    event = AgentEventInput(
+        event_id="event-missing",
+        document_id="doc-missing",
+        security_id="000538.SZ",
+        evidence_locator="doc-missing#paragraph-1",
+        fact="公司经营指标发生变化",
+        disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+        event_type="业绩",
+    )
+    hypotheses = (
+        HypothesisInput("THESIS-001", "H1", "假设一"),
+        HypothesisInput("THESIS-001", "H2", "假设二"),
+        HypothesisInput("THESIS-001", "H3", "假设三"),
+    )
+
+    result = InvestmentLogicChangeAgent(
+        gateway=gateway,
+        retriever=KeywordRetriever(),
+    ).analyze(event, hypotheses)
+
+    assert len(gateway.calls) == 2
+    assert len(result.impacts) == 3
+    assert all(impact.outcome.ai_status is AiStatus.PARSE_FAILED for impact in result.impacts)
+    assert all("必须返回 3 条 Impact" in impact.outcome.errors[0] for impact in result.impacts)
 
 
 def test_agent_编排检索和事件影响分析() -> None:

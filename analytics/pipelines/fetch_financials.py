@@ -20,6 +20,7 @@
 
 用法：
     python -m analytics.pipelines.fetch_financials
+    python -m analytics.pipelines.fetch_financials --security 002594 --refresh
 """
 
 from __future__ import annotations
@@ -32,11 +33,12 @@ from dataclasses import asdict, dataclass
 from decimal import Decimal
 from pathlib import Path
 
-from analytics.pipelines.http import request_json
-from analytics.pipelines.universe import COMPANIES, Company
+from analytics.pipelines.http import cached_shard, request_json
+from analytics.pipelines.universe import COMPANIES, Company, company_for_financials
 from app.core.config import PROJECT_ROOT
 
 RAW_DIR = PROJECT_ROOT / "real_data" / "raw"
+SHARD_DIR = RAW_DIR / "financials"
 API = "https://datacenter.eastmoney.com/securities/api/data/v1/get"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (research-tooling; MVP validation)",
@@ -265,16 +267,28 @@ def to_single_quarter(reports: list[RawReport]) -> list[QuarterMetric]:
     return metrics
 
 
-def run() -> Path:
+def run(*, refresh: bool = False, security_id: str | None = None) -> Path:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
+    destination = RAW_DIR / "financials.json"
+    existing = (
+        json.loads(destination.read_text(encoding="utf-8")) if destination.exists() else {}
+    )
     payload: dict[str, object] = {"data_version": DATA_VERSION, "metrics": {}}
-    metrics_map: dict[str, list[dict[str, object]]] = {}
+    metrics_map: dict[str, list[dict[str, object]]] = dict(existing.get("metrics") or {})
     # 年报披露的累计营业收入。留着它是为了让测试能验证差分正确性：
     # 单季度值之和必须等于年报值，否则说明累计值没差干净。
-    annual_map: dict[str, dict[str, str]] = {}
+    annual_map: dict[str, dict[str, str]] = dict(existing.get("annual_revenue") or {})
 
-    for company in COMPANIES:
-        reports = fetch_company(company)
+    targets = list(COMPANIES) if security_id is None else [company_for_financials(security_id)]
+    for company in targets:
+        shard = SHARD_DIR / f"{company.security_id.replace('.', '_')}.json"
+        raw_reports = cached_shard(
+            shard,
+            lambda current=company: [asdict(item) for item in fetch_company(current)],
+            refresh=refresh,
+            label=company.name,
+        )
+        reports = [RawReport(**item) for item in raw_reports]
         metrics = to_single_quarter(reports)
         metrics_map[company.security_id] = [asdict(m) for m in metrics]
         annual_map[company.security_id] = {
@@ -291,7 +305,6 @@ def run() -> Path:
     payload["metrics"] = metrics_map
     payload["annual_revenue"] = annual_map
     payload["markets"] = {c.security_id: c.market for c in COMPANIES}
-    destination = RAW_DIR / "financials.json"
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"→ {destination}")
     return destination
@@ -299,8 +312,10 @@ def run() -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
-    run()
+    parser.add_argument("--security", help="只刷新一个已登记证券，并保留其他缓存数据")
+    parser.add_argument("--refresh", action="store_true", help="忽略该证券分片缓存重新抓取")
+    args = parser.parse_args()
+    run(refresh=args.refresh, security_id=args.security)
 
 
 if __name__ == "__main__":

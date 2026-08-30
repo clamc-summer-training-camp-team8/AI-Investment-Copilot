@@ -43,14 +43,20 @@ def test_frontend_change_worker_gateway_contract_is_compatible() -> None:
         segment_locator="DOC-001#paragraph-1",
         segment_text="公司收入增长，订单持续提升。",
         disclosure_time="2026-08-10T09:00:00+08:00",
-        thesis_id="THS-001",
-        hypothesis_id="THS-001-H1",
+        candidates=[
+            {
+                "thesis_id": "THS-001",
+                "hypothesis_id": "THS-001-H1",
+                "statement": "收入保持增长",
+            }
+        ],
+        evidence_contexts=[],
         event_type="业绩",
         occurred_on="2026-08-10",
     )
 
     assert outcome.usable
-    signal = outcome.payload["signal"]
+    signal = outcome.payload["impacts"][0]["signal"]
     assert {
         "impact_direction",
         "strength",
@@ -69,20 +75,23 @@ def test_integrated_change_worker_context_contract_is_compatible() -> None:
         segment_locator="DOC-002#paragraph-1",
         segment_text="公司订单持续提升。",
         disclosure_time="2026-08-10T09:00:00+08:00",
-        thesis_id="THS-002",
-        hypothesis_id="THS-002-H1",
-        thesis_context="订单增长支持收入兑现",
-        hypothesis_context={
-            "statement": "订单增长能够转化为收入",
-            "importance": "核心",
-            "metrics": [],
-        },
+        candidates=[
+            {
+                "thesis_id": "THS-002",
+                "hypothesis_id": "THS-002-H1",
+                "thesis_core_view": "订单增长支持收入兑现",
+                "statement": "订单增长能够转化为收入",
+                "importance": "核心",
+                "metric_rules": [],
+            }
+        ],
+        evidence_contexts=[],
         event_type="订单",
     )
 
     assert outcome.usable
-    assert outcome.payload["thesis_id"] == "THS-002"
-    assert outcome.payload["hypothesis_id"] == "THS-002-H1"
+    assert outcome.payload["impacts"][0]["thesis_id"] == "THS-002"
+    assert outcome.payload["impacts"][0]["hypothesis_id"] == "THS-002-H1"
 
 
 def test_integrated_import_names_remain_compatible() -> None:

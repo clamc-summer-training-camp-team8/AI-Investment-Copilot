@@ -1,8 +1,11 @@
 ---
-skill_key: review-draft
-version: review-draft-v3-confirmed-records
-schema: review_draft
-risk_level: normal
+name: review-draft
+description: 使用指定复盘区间内已有且可追溯的研究记录生成阶段复盘候选稿，同时呈现支持、冲突和未决问题，不改变正式状态。
+metadata:
+  skill_key: review-draft
+  version: review-draft-v3-confirmed-records
+  schema: review_draft
+  risk_level: normal
 ---
 
 ## System

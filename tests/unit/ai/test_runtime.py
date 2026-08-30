@@ -96,6 +96,7 @@ def test_runtime_event_analysis_accepts_multiple_hypotheses() -> None:
         "H2",
         "H3",
     ]
+    assert len(execution.model_calls) == 1
     assert execution.finished_at is not None
 
 

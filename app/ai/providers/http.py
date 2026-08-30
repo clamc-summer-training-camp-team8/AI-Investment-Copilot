@@ -1,12 +1,12 @@
-"""OpenAI-compatible HTTP model provider.
+"""OpenAI-compatible HTTP 模型提供者。
 
-The adapter sends only task inputs supplied by the caller and never logs prompt
-content or credentials.  Business code continues to depend on ``Gateway`` and
-is therefore isolated from vendor-specific response shapes.
+适配器只发送调用方明确提供的任务输入，不记录提示词正文和凭据；业务代码统一依赖
+``Gateway``，不感知供应商特有的请求与响应结构。
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from datetime import UTC, datetime
@@ -19,7 +19,9 @@ from app.ai.errors import ModelUnavailable
 from app.ai.prompts.templates import (
     EVENT_EXTRACTION,
     EVENT_IMPACT,
+    HYPOTHESIS_QUALITY,
     METRIC_EXPLAIN,
+    METRIC_RECOMMEND,
     REVIEW_DRAFT,
     THESIS_DRAFT,
 )
@@ -31,9 +33,15 @@ ProviderResponseError = ModelUnavailable
 
 
 class HttpProvider:
-    """Synchronous adapter for an OpenAI-compatible chat-completions endpoint."""
+    """OpenAI-compatible chat-completions 端点的同步适配器。"""
 
-    def __init__(self, settings: Settings, *, client: httpx.Client | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        client: httpx.Client | None = None,
+        async_client: httpx.AsyncClient | None = None,
+    ) -> None:
         if not settings.llm_endpoint:
             raise ModelUnavailable("llm_provider=http 但未配置 LLM_ENDPOINT", retryable=False)
         endpoint = httpx.URL(settings.llm_endpoint)
@@ -59,7 +67,23 @@ class HttpProvider:
             raise ModelUnavailable("DeepSeek 端点必须配置 LLM_API_KEY", retryable=False)
         self._last_model_metadata: dict[str, Any] = {}
         self._client = client or httpx.Client(
-            timeout=httpx.Timeout(settings.llm_timeout_seconds),
+            timeout=httpx.Timeout(
+                timeout=settings.llm_timeout_seconds,
+                connect=settings.llm_connect_timeout_seconds,
+                read=settings.llm_timeout_seconds,
+                write=settings.llm_timeout_seconds,
+                pool=settings.llm_connect_timeout_seconds,
+            ),
+            follow_redirects=False,
+        )
+        self._async_client = async_client or httpx.AsyncClient(
+            timeout=httpx.Timeout(
+                timeout=settings.llm_timeout_seconds,
+                connect=settings.llm_connect_timeout_seconds,
+                read=settings.llm_timeout_seconds,
+                write=settings.llm_timeout_seconds,
+                pool=settings.llm_connect_timeout_seconds,
+            ),
             follow_redirects=False,
         )
 
@@ -79,40 +103,17 @@ class HttpProvider:
         segment_locator: str,
         segment_text: str,
         disclosure_time: str,
-        thesis_id: str | None = None,
-        hypothesis_id: str | None = None,
-        thesis_context: str | None = None,
-        hypothesis_context: dict[str, Any] | None = None,
-        retrieval_context: list[tuple[str, str]] | None = None,
+        candidates: list[dict[str, Any]],
+        evidence_contexts: list[dict[str, Any]],
         event_type: str = "其他",
         occurred_on: str | None = None,
-        context: str = "",
         repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         prompt = EVENT_IMPACT.render(
             event=segment_text,
             disclosure_time=disclosure_time,
-            candidates=json.dumps(
-                {
-                    "thesis_id": thesis_id,
-                    "thesis_view": thesis_context,
-                    "hypothesis_id": hypothesis_id,
-                    "hypothesis": hypothesis_context,
-                },
-                ensure_ascii=False,
-            ),
-            context=context
-            or (
-                json.dumps(
-                    [
-                        {"locator": locator, "content": content}
-                        for locator, content in (retrieval_context or [])
-                    ],
-                    ensure_ascii=False,
-                )
-                if retrieval_context
-                else "无额外上下文"
-            ),
+            candidates=json.dumps(candidates, ensure_ascii=False, sort_keys=True),
+            context=json.dumps(evidence_contexts, ensure_ascii=False, sort_keys=True),
         )
         payload = self._complete(
             system=EVENT_IMPACT.system,
@@ -120,15 +121,10 @@ class HttpProvider:
             schema_name="event_impact",
             repair_errors=repair_errors,
         )
-        relevance = payload.get("relevance")
-        resolved_thesis_id = None if relevance == "不相关" else thesis_id
-        resolved_hypothesis_id = None if relevance == "不相关" else hypothesis_id
         payload.update(
             {
                 "document_id": document_id,
                 "security_id": security_id,
-                "thesis_id": resolved_thesis_id,
-                "hypothesis_id": resolved_hypothesis_id,
                 "model_version": self.model_version,
                 "prompt_version": EVENT_IMPACT.version,
                 "generated_at": datetime.now(UTC).isoformat(),
@@ -147,12 +143,115 @@ class HttpProvider:
                     "evidence_locator": segment_locator,
                 }
             )
-        signal = payload.get("signal")
-        if isinstance(signal, dict):
-            signal["requires_human_review"] = True
-            if relevance == "不相关":
-                signal["direction"] = "中性"
-                signal["impact_direction"] = "无关"
+        impacts = payload.get("impacts")
+        if isinstance(impacts, list):
+            for impact in impacts:
+                if not isinstance(impact, dict):
+                    continue
+                signal = impact.get("signal")
+                if not isinstance(signal, dict):
+                    continue
+                signal["requires_human_review"] = True
+                if impact.get("relevance") == "不相关":
+                    signal["direction"] = "中性"
+                    signal["impact_direction"] = "无关"
+        return payload
+
+    def analyze_event_impacts(
+        self,
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """把同一资料的多个事件放进一次模型请求。"""
+        prompt = (
+            "请批量判断以下事件分别与其候选假设的关系。每个输入事件必须返回且仅返回一次，"
+            "results 顺序必须与输入一致；analysis 必须完整满足 event_impact 契约，"
+            "不得把不同事件的事实、引用或结论混合。\n"
+            + json.dumps(events, ensure_ascii=False, sort_keys=True)
+        )
+        payload = self._complete(
+            system=EVENT_IMPACT.system,
+            prompt=prompt,
+            schema_name="event_impact_batch",
+            repair_errors=repair_errors,
+        )
+        return self._decorate_batch_payload(
+            payload, document_id=document_id, security_id=security_id, events=events
+        )
+
+    async def analyze_event_impacts_async(
+        self,
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """异步批量分析；取消协程时同时取消底层 HTTP 请求。"""
+        prompt = (
+            "请批量判断以下事件分别与其候选假设的关系。每个输入事件必须返回且仅返回一次，"
+            "results 顺序必须与输入一致；analysis 必须完整满足 event_impact 契约，"
+            "不得把不同事件的事实、引用或结论混合。\n"
+            + json.dumps(events, ensure_ascii=False, sort_keys=True)
+        )
+        payload = await self._acomplete(
+            system=EVENT_IMPACT.system,
+            prompt=prompt,
+            schema_name="event_impact_batch",
+            repair_errors=repair_errors,
+        )
+        return self._decorate_batch_payload(
+            payload, document_id=document_id, security_id=security_id, events=events
+        )
+
+    def _decorate_batch_payload(
+        self,
+        payload: dict[str, Any],
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        generated_at = datetime.now(UTC).isoformat()
+        payload.update({"model_version": self.model_version, "prompt_version": f"{EVENT_IMPACT.version}-batch-v1", "generated_at": generated_at, "ai_status": AiStatus.CANDIDATE.value})
+        if self._last_model_metadata:
+            payload["model_metadata"] = self._last_model_metadata
+        inputs_by_id = {str(item["event_id"]): item for item in events}
+        for result in payload.get("results", []):
+            if not isinstance(result, dict) or not isinstance(result.get("analysis"), dict):
+                continue
+            analysis = result["analysis"]
+            event_input = inputs_by_id.get(str(result.get("event_id")), {})
+            analysis.setdefault("document_id", document_id)
+            analysis.setdefault("security_id", security_id)
+            analysis.setdefault("model_version", self.model_version)
+            analysis.setdefault("prompt_version", f"{EVENT_IMPACT.version}-batch-v1")
+            analysis.setdefault("generated_at", generated_at)
+            analysis.setdefault("ai_status", AiStatus.CANDIDATE.value)
+            if self._last_model_metadata:
+                analysis.setdefault("model_metadata", self._last_model_metadata)
+            event_payload = analysis.get("event")
+            if isinstance(event_payload, dict):
+                event_payload.update(
+                    {
+                        "event_id": str(result.get("event_id") or ""),
+                        "event_type": str(event_input.get("event_type") or "其他"),
+                        "event_time": event_input.get("occurred_on"),
+                        "disclosure_time": event_input.get("disclosure_time"),
+                        "fact": str(event_input.get("segment_text") or "")[:500],
+                        "evidence_locator": event_input.get("segment_locator"),
+                    }
+                )
+            for impact in analysis.get("impacts", []):
+                if not isinstance(impact, dict) or not isinstance(impact.get("signal"), dict):
+                    continue
+                impact["signal"]["requires_human_review"] = True
+                if impact.get("relevance") == "不相关":
+                    impact["signal"]["direction"] = "中性"
+                    impact["signal"]["impact_direction"] = "无关"
         return payload
 
     def extract_events(
@@ -173,6 +272,31 @@ class HttpProvider:
             prompt=prompt,
             schema_name="event_extraction",
         )
+        return self._decorate_extraction(payload, document_id=document_id)
+
+    async def extract_events_async(
+        self,
+        *,
+        document_id: str,
+        segments: list[tuple[str, str]],
+        disclosure_time: str,
+    ) -> dict[str, Any]:
+        rendered = "\n".join(f"[{locator}] {text}" for locator, text in segments)
+        prompt = EVENT_EXTRACTION.render(
+            document_id=document_id,
+            disclosure_time=disclosure_time,
+            segments=rendered,
+        )
+        payload = await self._acomplete(
+            system=EVENT_EXTRACTION.system,
+            prompt=prompt,
+            schema_name="event_extraction",
+        )
+        return self._decorate_extraction(payload, document_id=document_id)
+
+    def _decorate_extraction(
+        self, payload: dict[str, Any], *, document_id: str
+    ) -> dict[str, Any]:
         payload.update(
             {
                 "document_id": document_id,
@@ -185,6 +309,58 @@ class HttpProvider:
         if self._last_model_metadata:
             payload["model_metadata"] = self._last_model_metadata
         return payload
+
+    async def _acomplete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        schema_name: str,
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """异步 chat-completions 调用，供 worker 使用。"""
+        self._last_model_metadata = {}
+        started_at = time.perf_counter()
+        headers = {"Content-Type": "application/json"}
+        if self._settings.llm_api_key is not None:
+            headers["Authorization"] = f"Bearer {self._settings.llm_api_key.get_secret_value()}"
+        request = self._request_payload(
+            system=system,
+            prompt=prompt,
+            schema_name=schema_name,
+            repair_errors=repair_errors,
+        )
+        for attempt in range(self._settings.llm_max_retries + 1):
+            try:
+                response = await self._async_client.post(
+                    self._endpoint, headers=headers, json=request
+                )
+            except httpx.TimeoutException as exc:
+                if attempt >= self._settings.llm_max_retries:
+                    raise ModelUnavailable(
+                        f"模型请求超过 {self._settings.llm_timeout_seconds:g} 秒",
+                        retryable=False,
+                    ) from exc
+                await asyncio.sleep(min(0.2 * (2**attempt), 1.0))
+                continue
+            except httpx.RequestError as exc:
+                if attempt >= self._settings.llm_max_retries:
+                    raise ModelUnavailable(f"模型端点网络失败: {type(exc).__name__}") from exc
+                await asyncio.sleep(min(0.2 * (2**attempt), 1.0))
+                continue
+            if response.status_code in {408, 429} or response.status_code >= 500:
+                if attempt < self._settings.llm_max_retries:
+                    await asyncio.sleep(min(0.2 * (2**attempt), 1.0))
+                    continue
+                raise ModelUnavailable(f"模型端点暂不可用: HTTP {response.status_code}")
+            decoded = self._decode_response(response, started_at=started_at, attempt=attempt)
+            if decoded is not None:
+                return decoded
+            if attempt < self._settings.llm_max_retries:
+                await asyncio.sleep(min(0.2 * (2**attempt), 1.0))
+                continue
+            raise ModelUnavailable("模型端点返回空 JSON 内容")
+        raise ModelUnavailable("模型请求失败", retryable=False)
 
     def draft_thesis(
         self,
@@ -252,6 +428,40 @@ class HttpProvider:
         payload.setdefault("calculation_source", "app.calc")
         return self._metadata(payload, prompt_version=METRIC_EXPLAIN.version)
 
+    def recommend_metrics(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        industry: str,
+        catalog_version: str,
+        candidates: list[dict[str, Any]],
+        top_k: int,
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """让远程模型在工具召回的规范指标集合内完成关联判断。"""
+        prompt = METRIC_RECOMMEND.render(
+            security_id=security_id,
+            industry=industry or "未提供",
+            hypothesis_id=hypothesis_id,
+            hypothesis=hypothesis,
+            catalog_version=catalog_version,
+            candidates=json.dumps(candidates, ensure_ascii=False, sort_keys=True),
+            top_k=str(max(1, min(top_k, 20))),
+        )
+        payload = self._complete(
+            system=METRIC_RECOMMEND.system,
+            prompt=prompt,
+            schema_name="metric_recommend",
+            repair_errors=repair_errors,
+        )
+        payload.setdefault("security_id", security_id)
+        payload.setdefault("hypothesis_id", hypothesis_id)
+        payload.setdefault("catalog_version", catalog_version)
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=METRIC_RECOMMEND.version)
+
     def draft_review(
         self,
         *,
@@ -285,6 +495,32 @@ class HttpProvider:
         payload.setdefault("requires_human_review", True)
         return self._metadata(payload, prompt_version=REVIEW_DRAFT.version)
 
+    def hypothesis_quality(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        title: str,
+        core_view: str,
+        hypotheses: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        prompt = HYPOTHESIS_QUALITY.render(
+            security=security_id,
+            title=title,
+            core_view=core_view,
+            hypotheses=json.dumps(hypotheses, ensure_ascii=False, sort_keys=True),
+        )
+        payload = self._complete(
+            system=HYPOTHESIS_QUALITY.system,
+            prompt=prompt,
+            schema_name="hypothesis_quality",
+            repair_errors=repair_errors,
+        )
+        payload.setdefault("thesis_id", thesis_id)
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=HYPOTHESIS_QUALITY.version)
+
     def _complete(
         self,
         *,
@@ -298,7 +534,58 @@ class HttpProvider:
         headers = {"Content-Type": "application/json"}
         if self._settings.llm_api_key is not None:
             headers["Authorization"] = f"Bearer {self._settings.llm_api_key.get_secret_value()}"
-        request = {
+        request = self._request_payload(
+            system=system,
+            prompt=prompt,
+            schema_name=schema_name,
+            repair_errors=repair_errors,
+        )
+
+        for attempt in range(self._settings.llm_max_retries + 1):
+            try:
+                response = self._client.post(
+                    self._endpoint,
+                    headers=headers,
+                    json=request,
+                )
+            except httpx.TimeoutException as exc:
+                if attempt >= self._settings.llm_max_retries:
+                    raise ModelUnavailable(
+                        f"模型请求超过 {self._settings.llm_timeout_seconds:g} 秒",
+                        retryable=False,
+                    ) from exc
+                time.sleep(min(0.2 * (2**attempt), 1.0))
+                continue
+            except httpx.RequestError as exc:
+                if attempt >= self._settings.llm_max_retries:
+                    raise ModelUnavailable(f"模型端点网络失败: {type(exc).__name__}") from exc
+                time.sleep(min(0.2 * (2**attempt), 1.0))
+                continue
+
+            if response.status_code in {408, 429} or response.status_code >= 500:
+                if attempt < self._settings.llm_max_retries:
+                    time.sleep(min(0.2 * (2**attempt), 1.0))
+                    continue
+                raise ModelUnavailable(f"模型端点暂不可用: HTTP {response.status_code}")
+            decoded = self._decode_response(response, started_at=started_at, attempt=attempt)
+            if decoded is not None:
+                return decoded
+            if attempt < self._settings.llm_max_retries:
+                time.sleep(min(0.2 * (2**attempt), 1.0))
+                continue
+            raise ModelUnavailable("模型端点返回空 JSON 内容")
+
+        raise ModelUnavailable("模型端点未返回响应")
+
+    def _request_payload(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        schema_name: str,
+        repair_errors: list[str] | None,
+    ) -> dict[str, Any]:
+        request: dict[str, Any] = {
             "model": self.model_version,
             "messages": [
                 {"role": "system", "content": _system_with_contract(system, schema_name)},
@@ -314,43 +601,29 @@ class HttpProvider:
             request["thinking"] = {"type": self._settings.llm_thinking_mode}
             if self._settings.llm_thinking_mode == "enabled":
                 request["reasoning_effort"] = self._settings.llm_reasoning_effort
+        return request
 
-        for attempt in range(self._settings.llm_max_retries + 1):
-            try:
-                response = self._client.post(
-                    self._endpoint,
-                    headers=headers,
-                    json=request,
-                )
-            except httpx.RequestError as exc:
-                if attempt >= self._settings.llm_max_retries:
-                    raise ModelUnavailable(f"模型端点网络失败: {type(exc).__name__}") from exc
-                time.sleep(min(0.2 * (2**attempt), 1.0))
-                continue
-
-            if response.status_code in {408, 429} or response.status_code >= 500:
-                if attempt < self._settings.llm_max_retries:
-                    time.sleep(min(0.2 * (2**attempt), 1.0))
-                    continue
-                raise ModelUnavailable(f"模型端点暂不可用: HTTP {response.status_code}")
-            if response.is_error:
-                raise ModelUnavailable(
-                    f"模型端点拒绝请求: HTTP {response.status_code}", retryable=False
-                )
-            try:
-                body = response.json()
-                content = body["choices"][0]["message"]["content"]
-            except (ValueError, KeyError, IndexError, TypeError) as exc:
-                raise ModelUnavailable(
-                    "模型端点响应不符合 chat-completions 契约", retryable=False
-                ) from exc
-            finish_reason = body["choices"][0].get("finish_reason")
-            if finish_reason == "length":
-                raise ModelUnavailable(
-                    "模型 JSON 输出被长度上限截断，请提高 LLM_MAX_OUTPUT_TOKENS",
-                    retryable=False,
-                )
-            self._last_model_metadata = {
+    def _decode_response(
+        self, response: httpx.Response, *, started_at: float, attempt: int
+    ) -> dict[str, Any] | None:
+        if response.is_error:
+            raise ModelUnavailable(
+                f"模型端点拒绝请求: HTTP {response.status_code}", retryable=False
+            )
+        try:
+            body = response.json()
+            content = body["choices"][0]["message"]["content"]
+        except (ValueError, KeyError, IndexError, TypeError) as exc:
+            raise ModelUnavailable(
+                "模型端点响应不符合 chat-completions 契约", retryable=False
+            ) from exc
+        finish_reason = body["choices"][0].get("finish_reason")
+        if finish_reason == "length":
+            raise ModelUnavailable(
+                "模型 JSON 输出被长度上限截断，请提高 LLM_MAX_OUTPUT_TOKENS",
+                retryable=False,
+            )
+        self._last_model_metadata = {
                 key: value
                 for key, value in {
                     "provider": "deepseek" if self._is_deepseek else "openai-compatible",
@@ -362,26 +635,21 @@ class HttpProvider:
                 }.items()
                 if value is not None
             }
-            if isinstance(content, dict):
-                return content
-            if not isinstance(content, str):
-                return {"provider_raw_text": str(content)}
-            cleaned = content.strip()
-            if not cleaned:
-                if attempt < self._settings.llm_max_retries:
-                    time.sleep(min(0.2 * (2**attempt), 1.0))
-                    continue
-                raise ModelUnavailable("模型端点返回空 JSON 内容")
-            if cleaned.startswith("```"):
-                cleaned = cleaned.removeprefix("```json").removeprefix("```")
-                cleaned = cleaned.removesuffix("```").strip()
-            try:
-                parsed = json.loads(cleaned)
-            except json.JSONDecodeError:
-                return {"provider_raw_text": content}
-            return parsed if isinstance(parsed, dict) else {"provider_raw_output": parsed}
-
-        raise ModelUnavailable("模型端点未返回响应")
+        if isinstance(content, dict):
+            return content
+        if not isinstance(content, str):
+            return {"provider_raw_text": str(content)}
+        cleaned = content.strip()
+        if not cleaned:
+            return None
+        if cleaned.startswith("```"):
+            cleaned = cleaned.removeprefix("```json").removeprefix("```")
+            cleaned = cleaned.removesuffix("```").strip()
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError:
+            return {"provider_raw_text": content}
+        return parsed if isinstance(parsed, dict) else {"provider_raw_output": parsed}
 
     def _metadata(self, payload: dict[str, Any], *, prompt_version: str) -> dict[str, Any]:
         result = dict(payload)
@@ -393,12 +661,10 @@ class HttpProvider:
 
 
 def _normalize_thesis_references(payload: dict[str, Any]) -> None:
-    """Drop numeric draft indices that are not stable hypothesis identifiers.
+    """删除不是稳定假设标识的数字草稿索引。
 
-    DeepSeek can interpret ``hypothesis_ref`` as an array index even when the
-    example uses null. Draft hypothesis IDs are assigned only after validation,
-    so retaining such an index would create a false link. Null is the only
-    semantically valid value at this stage.
+    模型可能把 ``hypothesis_ref`` 误解为数组下标；草稿假设 ID 尚未分配时保留该值
+    会制造错误关联，因此这一阶段只有字符串 ID 或 null 具有业务含义。
     """
     suggestions = payload.get("invalidation_suggestions")
     if not isinstance(suggestions, list):

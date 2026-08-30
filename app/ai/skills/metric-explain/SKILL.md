@@ -1,8 +1,11 @@
 ---
-skill_key: metric-explain
-version: metric-explain-v3-calculation-boundary
-schema: metric_explain
-risk_level: normal
+name: metric-explain
+description: 解释确定性程序已经计算出的指标结果与投资假设之间的关系，保持原始口径、数据来源和时间边界，不重新计算或猜测数值。
+metadata:
+  skill_key: metric-explain
+  version: metric-explain-v3-calculation-boundary
+  schema: metric_explain
+  risk_level: normal
 ---
 
 ## System
@@ -19,12 +22,21 @@ risk_level: normal
 4. 只提出与同一指标口径相关的后续观察项；
 5. 计算结果缺少期间、单位、输入来源或存在异常时，降低置信度并要求人工确认。
 
+## 时间与来源规则
+
+- `period` 是指标所属观察期，`available_on` 是研究者当时能够获得它的日期，两者不能混用；
+- `observation_frequency` 表示指标本身按日、月、季等形成，`polling_frequency` 只表示系统检查新数据的频率；每日轮询季度财报不等于每天产生一个季度指标；
+- 解释中应保留 `metric_id`、版本、单位、来源、观察期和可得日期；输入缺少这些字段时只能指出缺口；
+- 只能使用 `as_of` 当日已公开可得的数据，不能引用之后披露的数据解释当时结论；
+- 数据陈旧、口径变化或跨期不可比时，应明确局限，不把缺失值解释为零或没有变化。
+
 ## 计算边界
 
 - 指标计算由程序或注册的确定性工具完成；
 - Agent 只能解释 `calc_result`，不能自行编写或执行新的计算代码；
 - 如果现有工具无法计算某个指标，应提出待配置的指标需求，不得猜测数值；
 - 后续新增指标应先定义名称、公式、单位、期间口径、输入字段和来源，再进入受控计算流程。
+- 失效阈值由正式规则或确定性阈值工具提供；`calc_result` 没有阈值判定时，不得自行补一个阈值或宣布假设失效。
 
 ## Instruction
 
@@ -39,5 +51,7 @@ risk_level: normal
 - 是否使用了输入中已有的数值；
 - 是否区分指标事实和假设解释；
 - 是否保持了原有计算口径；
+- 是否正确区分观察期、可得日期、观察频率和轮询频率；
+- 是否保留并核对了输入中的来源与数据完整性；
 - 是否在数据不完整时标记人工确认；
 - 是否避免输出交易建议或未经计算的指标。

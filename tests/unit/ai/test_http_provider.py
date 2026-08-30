@@ -53,6 +53,95 @@ def _draft_response() -> dict[str, object]:
     }
 
 
+def _batch_impact_response() -> dict[str, object]:
+    def impact(hypothesis_id: str, direction: str, relevance: str) -> dict[str, object]:
+        return {
+            "thesis_id": "THS-001",
+            "hypothesis_id": hypothesis_id,
+            "relevance": relevance,
+            "inference": f"事件对 {hypothesis_id} 的候选影响",
+            "citations": ["DOC-001#paragraph-1"],
+            "unsupported_claims": [],
+            "signal": {
+                "direction": "中性",
+                "impact_direction": direction,
+                "strength": 0.7,
+                "confidence": 0.8,
+                "horizon": "中期",
+                "rationale": f"{hypothesis_id} 批量判断",
+                "transmission_path": "事件 → 业务变量 → 目标假设",
+                "suggested_tracking": [],
+                "requires_human_review": True,
+            },
+        }
+
+    return {
+        "event": {"fact": "公司披露经营指标变化"},
+        "impacts": [
+            impact("H1", "冲突", "相关"),
+            impact("H2", "无关", "不相关"),
+        ],
+    }
+
+
+def test_http_event_impact_sends_all_candidates_in_one_model_call() -> None:
+    requests: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": json.dumps(_batch_impact_response())}}]},
+        )
+
+    settings = _settings()
+    gateway = Gateway(
+        settings=settings,
+        provider=HttpProvider(
+            settings, client=httpx.Client(transport=httpx.MockTransport(handler))
+        ),
+    )
+    outcome = gateway.event_impact(
+        document_id="DOC-001",
+        security_id="600000.SH",
+        segment_locator="DOC-001#paragraph-1",
+        segment_text="公司披露经营指标变化",
+        disclosure_time="2026-08-10T09:00:00+08:00",
+        candidates=[
+            {"thesis_id": "THS-001", "hypothesis_id": "H1", "statement": "毛利率改善"},
+            {
+                "thesis_id": "THS-001",
+                "hypothesis_id": "H2",
+                "statement": "资本开支增长",
+            },
+        ],
+        evidence_contexts=[
+            {
+                "hypothesis_id": "H1",
+                "evidence": [
+                    {
+                        "context_type": "current_event_evidence",
+                        "locator": "DOC-001#paragraph-1",
+                        "content": "公司披露经营指标变化",
+                    }
+                ],
+            }
+        ],
+        event_type="业绩",
+    )
+
+    assert outcome.usable
+    assert len(requests) == 1
+    prompt = requests[0]["messages"][1]["content"]  # type: ignore[index]
+    assert "H1" in prompt and "H2" in prompt
+    assert "current_event_evidence" in prompt
+    assert [item["hypothesis_id"] for item in outcome.payload["impacts"]] == [
+        "H1",
+        "H2",
+    ]
+    assert outcome.payload["impacts"][1]["signal"]["impact_direction"] == "无关"
+
+
 def test_http_provider_calls_compatible_endpoint_and_validates_contract() -> None:
     captured: dict[str, object] = {}
 

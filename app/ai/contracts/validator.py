@@ -24,6 +24,7 @@ from app.core.config import PROJECT_ROOT, RuleThresholds
 from app.core.enums import AiStatus
 
 CONTRACTS_DIR = PROJECT_ROOT / "contracts" / "ai"
+LOCAL_CONTRACTS_DIR = PROJECT_ROOT / "app" / "ai" / "contracts" / "schemas"
 
 
 @dataclass
@@ -48,7 +49,10 @@ class ValidationOutcome:
 
 @lru_cache(maxsize=8)
 def load_schema(name: str) -> dict[str, Any]:
+    """优先加载跨模块公共契约，再加载仅供 app/ai 内部使用的契约。"""
     path = CONTRACTS_DIR / f"{name}.schema.json"
+    if not path.is_file():
+        path = LOCAL_CONTRACTS_DIR / f"{name}.schema.json"
     if not path.is_file():
         raise FileNotFoundError(f"契约文件不存在: {path}")
     return json.loads(path.read_text(encoding="utf-8"))
@@ -113,6 +117,18 @@ def _extract_confidence(payload: dict[str, Any]) -> float | None:
     signal = payload.get("signal")
     if isinstance(signal, dict) and isinstance(signal.get("confidence"), int | float):
         return float(signal["confidence"])
+    impacts = payload.get("impacts")
+    if isinstance(impacts, list):
+        confidences = [
+            float(signal_data["confidence"])
+            for impact in impacts
+            if isinstance(impact, dict)
+            for signal_data in [impact.get("signal")]
+            if isinstance(signal_data, dict)
+            and isinstance(signal_data.get("confidence"), int | float)
+        ]
+        if confidences:
+            return min(confidences)
     if isinstance(payload.get("confidence"), int | float):
         return float(payload["confidence"])
     return None

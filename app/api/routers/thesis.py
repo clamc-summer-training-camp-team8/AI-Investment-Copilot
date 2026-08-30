@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated, TypeVar
+from dataclasses import replace
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query
 
 from app.ai.gateway import Gateway, ModelUnavailable
+from app.ai.agents.hypothesis_quality import HypothesisQualityAgent
+from app.ai.quality.hypothesis_structure import inspect_hypotheses
+from app.ai.runtime import InvestmentResearchAgent
 from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.api.feed_presenter import to_feed_item
 from app.core.domain import MetricMappingRecord, ThesisQuery, ThesisRecord, UnitOfWork
@@ -26,6 +31,7 @@ from app.core.enums import (
     Importance,
     ThesisStatus,
 )
+from app.core.timeutil import now
 from app.schemas.thesis import (
     AuditOut,
     AuditPage,
@@ -54,14 +60,15 @@ from app.schemas.thesis import (
     ThesisPublishIn,
     TrendPointOut,
 )
+from app.services import agent_workflow, audit, permission
 from app.services import assets as asset_service
-from app.services import audit, permission
 from app.services import evidence as evidence_service
 from app.services import query as query_service
 from app.services import relation as relation_service
 from app.services import security as security_service
 from app.services import status as status_service
 from app.services import thesis as thesis_service
+from app.services.ai_runtime import SqlRuntimeRecorder
 from app.services.errors import (
     EntityAmbiguous,
     HumanGateRequired,
@@ -85,6 +92,7 @@ def _require_visible(uow: UnitOfWork, actor: Actor, thesis_id: str) -> ThesisRec
     record = uow.thesis.get(thesis_id)
     if record is None:
         raise HTTPException(status_code=404, detail="逻辑不存在或无访问权限")
+    ai_questions: list[str] = []
     try:
         permission.ensure_thesis_visible(
             actor,
@@ -107,6 +115,7 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
     hypothesis_suggestions = suggestions.get("hypotheses", {})
     if not isinstance(hypothesis_suggestions, dict):
         hypothesis_suggestions = {}
+    dimension_alias = {"原因层": "需求/行业维度", "机制层": "竞争力/执行维度", "结果层": "财务结果维度"}
     return ThesisOut(
         thesis_id=record.thesis_id,
         security_id=record.security_id,
@@ -120,6 +129,8 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
         established_on=record.established_on,
         horizon_end_on=record.horizon_end_on,
         next_review_at=record.next_review_at,
+        thesis_kind=record.thesis_kind,
+        thesis_series_id=record.thesis_series_id,
         hypotheses=[
             HypothesisOut(
                 hypothesis_id=h.hypothesis_id,
@@ -129,6 +140,9 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
                 status=h.status,
                 observation_window=h.observation_window,
                 invalidation_rule=h.invalidation_rule,
+                causal_level=(dimension_alias.get(hypothesis_suggestions.get(h.hypothesis_id, {}).get("causal_level"), hypothesis_suggestions.get(h.hypothesis_id, {}).get("causal_level")) if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict) else None),
+                logic_dimension=(dimension_alias.get(hypothesis_suggestions.get(h.hypothesis_id, {}).get("logic_dimension"), hypothesis_suggestions.get(h.hypothesis_id, {}).get("logic_dimension")) if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict) else None),
+                quality_warning=(hypothesis_suggestions.get(h.hypothesis_id, {}).get("quality_warning") if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict) else None),
                 metric_suggestions=(
                     hypothesis_suggestions.get(h.hypothesis_id, {}).get("metric_suggestions", [])
                     if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
@@ -190,6 +204,7 @@ def create_draft(
                 actor=actor,
                 settings=conf,
                 security_ids=(security.security_id,),
+                published_to=now(),
                 limit=8,
             )
         except ValidationFailed as exc:
@@ -197,6 +212,9 @@ def create_draft(
         segments = [(hit.locator, hit.content) for hit in hits]
         if hits:
             source_document_id = hits[0].document_id
+
+    if not payload.view.strip() and not segments:
+        raise HTTPException(status_code=422, detail="未检索到可用历史资料，请先输入研究问题或补充资料。")
 
     try:
         outcome = gateway.thesis_draft(
@@ -212,6 +230,10 @@ def create_draft(
             status_code=422,
             detail={"code": "AI_OUTPUT_INVALID", "errors": outcome.errors[:5]},
         )
+
+    # 对所有模型输出统一执行去重与因果层级检查。
+    if isinstance(outcome.payload.get("hypotheses"), list):
+        inspect_hypotheses(outcome.payload["hypotheses"])
 
     audit.record_model_call(
         uow.audit,
@@ -231,8 +253,20 @@ def create_draft(
     # 用 uuid4 而不是 hash(view)：CPython 的字符串 hash 按进程随机化，同一观点
     # 换个进程就变 ID；同进程内重复建卡又会撞主键，flush 抛 IntegrityError 变 500。
     thesis_id = f"THS-{security.security_id[:24]}-{uuid4().hex[:12]}"
+    runtime = InvestmentResearchAgent.build(gateway, recorder=SqlRuntimeRecorder())
+    enriched_draft = agent_workflow.enrich_draft_metric_suggestions(
+        uow,
+        draft=outcome.payload,
+        thesis_id=thesis_id,
+        security_id=security.security_id,
+        industry=security.industry,
+        actor=actor,
+        settings=conf,
+        runtime=runtime,
+        as_of=now().date(),
+    )
     try:
-        thesis_service.create_draft(uow, thesis_id=thesis_id, draft=outcome.payload, actor=actor)
+        thesis_service.create_draft(uow, thesis_id=thesis_id, draft=enriched_draft, actor=actor)
     except EntityAmbiguous as exc:
         raise HTTPException(
             status_code=409,
@@ -257,6 +291,7 @@ def list_theses(
     manageable: Annotated[bool, Query(description="仅返回当前用户可管理的逻辑")] = False,
     limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
+    include_snapshots: Annotated[bool, Query(description="包含季度观察和评测快照")] = False,
 ) -> ThesisPage:
     """卡片列表。强制分页，只返回当前用户可见的卡片。
 
@@ -276,6 +311,7 @@ def list_theses(
             keyword=keyword,
             limit=limit,
             offset=offset,
+            include_snapshots=include_snapshots,
         ),
     )
     return ThesisPage(
@@ -523,6 +559,8 @@ def get_evidence_detail(evidence_id: str, actor: ActorDep, uow: UowDep) -> Evide
     )
     if any(value is None for value in required):
         raise HTTPException(status_code=422, detail="证据详情字段不完整，无法用于公开核验")
+    if record.ingested_at is None:
+        raise HTTPException(status_code=422, detail="证据缺少入库时间，无法用于公开核验")
     return EvidenceDetailOut(
         evidence_id=record.evidence_id,
         evidence_type=record.evidence_type,
@@ -543,6 +581,7 @@ def get_evidence_detail(evidence_id: str, actor: ActorDep, uow: UowDep) -> Evide
         source_document_title=record.source_document_title,
         disclosed_at=record.disclosed_at,
         occurred_at=record.occurred_at,
+        ingested_at=record.ingested_at,
         source_url=record.source_url,
     )
 
@@ -899,16 +938,21 @@ def list_trends(
     out: list[HypothesisTrendOut] = []
     for item in trends:
         result = item.result
+        source_by_period = {row.period: row for row in item.source_rows}
         out.append(
             HypothesisTrendOut(
                 hypothesis_id=item.hypothesis_id,
                 statement=item.statement,
                 metric_id=item.metric_id,
+                metric_name=item.metric_name,
+                expected_value=item.expected_value,
+                invalidation_threshold=item.invalidation_threshold,
+                invalidation_consecutive_periods=item.invalidation_consecutive_periods,
                 unit=item.unit,
                 period_type=item.period_type,
                 metric_version=item.metric_version,
                 data_version=item.data_version,
-                direction=result.direction if result else "无量化指标",
+                direction=result.direction if result else "历史参考（不参与正式判定）",
                 slope=result.slope if result else None,
                 consecutive_decline=result.consecutive_decline if result else 0,
                 consecutive_below_expectation=(
@@ -917,16 +961,81 @@ def list_trends(
                 verdict=result.verdict.value if result else None,
                 points=(
                     [
-                        TrendPointOut(period=period, value=value)
+                        TrendPointOut(
+                            period=period,
+                            value=value,
+                            published_on=(
+                                uow.documents.get(source_by_period[period].source_document_id).published_at.date()
+                                if source_by_period[period].source_document_id
+                                and uow.documents.get(source_by_period[period].source_document_id)
+                                else source_by_period[period].observation_date
+                            ),
+                            acquired_at=source_by_period[period].ingested_at,
+                            source_document_id=source_by_period[period].source_document_id,
+                            data_version=source_by_period[period].data_version,
+                        )
                         for period, value in zip(result.periods, result.values, strict=True)
                     ]
                     if result
-                    else []
+                    else [
+                        TrendPointOut(
+                            period=row.period,
+                            value=row.actual_value,
+                            published_on=(
+                                uow.documents.get(row.source_document_id).published_at.date()
+                                if row.source_document_id and uow.documents.get(row.source_document_id)
+                                else row.observation_date
+                            ),
+                            acquired_at=row.ingested_at,
+                            source_document_id=row.source_document_id,
+                            data_version=row.data_version,
+                        )
+                        for row in item.source_rows
+                        if row.actual_value is not None
+                    ]
                 ),
-                note=item.note,
+                note=(item.note + "；页面值为历史参考，不参与正式判定" if not result and item.source_rows else item.note),
             )
         )
     return out
+
+
+@router.post("/theses/{thesis_id}/quality-check", response_model=ThesisOut)
+def recheck_thesis_quality(thesis_id: str, actor: ActorDep, uow: UowDep, settings: SettingsDep) -> ThesisOut:
+    """用 AI 复核草稿逻辑，确定性规则负责兜底维度和重复检查。"""
+    record = _require_visible(uow, actor, thesis_id)
+    suggestions = dict(record.draft_suggestions or {})
+    grouped = dict(suggestions.get("hypotheses") or {})
+    hypotheses = uow.thesis.list_hypotheses(thesis_id)
+    try:
+        ai_review = HypothesisQualityAgent(gateway=Gateway.build(settings)).inspect(
+            security_id=record.security_id,
+            thesis_id=thesis_id,
+            title=record.title,
+            core_view=record.core_view,
+            hypotheses=[
+                {"hypothesis_id": h.hypothesis_id, "statement": h.statement}
+                for h in hypotheses
+            ],
+        )
+        suggestions["ai_quality_review"] = ai_review.payload
+        ai_by_id = {
+            str(item.get("hypothesis_id")): item
+            for item in ai_review.payload.get("results", [])
+            if isinstance(item, dict)
+        }
+    except Exception as exc:
+        suggestions["ai_quality_review"] = {"ai_status": "解析失败", "error": str(exc)}
+        ai_by_id = {}
+    checked = inspect_hypotheses([{"statement": h.statement} for h in hypotheses])
+    for h, fallback in zip(hypotheses, checked, strict=True):
+        current = dict(grouped.get(h.hypothesis_id) or {})
+        result = ai_by_id.get(h.hypothesis_id) or fallback
+        current.update({"logic_dimension": result.get("logic_dimension") or fallback.get("logic_dimension"), "causal_level": result.get("logic_dimension") or fallback.get("causal_level"), "quality_warning": result.get("quality_warning") or ""})
+        grouped[h.hypothesis_id] = current
+    suggestions["hypotheses"] = grouped
+    uow.thesis.update(replace(record, draft_suggestions=suggestions))
+    return _to_out(uow, thesis_id)
 
 
 @router.get("/theses/{thesis_id}/audit", response_model=AuditPage)

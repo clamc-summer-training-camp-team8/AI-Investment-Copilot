@@ -13,6 +13,7 @@ ingest.extract_events → ingest.dedupe
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from hashlib import sha256
 
@@ -108,7 +109,7 @@ def _rag_context(
     return hits
 
 
-def process_events(
+async def process_events_async(
     uow: UnitOfWork,
     ai: Gateway | InvestmentResearchAgent,
     *,
@@ -177,29 +178,38 @@ def process_events(
 
     for record, hypotheses in recalled:
         touched = False
-        for event in kept:
-            inputs = event_inputs.get(event.event_id)
-            if inputs is None:
-                continue
-            hypothesis_inputs = tuple(
-                build_hypothesis_input(
-                    thesis_record=record,
-                    hypothesis=hypothesis,
-                    mappings=uow.thesis.list_mappings(hypothesis.hypothesis_id),
-                )
-                for hypothesis in hypotheses
+        hypothesis_inputs = tuple(
+            build_hypothesis_input(
+                thesis_record=record,
+                hypothesis=hypothesis,
+                mappings=uow.thesis.list_mappings(hypothesis.hypothesis_id),
             )
-            if not hypothesis_inputs:
-                deferred.append((event.event_id, "候选逻辑下没有可分析假设，转人工判断"))
-                continue
+            for hypothesis in hypotheses
+        )
+        analyzable = [
+            (event, event_inputs[event.event_id])
+            for event in kept
+            if event.event_id in event_inputs
+        ]
+        if not hypothesis_inputs:
+            deferred.extend(
+                (event.event_id, "候选逻辑下没有可分析假设，转人工判断")
+                for event, _ in analyzable
+            )
+            continue
 
-            execution = runtime.analyze_event(
-                inputs.event,
-                hypothesis_inputs,
-                allowed_visibility=actor.document_labels,
-                top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
-                idempotency_key=f"event:{event.event_id}:thesis:{record.thesis_id}",
-            )
+        # 同一份资料的多个事件与该逻辑的全部假设在一个模型请求内判断。
+        executions = await runtime.analyze_events_async(
+            tuple(inputs.event for _, inputs in analyzable),
+            hypothesis_inputs,
+            allowed_visibility=actor.document_labels,
+            top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
+            idempotency_key=f"document:{document_id}:thesis:{record.thesis_id}",
+        )
+        if executions and all(execution.degraded_reason for execution in executions):
+            raise ModelUnavailable("批量事件影响分析输出不符合契约", retryable=False)
+
+        for (event, inputs), execution in zip(analyzable, executions, strict=True):
             analysis_result = to_backend_analysis_result(execution)
             if analysis_result.retryable:
                 raise ModelUnavailable(
@@ -296,8 +306,15 @@ def process_events(
                     deferred.append((event.event_id, "低置信，进人工复核队列，不触发风险提醒"))
 
         if touched:
+            # 新资料先完成事件→假设关联，再用资料首次公开日作为 as-of 核对指标；
+            # 不能让晚于该资料的财务数据反向影响当时的建议。
+            as_of = max(event.disclosure_time.date() for event in kept)
             suggestion = status_service.compute_suggestion(
-                uow, thesis=record, hypotheses=list(hypotheses), thresholds=thresholds
+                uow,
+                thesis=record,
+                hypotheses=list(hypotheses),
+                thresholds=thresholds,
+                today=as_of,
             )
             status_service.record_suggestion(
                 uow, thesis=record, suggestion=suggestion, actor=actor.user_id
@@ -316,3 +333,12 @@ def process_events(
         deferred=deferred,
         matched_theses=[r.thesis_id for r, _ in recalled],
     )
+
+
+def process_events(
+    uow: UnitOfWork,
+    ai: Gateway | InvestmentResearchAgent,
+    **kwargs: object,
+) -> ChangeResult:
+    """同步兼容入口；worker 使用 ``process_events_async``。"""
+    return asyncio.run(process_events_async(uow, ai, **kwargs))  # type: ignore[arg-type]

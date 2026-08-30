@@ -6,6 +6,7 @@ export const demoEvidence: EvidenceDetail = {
   factExcerpt: '公司披露的公开资料显示，储能业务保持增长，海外市场需求仍是后续经营的重要观察变量。',
   sourceDocumentTitle: '阳光电源公开披露资料',
   disclosedAt: '2026-08-01',
+  ingestedAt: '2026-08-01T09:05:00+08:00',
   sourceUrl: 'https://www.cninfo.com.cn/',
   direction: 'support',
   strength: 'medium',

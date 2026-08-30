@@ -2,7 +2,7 @@ import { demoEvidence, demoEvidenceFeed, demoThesis } from './mocks'
 import type {
   AuditItem, ConfirmationState, Direction, EvidenceDetail, EvidenceFeedItem,
   Adjudication, DocumentSegment, IngestionReview, JobAccepted, JobStatus, PageResult, ProcessingJob, Relation,
-  ReviewTask, Security, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
+  ReviewTask, ReviewDraftCandidate, Security, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
   MetricDefinition, MetricMapping, PublishReadiness,
   AssetInventory, AssetSearchHit,
   ThesisRevision, ThesisRevisionDiff,
@@ -44,6 +44,8 @@ function toThesis(item: Record<string, unknown>): ThesisDetail {
     thesisId: String(item.thesis_id), securityId: String(item.security_id),
     title: String(item.title), owner: String(item.owner), status: String(item.status),
     direction: String(item.direction), coreView: String(item.core_view), version: Number(item.version),
+    thesisKind: String(item.thesis_kind ?? 'canonical'),
+    thesisSeriesId: item.thesis_series_id ? String(item.thesis_series_id) : undefined,
     establishedOn: String(item.established_on),
     horizonEndOn: item.horizon_end_on ? String(item.horizon_end_on) : undefined,
     nextReviewAt: item.next_review_at ? String(item.next_review_at) : undefined,
@@ -53,6 +55,9 @@ function toThesis(item: Record<string, unknown>): ThesisDetail {
       observationWindow: h.observation_window ? String(h.observation_window) : undefined,
       invalidationRule: h.invalidation_rule ? String(h.invalidation_rule) : undefined,
       metricSuggestions: (h.metric_suggestions ?? []) as Array<Record<string, unknown>>,
+      causalLevel: h.causal_level ? String(h.causal_level) : undefined,
+      logicDimension: h.logic_dimension ? String(h.logic_dimension) : undefined,
+      qualityWarning: h.quality_warning ? String(h.quality_warning) : undefined,
       mappings: ((h.mappings ?? []) as Array<Record<string, unknown>>).map(toMapping),
     })),
     riskSuggestions: (item.risk_suggestions ?? []) as Array<Record<string, unknown>>,
@@ -92,12 +97,13 @@ function toPage<T>(page: { items: T[]; page: { total: number; limit: number; off
 }
 
 export async function getEvidence(evidenceId: string): Promise<EvidenceDetail> {
-  if (useMock) return { ...demoEvidence, evidenceId, aiStatus: '候选', promptVersion: 'demo', sourceDocumentId: 'DOC-DEMO', evidenceLocator: 'DOC-DEMO#paragraph-1' }
+  if (useMock) return { ...demoEvidence, evidenceId, ingestedAt: demoEvidence.disclosedAt, aiStatus: '候选', promptVersion: 'demo', sourceDocumentId: 'DOC-DEMO', evidenceLocator: 'DOC-DEMO#paragraph-1' }
   const item = await request<Record<string, unknown>>(`/api/evidence/${evidenceId}`)
   return {
     evidenceId: String(item.evidence_id), securityId: String(item.security_id),
     factExcerpt: String(item.fact_excerpt), sourceDocumentTitle: String(item.source_document_title),
     disclosedAt: String(item.disclosed_at), occurredAt: item.occurred_at ? String(item.occurred_at) : undefined,
+    ingestedAt: String(item.ingested_at),
     sourceUrl: String(item.source_url), direction: toDirection(item.direction), strength: toStrength(item.strength),
     aiConfidence: Number(item.ai_confidence ?? 0), aiStatus: String(item.ai_status ?? '候选'),
     modelVersion: String(item.model_version ?? '-'), promptVersion: String(item.prompt_version ?? '-'),
@@ -126,9 +132,9 @@ export async function getThesis(thesisId: string): Promise<ThesisDetail> {
   return toThesis(await request<Record<string, unknown>>(`/api/theses/${thesisId}`))
 }
 
-export async function listTheses(securityId?: string, manageable = false): Promise<ThesisDetail[]> {
+export async function listTheses(securityId?: string, manageable = false, includeSnapshots = false): Promise<ThesisDetail[]> {
   if (useMock) return [demoThesis]
-  const page = await request<{ items: Array<Record<string, unknown>> }>(`/api/theses?limit=50${securityId ? `&security_id=${encodeURIComponent(securityId)}` : ''}${manageable ? '&manageable=true' : ''}`)
+  const page = await request<{ items: Array<Record<string, unknown>> }>(`/api/theses?limit=50${securityId ? `&security_id=${encodeURIComponent(securityId)}` : ''}${manageable ? '&manageable=true' : ''}${includeSnapshots ? '&include_snapshots=true' : ''}`)
   return page.items.map(toThesis)
 }
 
@@ -186,7 +192,12 @@ export async function getSuggestions(thesisId: string): Promise<Suggestion[]> {
 export async function getTrends(thesisId: string): Promise<Trend[]> {
   if (useMock) return []
   const items = await request<Array<Record<string, unknown>>>(`/api/theses/${thesisId}/trends`)
-  return items.map((item) => ({ hypothesisId: String(item.hypothesis_id), statement: String(item.statement), metricId: String(item.metric_id), unit: String(item.unit), direction: String(item.direction), points: (item.points as Array<Record<string, unknown>>).map((p) => ({ period: String(p.period), value: String(p.value) })) }))
+  const names: Record<string, string> = { 'AUTO-SALES-M': '月度汽车销量', 'AUTO-EXPORT-SALES-M': '月度海外销量/出口量', 'AUTO-BATTERY-INSTALL-M': '月度动力电池装机量', 'FIN-REVENUE-Q': '单季度营业收入', 'FIN-REVENUE-YOY-Q': '单季度营业收入同比', 'FIN-GROSS-MARGIN-Q': '单季度毛利率' }
+  return items.map((item) => ({ hypothesisId: String(item.hypothesis_id), statement: String(item.statement), metricId: String(item.metric_id), metricName: item.metric_name ? String(item.metric_name) : names[String(item.metric_id)] ?? String(item.metric_id), unit: String(item.unit), direction: String(item.direction), expectedValue: item.expected_value != null ? String(item.expected_value) : undefined, invalidationThreshold: item.invalidation_threshold != null ? String(item.invalidation_threshold) : undefined, invalidationConsecutivePeriods: item.invalidation_consecutive_periods != null ? Number(item.invalidation_consecutive_periods) : undefined, slope: item.slope != null ? String(item.slope) : undefined, verdict: item.verdict ? String(item.verdict) : undefined, note: item.note ? String(item.note) : undefined, points: (item.points as Array<Record<string, unknown>>).map((p) => ({ period: String(p.period), value: String(p.value), publishedOn: String(p.published_on), acquiredAt: p.acquired_at ? String(p.acquired_at) : undefined, sourceDocumentId: p.source_document_id ? String(p.source_document_id) : undefined, dataVersion: p.data_version ? String(p.data_version) : undefined })) }))
+}
+
+export async function recheckThesisQuality(thesisId: string): Promise<ThesisDetail> {
+  return toThesis(await request<Record<string, unknown>>(`/api/theses/${encodeURIComponent(thesisId)}/quality-check`, { method: 'POST', body: '{}' }))
 }
 
 export async function getAudit(thesisId: string): Promise<AuditItem[]> {
@@ -245,7 +256,11 @@ export async function listMetrics(keyword = ''): Promise<MetricDefinition[]> {
 }
 
 export async function saveMetricMapping(thesisId: string, hypothesisId: string, payload: { mappingId?: string; metricId: string; metricVersion: string; expectedDirection: string; expectedValue?: string; invalidationThreshold?: string; invalidationConsecutivePeriods?: number; expectationSource: string }): Promise<MetricMapping> {
-  const item = await request<Record<string, unknown>>(`/api/theses/${thesisId}/hypotheses/${hypothesisId}/mappings`, { method: 'POST', body: JSON.stringify({ mapping_id: payload.mappingId || null, metric_id: payload.metricId, metric_version: payload.metricVersion, expected_direction: payload.expectedDirection, expected_value: payload.expectedValue || null, invalidation_threshold: payload.invalidationThreshold || null, invalidation_consecutive_periods: payload.invalidationConsecutivePeriods || null, expectation_source: payload.expectationSource }) })
+  const numeric = (value?: string) => {
+    const normalized = value?.replace(/[\s,，]/g, '').trim()
+    return normalized || null
+  }
+  const item = await request<Record<string, unknown>>(`/api/theses/${thesisId}/hypotheses/${hypothesisId}/mappings`, { method: 'POST', body: JSON.stringify({ mapping_id: payload.mappingId || null, metric_id: payload.metricId, metric_version: payload.metricVersion, expected_direction: payload.expectedDirection, expected_value: numeric(payload.expectedValue), invalidation_threshold: numeric(payload.invalidationThreshold), invalidation_consecutive_periods: payload.invalidationConsecutivePeriods || null, expectation_source: payload.expectationSource }) })
   return toMapping(item)
 }
 
@@ -308,6 +323,11 @@ export async function replayProcessingJob(jobId: string): Promise<JobAccepted> {
   return { jobId: String(item.job_id), documentId: String(item.document_id), status: String(item.status) }
 }
 
+export async function reanalyzeProcessingJob(jobId: string): Promise<JobAccepted> {
+  const item = await request<Record<string, unknown>>(`/api/jobs/${encodeURIComponent(jobId)}/reanalyze`, { method: 'POST' })
+  return { jobId: String(item.job_id), documentId: String(item.document_id), status: String(item.status) }
+}
+
 export async function listIngestionReviews(): Promise<IngestionReview[]> {
   if (useMock) return []
   const items = await request<Array<Record<string, unknown>>>('/api/reviews/ingestion?limit=100')
@@ -337,6 +357,30 @@ export async function listReviewTasks(): Promise<ReviewTask[]> {
 
 export async function resolveReviewTask(taskId: string, resolution: string): Promise<void> {
   await request(`/api/reviews/${encodeURIComponent(taskId)}/resolve`, { method: 'POST', body: JSON.stringify({ resolution }) })
+}
+
+export async function createReviewDraft(thesisId: string, payload: { periodStart: string; periodEnd: string }): Promise<ReviewDraftCandidate> {
+  const item = await request<Record<string, unknown>>(`/api/reviews/theses/${encodeURIComponent(thesisId)}/drafts`, {
+    method: 'POST', body: JSON.stringify({ period_start: payload.periodStart, period_end: payload.periodEnd }),
+  })
+  return {
+    runId: String(item.run_id), status: String(item.status),
+    aiStatus: item.ai_status ? String(item.ai_status) : undefined,
+    requiresHumanReview: Boolean(item.requires_human_review),
+    payload: (item.payload ?? {}) as Record<string, unknown>, errors: (item.errors ?? []) as string[],
+  }
+}
+
+export async function recommendHypothesisMetrics(thesisId: string, hypothesisId: string, topK = 8): Promise<ReviewDraftCandidate> {
+  const item = await request<Record<string, unknown>>(`/api/agent/theses/${encodeURIComponent(thesisId)}/hypotheses/${encodeURIComponent(hypothesisId)}/metric-recommendations`, {
+    method: 'POST', body: JSON.stringify({ top_k: topK }),
+  })
+  return {
+    runId: String(item.run_id), status: String(item.status),
+    aiStatus: item.ai_status ? String(item.ai_status) : undefined,
+    requiresHumanReview: Boolean(item.requires_human_review),
+    payload: (item.payload ?? {}) as Record<string, unknown>, errors: (item.errors ?? []) as string[],
+  }
 }
 
 export async function getDocumentSegment(locator: string): Promise<DocumentSegment> {

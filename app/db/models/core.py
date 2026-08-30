@@ -177,6 +177,8 @@ class Thesis(Base):
 
     source_document_id: Mapped[str | None] = mapped_column(ForeignKey("document.document_id"))
     is_illustrative: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    thesis_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="canonical")
+    thesis_series_id: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = created_at_column()
     updated_at: Mapped[datetime] = updated_at_column()
 
