@@ -20,6 +20,9 @@ web/node_modules/
 web/dist/
 web/.vite/
 
+# 演示文档构建依赖仅用于本地生成，不纳入项目版本。
+docs/.midterm_ppt_build/node_modules/
+
 # 离线分析：公开、可再分发且带来源清单的数据可随数据集版本提交。
 # 受许可限制、付费或内部数据必须放到 external/，不得提交。
 analytics/datasets/**/external/

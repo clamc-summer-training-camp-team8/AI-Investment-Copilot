@@ -1,0 +1,295 @@
+{"kind":"deck","id":"pr/5bp0ww","name":"Deck"}
+{"kind":"layout","layoutId":"ec39ebcd-70fe-466b-bffe-0f24eba7e94a","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"c5f0937c-4874-411a-9316-44bb358e81c9","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/qdpmbm","slide":1,"title":"中期答辩","textShapes":7}
+{"kind":"shape","id":"sh/7ets36hs","slide":1,"bbox":[0,0,440,720]}
+{"kind":"shape","id":"sh/sf2tcbid","slide":1,"bbox":[878,0,402,720]}
+{"kind":"textbox","id":"sh/tgba5gzy","slide":1,"text":"中期答辩","textPreview":"中期答辩","textChars":4,"textLines":1,"bbox":[72,82,220,28]}
+{"kind":"textbox","id":"sh/i90r610b","slide":1,"text":"AI Investment\nCopilot","textPreview":"AI Investment | Copilot","textChars":21,"textLines":2,"bbox":[72,164,760,150]}
+{"kind":"textbox","id":"sh/jatszmhw","slide":1,"text":"面向行业覆盖与公司研究的\n投资逻辑全生命周期管理","textPreview":"面向行业覆盖与公司研究的 | 投资逻辑全生命周期管理","textChars":24,"textLines":2,"bbox":[76,338,700,82]}
+{"kind":"shape","id":"sh/kb298rih","slide":1,"bbox":[76,456,234,0]}
+{"kind":"textbox","id":"sh/5cba1wz2","slide":1,"text":"把研究判断沉淀为可验证、可追溯、\n可复盘的逻辑资产","textPreview":"把研究判断沉淀为可验证、可追溯、 | 可复盘的逻辑资产","textChars":25,"textLines":2,"bbox":[76,485,610,60]}
+{"kind":"textbox","id":"sh/254bilgv","slide":1,"text":"项目组 · 2026 年 8 月","textPreview":"项目组 · 2026 年 8 月","textChars":16,"textLines":1,"bbox":[76,642,420,24]}
+{"kind":"textbox","id":"sh/36dsbqh0","slide":1,"text":"从“资料堆积”\n到“逻辑演化”","textPreview":"从“资料堆积” | 到“逻辑演化”","textChars":15,"textLines":2,"bbox":[908,132,270,105]}
+{"kind":"textbox","id":"sh/v69wrq5k","slide":1,"text":"研究员判断\nAI 候选\n人工确认\n版本审计","textPreview":"研究员判断 | AI 候选 | 人工确认 | 版本审计","textChars":21,"textLines":4,"bbox":[908,330,230,170]}
+{"kind":"notes","id":"nt/qdpmbm","slide":1,"text":""}
+{"kind":"slide","id":"sl/mj77w0","slide":2,"title":"01 研究问题","textShapes":17}
+{"kind":"textbox","id":"sh/cbqpknql","slide":2,"text":"01 研究问题","textPreview":"01 研究问题","textChars":7,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/bahobi9g","slide":2,"text":"投研工作真正难点，是让判断在变化中仍可回溯","textPreview":"投研工作真正难点，是让判断在变化中仍可回溯","textChars":21,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/q9onid8v","slide":2,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/p8f698ra","slide":2,"bbox":[72,215,530,150]}
+{"kind":"textbox","id":"sh/o765g3qp","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[100,240,48,28]}
+{"kind":"textbox","id":"sh/36xo7y94","slide":2,"text":"资料持续涌入","textPreview":"资料持续涌入","textChars":6,"textLines":1,"bbox":[100,275,440,30]}
+{"kind":"textbox","id":"sh/2loned8j","slide":2,"text":"公告、财报、新闻、研报分散；新信息难以回到原始判断。","textPreview":"公告、财报、新闻、研报分散；新信息难以回到原始判断。","textChars":26,"textLines":1,"bbox":[100,313,450,40]}
+{"kind":"shape","id":"sh/1kf658ry","slide":2,"bbox":[638,215,530,150]}
+{"kind":"textbox","id":"sh/gj65c3qt","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[666,240,48,28]}
+{"kind":"textbox","id":"sh/ix83e1w7","slide":2,"text":"判断缺少结构","textPreview":"判断缺少结构","textChars":6,"textLines":1,"bbox":[666,275,440,30]}
+{"kind":"textbox","id":"sh/3yhknmds","slide":2,"text":"观点常停留在文档或沟通中，缺少可验证假设和失效条件。","textPreview":"观点常停留在文档或沟通中，缺少可验证假设和失效条件。","textChars":26,"textLines":1,"bbox":[666,313,450,40]}
+{"kind":"shape","id":"sh/4zqlgred","slide":2,"bbox":[72,405,530,150]}
+{"kind":"textbox","id":"sh/50z2pwvy","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[100,430,48,28]}
+{"kind":"textbox","id":"sh/u9o3ahwb","slide":2,"text":"状态更新不透明","textPreview":"状态更新不透明","textChars":7,"textLines":1,"bbox":[100,465,440,30]}
+{"kind":"textbox","id":"sh/vuxkjmdw","slide":2,"text":"为什么改变观点、谁确认、依据何在，难形成可审计记录。","textPreview":"为什么改变观点、谁确认、依据何在，难形成可审计记录。","textChars":26,"textLines":1,"bbox":[100,503,450,40]}
+{"kind":"shape","id":"sh/gv6lcreh","slide":2,"bbox":[638,405,530,150]}
+{"kind":"textbox","id":"sh/hwz2lwv2","slide":2,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[666,430,48,28]}
+{"kind":"textbox","id":"sh/65oj6hwf","slide":2,"text":"事后复盘成本高","textPreview":"事后复盘成本高","textChars":7,"textLines":1,"bbox":[666,465,440,30]}
+{"kind":"textbox","id":"sh/76xkf2dk","slide":2,"text":"难还原某时点可得信息与逻辑演化，经验无法沉淀。","textPreview":"难还原某时点可得信息与逻辑演化，经验无法沉淀。","textChars":23,"textLines":1,"bbox":[666,503,450,40]}
+{"kind":"textbox","id":"sh/bat0nytc","slide":2,"text":"核心矛盾：资料在增加，但“投资逻辑—证据—决策”的关系没有被持续管理。","textPreview":"核心矛盾：资料在增加，但“投资逻辑—证据—决策”的关系没有被持续管理。","textChars":35,"textLines":1,"bbox":[72,624,1080,28]}
+{"kind":"textbox","id":"sh/a9kzedc7","slide":2,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/xcvip8bi","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/mj77w0","slide":2,"text":""}
+{"kind":"slide","id":"sl/xbcc0n","slide":3,"title":"02 产品定位","textShapes":20}
+{"kind":"textbox","id":"sh/c7mdgfqd","slide":3,"text":"02 产品定位","textPreview":"02 产品定位","textChars":7,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/rmdc7ap8","slide":3,"text":"我们管理的不是一次性结论，而是投资逻辑的全生命周期","textPreview":"我们管理的不是一次性结论，而是投资逻辑的全生命周期","textChars":25,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/ql4be58n","slide":3,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/1cfudk7a","slide":3,"bbox":[72,245,198,245]}
+{"kind":"textbox","id":"sh/0b6dkf6p","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[92,270,50,22]}
+{"kind":"textbox","id":"sh/zaxcbup4","slide":3,"text":"行业","textPreview":"行业","textChars":2,"textLines":1,"bbox":[92,310,160,42]}
+{"kind":"textbox","id":"sh/e9ovip8j","slide":3,"text":"预定义三行业的研究框架、资料源与共性变量","textPreview":"预定义三行业的研究框架、资料源与共性变量","textChars":20,"textLines":1,"bbox":[92,366,158,94]}
+{"kind":"shape","id":"sh/hgbu107q","slide":3,"bbox":[270,367,24,0]}
+{"kind":"shape","id":"sh/gf2t8vql","slide":3,"bbox":[298,245,198,245]}
+{"kind":"textbox","id":"sh/yxo3ud4b","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[318,270,50,22]}
+{"kind":"textbox","id":"sh/zyxkni5w","slide":3,"text":"公司","textPreview":"公司","textChars":2,"textLines":1,"bbox":[318,310,160,42]}
+{"kind":"textbox","id":"sh/0z6lgnm1","slide":3,"text":"行业内可持续纳入；形成公司资料与研究覆盖","textPreview":"行业内可持续纳入；形成公司资料与研究覆盖","textChars":20,"textLines":1,"bbox":[318,366,158,94]}
+{"kind":"shape","id":"sh/l0zmpsnm","slide":3,"bbox":[496,367,24,0]}
+{"kind":"shape","id":"sh/m183ix47","slide":3,"bbox":[524,245,198,245]}
+{"kind":"textbox","id":"sh/72h4r25s","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[544,270,50,22]}
+{"kind":"textbox","id":"sh/8nqlknmd","slide":3,"text":"主投资逻辑","textPreview":"主投资逻辑","textChars":5,"textLines":1,"bbox":[544,310,160,42]}
+{"kind":"textbox","id":"sh/9ozmtsny","slide":3,"text":"按明确期限与研究视角管理；保留创建、验证、关闭与继任","textPreview":"按明确期限与研究视角管理；保留创建、验证、关闭与继任","textChars":26,"textLines":1,"bbox":[544,366,158,94]}
+{"kind":"shape","id":"sh/up83mx4j","slide":3,"bbox":[722,367,24,0]}
+{"kind":"shape","id":"sh/vqh4v25o","slide":3,"bbox":[750,245,198,245]}
+{"kind":"textbox","id":"sh/ru1kj21w","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[770,270,50,22]}
+{"kind":"textbox","id":"sh/6tsjaxkb","slide":3,"text":"核心假设","textPreview":"核心假设","textChars":4,"textLines":1,"bbox":[770,310,160,42]}
+{"kind":"textbox","id":"sh/twj2lcj2","slide":3,"text":"每条逻辑聚焦 3–4 条可证伪的关键前提","textPreview":"每条逻辑聚焦 3–4 条可证伪的关键前提","textChars":20,"textLines":1,"bbox":[770,366,158,94]}
+{"kind":"shape","id":"sh/svalc72h","slide":3,"bbox":[948,367,24,0]}
+{"kind":"shape","id":"sh/jqhkf210","slide":3,"bbox":[976,245,198,245]}
+{"kind":"textbox","id":"sh/ip8j6xkf","slide":3,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[996,270,50,22]}
+{"kind":"textbox","id":"sh/5sj2hsjq","slide":3,"text":"证据与决策","textPreview":"证据与决策","textChars":5,"textLines":1,"bbox":[996,310,160,42]}
+{"kind":"textbox","id":"sh/4ra1872l","slide":3,"text":"新资料影响候选经人工确认，写入版本、审计与复盘","textPreview":"新资料影响候选经人工确认，写入版本、审计与复盘","textChars":23,"textLines":1,"bbox":[996,366,158,94]}
+{"kind":"textbox","id":"sh/v2hkbi1o","slide":3,"text":"行业 → 公司 → 逻辑 → 假设 → 指标/失效条件 → 事件与证据 → 人工确认 → 版本与复盘","textPreview":"行业 → 公司 → 逻辑 → 假设 → 指标/失效条件 → 事件与证据 → 人工确认 → 版本与复盘","textChars":50,"textLines":1,"bbox":[100,576,1080,40]}
+{"kind":"textbox","id":"sh/u18j2dk3","slide":3,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/07mhcji1","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/xbcc0n","slide":3,"text":""}
+{"kind":"slide","id":"sl/w96bf0","slide":4,"title":"03 核心对象","textShapes":15}
+{"kind":"textbox","id":"sh/8nu9sbul","slide":4,"text":"03 核心对象","textPreview":"03 核心对象","textChars":7,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/7ml8j6d0","slide":4,"text":"一张逻辑卡片，把研究观点转成可验证、可治理的对象","textPreview":"一张逻辑卡片，把研究观点转成可验证、可治理的对象","textChars":24,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/61crqlwf","slide":4,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/l03qhgva","slide":4,"bbox":[72,214,430,360]}
+{"kind":"textbox","id":"sh/kzu9obep","slide":4,"text":"投资逻辑卡片","textPreview":"投资逻辑卡片","textChars":6,"textLines":1,"bbox":[105,245,310,34]}
+{"kind":"textbox","id":"sh/jyl8f6d4","slide":4,"text":"公司 / 研究期限 / 负责人\n核心观点与研究视角\n当前状态与下次复核日\n当前版本与历史快照","textPreview":"公司 / 研究期限 / 负责人 | 核心观点与研究视角 | 当前状态与下次复核日 | 当前版本与历史快照","textChars":46,"textLines":4,"bbox":[105,302,330,180]}
+{"kind":"textbox","id":"sh/yxsrm1wj","slide":4,"text":"正式发布后持续演化","textPreview":"正式发布后持续演化","textChars":9,"textLines":1,"bbox":[105,515,300,24]}
+{"kind":"shape","id":"sh/xwjqdwvy","slide":4,"bbox":[544,214,280,144]}
+{"kind":"textbox","id":"sh/wva9kred","slide":4,"text":"核心假设","textPreview":"核心假设","textChars":4,"textLines":1,"bbox":[564,238,220,26]}
+{"kind":"textbox","id":"sh/q5orqt8v","slide":4,"text":"支持 / 冲突 / 待确认，健康度可见","textPreview":"支持 / 冲突 / 待确认，健康度可见","textChars":19,"textLines":1,"bbox":[564,280,240,55]}
+{"kind":"shape","id":"sh/b6x8jy90","slide":4,"bbox":[859,214,280,144]}
+{"kind":"textbox","id":"sh/crq9s3ql","slide":4,"text":"指标与阈值","textPreview":"指标与阈值","textChars":5,"textLines":1,"bbox":[879,238,220,26]}
+{"kind":"textbox","id":"sh/xszql8r6","slide":4,"text":"程序化验证预期差、趋势、失效条件","textPreview":"程序化验证预期差、趋势、失效条件","textChars":16,"textLines":1,"bbox":[879,280,240,55]}
+{"kind":"shape","id":"sh/21orm98j","slide":4,"bbox":[544,394,280,144]}
+{"kind":"textbox","id":"sh/32x8fe94","slide":4,"text":"原文证据","textPreview":"原文证据","textChars":4,"textLines":1,"bbox":[564,418,220,26]}
+{"kind":"textbox","id":"sh/o369ojqp","slide":4,"text":"段落定位、披露时间、事实与推断分离","textPreview":"段落定位、披露时间、事实与推断分离","textChars":17,"textLines":1,"bbox":[564,460,240,55]}
+{"kind":"shape","id":"sh/p4fqhora","slide":4,"bbox":[859,394,280,144]}
+{"kind":"textbox","id":"sh/ex47i9sn","slide":4,"text":"人工决策","textPreview":"人工决策","textChars":4,"textLines":1,"bbox":[879,418,220,26]}
+{"kind":"textbox","id":"sh/fyd8be9s","slide":4,"text":"确认人、理由、前后状态与审计留痕","textPreview":"确认人、理由、前后状态与审计留痕","textChars":16,"textLines":1,"bbox":[879,460,240,55]}
+{"kind":"textbox","id":"sh/jq9w36lo","slide":4,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/i50fulk3","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/w96bf0","slide":4,"text":""}
+{"kind":"slide","id":"sl/za21y0","slide":5,"title":"04 业务闭环","textShapes":14}
+{"kind":"textbox","id":"sh/xsbe90r2","slide":5,"text":"04 业务闭环","textPreview":"04 业务闭环","textChars":7,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/a5kvelsr","slide":5,"text":"新资料进入后，AI 与程序分别做擅长的事，汇合于人工复核","textPreview":"新资料进入后，AI 与程序分别做擅长的事，汇合于人工复核","textChars":28,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/v6tw7q9c","slide":5,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/kvmxkvat","slide":5,"bbox":[92,205,320,76]}
+{"kind":"textbox","id":"sh/5wved0re","slide":5,"text":"1. 行业知识库 + 公司资料 + 研究员观点","textPreview":"1. 行业知识库 + 公司资料 + 研究员观点","textChars":23,"textLines":1,"bbox":[110,221,280,46]}
+{"kind":"shape","id":"sh/itkfi5sn","slide":5,"bbox":[412,243,40,0]}
+{"kind":"shape","id":"sh/jutwba98","slide":5,"bbox":[466,205,320,76]}
+{"kind":"textbox","id":"sh/szmxofap","slide":5,"text":"2. AI 生成可编辑逻辑草稿","textPreview":"2. AI 生成可编辑逻辑草稿","textChars":15,"textLines":1,"bbox":[484,221,280,46]}
+{"kind":"shape","id":"sh/t0vehkra","slide":5,"bbox":[786,243,40,0]}
+{"kind":"shape","id":"sh/tkrepsjy","slide":5,"bbox":[840,205,320,76]}
+{"kind":"textbox","id":"sh/sjixgnid","slide":5,"text":"3. 假设、指标、阈值与失效条件","textPreview":"3. 假设、指标、阈值与失效条件","textChars":16,"textLines":1,"bbox":[858,221,280,46]}
+{"kind":"shape","id":"sh/7ipwni1s","slide":5,"bbox":[1000,281,0,36]}
+{"kind":"shape","id":"sh/6xgfed07","slide":5,"bbox":[92,337,320,76]}
+{"kind":"textbox","id":"sh/horetszu","slide":5,"text":"4. 研究员发布正式逻辑","textPreview":"4. 研究员发布正式逻辑","textChars":12,"textLines":1,"bbox":[110,353,280,46]}
+{"kind":"shape","id":"sh/gnixk7i9","slide":5,"bbox":[412,375,40,0]}
+{"kind":"shape","id":"sh/fm9wr2ho","slide":5,"bbox":[466,337,320,76]}
+{"kind":"textbox","id":"sh/ul0fix03","slide":5,"text":"5. 持续资料/事件进入与指标更新","textPreview":"5. 持续资料/事件进入与指标更新","textChars":17,"textLines":1,"bbox":[484,353,280,46]}
+{"kind":"shape","id":"sh/xs7eh8jq","slide":5,"bbox":[786,375,40,0]}
+{"kind":"shape","id":"sh/wryx83i5","slide":5,"bbox":[840,337,320,76]}
+{"kind":"textbox","id":"sh/8n25k7ux","slide":5,"text":"6. AI 候选影响 + 程序化指标验证","textPreview":"6. AI 候选影响 + 程序化指标验证","textChars":20,"textLines":1,"bbox":[858,353,280,46]}
+{"kind":"shape","id":"sh/9ob6dcvi","slide":5,"bbox":[1000,413,0,36]}
+{"kind":"shape","id":"sh/mlknixc7","slide":5,"bbox":[92,469,320,76]}
+{"kind":"textbox","id":"sh/nmtob2ds","slide":5,"text":"7. 人工复核","textPreview":"7. 人工复核","textChars":7,"textLines":1,"bbox":[110,485,280,46]}
+{"kind":"shape","id":"sh/wbm5o7u9","slide":5,"bbox":[412,507,40,0]}
+{"kind":"shape","id":"sh/xcv6hcvu","slide":5,"bbox":[466,469,320,76]}
+{"kind":"textbox","id":"sh/a94nmhc3","slide":5,"text":"8. 健康度、状态、版本更新","textPreview":"8. 健康度、状态、版本更新","textChars":14,"textLines":1,"bbox":[484,485,280,46]}
+{"kind":"shape","id":"sh/vadof2do","slide":5,"bbox":[786,507,40,0]}
+{"kind":"shape","id":"sh/kfmpsru5","slide":5,"bbox":[840,469,320,76]}
+{"kind":"textbox","id":"sh/5gv6lwvq","slide":5,"text":"9. 时间线复盘与规则/模型迭代","textPreview":"9. 时间线复盘与规则/模型迭代","textChars":16,"textLines":1,"bbox":[858,485,280,46]}
+{"kind":"textbox","id":"sh/fah8bqxs","slide":5,"text":"AI：理解非结构化资料、生成影响候选与引用　　 程序：计算指标、阈值、预期差与失效条件","textPreview":"AI：理解非结构化资料、生成影响候选与引用　　 程序：计算指标、阈值、预期差与失效条件","textChars":43,"textLines":1,"bbox":[105,615,1060,28]}
+{"kind":"textbox","id":"sh/e98rilwn","slide":5,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/1czqd0fy","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/za21y0","slide":5,"text":""}
+{"kind":"slide","id":"sl/1s5e5t","slide":6,"title":"05 已完成的可演示闭环","textShapes":19}
+{"kind":"textbox","id":"sh/3exsbup0","slide":6,"text":"05 已完成的可演示闭环","textPreview":"05 已完成的可演示闭环","textChars":12,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/of6tkz6l","slide":6,"text":"前端 Demo 展示：一条逻辑如何被新资料挑战、复核并沉淀","textPreview":"前端 Demo 展示：一条逻辑如何被新资料挑战、复核并沉淀","textChars":29,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/pgfad47q","slide":6,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/qh8bm9ob","slide":6,"bbox":[72,254,160,170]}
+{"kind":"textbox","id":"sh/bihsfe5w","slide":6,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[92,278,30,30]}
+{"kind":"textbox","id":"sh/cjqtoj6h","slide":6,"text":"已发布逻辑","textPreview":"已发布逻辑","textChars":5,"textLines":1,"bbox":[90,326,124,72]}
+{"kind":"shape","id":"sh/dkzah4n2","slide":6,"bbox":[232,339,24,0]}
+{"kind":"shape","id":"sh/yl8bq9on","slide":6,"bbox":[260,254,160,170]}
+{"kind":"textbox","id":"sh/z6hsje58","slide":6,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[280,278,30,30]}
+{"kind":"textbox","id":"sh/zutorut8","slide":6,"text":"上传固定公开资料","textPreview":"上传固定公开资料","textChars":8,"textLines":1,"bbox":[278,326,124,72]}
+{"kind":"shape","id":"sh/ytknypcn","slide":6,"bbox":[420,339,24,0]}
+{"kind":"shape","id":"sh/lwv6t4be","slide":6,"bbox":[448,254,160,170]}
+{"kind":"textbox","id":"sh/kv250zut","slide":6,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[468,278,30,30]}
+{"kind":"textbox","id":"sh/bqtonutc","slide":6,"text":"查看 AI 影响候选与原文引用","textPreview":"查看 AI 影响候选与原文引用","textChars":15,"textLines":1,"bbox":[466,326,124,72]}
+{"kind":"shape","id":"sh/apknupcr","slide":6,"bbox":[608,339,24,0]}
+{"kind":"shape","id":"sh/xsb6pkb2","slide":6,"bbox":[636,254,160,170]}
+{"kind":"textbox","id":"sh/cr25wfuh","slide":6,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[656,278,30,30]}
+{"kind":"textbox","id":"sh/vmdozetg","slide":6,"text":"人工复核并填写理由","textPreview":"人工复核并填写理由","textChars":9,"textLines":1,"bbox":[654,326,124,72]}
+{"kind":"shape","id":"sh/ul4769sv","slide":6,"bbox":[796,339,24,0]}
+{"kind":"shape","id":"sh/qtszeh0f","slide":6,"bbox":[824,254,160,170]}
+{"kind":"textbox","id":"sh/ru10nmh0","slide":6,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[844,278,30,30]}
+{"kind":"textbox","id":"sh/cvahg7il","slide":6,"text":"状态建议处理","textPreview":"状态建议处理","textChars":6,"textLines":1,"bbox":[842,326,124,72]}
+{"kind":"shape","id":"sh/dwjipczq","slide":6,"bbox":[984,339,24,0]}
+{"kind":"shape","id":"sh/exszih0b","slide":6,"bbox":[1012,254,160,170]}
+{"kind":"textbox","id":"sh/zy10rmhw","slide":6,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1032,278,30,30]}
+{"kind":"textbox","id":"sh/0ja1kryh","slide":6,"text":"时间线与审计更新","textPreview":"时间线与审计更新","textChars":8,"textLines":1,"bbox":[1030,326,124,72]}
+{"kind":"shape","id":"sh/1k3itwz2","slide":6,"bbox":[72,482,1136,100]}
+{"kind":"textbox","id":"sh/u18z6x07","slide":6,"text":"视频演示位","textPreview":"视频演示位","textChars":5,"textLines":1,"bbox":[104,506,180,28]}
+{"kind":"textbox","id":"sh/v2h0fihs","slide":6,"text":"演示重点：事实、AI 候选、程序计算、人工结论有明确视觉区分；AI 不直接修改正式逻辑。","textPreview":"演示重点：事实、AI 候选、程序计算、人工结论有明确视觉区分；AI 不直接修改正式逻辑。","textChars":44,"textLines":1,"bbox":[280,505,850,34]}
+{"kind":"textbox","id":"sh/xgn2l0ja","slide":6,"text":"此处嵌入或播放前端 Demo 录屏（建议 60–90 秒）","textPreview":"此处嵌入或播放前端 Demo 录屏（建议 60–90 秒）","textChars":29,"textLines":1,"bbox":[280,542,800,24]}
+{"kind":"textbox","id":"sh/wfelcv2p","slide":6,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/be5kjq14","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/1s5e5t","slide":6,"text":""}
+{"kind":"slide","id":"sl/rhw5kq","slide":7,"title":"06 已有工程基础","textShapes":15}
+{"kind":"textbox","id":"sh/4nihsb21","slide":7,"text":"06 已有工程基础","textPreview":"06 已有工程基础","textChars":9,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/jm90j6lg","slide":7,"text":"代码已形成“投研对象 + 人工门禁 + 可追溯计算”的 MVP 骨架","textPreview":"代码已形成“投研对象 + 人工门禁 + 可追溯计算”的 MVP 骨架","textChars":34,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/il0zq1kv","slide":7,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/hk7ihw3a","slide":7,"bbox":[72,210,1136,58]}
+{"kind":"textbox","id":"sh/wjyhor2p","slide":7,"text":"领域对象","textPreview":"领域对象","textChars":4,"textLines":1,"bbox":[94,225,180,28]}
+{"kind":"textbox","id":"sh/vip0fml4","slide":7,"text":"Security、Thesis、Hypothesis、Metric、Event、Evidence、EvidenceRelation","textPreview":"Security、Thesis、Hypothesis、Metric、Event、Evidence、EvidenceRelation","textChars":65,"textLines":1,"bbox":[302,225,870,28]}
+{"kind":"shape","id":"sh/uhgzmhkz","slide":7,"bbox":[72,283,1136,58]}
+{"kind":"textbox","id":"sh/9g7idw3e","slide":7,"text":"治理能力","textPreview":"治理能力","textChars":4,"textLines":1,"bbox":[94,298,180,28]}
+{"kind":"textbox","id":"sh/8vyhkr2t","slide":7,"text":"ThesisVersion、ReviewTask、AuditLog；状态建议与人工确认分离","textPreview":"ThesisVersion、ReviewTask、AuditLog；状态建议与人工确认分离","textChars":45,"textLines":1,"bbox":[302,298,870,28]}
+{"kind":"shape","id":"sh/y98za9cj","slide":7,"bbox":[72,356,1136,58]}
+{"kind":"textbox","id":"sh/za1g3et4","slide":7,"text":"数据与解析","textPreview":"数据与解析","textChars":5,"textLines":1,"bbox":[94,371,180,28]}
+{"kind":"textbox","id":"sh/0vahcjup","slide":7,"text":"Document、DocumentSegment、解析/切片/去重/引用定位；公开数据版本化","textPreview":"Document、DocumentSegment、解析/切片/去重/引用定位；公开数据版本化","textChars":46,"textLines":1,"bbox":[302,371,870,28]}
+{"kind":"shape","id":"sh/lwjy5obu","slide":7,"bbox":[72,429,1136,58]}
+{"kind":"textbox","id":"sh/q58f69c7","slide":7,"text":"AI 与规则","textPreview":"AI 与规则","textChars":6,"textLines":1,"bbox":[94,444,180,28]}
+{"kind":"textbox","id":"sh/b6hgfets","slide":7,"text":"AI 输出走 JSON Schema；数值验证由 app/calc 的确定性规则完成","textPreview":"AI 输出走 JSON Schema；数值验证由 app/calc 的确定性规则完成","textChars":42,"textLines":1,"bbox":[302,444,870,28]}
+{"kind":"shape","id":"sh/c7qh8jud","slide":7,"bbox":[72,502,1136,58]}
+{"kind":"textbox","id":"sh/d8zyhoby","slide":7,"text":"工程保障","textPreview":"工程保障","textChars":4,"textLines":1,"bbox":[94,517,180,28]}
+{"kind":"textbox","id":"sh/21of2pcb","slide":7,"text":"FastAPI + PostgreSQL + Alembic；单元/集成/契约测试；OpenAPI 契约","textPreview":"FastAPI + PostgreSQL + Alembic；单元/集成/契约测试；OpenAPI 契约","textChars":52,"textLines":1,"bbox":[302,517,870,28]}
+{"kind":"textbox","id":"sh/32xgbutw","slide":7,"text":"当前真实数据验证：三行业九公司、45 条逻辑、135 条假设；450/450 条可追溯证据。","textPreview":"当前真实数据验证：三行业九公司、45 条逻辑、135 条假设；450/450 条可追溯证据。","textChars":46,"textLines":1,"bbox":[72,600,1120,30]}
+{"kind":"textbox","id":"sh/r6dw3q9o","slide":7,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/6l4va5s3","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/rhw5kq","slide":7,"text":""}
+{"kind":"slide","id":"sl/6khr23","slide":8,"title":"07 后端框架","textShapes":14}
+{"kind":"textbox","id":"sh/sjat0bi9","slide":8,"text":"07 后端框架","textPreview":"07 后端框架","textChars":7,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/7i1cr61o","slide":8,"text":"应用服务负责正式变更；Agent 异步生成候选；RAG 为 Agent 提供可引用上下文","textPreview":"应用服务负责正式变更；Agent 异步生成候选；RAG 为 Agent 提供可引用上下文","textChars":44,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/6hsby1k3","slide":8,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/h8juxgjq","slide":8,"bbox":[160,195,960,64]}
+{"kind":"textbox","id":"sh/g7at4bi5","slide":8,"text":"API / Web","textPreview":"API / Web","textChars":9,"textLines":1,"bbox":[185,212,260,28]}
+{"kind":"textbox","id":"sh/fm1cv61k","slide":8,"text":"接口、权限、前端工作台","textPreview":"接口、权限、前端工作台","textChars":11,"textLines":1,"bbox":[475,207,610,42]}
+{"kind":"shape","id":"sh/ulsb2l0z","slide":8,"bbox":[640,259,0,18]}
+{"kind":"shape","id":"sh/xczalwjm","slide":8,"bbox":[160,281,960,64]}
+{"kind":"textbox","id":"sh/wbqtsr21","slide":8,"text":"Application Service","textPreview":"Application Service","textChars":19,"textLines":1,"bbox":[185,298,260,28]}
+{"kind":"textbox","id":"sh/mx03qpk7","slide":8,"text":"Coverage · Knowledge · Thesis Lifecycle · Review · Timeline","textPreview":"Coverage · Knowledge · Thesis Lifecycle · Review · Timeline","textChars":59,"textLines":1,"bbox":[475,293,610,42]}
+{"kind":"shape","id":"sh/ny9kja1s","slide":8,"bbox":[640,345,0,18]}
+{"kind":"shape","id":"sh/8zilsf2d","slide":8,"bbox":[160,367,960,64]}
+{"kind":"textbox","id":"sh/9krmlkjy","slide":8,"text":"Agent Orchestrator","textPreview":"Agent Orchestrator","textChars":18,"textLines":1,"bbox":[185,384,260,28]}
+{"kind":"textbox","id":"sh/ul03upkj","slide":8,"text":"文档理解 · 逻辑草稿 · 事件影响 · 假设校验/状态建议\n只写候选，不直接改正式逻辑","textPreview":"文档理解 · 逻辑草稿 · 事件影响 · 假设校验/状态建议 | 只写候选，不直接改正式逻辑","textChars":44,"textLines":2,"bbox":[475,379,610,42]}
+{"kind":"shape","id":"sh/vmt4nu14","slide":8,"bbox":[640,431,0,18]}
+{"kind":"shape","id":"sh/wn2lwz29","slide":8,"bbox":[160,453,960,64]}
+{"kind":"textbox","id":"sh/hobmp4ju","slide":8,"text":"RAG Context Builder","textPreview":"RAG Context Builder","textChars":19,"textLines":1,"bbox":[185,470,260,28]}
+{"kind":"textbox","id":"sh/ipk3y9kf","slide":8,"text":"当前逻辑/假设/指标/历史证据 + 公司资料库 + 行业资料库","textPreview":"当前逻辑/假设/指标/历史证据 + 公司资料库 + 行业资料库","textChars":31,"textLines":1,"bbox":[475,465,610,42]}
+{"kind":"shape","id":"sh/jqt4ru10","slide":8,"bbox":[640,517,0,18]}
+{"kind":"shape","id":"sh/fudkfeh8","slide":8,"bbox":[160,539,960,64]}
+{"kind":"textbox","id":"sh/et4369gn","slide":8,"text":"Domain + Repository + Database","textPreview":"Domain + Repository + Database","textChars":30,"textLines":1,"bbox":[185,556,260,28]}
+{"kind":"textbox","id":"sh/1wv2h4ze","slide":8,"text":"业务库：行业、公司、逻辑、假设、指标、证据、版本、审计\n知识库：原文、切片、向量、关键词索引、引用定位","textPreview":"业务库：行业、公司、逻辑、假设、指标、证据、版本、审计 | 知识库：原文、切片、向量、关键词索引、引用定位","textChars":51,"textLines":2,"bbox":[475,551,610,42]}
+{"kind":"textbox","id":"sh/gvml8zyt","slide":8,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/rqtkbuhw","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/6khr23","slide":8,"text":""}
+{"kind":"slide","id":"sl/017beb","slide":9,"title":"08 动态知识库与 RAG","textShapes":14}
+{"kind":"textbox","id":"sh/xormhwjm","slide":9,"text":"08 动态知识库与 RAG","textPreview":"08 动态知识库与 RAG","textChars":13,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/a10nm1kv","slide":9,"text":"RAG 不是“大文档搜索”，而是按研究范围构建可引用的决策上下文","textPreview":"RAG 不是“大文档搜索”，而是按研究范围构建可引用的决策上下文","textChars":32,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/b294f61g","slide":9,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/kri5sb2d","slide":9,"bbox":[72,225,330,280]}
+{"kind":"textbox","id":"sh/lsbmlgji","slide":9,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[97,252,48,24]}
+{"kind":"textbox","id":"sh/yp0nq1k7","slide":9,"text":"资料进入","textPreview":"资料进入","textChars":4,"textLines":1,"bbox":[97,294,260,30]}
+{"kind":"textbox","id":"sh/jq94j61s","slide":9,"text":"行业/公司资料采集\n→ 解析、切片、去重\n→ 事实/事件抽取\n→ 引用定位与质量检查","textPreview":"行业/公司资料采集 | → 解析、切片、去重 | → 事实/事件抽取 | → 引用定位与质量检查","textChars":42,"textLines":4,"bbox":[97,350,266,118]}
+{"kind":"shape","id":"sh/0vy5g72t","slide":9,"bbox":[402,365,40,0]}
+{"kind":"shape","id":"sh/1w7m9cje","slide":9,"bbox":[454,225,330,280]}
+{"kind":"textbox","id":"sh/to3m94z2","slide":9,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[479,252,48,24]}
+{"kind":"textbox","id":"sh/8nal0zih","slide":9,"text":"分层检索","textPreview":"分层检索","textChars":4,"textLines":1,"bbox":[479,294,260,30]}
+{"kind":"textbox","id":"sh/7m147uhw","slide":9,"text":"① 当前逻辑与已确认假设\n② 当前公司的历史资料/事件\n③ 所属行业的共性知识与变量","textPreview":"① 当前逻辑与已确认假设 | ② 当前公司的历史资料/事件 | ③ 所属行业的共性知识与变量","textChars":42,"textLines":3,"bbox":[479,350,266,118]}
+{"kind":"shape","id":"sh/6ls3y90r","slide":9,"bbox":[784,365,40,0]}
+{"kind":"shape","id":"sh/hs3mdoze","slide":9,"bbox":[836,225,330,280]}
+{"kind":"textbox","id":"sh/grul4jyt","slide":9,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[861,252,48,24]}
+{"kind":"textbox","id":"sh/vql4beh8","slide":9,"text":"Agent 输出","textPreview":"Agent 输出","textChars":8,"textLines":1,"bbox":[861,294,260,30]}
+{"kind":"textbox","id":"sh/upc3290n","slide":9,"text":"影响的既有假设\n支持/冲突/待判断\n强度与置信度\n可打开的原文引用","textPreview":"影响的既有假设 | 支持/冲突/待判断 | 强度与置信度 | 可打开的原文引用","textChars":33,"textLines":4,"bbox":[861,350,266,118]}
+{"kind":"textbox","id":"sh/5wnmhoza","slide":9,"text":"目标：每一条 AI 候选都能回到“检索范围 + 原文片段 + 模型/提示词版本”，再等待人工确认。","textPreview":"目标：每一条 AI 候选都能回到“检索范围 + 原文片段 + 模型/提示词版本”，再等待人工确认。","textChars":49,"textLines":1,"bbox":[92,565,1080,40]}
+{"kind":"textbox","id":"sh/4vel8jyp","slide":9,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/obmx0rad","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/017beb","slide":9,"text":""}
+{"kind":"slide","id":"sl/1w62l4","slide":10,"title":"09 当前验证与边界","textShapes":18}
+{"kind":"textbox","id":"sh/ep43mh8f","slide":10,"text":"09 当前验证与边界","textPreview":"09 当前验证与边界","textChars":10,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/1cvmhw76","slide":10,"text":"我们验证的是闭环治理能力，不宣称 AI 已能产生交易结论或稳定创造 Alpha","textPreview":"我们验证的是闭环治理能力，不宣称 AI 已能产生交易结论或稳定创造 Alpha","textChars":39,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/grmlorql","slide":10,"bbox":[72,174,1136,0]}
+{"kind":"textbox","id":"sh/rmtkb2p4","slide":10,"text":"已完成","textPreview":"已完成","textChars":3,"textLines":1,"bbox":[72,215,380,30]}
+{"kind":"textbox","id":"sh/6lk3ix8j","slide":10,"text":"下一阶段","textPreview":"下一阶段","textChars":4,"textLines":1,"bbox":[650,215,380,30]}
+{"kind":"shape","id":"sh/tov2dc7a","slide":10,"bbox":[72,265,500,76]}
+{"kind":"textbox","id":"sh/snmlk7qp","slide":10,"text":"已验证","textPreview":"已验证","textChars":3,"textLines":1,"bbox":[94,282,100,24]}
+{"kind":"textbox","id":"sh/bix4n6p8","slide":10,"text":"三行业九公司数据范围与公开披露资料","textPreview":"三行业九公司数据范围与公开披露资料","textChars":17,"textLines":1,"bbox":[94,315,440,32]}
+{"kind":"shape","id":"sh/qho3u1on","slide":10,"bbox":[72,361,500,76]}
+{"kind":"textbox","id":"sh/krqpknm1","slide":10,"text":"已验证","textPreview":"已验证","textChars":3,"textLines":1,"bbox":[94,282,100,24]}
+{"kind":"textbox","id":"sh/lszqdsn6","slide":10,"text":"逻辑—假设—证据—状态建议—人工门禁—版本/审计链路","textPreview":"逻辑—假设—证据—状态建议—人工门禁—版本/审计链路","textChars":26,"textLines":1,"bbox":[94,315,440,32]}
+{"kind":"shape","id":"sh/yp87id4v","slide":10,"bbox":[72,457,500,76]}
+{"kind":"textbox","id":"sh/jqh8bi5g","slide":10,"text":"已验证","textPreview":"已验证","textChars":3,"textLines":1,"bbox":[94,282,100,24]}
+{"kind":"textbox","id":"sh/w36pgn6p","slide":10,"text":"高影响输出 450/450 可追溯；AI/规则不自动改正式状态","textPreview":"高影响输出 450/450 可追溯；AI/规则不自动改正式状态","textChars":31,"textLines":1,"bbox":[94,315,440,32]}
+{"kind":"shape","id":"sh/xofq9sna","slide":10,"bbox":[650,265,558,76]}
+{"kind":"textbox","id":"sh/a1o7edoj","slide":10,"text":"尚待验证","textPreview":"尚待验证","textChars":4,"textLines":1,"bbox":[672,282,110,24]}
+{"kind":"textbox","id":"sh/b2xo7i54","slide":10,"text":"动态采集、向量/关键词检索与异步任务的生产化","textPreview":"动态采集、向量/关键词检索与异步任务的生产化","textChars":22,"textLines":1,"bbox":[672,315,500,32]}
+{"kind":"shape","id":"sh/oz6pc36t","slide":10,"bbox":[650,361,558,76]}
+{"kind":"textbox","id":"sh/90f658ne","slide":10,"text":"尚待验证","textPreview":"尚待验证","textChars":4,"textLines":1,"bbox":[672,282,110,24]}
+{"kind":"textbox","id":"sh/pknet0bq","slide":10,"text":"独立人工金标、研究员人工基线耗时、跨行业语义共识","textPreview":"独立人工金标、研究员人工基线耗时、跨行业语义共识","textChars":24,"textLines":1,"bbox":[672,315,500,32]}
+{"kind":"shape","id":"sh/4jedkvu5","slide":10,"bbox":[650,457,558,76]}
+{"kind":"textbox","id":"sh/3i5wrqtk","slide":10,"text":"尚待验证","textPreview":"尚待验证","textChars":4,"textLines":1,"bbox":[672,282,110,24]}
+{"kind":"textbox","id":"sh/2hwvi5cf","slide":10,"text":"真实模型接入后的召回、准确、采纳率与长期稳定性","textPreview":"真实模型接入后的召回、准确、采纳率与长期稳定性","textChars":23,"textLines":1,"bbox":[672,315,500,32]}
+{"kind":"textbox","id":"sh/hgnep0bu","slide":10,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/gfudgvu9","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/1w62l4","slide":10,"text":""}
+{"kind":"slide","id":"sl/fvdxkw","slide":11,"title":"10 下一阶段计划","textShapes":16}
+{"kind":"textbox","id":"sh/4v6pwze1","slide":11,"text":"10 下一阶段计划","textPreview":"10 下一阶段计划","textChars":9,"textLines":1,"bbox":[72,42,600,25]}
+{"kind":"textbox","id":"sh/3ux83uxw","slide":11,"text":"先把长期运行的基础设施做扎实，再扩大行业与公司覆盖","textPreview":"先把长期运行的基础设施做扎实，再扩大行业与公司覆盖","textChars":25,"textLines":1,"bbox":[72,76,1136,52]}
+{"kind":"shape","id":"sh/ito7upwb","slide":11,"bbox":[72,174,1136,0]}
+{"kind":"shape","id":"sh/hsvq14fq","slide":11,"bbox":[72,214,1136,70]}
+{"kind":"shape","id":"sh/grmpsze5","slide":11,"bbox":[92,227,122,44]}
+{"kind":"textbox","id":"sh/vqdozuxk","slide":11,"text":"阶段一","textPreview":"阶段一","textChars":3,"textLines":1,"bbox":[100,235,105,22]}
+{"kind":"textbox","id":"sh/up47qpwz","slide":11,"text":"补齐 Industry / Coverage 与同公司跨期逻辑生命周期规则","textPreview":"补齐 Industry / Coverage 与同公司跨期逻辑生命周期规则","textChars":37,"textLines":1,"bbox":[245,226,610,26]}
+{"kind":"textbox","id":"sh/tov6xkfe","slide":11,"text":"行业固定、公司可扩展、逻辑可关闭/继任","textPreview":"行业固定、公司可扩展、逻辑可关闭/继任","textChars":19,"textLines":1,"bbox":[245,255,820,20]}
+{"kind":"shape","id":"sh/8nmpofe9","slide":11,"bbox":[72,309,1136,70]}
+{"kind":"shape","id":"sh/a5kr218n","slide":11,"bbox":[92,322,122,44]}
+{"kind":"textbox","id":"sh/b6tsbmp8","slide":11,"text":"阶段二","textPreview":"阶段二","textChars":3,"textLines":1,"bbox":[100,330,105,22]}
+{"kind":"textbox","id":"sh/w7294rqt","slide":11,"text":"落地文档入库、索引、RAG Retrieval 与异步 Job 框架","textPreview":"落地文档入库、索引、RAG Retrieval 与异步 Job 框架","textChars":34,"textLines":1,"bbox":[245,321,610,26]}
+{"kind":"textbox","id":"sh/xsbadw7y","slide":11,"text":"动态知识库与任务可观测、可重试","textPreview":"动态知识库与任务可观测、可重试","textChars":15,"textLines":1,"bbox":[245,350,820,20]}
+{"kind":"shape","id":"sh/m10ryh8b","slide":11,"bbox":[72,404,1136,70]}
+{"kind":"shape","id":"sh/n29s7mpw","slide":11,"bbox":[92,417,122,44]}
+{"kind":"textbox","id":"sh/o3i90rqh","slide":11,"text":"阶段三","textPreview":"阶段三","textChars":3,"textLines":1,"bbox":[100,425,105,22]}
+{"kind":"textbox","id":"sh/94ra9w72","slide":11,"text":"接入事件影响 Agent，形成候选—复核—版本更新闭环","textPreview":"接入事件影响 Agent，形成候选—复核—版本更新闭环","textChars":27,"textLines":1,"bbox":[245,416,610,26]}
+{"kind":"textbox","id":"sh/ex0ruh8f","slide":11,"text":"模型只写候选，人工保持最终控制","textPreview":"模型只写候选，人工保持最终控制","textChars":15,"textLines":1,"bbox":[245,445,820,20]}
+{"kind":"shape","id":"sh/zy9832p0","slide":11,"bbox":[72,499,1136,70]}
+{"kind":"shape","id":"sh/325obi5s","slide":11,"bbox":[92,512,122,44]}
+{"kind":"textbox","id":"sh/2hw72do7","slide":11,"text":"阶段四","textPreview":"阶段四","textChars":3,"textLines":1,"bbox":[100,520,105,22]}
+{"kind":"textbox","id":"sh/p4n6d8ni","slide":11,"text":"构建独立金标与研究员对照实验，评估采纳率与效率","textPreview":"构建独立金标与研究员对照实验，评估采纳率与效率","textChars":23,"textLines":1,"bbox":[245,511,610,26]}
+{"kind":"textbox","id":"sh/43ep436d","slide":11,"text":"验证真实产品价值，持续修正规则与模型","textPreview":"验证真实产品价值，持续修正规则与模型","textChars":18,"textLines":1,"bbox":[245,540,820,20]}
+{"kind":"textbox","id":"sh/r6pofi5o","slide":11,"text":"AI Investment Copilot · 中期答辩","textPreview":"AI Investment Copilot · 中期答辩","textChars":28,"textLines":1,"bbox":[72,678,500,18]}
+{"kind":"textbox","id":"sh/q5w76do3","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1150,678,58,18]}
+{"kind":"notes","id":"nt/fvdxkw","slide":11,"text":""}
+{"kind":"slide","id":"sl/rxkcpp","slide":12,"title":"中期结论","textShapes":5}
+{"kind":"textbox","id":"sh/2tsrud47","slide":12,"text":"中期结论","textPreview":"中期结论","textChars":4,"textLines":1,"bbox":[72,86,310,30]}
+{"kind":"textbox","id":"sh/pgja583y","slide":12,"text":"让投资逻辑成为\n可持续演化的研究资产","textPreview":"让投资逻辑成为 | 可持续演化的研究资产","textChars":18,"textLines":2,"bbox":[72,150,820,140]}
+{"kind":"textbox","id":"sh/ova9w3md","slide":12,"text":"已完成：逻辑对象定义、单逻辑可点击闭环、人工门禁与审计骨架、\n真实公开数据的初步验证。","textPreview":"已完成：逻辑对象定义、单逻辑可点击闭环、人工门禁与审计骨架、 | 真实公开数据的初步验证。","textChars":43,"textLines":2,"bbox":[76,340,900,66]}
+{"kind":"shape","id":"sh/bi1s7ilo","slide":12,"bbox":[76,450,294,0]}
+{"kind":"textbox","id":"sh/ahsryd43","slide":12,"text":"下一步：以动态 RAG 知识库与异步 Agent 编排为底座，\n在固定行业能力边界内持续扩展公司与跨期逻辑管理。","textPreview":"下一步：以动态 RAG 知识库与异步 Agent 编排为底座， | 在固定行业能力边界内持续扩展公司与跨期逻辑管理。","textChars":56,"textLines":2,"bbox":[76,480,940,70]}
+{"kind":"textbox","id":"sh/xk3a9s3u","slide":12,"text":"谢谢","textPreview":"谢谢","textChars":2,"textLines":1,"bbox":[76,632,180,32]}
+{"kind":"notes","id":"nt/rxkcpp","slide":12,"text":""}
