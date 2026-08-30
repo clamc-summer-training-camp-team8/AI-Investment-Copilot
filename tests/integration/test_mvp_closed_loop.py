@@ -23,6 +23,7 @@ import pytest
 from app.ai.gateway import Gateway
 from app.core.config import RuleThresholds, settings
 from app.core.domain import (
+    DocumentSegmentRecord,
     HypothesisRecord,
     MetricMappingRecord,
     ObservationRecord,
@@ -63,6 +64,19 @@ def sample_documents(sample_pack_dir):  # type: ignore[no-untyped-def]
 @pytest.fixture
 def annotated_events(sample_pack_dir):  # type: ignore[no-untyped-def]
     return load_annotated_events(sample_pack_dir / "样例事件人工标注.csv")
+
+
+def _current_event_segments(sample_documents, events):  # type: ignore[no-untyped-def]
+    return [
+        DocumentSegmentRecord(
+            document_id=segment.document_id,
+            locator=segment.locator,
+            ordinal=segment.ordinal,
+            content=segment.content,
+        )
+        for event in events
+        for segment in segment_document(event.document_id, sample_documents[event.document_id])
+    ]
 
 
 def _seed_thesis(uow):  # type: ignore[no-untyped-def]
@@ -199,6 +213,7 @@ def test_闭环跑通且落在关注而非失效(
         security_id=SECURITY_ID,
         actor=RESEARCHER,
         thresholds=thresholds,
+        current_event_segments=_current_event_segments(sample_documents, annotated_events),
         locator_by_event=locator_by_event,
     )
 
@@ -258,6 +273,7 @@ def test_人工确认后状态才变更并生成版本与时间线(
         security_id=SECURITY_ID,
         actor=RESEARCHER,
         thresholds=thresholds,
+        current_event_segments=_current_event_segments(sample_documents, annotated_events),
         locator_by_event=locator_by_event,
     )
     for candidate in uow.evidence.list_for_thesis(THESIS_ID):
@@ -326,6 +342,7 @@ def test_确认证据前状态计算不受待确认证据影响(
         security_id=SECURITY_ID,
         actor=RESEARCHER,
         thresholds=thresholds,
+        current_event_segments=_current_event_segments(sample_documents, annotated_events),
         locator_by_event=locator_by_event,
     )
     assert result.candidates

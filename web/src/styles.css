@@ -149,6 +149,13 @@ a { color: inherit; }
 .hypothesis-card h3 { font-size: 15px; line-height: 1.65; min-height: 74px; }
 .importance, .hypothesis-status { color: var(--muted); font-size: 12px; }
 .hypothesis-card footer { padding-top: 12px; border-top: 1px solid #edf1f5; font-size: 12px; color: var(--muted); }
+.stage-bar { display: flex; align-items: center; gap: 12px; margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.stage-bar .active { color: var(--navy); font-weight: 700; }
+.stage-bar i { color: var(--muted); font-style: normal; }
+.hypothesis-metrics { display: grid; gap: 6px; margin: 10px 0 12px; padding: 10px 12px; border: 1px solid var(--line); background: #fafbfd; color: var(--muted); font-size: 12px; }
+.hypothesis-metrics strong { color: var(--navy); }
+.hypothesis-metrics > div { display: grid; gap: 3px; }
+.hypothesis-metrics small { color: var(--muted); line-height: 1.5; }
 .two-column { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; }
 .suggestion-card { border: 1px solid #d6d0f2; background: #fbfaff; border-radius: 12px; padding: 18px; }
 .suggestion-card > span { color: var(--purple); font-size: 12px; font-weight: 700; }
@@ -357,3 +364,16 @@ blockquote { margin: 16px 0; padding: 3px 0 3px 18px; border-left: 3px solid #b8
   .adjudication-form .decision-reason { grid-column: auto; }
   .quality-exceptions p { grid-template-columns: 1fr; gap: 3px; }
 }
+.suggestion-meta { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; }
+.existing-trend { display: grid; gap: 4px; margin: 10px 0 14px; padding: 10px 12px; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--muted); font-size: 12px; }
+.existing-trend strong { color: var(--navy); }
+.history-chart { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); overflow-x: auto; }
+.history-chart-head, .history-scale { display: flex; gap: 12px; align-items: baseline; color: var(--muted); font-size: 11px; margin-bottom: 5px; white-space: nowrap; }
+.history-chart-head strong { color: var(--text); font-size: 12px; }
+.history-scale { justify-content: space-between; font-size: 10px; }
+.history-bars { display: flex; flex-direction: row; align-items: flex-end; gap: 8px; min-height: 132px; min-width: 100%; width: max-content; }
+.history-bar-wrap { display: flex; flex: 0 0 56px; flex-direction: column; align-items: center; gap: 3px; }
+.history-bar-wrap i { display: block; width: 16px; background: var(--blue); border-radius: 2px 2px 0 0; min-height: 4px; }
+.history-bar-wrap small { color: var(--muted); font-size: 9px; transform: rotate(-35deg); transform-origin: top center; white-space: nowrap; }
+.history-bar-wrap b { color: var(--text); font-size: 9px; font-weight: 500; white-space: nowrap; }
+.warning-note { margin: 6px 0; padding: 8px 10px; color: #8a5a00; background: #fff7df; border: 1px solid #f0d58a; border-radius: 6px; }

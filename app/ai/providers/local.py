@@ -19,7 +19,9 @@ from typing import Any
 from app.ai.prompts.templates import (
     EVENT_EXTRACTION,
     EVENT_IMPACT,
+    HYPOTHESIS_QUALITY,
     METRIC_EXPLAIN,
+    METRIC_RECOMMEND,
     REVIEW_DRAFT,
     THESIS_DRAFT,
 )
@@ -144,28 +146,21 @@ class LocalProvider:
         segment_locator: str,
         segment_text: str,
         disclosure_time: str,
-        thesis_id: str | None = None,
-        hypothesis_id: str | None = None,
-        thesis_context: str | None = None,
-        hypothesis_context: dict[str, Any] | None = None,
-        retrieval_context: list[tuple[str, str]] | None = None,
+        candidates: list[dict[str, Any]],
+        evidence_contexts: list[dict[str, Any]],
         event_type: str = "其他",
         occurred_on: str | None = None,
-        context: str = "",
         repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """产出符合 contracts/ai/event_impact.schema.json 的载荷。"""
         # The deterministic provider deliberately ignores retrieval text.  It
         # keeps the pilot's execution contract testable without pretending a
         # lexical rule engine can consume semantic RAG context.
-        _ = context, repair_errors, retrieval_context
+        _ = evidence_contexts, repair_errors
         verdict = judge_impact(segment_text)
         return {
             "document_id": document_id,
             "security_id": security_id,
-            "thesis_id": thesis_id,
-            "hypothesis_id": hypothesis_id,
-            "relevance": "相关" if hypothesis_id else "待定",
             "event": {
                 "event_type": event_type,
                 "event_time": occurred_on,
@@ -173,19 +168,62 @@ class LocalProvider:
                 "fact": segment_text[:500],
                 "evidence_locator": segment_locator,
             },
-            "signal": {
-                "direction": verdict.signal_direction.value,
-                "impact_direction": verdict.impact_direction.value,
-                "strength": verdict.strength,
-                "confidence": verdict.confidence,
-                "horizon": "中期",
-                "rationale": verdict.rationale,
-                "transmission_path": verdict.transmission_path,
-                "suggested_tracking": _tracking_hints(segment_text),
-                "requires_human_review": True,
-            },
+            "impacts": [
+                {
+                    "thesis_id": str(candidate.get("thesis_id") or ""),
+                    "hypothesis_id": str(candidate.get("hypothesis_id") or ""),
+                    "relevance": "相关",
+                    "inference": verdict.rationale,
+                    "citations": [segment_locator],
+                    "unsupported_claims": [],
+                    "signal": {
+                        "direction": verdict.signal_direction.value,
+                        "impact_direction": verdict.impact_direction.value,
+                        "strength": verdict.strength,
+                        "confidence": verdict.confidence,
+                        "horizon": "中期",
+                        "rationale": verdict.rationale,
+                        "transmission_path": verdict.transmission_path,
+                        "suggested_tracking": _tracking_hints(segment_text),
+                        "requires_human_review": True,
+                    },
+                }
+                for candidate in candidates
+            ],
             "model_version": self.model_version,
             "prompt_version": EVENT_IMPACT.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
+    def analyze_event_impacts(
+        self,
+        *,
+        document_id: str,
+        security_id: str,
+        events: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """本地测试提供者保持批量契约；仅在明确配置 local 时使用。"""
+        results = []
+        for event in events:
+            analysis = self.analyze_event_impact(
+                document_id=document_id,
+                security_id=security_id,
+                segment_locator=str(event["segment_locator"]),
+                segment_text=str(event["segment_text"]),
+                disclosure_time=str(event["disclosure_time"]),
+                candidates=list(event["candidates"]),
+                evidence_contexts=list(event["evidence_contexts"]),
+                event_type=str(event.get("event_type") or "其他"),
+                occurred_on=(str(event["occurred_on"]) if event.get("occurred_on") else None),
+                repair_errors=repair_errors,
+            )
+            results.append({"event_id": str(event["event_id"]), "analysis": analysis})
+        return {
+            "results": results,
+            "model_version": self.model_version,
+            "prompt_version": f"{EVENT_IMPACT.version}-batch-v1",
             "generated_at": now().isoformat(),
             "ai_status": AiStatus.CANDIDATE.value,
         }
@@ -302,6 +340,61 @@ class LocalProvider:
             "ai_status": AiStatus.CANDIDATE.value,
         }
 
+    def recommend_metrics(
+        self,
+        *,
+        security_id: str,
+        hypothesis_id: str,
+        hypothesis: str,
+        industry: str,
+        catalog_version: str,
+        candidates: list[dict[str, Any]],
+        top_k: int,
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """离线实现按工具召回分排序，保证目录约束和测试可复现。"""
+        del industry, repair_errors
+        selected = candidates[: max(1, min(top_k, 20))]
+        recommendations: list[dict[str, Any]] = []
+        for candidate in selected:
+            reasons = candidate.get("matching_reasons") or []
+            relation_type = str(candidate.get("relation_type") or "代理指标")
+            score = float(candidate.get("retrieval_score") or 0)
+            recommendations.append(
+                {
+                    "metric_id": str(candidate["metric_id"]),
+                    "metric_version": str(candidate["metric_version"]),
+                    "metric_name": str(candidate["metric_name"]),
+                    "relation_type": relation_type,
+                    "rationale": (
+                        "；".join(str(item) for item in reasons)
+                        or f"该指标可用于观察假设“{hypothesis}”中的相关变量"
+                    ),
+                    "expected_direction": candidate.get("expected_direction"),
+                    "observation_frequency": str(candidate["observation_frequency"]),
+                    "availability_grade": str(candidate["availability_grade"]),
+                    "source_ids": [str(item) for item in candidate.get("source_ids") or []],
+                    "threshold_policy": str(candidate["threshold_policy"]),
+                    "confidence": min(0.9, max(0.55, 0.5 + score / 40)),
+                }
+            )
+        confidence = (
+            min(item["confidence"] for item in recommendations) if recommendations else 0.4
+        )
+        return {
+            "security_id": security_id,
+            "hypothesis_id": hypothesis_id,
+            "catalog_version": catalog_version,
+            "recommendations": recommendations,
+            "unmatched_concepts": [] if recommendations else [hypothesis],
+            "requires_human_review": True,
+            "confidence": confidence,
+            "model_version": self.model_version,
+            "prompt_version": METRIC_RECOMMEND.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
     def draft_review(
         self,
         *,
@@ -345,6 +438,41 @@ class LocalProvider:
             "confidence": 0.75 if records else 0.4,
             "model_version": self.model_version,
             "prompt_version": REVIEW_DRAFT.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
+    def hypothesis_quality(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        title: str,
+        core_view: str,
+        hypotheses: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        from app.ai.quality.hypothesis_structure import inspect_hypotheses
+
+        checked = inspect_hypotheses([dict(item) for item in hypotheses])
+        results = [
+            {
+                "hypothesis_id": str(item.get("hypothesis_id") or ""),
+                "logic_dimension": str(item.get("logic_dimension") or "待确认"),
+                "duplicate_with": [],
+                "crosses_with": [],
+                "quality_warning": str(item.get("quality_warning") or ""),
+            }
+            for item in checked
+        ]
+        return {
+            "thesis_id": thesis_id,
+            "summary": f"已检查 {len(results)} 条假设的维度、重复和交叉关系。",
+            "results": results,
+            "requires_human_review": True,
+            "confidence": 0.75,
+            "model_version": self.model_version,
+            "prompt_version": HYPOTHESIS_QUALITY.version,
             "generated_at": now().isoformat(),
             "ai_status": AiStatus.CANDIDATE.value,
         }
@@ -397,7 +525,8 @@ def _extract_hypotheses(segments: list[tuple[str, str]]) -> list[dict[str, Any]]
                 "evidence_locator": None,
             }
         )
-    return candidates
+    from app.ai.quality.hypothesis_structure import inspect_hypotheses
+    return inspect_hypotheses(candidates)
 
 
 def _metric_hints(text: str) -> list[dict[str, Any]]:

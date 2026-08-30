@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from app.ai.agents import AgentEvent, CandidateHypothesis
+from app.ai.agents import AgentEventInput, HypothesisInput
 from app.ai.errors import ModelUnavailable as SharedModelUnavailable
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.ai.providers.http import HttpLLMProvider, HttpProvider, ProviderResponseError
@@ -43,14 +43,20 @@ def test_frontend_change_worker_gateway_contract_is_compatible() -> None:
         segment_locator="DOC-001#paragraph-1",
         segment_text="公司收入增长，订单持续提升。",
         disclosure_time="2026-08-10T09:00:00+08:00",
-        thesis_id="THS-001",
-        hypothesis_id="THS-001-H1",
+        candidates=[
+            {
+                "thesis_id": "THS-001",
+                "hypothesis_id": "THS-001-H1",
+                "statement": "收入保持增长",
+            }
+        ],
+        evidence_contexts=[],
         event_type="业绩",
         occurred_on="2026-08-10",
     )
 
     assert outcome.usable
-    signal = outcome.payload["signal"]
+    signal = outcome.payload["impacts"][0]["signal"]
     assert {
         "impact_direction",
         "strength",
@@ -69,20 +75,23 @@ def test_integrated_change_worker_context_contract_is_compatible() -> None:
         segment_locator="DOC-002#paragraph-1",
         segment_text="公司订单持续提升。",
         disclosure_time="2026-08-10T09:00:00+08:00",
-        thesis_id="THS-002",
-        hypothesis_id="THS-002-H1",
-        thesis_context="订单增长支持收入兑现",
-        hypothesis_context={
-            "statement": "订单增长能够转化为收入",
-            "importance": "核心",
-            "metrics": [],
-        },
+        candidates=[
+            {
+                "thesis_id": "THS-002",
+                "hypothesis_id": "THS-002-H1",
+                "thesis_core_view": "订单增长支持收入兑现",
+                "statement": "订单增长能够转化为收入",
+                "importance": "核心",
+                "metric_rules": [],
+            }
+        ],
+        evidence_contexts=[],
         event_type="订单",
     )
 
     assert outcome.usable
-    assert outcome.payload["thesis_id"] == "THS-002"
-    assert outcome.payload["hypothesis_id"] == "THS-002-H1"
+    assert outcome.payload["impacts"][0]["thesis_id"] == "THS-002"
+    assert outcome.payload["impacts"][0]["hypothesis_id"] == "THS-002-H1"
 
 
 def test_integrated_import_names_remain_compatible() -> None:
@@ -96,15 +105,16 @@ def test_runtime_build_exposes_typed_event_analysis() -> None:
     runtime = InvestmentResearchAgent.build(_gateway())
 
     execution = runtime.analyze_event(
-        AgentEvent(
+        AgentEventInput(
             event_id="EV-001",
             document_id="DOC-001",
             security_id="000538.SZ",
-            segment_locator="DOC-001#paragraph-1",
-            segment_text="公司收入增长。",
+            evidence_locator="DOC-001#paragraph-1",
+            fact="公司收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THS-001", "THS-001-H1", "收入保持增长")],
+        (HypothesisInput("THS-001", "THS-001-H1", "收入保持增长"),),
     )
 
     assert execution.task == "event_impact"

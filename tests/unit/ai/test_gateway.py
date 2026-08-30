@@ -20,10 +20,19 @@ def test_mock_provider_复用本地规则并通过事件契约() -> None:
         segment_locator="doc-001#paragraph-1",
         segment_text="公司收入增长，订单持续提升。",
         disclosure_time=datetime.now(UTC).isoformat(),
+        candidates=[
+            {
+                "thesis_id": "THS-001",
+                "hypothesis_id": "H1",
+                "statement": "收入保持增长",
+            }
+        ],
+        evidence_contexts=[],
     )
 
     assert outcome.ai_status is AiStatus.CANDIDATE
     assert outcome.payload["event"]["evidence_locator"] == "doc-001#paragraph-1"
+    assert outcome.payload["impacts"][0]["hypothesis_id"] == "H1"
 
 
 def test_http_provider_缺少端点时明确失败() -> None:

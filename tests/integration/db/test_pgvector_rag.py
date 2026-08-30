@@ -86,4 +86,6 @@ def test_pgvector_extension_and_permission_first_hybrid_search(session: Session)
     assert public_doc in returned
     assert secret_doc not in returned
     assert all(hit.visibility_label == "公开" for hit in hits)
+    assert all(hit.published_at is not None for hit in hits)
+    assert all(hit.source == "公开" for hit in hits)
     assert all(hit.embedding_version == "hash-char-2gram-v1" for hit in hits)

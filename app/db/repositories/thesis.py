@@ -46,6 +46,8 @@ def _to_thesis(row: Thesis, *, participating: list[str] | None = None) -> Thesis
         invalidation_require_all=row.invalidation_require_all,
         invalidation_hypotheses=participating or [],
         draft_suggestions=row.draft_suggestions or {},
+        thesis_kind=row.thesis_kind,
+        thesis_series_id=row.thesis_series_id,
     )
 
 
@@ -81,6 +83,8 @@ class SqlThesisRepo:
                 superseded_by_thesis_id=record.superseded_by_thesis_id,
                 source_document_id=record.source_document_id,
                 is_illustrative=record.is_illustrative,
+                thesis_kind=record.thesis_kind,
+                thesis_series_id=record.thesis_series_id,
             )
         )
         self._session.flush()
@@ -99,6 +103,7 @@ class SqlThesisRepo:
         row.version = record.version
         row.horizon_end_on = record.horizon_end_on
         row.next_review_at = record.next_review_at
+        row.draft_suggestions = record.draft_suggestions
         row.draft_suggestions = record.draft_suggestions or None
         self._session.flush()
 
@@ -243,6 +248,7 @@ class SqlThesisRepo:
         rows = self._session.scalars(
             select(Thesis)
             .where(*conditions)
+            .where(True if query.include_snapshots else Thesis.thesis_kind == "canonical")
             # established_on 倒序让最新的卡片在前；thesis_id 兜底保证分页稳定，
             # 否则同一天建立的卡片在翻页时可能重复或漏掉。
             .order_by(Thesis.established_on.desc(), Thesis.thesis_id)

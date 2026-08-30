@@ -110,6 +110,9 @@ def create_draft(
             "hypotheses": {
                 f"{thesis_id}-H{index}": {
                     "metric_suggestions": item.get("metric_suggestions") or [],
+                    "causal_level": item.get("causal_level"),
+                    "logic_dimension": item.get("logic_dimension") or item.get("causal_level"),
+                    "quality_warning": item.get("quality_warning", ""),
                 }
                 for index, item in enumerate(hypotheses, start=1)
             },

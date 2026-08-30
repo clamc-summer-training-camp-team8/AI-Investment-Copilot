@@ -67,6 +67,7 @@ def _to_evidence(row: Evidence, *, label: str = "内部") -> EvidenceRecord:
         occurred_at=row.occurred_at,
         source_url=row.source_url,
         retrieval_trace=dict(row.retrieval_trace) if row.retrieval_trace else None,
+        ingested_at=row.created_at,
     )
 
 
@@ -374,27 +375,29 @@ class SqlObservationRepo:
                 period_type=r.period_type,
                 source_document_id=r.source_document_id,
                 data_version=r.data_version,
+                ingested_at=r.ingested_at,
             )
             for r in rows
         ]
 
     def add(self, record: ObservationRecord) -> None:
-        self._session.add(
-            MetricObservation(
-                security_id=record.security_id,
-                metric_id=record.metric_id,
-                metric_version=record.metric_version,
-                period=record.period,
-                period_type=record.period_type,
-                observation_date=record.observation_date,
-                actual_value=record.actual_value,
-                unit=record.unit,
-                expected_value=record.expected_value,
-                benchmark_value=record.benchmark_value,
-                source_document_id=record.source_document_id,
-                data_version=record.data_version,
-            )
+        row = MetricObservation(
+            security_id=record.security_id,
+            metric_id=record.metric_id,
+            metric_version=record.metric_version,
+            period=record.period,
+            period_type=record.period_type,
+            observation_date=record.observation_date,
+            actual_value=record.actual_value,
+            unit=record.unit,
+            expected_value=record.expected_value,
+            benchmark_value=record.benchmark_value,
+            source_document_id=record.source_document_id,
+            data_version=record.data_version,
         )
+        if record.ingested_at is not None:
+            row.ingested_at = record.ingested_at
+        self._session.add(row)
         self._session.flush()
 
 

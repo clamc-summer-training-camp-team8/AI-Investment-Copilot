@@ -38,6 +38,9 @@ class RuleThresholds(BaseSettings):
     trend_min_periods: int = 4
     trend_max_periods: int = 8
 
+    # 指标超过该可得时间窗口只标记为过期，不参与新的失效建议。过期数据不是反证。
+    metric_max_age_days: int = Field(default=180, ge=1, le=3650)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -57,8 +60,13 @@ class Settings(BaseSettings):
     llm_endpoint: str | None = None
     llm_api_key: SecretStr | None = None
     llm_model_version: str = "local-rule-v1"
-    llm_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
-    llm_max_retries: int = Field(default=2, ge=0, le=5)
+    # 三层超时：连接、单次响应、整段 AI 分析。最外层 ARQ job_timeout
+    # 只作兜底，不能代替模型调用自己的明确截止时间。
+    llm_connect_timeout_seconds: float = Field(default=5.0, gt=0, le=60)
+    llm_timeout_seconds: float = Field(default=45.0, gt=0, le=300)
+    llm_analysis_timeout_seconds: float = Field(default=120.0, gt=0, le=600)
+    # HTTP 层最多补偿一次瞬时网络错误；任务层不再自动重跑整份文档。
+    llm_max_retries: int = Field(default=1, ge=0, le=2)
     llm_max_output_tokens: int = Field(default=4096, ge=256, le=65536)
     llm_thinking_mode: str = Field(default="disabled", pattern="^(enabled|disabled)$")
     llm_reasoning_effort: str = Field(default="low", pattern="^(low|high|max)$")

@@ -34,9 +34,10 @@ class ThesisDraftIn(Base):
     """建卡入参。文件上传走单独的接口，这里只接手工观点。"""
 
     security_id: Annotated[str, Field(min_length=1)]
-    view: Annotated[str, Field(min_length=1, max_length=2000)]
+    view: Annotated[str, Field(max_length=2000)] = ""
     document_id: str | None = None
-    use_rag: bool = False
+    # 新建逻辑默认使用权限过滤后的历史资料；调用方仍可显式关闭以做无资料对照测试。
+    use_rag: bool = True
 
 
 class ThesisPublishIn(Base):
@@ -92,6 +93,10 @@ class StatusDecisionIn(Base):
 class MetricMappingOut(Base):
     mapping_id: str
     metric_id: str
+    metric_name: str = ""
+    expected_value: Decimal | None = None
+    invalidation_threshold: Decimal | None = None
+    invalidation_consecutive_periods: int | None = None
     metric_version: str
     expected_direction: str
     expected_value: Decimal | None = None
@@ -113,6 +118,9 @@ class HypothesisOut(Base):
     status: str
     observation_window: str | None = None
     invalidation_rule: str | None = None
+    causal_level: str | None = None
+    logic_dimension: str | None = None
+    quality_warning: str | None = None
     metric_suggestions: list[dict[str, object]] = Field(default_factory=list)
     mappings: list[MetricMappingOut] = Field(default_factory=list)
 
@@ -130,6 +138,8 @@ class ThesisOut(Base):
     established_on: date
     horizon_end_on: date | None = None
     next_review_at: date | None = None
+    thesis_kind: str = "canonical"
+    thesis_series_id: str | None = None
     hypotheses: list[HypothesisOut] = Field(default_factory=list)
     risk_suggestions: list[dict[str, object]] = Field(default_factory=list)
     invalidation_suggestions: list[dict[str, object]] = Field(default_factory=list)
@@ -191,6 +201,7 @@ class EvidenceDetailOut(Base):
     source_document_title: str
     disclosed_at: datetime
     occurred_at: date | None = None
+    ingested_at: datetime
     source_url: str
 
     @field_serializer("strength_score", "ai_confidence")
@@ -376,6 +387,10 @@ class TrendPointOut(Base):
 
     period: str
     value: Decimal
+    published_on: date
+    acquired_at: datetime | None = None
+    source_document_id: str | None = None
+    data_version: str | None = None
 
     @field_serializer("value")
     def _value_as_str(self, value: Decimal) -> str:
@@ -395,6 +410,7 @@ class HypothesisTrendOut(Base):
     hypothesis_id: str
     statement: str
     metric_id: str
+    metric_name: str = ""
     unit: str
     period_type: str
     metric_version: str

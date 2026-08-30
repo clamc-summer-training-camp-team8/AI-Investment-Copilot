@@ -10,7 +10,7 @@
 | 文件 | 契约 | 说明 |
 | --- | --- | --- |
 | `thesis_draft.schema.json` | 逻辑卡片生成 | 标题、核心观点、2~5 条假设、指标建议、风险、失效条件建议、引用 |
-| `event_impact.schema.json` | 事件影响分析 | 相关性、目标假设、方向、强度、事实摘要、传导路径、建议跟踪项、引用 |
+| `event_impact.schema.json` | 批量事件影响分析 | 一条事件对应全部候选假设的逐条相关性、方向、强度、传导路径、建议跟踪项和引用 |
 | `metric_validation.schema.json` | 指标验证结果 | 预期差、同比环比、趋势、同业位置、规则结论。由 `app/calc` 产出 |
 | `retrospective_draft.schema.json` | 复盘草稿 | 正确判断、错误假设、遗漏风险、领先信号、改进建议、引用 |
 

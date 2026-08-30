@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import date
+from datetime import date, timedelta
 
 from app.calc.deterministic import Observation
 from app.calc.rules import (
@@ -132,6 +132,13 @@ def compute_suggestion(
                 if today is None or o.observation_date <= today
             ]
             if not observations:
+                continue
+            evaluation_date = today or date.today()
+            latest_available_on = max(item.observation_date for item in observations)
+            if latest_available_on < evaluation_date - timedelta(
+                days=thresholds.metric_max_age_days
+            ):
+                # 数据过期只意味着当前不可判定，不能把旧突破直接升级为新的失效建议。
                 continue
             checks.append(
                 check_invalidation(

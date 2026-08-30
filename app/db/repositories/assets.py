@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sqlalchemy import delete, func, select, text, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.domain import (
@@ -194,7 +195,17 @@ class SqlAssetRepo:
         return None if row is None else _run(row)
 
     def add_artifacts(self, records: list[IngestionArtifactRecord]) -> None:
-        self._session.add_all([IngestionArtifact(**record.__dict__) for record in records])
+        if not records:
+            return
+        statement = insert(IngestionArtifact).values([record.__dict__ for record in records])
+        statement = statement.on_conflict_do_update(
+            index_elements=["run_id", "artifact_type", "artifact_key"],
+            set_={
+                "payload": statement.excluded.payload,
+                "content_hash": statement.excluded.content_hash,
+            },
+        )
+        self._session.execute(statement)
         self._session.flush()
 
     def index_artifacts(
@@ -206,19 +217,30 @@ class SqlAssetRepo:
         records: list[IngestionArtifactRecord],
     ) -> None:
         segments = [record for record in records if record.artifact_type == "segment"]
-        self._session.add_all(
-            [
-                SegmentSearchIndex(
-                    index_id=f"{run_id}:{record.artifact_key}",
-                    ingestion_run_id=run_id,
-                    document_id=document_id,
-                    locator=record.artifact_key,
-                    content=str(record.payload.get("content", "")),
-                    visibility_label=visibility_label,
-                )
-                for record in segments
-            ]
+        if not segments:
+            return
+        values = [
+            {
+                "index_id": f"{run_id}:{record.artifact_key}",
+                "ingestion_run_id": run_id,
+                "document_id": document_id,
+                "locator": record.artifact_key,
+                "content": str(record.payload.get("content", "")),
+                "visibility_label": visibility_label,
+            }
+            for record in segments
+        ]
+        statement = insert(SegmentSearchIndex).values(values)
+        statement = statement.on_conflict_do_update(
+            index_elements=["index_id"],
+            set_={
+                "document_id": statement.excluded.document_id,
+                "locator": statement.excluded.locator,
+                "content": statement.excluded.content,
+                "visibility_label": statement.excluded.visibility_label,
+            },
         )
+        self._session.execute(statement)
         self._session.flush()
         self._session.execute(
             text(
@@ -395,13 +417,18 @@ class SqlAssetRepo:
         escaped = query.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         rows = self._session.execute(
             text(
-                """SELECT document_id, locator, content, visibility_label,
-                          ts_rank_cd(search_vector, plainto_tsquery('simple', :query)) AS rank
-                   FROM segment_search_index
-                   WHERE visibility_label = ANY(:labels)
-                     AND (search_vector @@ plainto_tsquery('simple', :query)
-                          OR content ILIKE :pattern ESCAPE '\\')
-                   ORDER BY rank DESC, document_id, locator
+                """SELECT i.document_id, i.locator, i.content, i.visibility_label,
+                          d.published_at,
+                          COALESCE(NULLIF(BTRIM(d.title),''),
+                                   NULLIF(BTRIM(d.source_id),''),d.document_id)
+                            AS source,
+                          ts_rank_cd(i.search_vector, plainto_tsquery('simple', :query)) AS rank
+                   FROM segment_search_index i
+                   JOIN document d ON d.document_id=i.document_id AND d.deleted_at IS NULL
+                   WHERE i.visibility_label = ANY(:labels)
+                     AND (i.search_vector @@ plainto_tsquery('simple', :query)
+                          OR i.content ILIKE :pattern ESCAPE '\\')
+                   ORDER BY rank DESC, i.document_id, i.locator
                    LIMIT :limit"""
             ),
             {
@@ -418,6 +445,8 @@ class SqlAssetRepo:
                 content=str(row["content"]),
                 visibility_label=str(row["visibility_label"]),
                 rank=float(row["rank"] or 0),
+                published_at=row["published_at"],
+                source=str(row["source"]),
             )
             for row in rows
         ]
@@ -494,7 +523,10 @@ class SqlAssetRepo:
             text(
                 """WITH filtered AS (
                      SELECT i.index_id,i.ingestion_run_id,i.document_id,i.locator,i.content,
-                            i.visibility_label,i.search_vector,e.embedding,d.published_at
+                            i.visibility_label,i.search_vector,e.embedding,d.published_at,
+                            COALESCE(NULLIF(BTRIM(d.title),''),
+                                     NULLIF(BTRIM(d.source_id),''),d.document_id)
+                              AS source
                      FROM segment_search_index i
                      JOIN segment_embedding e ON e.index_id=i.index_id
                                               AND e.embedding_version=:embedding_version
@@ -523,7 +555,8 @@ class SqlAssetRepo:
                        1-(embedding <=> CAST(:embedding AS vector)) AS vector_rank
                      FROM filtered
                    )
-                   SELECT document_id,locator,content,visibility_label,ingestion_run_id,
+                   SELECT document_id,locator,content,visibility_label,published_at,source,
+                          ingestion_run_id,
                           keyword_rank,vector_rank,
                           (:keyword_weight*keyword_rank)+(:vector_weight*GREATEST(vector_rank,0)) AS rank
                    FROM scored
@@ -550,6 +583,8 @@ class SqlAssetRepo:
                 content=str(row["content"]),
                 visibility_label=str(row["visibility_label"]),
                 rank=float(row["rank"] or 0),
+                published_at=row["published_at"],
+                source=str(row["source"]),
                 retrieval_mode="hybrid",
                 keyword_rank=float(row["keyword_rank"] or 0),
                 vector_rank=float(row["vector_rank"] or 0),

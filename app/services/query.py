@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+import re
 
 from app.calc.deterministic import Observation, TrendResult, trend
 from app.core.config import RuleThresholds
@@ -24,11 +25,12 @@ from app.core.domain import (
     AuditRecord,
     HypothesisRecord,
     MetricMappingRecord,
+    ObservationRecord,
     ThesisQuery,
     ThesisRecord,
     UnitOfWork,
 )
-from app.core.enums import ConfirmationStatus
+from app.core.enums import ConfirmationStatus, ThesisStatus
 from app.services.permission import Actor, can_view_thesis
 
 # 单页上限。前端分页器默认 20，给到 100 已足够；再大就该走导出而不是列表接口。
@@ -75,6 +77,7 @@ def list_theses(uow: UnitOfWork, actor: Actor, query: ThesisQuery) -> Page:
             keyword=query.keyword,
             limit=clamp_limit(query.limit),
             offset=max(query.offset, 0),
+            include_snapshots=query.include_snapshots,
         )
     )
     visible = [
@@ -103,12 +106,17 @@ class HypothesisTrend:
     hypothesis_id: str
     statement: str
     metric_id: str
+    metric_name: str
     unit: str
     period_type: str
     metric_version: str
     data_version: str | None
     result: TrendResult | None
+    expected_value: Decimal | None = None
+    invalidation_threshold: Decimal | None = None
+    invalidation_consecutive_periods: int | None = None
     note: str = ""
+    source_rows: tuple[ObservationRecord, ...] = ()
 
 
 def hypothesis_trends(
@@ -137,6 +145,7 @@ def hypothesis_trends(
                     hypothesis_id=hypothesis.hypothesis_id,
                     statement=hypothesis.statement,
                     metric_id="",
+                    metric_name="",
                     unit="",
                     period_type="",
                     metric_version="",
@@ -146,7 +155,7 @@ def hypothesis_trends(
                 )
             )
             continue
-        trends.append(_trend_for(uow, thesis, hypothesis, mappings[0], conf))
+        trends.extend(_trend_for(uow, thesis, hypothesis, mapping, conf) for mapping in mappings)
 
     return trends
 
@@ -160,7 +169,17 @@ def _trend_for(
 ) -> HypothesisTrend:
     rows = uow.observations.list_for_metric(thesis.security_id, mapping.metric_id)
     # 窗口裁剪：早于建立日可得的观测不算对这条逻辑的验证。
-    in_window = [r for r in rows if r.observation_date >= thesis.established_on]
+    # 草稿阶段需要展示历史参考，供研究员校准预期；正式逻辑仍只用建立日后的
+    # 观测参与验证，避免把事前数据误判为已验证结果。
+    in_window = list(rows) if thesis.status is ThesisStatus.DRAFT else [
+        r for r in rows if r.observation_date >= thesis.established_on
+    ]
+    window_match = re.search(r"(\d+)\s*(?:个)?(季度|季|月)", hypothesis.observation_window or "")
+    if window_match and in_window:
+        count = int(window_match.group(1))
+        periods = sorted({r.period for r in in_window})
+        allowed = set(periods[-count:])
+        in_window = [r for r in in_window if r.period in allowed]
 
     observations = [
         Observation(
@@ -190,17 +209,35 @@ def _trend_for(
     )
 
     latest = max(in_window, key=lambda r: r.observation_date, default=None)
+    display_rows = rows[-8:]
+    display_latest = latest or max(display_rows, key=lambda r: r.observation_date, default=None)
     excluded = len(rows) - len(in_window)
+    note = ""
+    if thesis.status is ThesisStatus.DRAFT:
+        note = "草稿阶段展示历史参考；正式状态判断仍按逻辑建立日裁剪"
+    elif excluded:
+        note = f"已排除逻辑建立日之前的 {excluded} 期观测"
+    expectation_note = (
+        f"预期值：{mapping.expected_value if mapping.expected_value is not None else '未设置'}；"
+        f"失效阈值：{mapping.invalidation_threshold if mapping.invalidation_threshold is not None else '未设置'}；"
+        f"连续：{mapping.invalidation_consecutive_periods or '—'} 期"
+    )
+    note = f"{note}；{expectation_note}" if note else expectation_note
     return HypothesisTrend(
         hypothesis_id=hypothesis.hypothesis_id,
         statement=hypothesis.statement,
         metric_id=mapping.metric_id,
-        unit=latest.unit if latest else "",
-        period_type=latest.period_type if latest else "单季度",
+        metric_name=(uow.metrics.get(mapping.metric_id, mapping.metric_version).name if uow.metrics.get(mapping.metric_id, mapping.metric_version) else mapping.metric_id),
+        expected_value=mapping.expected_value,
+        invalidation_threshold=mapping.invalidation_threshold,
+        invalidation_consecutive_periods=mapping.invalidation_consecutive_periods,
+        unit=display_latest.unit if display_latest else "",
+        period_type=display_latest.period_type if display_latest else "单季度",
         metric_version=mapping.metric_version,
         data_version=latest.data_version if latest else None,
         result=result,
-        note=(f"已排除逻辑建立日之前的 {excluded} 期观测" if excluded else ""),
+        note=note,
+        source_rows=tuple(display_rows),
     )
 
 

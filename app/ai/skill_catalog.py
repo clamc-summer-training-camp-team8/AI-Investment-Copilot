@@ -17,7 +17,9 @@ _SKILL_KEYS = frozenset(
         "thesis-draft",
         "event-impact",
         "metric-explain",
+        "metric-recommend",
         "review-draft",
+        "hypothesis-quality",
     }
 )
 

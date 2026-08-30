@@ -46,7 +46,7 @@ export const demoTheses: ThesisDetail[] = [
 export const demoEvidence: EvidenceDetail = {
   evidenceId: 'EVD-SG-001', securityId: '300274', sourceDocumentTitle: '阳光电源 2025 年年度报告',
   factExcerpt: '储能行业营业收入 372.87 亿元，同比增长 49.39%；毛利率 36.49%，同比下降 0.20 个百分点。',
-  disclosedAt: '2026-04-18T18:00:00+08:00', sourceUrl: 'https://www.cninfo.com.cn/',
+  disclosedAt: '2026-04-18T18:00:00+08:00', ingestedAt: '2026-04-18T18:05:00+08:00', sourceUrl: 'https://www.cninfo.com.cn/',
   direction: 'conflict', strength: 'high', aiConfidence: 0.84, aiStatus: '候选',
   modelVersion: 'local-rule-v1', promptVersion: 'event-impact-v4', confirmationStatus: 'pending',
   sourceDocumentId: 'DOC-SG-2025-AR', evidenceLocator: 'DOC-SG-2025-AR#paragraph-184',
@@ -78,8 +78,8 @@ export const demoRelations: Relation[] = [{ relationId: 'REL-SG-001', thesisId: 
 export const demoSuggestions: Suggestion[] = [{ suggestionId: 2031, currentStatus: '验证中', suggestedStatus: '出现分歧', reasons: ['核心假设同时存在已确认支持证据与高强度冲突候选', '收入增长与毛利率变化方向背离'], triggeredHypotheses: ['HYP-SG-001'], ruleVersion: 'status-rule-v1.8' }]
 
 export const demoTrends: Trend[] = [
-  { hypothesisId: 'HYP-SG-001', statement: hypotheses[0].statement, metricId: 'MET-GM-001', unit: '%', direction: '改善', points: [{ period: '2025Q2', value: '34.2' }, { period: '2025Q3', value: '35.1' }, { period: '2025Q4', value: '36.5' }, { period: '2026Q1', value: '38.4' }] },
-  { hypothesisId: 'HYP-SG-002', statement: hypotheses[1].statement, metricId: 'MET-CFO-001', unit: '亿元', direction: '波动', points: [{ period: '2025Q2', value: '9.8' }, { period: '2025Q3', value: '15.4' }, { period: '2025Q4', value: '48.7' }, { period: '2026Q1', value: '6.2' }] },
+  { hypothesisId: 'HYP-SG-001', statement: hypotheses[0].statement, metricId: 'MET-GM-001', unit: '%', direction: '改善', points: [{ period: '2025Q2', value: '34.2', publishedOn: '2025-08-20' }, { period: '2025Q3', value: '35.1', publishedOn: '2025-10-30' }, { period: '2025Q4', value: '36.5', publishedOn: '2026-04-18' }, { period: '2026Q1', value: '38.4', publishedOn: '2026-04-29' }] },
+  { hypothesisId: 'HYP-SG-002', statement: hypotheses[1].statement, metricId: 'MET-CFO-001', unit: '亿元', direction: '波动', points: [{ period: '2025Q2', value: '9.8', publishedOn: '2025-08-20' }, { period: '2025Q3', value: '15.4', publishedOn: '2025-10-30' }, { period: '2025Q4', value: '48.7', publishedOn: '2026-04-18' }, { period: '2026Q1', value: '6.2', publishedOn: '2026-04-29' }] },
 ]
 
 export const demoAudit: AuditItem[] = [

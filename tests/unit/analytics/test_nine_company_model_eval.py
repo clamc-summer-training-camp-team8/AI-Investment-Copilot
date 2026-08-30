@@ -23,9 +23,13 @@ class FakeGateway:
         return ValidationOutcome(
             ai_status=AiStatus.CANDIDATE,
             payload={
-                "relevance": "相关",
                 "event": {"evidence_locator": kwargs["segment_locator"]},
-                "signal": {"impact_direction": "支持", "confidence": 0.88},
+                "impacts": [
+                    {
+                        "relevance": "相关",
+                        "signal": {"impact_direction": "支持", "confidence": 0.88},
+                    }
+                ],
                 "model_version": "deepseek-v4-flash",
                 "prompt_version": "event-impact-v2-mentor-ruling",
                 "model_metadata": {

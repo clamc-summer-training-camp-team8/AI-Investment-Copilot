@@ -101,6 +101,20 @@ COMPANIES: tuple[Company, ...] = (
 COMPANY_BY_ID = {c.security_id: c for c in COMPANIES}
 
 
+def company_for_financials(security_id: str) -> Company:
+    """返回财务采集所需的最小证券上下文；已登记样本优先，其他 A/H 股按代码推断市场。"""
+    known = COMPANY_BY_ID.get(security_id)
+    if known is not None:
+        return known
+    if len(security_id) == 6 and security_id[0] in {"0", "3"}:
+        return Company(security_id, security_id, "", f"0.{security_id}", "未分类", "通用财务")
+    if len(security_id) == 6 and security_id[0] == "6":
+        return Company(security_id, security_id, "", f"1.{security_id}", "未分类", "通用财务")
+    if len(security_id) == 5 and security_id.isdigit():
+        return Company(security_id, security_id, "", f"116.{security_id}", "未分类", "通用财务", market=MARKET_HK)
+    raise ValueError(f"暂不支持自动识别该证券市场：{security_id}")
+
+
 def companies_of(industry: str) -> tuple[Company, ...]:
     return tuple(c for c in COMPANIES if c.industry == industry)
 

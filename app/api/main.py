@@ -84,6 +84,7 @@ def create_app() -> FastAPI:
         )
 
     from app.api.routers import (
+        agent,
         assets,
         demo,
         documents,
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     )
 
     application.include_router(securities.router, prefix="/api")
+    application.include_router(agent.router, prefix="/api")
     application.include_router(assets.router, prefix="/api")
     application.include_router(metrics.router, prefix="/api")
     application.include_router(evaluation.router, prefix="/api")

@@ -403,9 +403,14 @@ def _check_traceability(uow, thesis: ThesisRecord) -> tuple[int, list[str]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true", help="只输出 JSON")
+    parser.add_argument("--security", help="只运行指定证券，例如 002594")
     args = parser.parse_args()
 
     specs = _load_theses()
+    if args.security:
+        specs = [item for item in specs if item["security_id"] == args.security]
+        if not specs:
+            raise ValueError(f"证券不在行业数据集中：{args.security}")
     financials = _load_financials()
     events = _load_events()
 

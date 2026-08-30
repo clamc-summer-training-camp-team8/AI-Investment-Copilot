@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from app.ai.agent import (
-    AgentEvent,
-    CandidateHypothesis,
+    AgentEventInput,
+    HypothesisInput,
     InvestmentLogicChangeAgent,
     ThesisDraftAgent,
 )
@@ -51,15 +51,16 @@ def test_runtime_统一编排_thesis_draft_并记录完成状态() -> None:
 def test_runtime_事件分析完成后进入人工复核状态() -> None:
     runtime = _runtime()
     execution = runtime.analyze_event(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="doc-001",
             security_id="000538.SZ",
-            segment_locator="doc-001#paragraph-1",
-            segment_text="公司收入增长。",
+            evidence_locator="doc-001#paragraph-1",
+            fact="公司收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [CandidateHypothesis("THESIS-001", "H1", "收入增长")],
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
     )
 
     assert execution.task == "event_impact"
@@ -69,22 +70,33 @@ def test_runtime_事件分析完成后进入人工复核状态() -> None:
     assert execution.evidence_grades[0].score >= 0
 
 
-def test_runtime_no_candidates_returns_degraded_instead_of_completed() -> None:
+def test_runtime_event_analysis_accepts_multiple_hypotheses() -> None:
     runtime = _runtime()
     execution = runtime.analyze_event(
-        AgentEvent(
+        AgentEventInput(
             event_id="event-001",
             document_id="doc-001",
             security_id="000538.SZ",
-            segment_locator="doc-001#paragraph-1",
-            segment_text="公司收入增长。",
+            evidence_locator="doc-001#paragraph-1",
+            fact="公司收入增长。",
             disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
         ),
-        [],
+        (
+            HypothesisInput("THESIS-001", "H1", "收入增长"),
+            HypothesisInput("THESIS-001", "H2", "毛利率改善"),
+            HypothesisInput("THESIS-001", "H3", "产能扩张"),
+        ),
     )
 
-    assert execution.status == "degraded"
-    assert execution.degraded_reason == "no_candidate_hypotheses"
+    assert execution.status == "needs_human_review"
+    assert len(execution.result.impacts) == 3
+    assert [impact.candidate.hypothesis_id for impact in execution.result.impacts] == [
+        "H1",
+        "H2",
+        "H3",
+    ]
+    assert len(execution.model_calls) == 1
     assert execution.finished_at is not None
 
 

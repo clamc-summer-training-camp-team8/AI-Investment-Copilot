@@ -119,6 +119,8 @@ class ThesisRecord:
     invalidation_hypotheses: list[str] = field(default_factory=list)
     # AI 生成的指标、风险与失效建议只作为待采用候选保存，不能直接改变正式配置。
     draft_suggestions: dict[str, object] = field(default_factory=dict)
+    thesis_kind: str = "canonical"
+    thesis_series_id: str | None = None
 
 
 @dataclass
@@ -206,6 +208,7 @@ class EvidenceRecord:
     source_url: str | None = None
     # 证据生成时冻结的检索追踪；只包含分数、路径和快照清单，不复制原文正文。
     retrieval_trace: dict[str, object] | None = None
+    ingested_at: datetime | None = None
 
 
 @dataclass
@@ -271,6 +274,7 @@ class ObservationRecord:
     period_type: str = "单季度"
     source_document_id: str | None = None
     data_version: str | None = None
+    ingested_at: datetime | None = None
 
 
 @dataclass
@@ -333,6 +337,7 @@ class ThesisQuery:
     keyword: str | None = None
     limit: int = 20
     offset: int = 0
+    include_snapshots: bool = False
 
 
 @dataclass
@@ -488,6 +493,8 @@ class AssetSearchHitRecord:
     content: str
     visibility_label: str
     rank: float
+    published_at: datetime
+    source: str
     retrieval_mode: str = "keyword"
     keyword_rank: float | None = None
     vector_rank: float | None = None

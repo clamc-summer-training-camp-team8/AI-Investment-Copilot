@@ -136,3 +136,17 @@ def test_单期转负是关注不是失效() -> None:
     )
     assert suggestion.suggested_status is not ThesisStatus.MAJOR_RISK
     assert any("接近失效阈值" in reason for reason in suggestion.reasons)
+
+
+def test_过期指标不能直接触发失效建议() -> None:
+    """旧数据即使曾突破阈值，也只能等待补数或人工复核。"""
+    uow, thesis, hypotheses = _setup(["-3.20", "-5.10"])
+    suggestion = status_service.compute_suggestion(
+        uow,
+        thesis=thesis,
+        hypotheses=hypotheses,
+        thresholds=RuleThresholds(metric_max_age_days=30),
+        today=date(2026, 8, 30),
+    )
+    assert suggestion.suggested_status is not ThesisStatus.MAJOR_RISK
+    assert suggestion.triggered_hypotheses == []

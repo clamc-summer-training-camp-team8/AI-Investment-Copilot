@@ -47,6 +47,7 @@ export interface EvidenceDetail {
   sourceDocumentTitle: string
   disclosedAt: string
   occurredAt?: string
+  ingestedAt: string
   sourceUrl: string
   direction: Direction
   strength: Strength
@@ -110,6 +111,8 @@ export interface ThesisSummary {
   owner: string
   status: string
   direction?: string
+  thesisKind?: string
+  thesisSeriesId?: string
 }
 
 export interface Security {
@@ -134,11 +137,12 @@ export interface ThesisDetail extends ThesisSummary {
 export interface MetricMapping {
   mappingId: string
   metricId: string
-  metricVersion: string
-  expectedDirection: string
+  metricName?: string
   expectedValue?: string
   invalidationThreshold?: string
   invalidationConsecutivePeriods?: number
+  metricVersion: string
+  expectedDirection: string
   expectationSource: string
   confirmationStatus: string
 }
@@ -152,6 +156,9 @@ export interface Hypothesis {
   observationWindow?: string
   invalidationRule?: string
   metricSuggestions: Array<Record<string, unknown>>
+  causalLevel?: string
+  logicDimension?: string
+  qualityWarning?: string
   mappings: MetricMapping[]
 }
 
@@ -217,9 +224,13 @@ export interface Trend {
   hypothesisId: string
   statement: string
   metricId: string
+  metricName?: string
   unit: string
   direction: string
-  points: Array<{ period: string; value: string }>
+  slope?: string
+  verdict?: string
+  note?: string
+  points: Array<{ period: string; value: string; publishedOn: string; acquiredAt?: string; sourceDocumentId?: string; dataVersion?: string }>
 }
 
 export interface AuditItem {
@@ -286,6 +297,15 @@ export interface ReviewTask {
   resolution?: string
   createdAt?: string
   resolvedAt?: string
+}
+
+export interface ReviewDraftCandidate {
+  runId: string
+  status: string
+  aiStatus?: string
+  requiresHumanReview: boolean
+  payload: Record<string, unknown>
+  errors: string[]
 }
 
 export interface Adjudication {

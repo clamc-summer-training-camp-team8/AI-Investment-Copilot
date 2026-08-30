@@ -6,8 +6,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.ai.errors import ModelUnavailable
 from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.core.domain import IngestionReviewRecord, ReviewTaskRecord
+from app.schemas.agent import AgentCandidateOut, ReviewDraftIn
 from app.schemas.review import (
     IngestionReviewOut,
     IngestionReviewResolveIn,
@@ -15,9 +17,10 @@ from app.schemas.review import (
     ReviewTaskOut,
     ReviewTaskResolveIn,
 )
+from app.services import agent_workflow
 from app.services import ingestion as ingestion_service
 from app.services import review as review_service
-from app.services.errors import NotVisible, ValidationFailed
+from app.services.errors import HumanGateRequired, NotVisible, ValidationFailed
 from app.workers.queue import QueueUnavailable, enqueue_job_record, open_queue, worker_ready
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
@@ -41,6 +44,43 @@ def _ingestion_out(record: IngestionReviewRecord) -> IngestionReviewOut:
         resolution=record.resolution,
         created_at=record.created_at,
         resolved_at=record.resolved_at,
+    )
+
+
+@router.post("/theses/{thesis_id}/drafts", response_model=AgentCandidateOut)
+def create_review_draft(
+    thesis_id: str,
+    payload: ReviewDraftIn,
+    actor: ActorDep,
+    conf: SettingsDep,
+    uow: UowDep,
+) -> AgentCandidateOut:
+    """在复核中心生成指定投资逻辑的复盘候选，结果仍需人工编辑和发布。"""
+    try:
+        candidate = agent_workflow.draft_review(
+            uow,
+            thesis_id=thesis_id,
+            period_start=payload.period_start,
+            period_end=payload.period_end,
+            actor=actor,
+            settings=conf,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return AgentCandidateOut(
+        run_id=candidate.run_id,
+        task=candidate.task,
+        status=candidate.status,
+        ai_status=candidate.ai_status,
+        requires_human_review=candidate.requires_human_review,
+        payload=candidate.payload,
+        errors=list(candidate.errors),
     )
 
 

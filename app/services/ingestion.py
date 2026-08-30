@@ -97,6 +97,21 @@ def mark_running(uow: UnitOfWork, job_id: str, *, attempt_count: int | None = No
         )
 
 
+def mark_progress(
+    uow: UnitOfWork,
+    job_id: str,
+    *,
+    stage: str,
+    detail: dict[str, object] | None = None,
+) -> None:
+    record = uow.processing_jobs.get(job_id)
+    if record:
+        result = dict(record.result or {})
+        result.update(detail or {})
+        result["stage"] = stage
+        uow.processing_jobs.update(replace(record, result=result))
+
+
 def mark_complete(
     uow: UnitOfWork,
     job_id: str,
@@ -145,7 +160,7 @@ def build_replay(
     suffix = uuid4().hex[:12]
     replay = replace(
         source,
-        job_id=f"document-{source.document_id}-replay-{suffix}",
+        job_id=f"document-{source.document_id}-r-{suffix}",
         status="queued",
         attempt_count=source.attempt_count + 1,
         result=None,
@@ -180,7 +195,7 @@ def build_assignment_replay(
         raise ValidationFailed("原始上传文件已清理，无法按证券重新处理")
     replay = replace(
         source,
-        job_id=f"document-{source.document_id}-assignment-{uuid4().hex[:12]}",
+        job_id=f"document-{source.document_id}-a-{uuid4().hex[:12]}",
         security_id=security_id,
         status="queued",
         attempt_count=source.attempt_count + 1,

@@ -58,6 +58,27 @@ def test_dead_letter_replay_gets_new_job_id_and_keeps_source(tmp_path: Path) -> 
     assert replay.status == "queued"
 
 
+def test_replay_job_id_fits_audit_object_id_limit(tmp_path: Path) -> None:
+    path = tmp_path / "uploads" / "report.txt"
+    path.parent.mkdir()
+    path.write_text("正文", encoding="utf-8")
+    source = DocumentProcessingJobRecord(
+        job_id="document-DOC-" + "a" * 32,
+        document_id="DOC-" + "a" * 32,
+        owner="researcher-1",
+        upload_path=str(path),
+        source_filename="report.txt",
+        published_at=None,
+        status="dead_letter",
+    )
+
+    replay = ingestion.build_replay(
+        build_fake_uow(), source=source, actor=Actor(user_id="researcher-1")
+    )
+
+    assert len(replay.job_id) <= 64
+
+
 def test_successful_job_is_not_replayable(tmp_path: Path) -> None:
     path = tmp_path / "DOC-1.txt"
     path.write_text("正文", encoding="utf-8")

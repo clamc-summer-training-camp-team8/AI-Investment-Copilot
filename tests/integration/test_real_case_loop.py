@@ -22,6 +22,7 @@ from app.calc.deterministic import (
     period_over_period,
 )
 from app.core.config import Settings
+from app.core.domain import DocumentSegmentRecord
 from app.core.enums import ConfirmationStatus, ExpectationDirection, ThesisStatus
 from app.core.timeutil import BUSINESS_TZ, ensure_aware, is_leakage
 from app.services import status as status_service
@@ -239,6 +240,17 @@ def test_人工确认后才进入正式证据链() -> None:
         for e in events
         if e.document_id in documents
     }
+    current_event_segments = [
+        DocumentSegmentRecord(
+            document_id=segment.document_id,
+            locator=segment.locator,
+            ordinal=segment.ordinal,
+            content=segment.content,
+        )
+        for event in events
+        if event.document_id in documents
+        for segment in segment_document(event.document_id, documents[event.document_id])
+    ]
 
     change_chain.process_events(
         uow,
@@ -247,6 +259,7 @@ def test_人工确认后才进入正式证据链() -> None:
         security_id=run_real_case.SECURITY_ID,
         actor=run_real_case.RESEARCHER,
         thresholds=settings.rules,
+        current_event_segments=current_event_segments,
         locator_by_event=locators,
     )
 

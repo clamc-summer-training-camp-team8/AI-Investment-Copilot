@@ -53,10 +53,8 @@ class EventGateway(Protocol):
         segment_locator: str,
         segment_text: str,
         disclosure_time: str,
-        thesis_id: str | None = None,
-        hypothesis_id: str | None = None,
-        thesis_context: str | None = None,
-        hypothesis_context: dict[str, Any] | None = None,
+        candidates: list[dict[str, Any]],
+        evidence_contexts: list[dict[str, Any]],
         event_type: str = "其他",
         occurred_on: str | None = None,
     ) -> ValidationOutcome: ...
@@ -175,7 +173,10 @@ def _number(value: object) -> float | None:
 
 def _case_result(case: EvaluationCase, outcome: ValidationOutcome, latency_ms: int) -> CaseResult:
     payload = outcome.payload
-    signal = payload.get("signal")
+    impacts = payload.get("impacts")
+    impact = impacts[0] if isinstance(impacts, list) and impacts else {}
+    impact_data = impact if isinstance(impact, dict) else {}
+    signal = impact_data.get("signal")
     event = payload.get("event")
     metadata = payload.get("model_metadata")
     signal_data = signal if isinstance(signal, dict) else {}
@@ -196,7 +197,9 @@ def _case_result(case: EvaluationCase, outcome: ValidationOutcome, latency_ms: i
         ai_status=outcome.ai_status.value,
         predicted_direction=predicted,
         exact_match=predicted == case.gold_direction if predicted is not None else None,
-        relevance=payload.get("relevance") if isinstance(payload.get("relevance"), str) else None,
+        relevance=(
+            impact_data.get("relevance") if isinstance(impact_data.get("relevance"), str) else None
+        ),
         confidence=_number(signal_data.get("confidence")),
         citation_locator_valid=event_data.get("evidence_locator") == case.segment_locator,
         latency_ms=latency_ms,
@@ -231,20 +234,42 @@ def evaluate_cases(
                 segment_locator=case.segment_locator,
                 segment_text=case.evidence,
                 disclosure_time=case.disclosure_time,
-                thesis_id=case.case_id,
-                hypothesis_id=f"{case.case_id}-H1",
-                thesis_context=f"{case.thesis_title}：{case.thesis_statement}",
-                hypothesis_context={
-                    "statement": case.thesis_statement,
-                    "importance": "核心",
-                    "expected_direction": "不低于阈值",
-                    "metric_name": case.metric_name,
-                    "metric_unit": case.metric_unit,
-                    "threshold": case.threshold,
-                    "observed_value": case.actual_value,
-                    "deterministic_comparison": case.deterministic_comparison,
-                    "calculation_owner": "program-not-model",
-                },
+                candidates=[
+                    {
+                        "thesis_id": case.case_id,
+                        "hypothesis_id": f"{case.case_id}-H1",
+                        "thesis_core_view": (f"{case.thesis_title}：{case.thesis_statement}"),
+                        "statement": case.thesis_statement,
+                        "importance": "核心",
+                        "expected_direction": "不低于阈值",
+                        "metric_rules": [
+                            {
+                                "metric_name": case.metric_name,
+                                "metric_unit": case.metric_unit,
+                                "threshold": case.threshold,
+                                "observed_value": case.actual_value,
+                                "deterministic_comparison": case.deterministic_comparison,
+                                "calculation_owner": "program-not-model",
+                            }
+                        ],
+                    }
+                ],
+                evidence_contexts=[
+                    {
+                        "thesis_id": case.case_id,
+                        "hypothesis_id": f"{case.case_id}-H1",
+                        "evidence": [
+                            {
+                                "context_type": "current_event_evidence",
+                                "document_id": case.source_document_id,
+                                "locator": case.segment_locator,
+                                "content": case.evidence,
+                                "published_at": case.disclosure_time,
+                                "source": "evaluation-dataset",
+                            }
+                        ],
+                    }
+                ],
                 event_type="业绩",
                 occurred_on=case.period_end,
             )

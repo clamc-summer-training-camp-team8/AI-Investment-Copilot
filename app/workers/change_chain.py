@@ -13,18 +13,20 @@ ingest.extract_events → ingest.dedupe
 
 from __future__ import annotations
 
+import asyncio
 import re
 from dataclasses import dataclass
-from decimal import Decimal
 from hashlib import sha256
 
-from app.ai.agents import AgentEvent, CandidateHypothesis
+from app.ai.agents import AgentRunResult
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
+from app.ai.integration import to_backend_analysis_result
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument, RetrievalResult
 from app.ai.runtime import InvestmentResearchAgent
 from app.calc.rules import StatusSuggestion
 from app.core.config import RuleThresholds, Settings
+from app.core.domain import AssetSearchHitRecord
 from app.core.enums import AiStatus, ConfirmationStatus, ImpactDirection
 from app.ingest.events import ExtractedEvent, dedupe_events, to_strength_bucket
 from app.services import assets as asset_service
@@ -39,7 +41,21 @@ from app.services.graph_rag import (
     graph_candidate_context,
 )
 from app.services.permission import Actor
-from app.services.ports import EvidenceRecord, HypothesisRecord, ThesisRecord, UnitOfWork
+from app.services.ports import (
+    DocumentSegmentRecord,
+    EvidenceRecord,
+    HypothesisRecord,
+    ThesisRecord,
+    UnitOfWork,
+)
+from app.workers.agent_input import (
+    EventAgentInputs,
+    EventEvidenceUnavailable,
+    build_event_agent_inputs,
+    build_historical_rag_context,
+    build_hypothesis_input,
+    index_current_event_segments,
+)
 
 
 @dataclass(frozen=True)
@@ -239,7 +255,7 @@ def _rag_context(
     security_id: str,
     actor: Actor,
     settings: Settings | None,
-) -> list[tuple[str, str]]:
+) -> list[AssetSearchHitRecord]:
     if (
         settings is None
         or not settings.rag_event_pilot_enabled
@@ -268,10 +284,10 @@ def _rag_context(
             "document_ids": sorted({hit.document_id for hit in hits}),
         },
     )
-    return [(hit.locator, hit.content) for hit in hits]
+    return hits
 
 
-def process_events(
+async def process_events_async(
     uow: UnitOfWork,
     ai: Gateway | InvestmentResearchAgent,
     *,
@@ -279,6 +295,7 @@ def process_events(
     security_id: str,
     actor: Actor,
     thresholds: RuleThresholds,
+    current_event_segments: list[DocumentSegmentRecord],
     document_id: str = "",
     locator_by_event: dict[str, str] | None = None,
     document_title: str | None = None,
@@ -342,33 +359,33 @@ def process_events(
                     "candidates": [trace.to_dict() for trace in recall_traces],
                 },
             )
-    retrieval_documents: list[RetrievalDocument] = []
+    retriever = KeywordRetriever()
+    segments_by_locator = index_current_event_segments(current_event_segments)
+    event_inputs: dict[str, EventAgentInputs] = {}
+    current_event_evidence: list[RetrievalDocument] = []
+    historical_rag_context: list[RetrievalDocument] = []
     for event in kept:
-        locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
-        if locator:
-            retrieval_documents.append(
-                RetrievalDocument(
-                    document_id=event.document_id,
-                    security_id=security_id,
-                    locator=locator,
-                    content=event.summary,
-                    published_at=event.disclosure_time,
-                    visibility_label=source_visibility_label,
-                    source=document_title or event.document_id,
-                )
-            )
-        retrieval_documents.extend(
-            RetrievalDocument(
-                document_id=hit_locator.split("#", maxsplit=1)[0],
+        try:
+            inputs = build_event_agent_inputs(
+                event=event,
                 security_id=security_id,
-                locator=hit_locator,
-                content=content,
-                published_at=event.disclosure_time,
+                segments_by_locator=segments_by_locator,
+                locator_override=(locator_by_event or {}).get(event.event_id),
                 visibility_label=source_visibility_label,
-                source="RAG试点召回",
+                source=document_title or event.document_id,
             )
-            for hit_locator, content in rag_contexts[event.event_id]
+        except EventEvidenceUnavailable as exc:
+            deferred.append((event.event_id, str(exc)))
+            continue
+        event_inputs[event.event_id] = inputs
+        current_event_evidence.append(inputs.current_event_evidence)
+        historical_rag_context.extend(
+            build_historical_rag_context(
+                security_id=security_id,
+                hits=rag_contexts[event.event_id],
+            )
         )
+    agent_retrieval_documents = [*historical_rag_context, *current_event_evidence]
     if isinstance(ai, InvestmentResearchAgent):
         runtime = ai
         if graph_corpus and rag_settings:
@@ -380,9 +397,8 @@ def process_events(
                 max_hops=rag_settings.rag_graph_max_hops,
                 assist_only=rag_settings.rag_graph_assist_only,
             )
-        runtime.logic_change.retriever.add(retrieval_documents)
+        runtime.logic_change.retriever.add(agent_retrieval_documents)
     else:
-        retriever = KeywordRetriever()
         active_retriever = (
             build_graph_retriever_from_corpus(
                 graph_corpus,
@@ -395,184 +411,158 @@ def process_events(
             if graph_corpus and rag_settings
             else retriever
         )
-        active_retriever.add(retrieval_documents)
+        active_retriever.add(agent_retrieval_documents)
         runtime = InvestmentResearchAgent.build(ai, retriever=active_retriever)
 
     for record, hypotheses in recalled:
         touched = False
-        for event in kept:
-            hypothesis_id = _pick_hypothesis(event, list(hypotheses))
-            if hypothesis_id is None:
-                deferred.append((event.event_id, "未能落到具体假设，转人工判断"))
-                continue
-            if hypothesis_id not in {str(getattr(h, "hypothesis_id", "")) for h in hypotheses}:
-                continue
-            target_hypothesis = next(
-                hypothesis
-                for hypothesis in hypotheses
-                if str(getattr(hypothesis, "hypothesis_id", "")) == hypothesis_id
+        hypothesis_inputs = tuple(
+            build_hypothesis_input(
+                thesis_record=record,
+                hypothesis=hypothesis,
+                mappings=uow.thesis.list_mappings(hypothesis.hypothesis_id),
             )
-            mappings = uow.thesis.list_mappings(hypothesis_id)
-            hypothesis_context: dict[str, object] = {
-                "statement": target_hypothesis.statement,
-                "hypothesis_type": target_hypothesis.hypothesis_type,
-                "importance": target_hypothesis.importance.value,
-                "expected_direction": (
-                    target_hypothesis.expected_direction.value
-                    if target_hypothesis.expected_direction is not None
-                    else None
-                ),
-                "invalidation_rule": target_hypothesis.invalidation_rule,
-                "metrics": [
-                    {
-                        "metric_id": mapping.metric_id,
-                        "expected_direction": mapping.expected_direction.value,
-                        "expected_value": (
-                            str(mapping.expected_value)
-                            if mapping.expected_value is not None
-                            else None
-                        ),
-                        "invalidation_threshold": (
-                            str(mapping.invalidation_threshold)
-                            if mapping.invalidation_threshold is not None
-                            else None
-                        ),
-                    }
-                    for mapping in mappings
-                ],
-            }
-
-            locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
-            if locator is None:
-                # 没有引用定位的结论不得进入正式证据链（DQ-005）
-                deferred.append((event.event_id, "缺少引用定位，无法进入证据链"))
-                continue
-
-            execution = runtime.analyze_event(
-                AgentEvent(
-                    event_id=event.event_id,
-                    document_id=event.document_id,
-                    security_id=security_id,
-                    segment_locator=locator,
-                    segment_text=event.summary,
-                    disclosure_time=event.disclosure_time,
-                    event_type=event.event_type,
-                    occurred_on=event.occurred_on,
-                ),
-                [
-                    CandidateHypothesis(
-                        thesis_id=record.thesis_id,
-                        hypothesis_id=hypothesis_id,
-                        statement=str(target_hypothesis.statement),
-                        thesis_context=str(record.core_view) or None,
-                        hypothesis_context=hypothesis_context,
-                    )
-                ],
-                allowed_visibility=actor.document_labels,
-                top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
-                idempotency_key=(
-                    f"event:{event.event_id}:thesis:{record.thesis_id}:hypothesis:{hypothesis_id}"
-                ),
+            for hypothesis in hypotheses
+        )
+        analyzable = [
+            (event, event_inputs[event.event_id])
+            for event in kept
+            if event.event_id in event_inputs
+        ]
+        if not hypothesis_inputs:
+            deferred.extend(
+                (event.event_id, "候选逻辑下没有可分析假设，转人工判断") for event, _ in analyzable
             )
-            if execution.retryable:
+            continue
+
+        # 同一份资料的多个事件与该逻辑的全部假设在一个模型请求内判断。
+        executions = await runtime.analyze_events_async(
+            tuple(inputs.event for _, inputs in analyzable),
+            hypothesis_inputs,
+            allowed_visibility=actor.document_labels,
+            top_k=(rag_settings.rag_event_pilot_limit if rag_settings else 3),
+            idempotency_key=f"document:{document_id}:thesis:{record.thesis_id}",
+        )
+        if executions and all(execution.degraded_reason for execution in executions):
+            raise ModelUnavailable("批量事件影响分析输出不符合契约", retryable=False)
+
+        for (event, inputs), execution in zip(analyzable, executions, strict=True):
+            analysis_result = to_backend_analysis_result(execution)
+            if analysis_result.retryable:
                 raise ModelUnavailable(
-                    execution.degraded_reason or "Runtime 暂时不可用",
+                    analysis_result.degraded_reason or "Runtime 暂时不可用",
                     retryable=True,
                 )
-            if execution.result is None or not execution.result.impacts:
+            if not analysis_result.impacts:
                 deferred.append((event.event_id, "Runtime 未生成候选影响，转人工"))
                 continue
-            impact = execution.result.impacts[0]
-            outcome = impact.outcome
-
-            audit.record_model_call(
-                uow.audit,
-                actor=actor.user_id,
-                object_type="event",
-                object_id=event.event_id,
-                model_version=str(outcome.payload.get("model_version", "")),
-                prompt_version=str(outcome.payload.get("prompt_version", "")),
-                ai_status=outcome.ai_status.value,
-                model_metadata=(
-                    outcome.payload.get("model_metadata")
-                    if isinstance(outcome.payload.get("model_metadata"), dict)
-                    else None
-                ),
+            runtime_impacts = (
+                {item.candidate.hypothesis_id: item for item in execution.result.impacts}
+                if isinstance(execution.result, AgentRunResult)
+                else {}
             )
+            for impact in analysis_result.impacts:
+                hypothesis_id = impact.hypothesis_id
 
-            if outcome.ai_status is AiStatus.PARSE_FAILED:
-                deferred.append((event.event_id, "模型输出不合契约，转人工"))
-                continue
+                audit.record_model_call(
+                    uow.audit,
+                    actor=actor.user_id,
+                    object_type="event",
+                    object_id=event.event_id,
+                    model_version=impact.model_version or "",
+                    prompt_version=impact.prompt_version or "",
+                    ai_status=impact.ai_status.value,
+                    model_metadata=impact.model_metadata,
+                )
 
-            signal = outcome.payload["signal"]
-            if not isinstance(signal, dict):
-                deferred.append((event.event_id, "模型输出缺少 signal 段，转人工"))
-                continue
+                if impact.ai_status is AiStatus.PARSE_FAILED:
+                    deferred.append((event.event_id, "模型输出不合契约，转人工"))
+                    continue
 
-            # 人工标注的方向优先于模型判断：标注是金标（标注规范 §10）
-            direction = event.impact_direction or ImpactDirection(
-                str(signal.get("impact_direction") or ImpactDirection.NEUTRAL.value)
-            )
-            if direction is ImpactDirection.IRRELEVANT:
-                deferred.append((event.event_id, "模型判定与该假设不相关，不进入证据链"))
-                continue
-            score = event.strength_score
-            if score is None:
-                score = _dec(signal.get("strength"))
-            bucket = to_strength_bucket(score)
+                annotated_target = event.hypothesis_id == hypothesis_id
+                direction = (
+                    event.impact_direction
+                    if annotated_target and event.impact_direction is not None
+                    else impact.impact_direction
+                )
+                if direction is ImpactDirection.IRRELEVANT:
+                    deferred.append((event.event_id, "模型判定与该假设不相关，不进入证据链"))
+                    continue
+                score = (
+                    event.strength_score
+                    if annotated_target and event.strength_score is not None
+                    else impact.strength_score
+                )
+                bucket = to_strength_bucket(score)
 
-            evidence_id = _stable_id("EVD", event.event_id, record.thesis_id, hypothesis_id)
-            if uow.evidence.get(evidence_id) is not None:
-                deferred.append((event.event_id, "该事件与假设已生成候选证据，跳过重复提醒"))
-                continue
+                evidence_id = _stable_id("EVD", event.event_id, impact.thesis_id, hypothesis_id)
+                if uow.evidence.get(evidence_id) is not None:
+                    deferred.append((event.event_id, "该事件与假设已生成候选证据，跳过重复提醒"))
+                    continue
 
-            candidate = EvidenceRecord(
-                evidence_id=evidence_id,
-                thesis_id=record.thesis_id,
-                hypothesis_id=hypothesis_id,
-                evidence_type=event.event_type,
-                direction=direction,
-                evidence_locator=locator,
-                event_id=event.event_id,
-                strength=bucket.value if bucket is not None else None,
-                strength_score=score,
-                horizon=event.horizon or str(signal.get("horizon") or "") or None,
-                ai_status=outcome.ai_status.value,
-                ai_confidence=_dec(signal.get("confidence")),
-                model_version=str(outcome.payload.get("model_version", "")),
-                prompt_version=str(outcome.payload.get("prompt_version", "")),
-                confirmation_status=ConfirmationStatus.PENDING,
-                source_visibility_label=source_visibility_label,
-                security_id=security_id,
-                fact_excerpt=event.summary,
-                source_document_id=event.document_id,
-                source_document_title=document_title or event.document_id,
-                disclosed_at=event.disclosure_time,
-                occurred_at=event.occurred_on,
-                source_url=source_url,
-                retrieval_trace=_retrieval_trace(impact.retrieval, locator=locator),
-            )
-            evidence_service.create_candidate(uow, record=candidate, actor=actor.user_id)
-            relation_service.create_candidate(
-                uow,
-                evidence_id=candidate.evidence_id,
-                thesis_id=record.thesis_id,
-                hypothesis_id=hypothesis_id,
-                direction=direction,
-                strength=candidate.strength,
-                reason="上传资料自动召回候选关联，待逻辑负责人核验",
-                actor=actor.user_id,
-            )
-            candidates.append(candidate)
-            touched = True
+                candidate = EvidenceRecord(
+                    evidence_id=evidence_id,
+                    thesis_id=impact.thesis_id,
+                    hypothesis_id=hypothesis_id,
+                    evidence_type=event.event_type,
+                    direction=direction,
+                    evidence_locator=inputs.event.evidence_locator,
+                    event_id=event.event_id,
+                    strength=bucket.value if bucket is not None else None,
+                    strength_score=score,
+                    horizon=(
+                        event.horizon if annotated_target and event.horizon else impact.horizon
+                    ),
+                    ai_status=impact.ai_status.value,
+                    ai_confidence=impact.confidence,
+                    model_version=impact.model_version,
+                    prompt_version=impact.prompt_version,
+                    confirmation_status=ConfirmationStatus.PENDING,
+                    source_visibility_label=source_visibility_label,
+                    security_id=security_id,
+                    fact_excerpt=event.summary,
+                    source_document_id=event.document_id,
+                    source_document_title=document_title or event.document_id,
+                    disclosed_at=event.disclosure_time,
+                    occurred_at=event.occurred_on,
+                    source_url=source_url,
+                    retrieval_trace=(
+                        _retrieval_trace(
+                            runtime_impacts[hypothesis_id].retrieval,
+                            locator=inputs.event.evidence_locator,
+                        )
+                        if hypothesis_id in runtime_impacts
+                        else None
+                    ),
+                )
+                evidence_service.create_candidate(uow, record=candidate, actor=actor.user_id)
+                relation_service.create_candidate(
+                    uow,
+                    evidence_id=candidate.evidence_id,
+                    thesis_id=impact.thesis_id,
+                    hypothesis_id=hypothesis_id,
+                    direction=direction,
+                    strength=candidate.strength,
+                    reason="上传资料自动召回候选关联，待逻辑负责人核验",
+                    actor=actor.user_id,
+                )
+                candidates.append(candidate)
+                touched = True
 
-            if outcome.ai_status is AiStatus.LOW_CONFIDENCE:
-                # FR-R-007：低置信进人工队列，不升级提醒
-                deferred.append((event.event_id, "低置信，进人工复核队列，不触发风险提醒"))
+                if impact.ai_status is AiStatus.LOW_CONFIDENCE:
+                    # FR-R-007：低置信进人工队列，不升级提醒
+                    deferred.append((event.event_id, "低置信，进人工复核队列，不触发风险提醒"))
 
         if touched:
+            # 新资料先完成事件→假设关联，再用资料首次公开日作为 as-of 核对指标；
+            # 不能让晚于该资料的财务数据反向影响当时的建议。
+            as_of = max(event.disclosure_time.date() for event in kept)
             suggestion = status_service.compute_suggestion(
-                uow, thesis=record, hypotheses=list(hypotheses), thresholds=thresholds
+                uow,
+                thesis=record,
+                hypotheses=list(hypotheses),
+                thresholds=thresholds,
+                today=as_of,
             )
             status_service.record_suggestion(
                 uow, thesis=record, suggestion=suggestion, actor=actor.user_id
@@ -596,8 +586,10 @@ def process_events(
     )
 
 
-def _dec(value: object) -> Decimal | None:
-    """转 Decimal。走字符串避免 float 二进制残留进入数据库。"""
-    if value is None:
-        return None
-    return Decimal(str(value))
+def process_events(
+    uow: UnitOfWork,
+    ai: Gateway | InvestmentResearchAgent,
+    **kwargs: object,
+) -> ChangeResult:
+    """同步兼容入口；worker 使用 ``process_events_async``。"""
+    return asyncio.run(process_events_async(uow, ai, **kwargs))  # type: ignore[arg-type]

@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -43,6 +44,10 @@ OWNER = "analyst-mvp"
 TEAM = "equity-research"
 ANNOUNCEMENT_VERSION = "cninfo-announcement-v2"
 FINANCIAL_VERSION = "em-f10-gincome-v2"
+_FINANCIAL_METRIC_IDS = {
+    "revenue_yoy": ("MET-001", "FIN-REVENUE-YOY-Q"),
+    "gross_margin": ("MET-002", "FIN-GROSS-MARGIN-Q"),
+}
 
 _DIRECTION_MAP = {
     "higher_better": "越高越好",
@@ -120,6 +125,36 @@ def _seed_metrics(session) -> None:
     )
     session.merge(
         Metric(
+            metric_id="FIN-REVENUE-YOY-Q",
+            version="v1.0",
+            name="单季度营业收入同比",
+            category="经营",
+            definition="同一公司同一口径的单季度营业收入同比增速",
+            unit="%",
+            frequency="季度",
+            period_type="单季度",
+            source_id=FINANCIAL_VERSION,
+            expected_direction="越高越好",
+            status="已确认",
+        )
+    )
+    session.merge(
+        Metric(
+            metric_id="FIN-GROSS-MARGIN-Q",
+            version="v1.0",
+            name="单季度毛利率",
+            category="盈利",
+            definition="同口径单季度营业收入减营业成本后除以营业收入",
+            unit="%",
+            frequency="季度",
+            period_type="单季度",
+            source_id=FINANCIAL_VERSION,
+            expected_direction="不低于阈值",
+            status="已确认",
+        )
+    )
+    session.merge(
+        Metric(
             metric_id="MET-002",
             version="v1.0",
             name="毛利率",
@@ -170,6 +205,8 @@ def _seed_theses(
                 version=1,
                 invalidation_require_all=bool(spec["invalidation_require_all"]),
                 is_illustrative=False,
+                thesis_kind="observation",
+                thesis_series_id=security_id,
             )
         )
         # merge 的对象之间没有 ORM relationship；先 flush 才能满足 Hypothesis 的外键。
@@ -233,30 +270,29 @@ def _seed_observations(session, financials: dict[str, object]) -> int:
             # 无首次公开日期的观测值不能安全进入验证窗口：用报告期末补齐会造成未来泄露。
             if not disclosure_date:
                 continue
-            for metric_id, value in (
-                ("MET-001", row.get("revenue_yoy")),
-                ("MET-002", row.get("gross_margin")),
-            ):
+            for field, metric_ids in _FINANCIAL_METRIC_IDS.items():
+                value = row.get(field)
                 if value is None:
                     continue
-                key = (security_id, metric_id, row["period"], FINANCIAL_VERSION)
-                target = existing.get(key)
-                if target is None:
-                    target = MetricObservation(
-                        security_id=security_id,
-                        metric_id=metric_id,
-                        metric_version="v1.0",
-                        period=row["period"],
-                        data_version=FINANCIAL_VERSION,
-                    )
-                    session.add(target)
-                    existing[key] = target
-                target.period_type = row["period_type"]
-                target.observation_date = date.fromisoformat(disclosure_date)
-                target.actual_value = Decimal(str(value))
-                target.unit = "%"
-                target.is_illustrative = False
-                count += 1
+                for metric_id in metric_ids:
+                    key = (security_id, metric_id, row["period"], FINANCIAL_VERSION)
+                    target = existing.get(key)
+                    if target is None:
+                        target = MetricObservation(
+                            security_id=security_id,
+                            metric_id=metric_id,
+                            metric_version="v1.0",
+                            period=row["period"],
+                            data_version=FINANCIAL_VERSION,
+                        )
+                        session.add(target)
+                        existing[key] = target
+                    target.period_type = row["period_type"]
+                    target.observation_date = date.fromisoformat(disclosure_date)
+                    target.actual_value = Decimal(str(value))
+                    target.unit = "%"
+                    target.is_illustrative = False
+                    count += 1
     return count
 
 
@@ -389,6 +425,9 @@ def _seed_events_and_evidence(
 
 def main() -> None:
     """执行一次完整、可重复的本地真实数据导入。"""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--security", help="只导入指定证券，例如 002594")
+    args = parser.parse_args()
     theses = _read_json(DATASET_ROOT / "theses.json")
     financials = _read_json(RAW_ROOT / "financials.json")
     with (DATASET_ROOT / "events.csv").open(encoding="utf-8", newline="") as file:
@@ -396,6 +435,17 @@ def main() -> None:
 
     if not isinstance(theses, list) or not isinstance(financials, dict):
         raise ValueError("真实数据文件结构不符合预期")
+    if args.security:
+        theses = [item for item in theses if item["security_id"] == args.security]
+        events = [item for item in events if item["security_id"] == args.security]
+        financials = {
+            **financials,
+            "metrics": {
+                args.security: (financials.get("metrics") or {}).get(args.security, [])
+            },
+        }
+        if not theses:
+            raise ValueError(f"证券不在行业数据集中：{args.security}")
 
     with session_scope() as session:
         _seed_metrics(session)
