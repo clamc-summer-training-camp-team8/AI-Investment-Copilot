@@ -59,6 +59,50 @@ export interface EvidenceDetail {
   evidenceLocator: string
 }
 
+export interface RetrievalScoreComponents {
+  text: number
+  graph: number
+}
+
+export interface GraphPathTrace {
+  score: number
+  nodeIds: string[]
+  nodeKinds: string[]
+  layers: string[]
+  relations: string[]
+  provenanceLocators: string[]
+  explanation: string
+}
+
+export interface GraphLayerSnapshot {
+  layer: string
+  nodeCount: number
+  contentHash: string
+}
+
+export interface GraphSnapshotTrace {
+  snapshotId: string
+  schemaVersion: string
+  builderVersion: string
+  vocabularyVersion: string
+  builtAt: string
+  asOf?: string
+  thesisIds: string[]
+  securityIds: string[]
+  layers: GraphLayerSnapshot[]
+}
+
+export interface EvidenceRetrievalTrace {
+  available: boolean
+  retrievalMode: string
+  retrievalVersion: string
+  locator: string
+  finalScore: number
+  scoreComponents: RetrievalScoreComponents
+  graphPaths: GraphPathTrace[]
+  graphSnapshot?: GraphSnapshotTrace
+}
+
 export interface ThesisSummary {
   thesisId: string
   securityId: string
@@ -319,4 +363,188 @@ export interface ThesisRevisionDiff {
   draftId: string
   baseVersion: number
   changes: Record<string, { before?: unknown; after?: unknown }>
+}
+
+export interface QuantBarInput {
+  tradingDate: string
+  close: number
+  benchmarkClose: number
+  tradable?: boolean
+}
+
+export interface QuantSignalInput {
+  signalId: string
+  disclosedAt: string
+  generatedAt: string
+  direction: '支持' | '冲突' | '中性'
+  strength: '高' | '中' | '低'
+  confidence: number
+}
+
+export interface QuantBacktestRequest {
+  name: string
+  bars: QuantBarInput[]
+  signals: QuantSignalInput[]
+  config: {
+    initialCapital: number
+    holdingDays: number
+    transactionCostBps: number
+    slippageBps: number
+    allowShort: boolean
+  }
+}
+
+export interface QuantMetrics {
+  initialCapital: number
+  finalEquity: number
+  totalReturn: number
+  benchmarkReturn: number
+  excessReturn: number
+  annualizedReturn: number
+  annualizedVolatility: number
+  sharpeRatio?: number
+  maxDrawdown: number
+  winRate?: number
+  turnover: number
+  tradeCount: number
+  averageExposure: number
+}
+
+export interface QuantEquityPoint {
+  tradingDate: string
+  equity: number
+  benchmarkEquity: number
+  drawdown: number
+  position: number
+}
+
+export interface QuantTrade {
+  signalId: string
+  direction: string
+  entryDate: string
+  exitDate: string
+  entryPrice: number
+  exitPrice: number
+  position: number
+  grossReturn: number
+  netReturn: number
+  holdingDays: number
+  exitReason: string
+}
+
+export interface QuantBacktestRun {
+  runId: string
+  name: string
+  generatedAt: string
+  methodologyVersion: string
+  metrics: QuantMetrics
+  equityCurve: QuantEquityPoint[]
+  trades: QuantTrade[]
+  diagnostics: {
+    inputSignalCount: number
+    acceptedSignalCount: number
+    skippedSignalCount: number
+    skippedSignals: string[]
+    warnings: string[]
+  }
+}
+
+export interface GoldQualitySummary {
+  totalSamples: number
+  consensusSamples: number
+  adjudicatedSamples: number
+  goldSamples: number
+  evaluationEligibleSamples: number
+  pendingAdjudication: number
+  consensusCoverage: number
+  goldCoverage: number
+  evaluationReady: boolean
+  productionGoldReady: boolean
+  graphRagRolloutReady: boolean
+}
+
+export interface GoldTaskQuality {
+  task: string
+  label: string
+  total: number
+  consensus: number
+  adjudicated: number
+  final: number
+  evaluationEligible: number
+  pending: number
+  coverage: number
+  coreFields: string[]
+  file: string
+}
+
+export interface GoldAgreement {
+  task: string
+  field: string
+  n: number
+  agreement: number
+  cohenKappa?: number
+}
+
+export interface GoldQualityGate {
+  code: string
+  label: string
+  status: 'passed' | 'warning' | 'blocked'
+  current?: boolean | number
+  target?: boolean | number
+  message: string
+}
+
+export interface GraphRagRankingMetrics {
+  evaluatedQueries: number
+  positiveQueries: number
+  recallAtK: Record<string, number>
+  hitRateAtK: Record<string, number>
+  ndcgAtK: Record<string, number>
+  mrr: number
+  top1Correctness: number
+  unjudgedResultCount: number
+}
+
+export interface GraphRagBenchmarkGate {
+  code: string
+  current: boolean | number
+  target: boolean | number
+  passed: boolean
+}
+
+export interface GraphRagSystemBenchmark {
+  benchmarkVersion: string
+  generatedAt: string
+  reportPath: string
+  rolloutReady: boolean
+  evaluatedQueries: number
+  positiveQueries: number
+  textBaseline: GraphRagRankingMetrics
+  graphRag: GraphRagRankingMetrics
+  safety: {
+    permissionLeakageCount: number
+    securityLeakageCount: number
+    futureLeakageCount: number
+    canaryContentLeakageCount: number
+    adversarialCanaryCount: number
+    pathProvenanceValid: number
+    pathProvenanceRelevantHits: number
+    pathProvenanceRate: number
+  }
+  gates: GraphRagBenchmarkGate[]
+}
+
+export interface GoldQualityReport {
+  schemaVersion: string
+  goldVersion: string
+  goldState: 'consensus' | 'final'
+  createdAt: string
+  sourcePackage: string
+  summary: GoldQualitySummary
+  tasks: GoldTaskQuality[]
+  agreement: GoldAgreement[]
+  gates: GoldQualityGate[]
+  qualityExceptions: Array<{ task: string; sampleId: string; reason: string }>
+  files: Array<{ path: string; rows: number; sha256: string }>
+  graphRagBenchmark?: GraphRagSystemBenchmark
 }

@@ -9,6 +9,7 @@ PRD 层级：AI 与规则层（规则侧）
 
 ```
 calc/
+├── backtest.py       研究验证型事件回测、净值、风险和交易审计
 ├── deterministic.py  预期差、同比环比、趋势、同业比较、超额收益
 └── rules.py          失效条件判定、状态建议生成、证据聚合
 ```
@@ -34,6 +35,7 @@ calc/
 | `trend` | 最近 4–8 期，只给方向、OLS 斜率和连续性，不做预测 | FR-V-002 |
 | `peer_comparison` | 同业中位数与分位，披露有效样本数与缺失数 | FR-V-003 |
 | `excess_return` | AR = R − Rb，MVP 只做简单基准调整 | 说明书 T15 |
+| `run_event_backtest` | T+1 事件回测、成本/滑点、净值与风险指标 | 量化研究 MVP |
 | `check_invalidation` | 连续突破阈值判定，按建立日裁剪观察窗口 | PRD 4.7 / FR-S-002 |
 | `suggest_status` | 重大风险 > 出现分歧 > 维持当前 | PRD 5.2 |
 

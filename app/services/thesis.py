@@ -12,7 +12,13 @@ from typing import Any
 
 from app.core.enums import Importance, ThesisStatus, Visibility
 from app.services import audit, permission, version
-from app.services.errors import EntityAmbiguous, HumanGateRequired, ValidationFailed
+from app.services.errors import (
+    EntityAmbiguous,
+    HumanGateRequired,
+    NotVisible,
+    ThesisAlreadyExists,
+    ValidationFailed,
+)
 from app.services.permission import Actor
 from app.services.ports import (
     HypothesisRecord,
@@ -23,6 +29,14 @@ from app.services.ports import (
 
 TITLE_MAX = 40
 CORE_VIEW_MAX = 200
+
+
+def _ensure_current(record: ThesisRecord) -> None:
+    if not record.is_current:
+        suffix = (
+            f"，请维护 {record.superseded_by_thesis_id}" if record.superseded_by_thesis_id else ""
+        )
+        raise ValidationFailed(f"历史投资逻辑只读{suffix}")
 
 
 def create_draft(
@@ -44,6 +58,28 @@ def create_draft(
     security_id = draft.get("security_id")
     if not security_id:
         raise ValidationFailed("缺少投资对象")
+
+    existing = uow.thesis.get_by_security(str(security_id))
+    if existing is not None:
+        # 数据库唯一约束是并发写入的最后防线；这里在模型结果落库前给出可理解的
+        # 业务冲突。历史异常数据若已存在多条，也绝不再制造第三条。
+        visible_id: str | None = None
+        try:
+            permission.ensure_thesis_visible(
+                actor,
+                thesis_id=existing.thesis_id,
+                owner=existing.owner,
+                visibility=existing.visibility,
+                team=existing.team,
+            )
+        except NotVisible:
+            pass
+        else:
+            visible_id = existing.thesis_id
+        raise ThesisAlreadyExists(
+            "该公司已维护一条投资逻辑，请在现有逻辑中通过修订更新",
+            visible_id,
+        )
 
     title = str(draft.get("title") or "").strip()
     core_view = str(draft.get("core_view") or "").strip()
@@ -183,6 +219,7 @@ def set_expectations(
     thesis = uow.thesis.get(hypothesis.thesis_id)
     if thesis is None:
         raise ValidationFailed(f"逻辑 {hypothesis.thesis_id} 不存在")
+    _ensure_current(thesis)
     if thesis_id is not None and hypothesis.thesis_id != thesis_id:
         raise ValidationFailed(f"假设 {hypothesis_id} 不属于逻辑 {thesis_id}")
     if require_draft and thesis.status is not ThesisStatus.DRAFT:
@@ -246,6 +283,7 @@ def publish_readiness(
     record = uow.thesis.get(thesis_id)
     if record is None:
         raise ValidationFailed(f"逻辑 {thesis_id} 不存在")
+    _ensure_current(record)
     permission.ensure_thesis_visible(
         actor,
         thesis_id=thesis_id,
@@ -402,6 +440,7 @@ def _require_owned_draft(uow: UnitOfWork, *, thesis_id: str, actor: Actor) -> Th
     record = uow.thesis.get(thesis_id)
     if record is None:
         raise ValidationFailed(f"逻辑 {thesis_id} 不存在")
+    _ensure_current(record)
     permission.ensure_thesis_visible(
         actor,
         thesis_id=thesis_id,
@@ -427,13 +466,11 @@ def recall_candidates(
     只返回可见的逻辑：越权召回会通过「你的资料匹配到某条逻辑」间接泄露他人研究
     方向。草稿不参与召回，未发布的逻辑不应该被新资料触发。
     """
-    results: list[tuple[ThesisRecord, list[HypothesisRecord]]] = []
-    for record in uow.thesis.find_by_security(security_id):
-        if record.status in (ThesisStatus.DRAFT, ThesisStatus.CLOSED):
-            continue
-        if not permission.can_view_thesis(
-            actor, owner=record.owner, visibility=record.visibility, team=record.team
-        ):
-            continue
-        results.append((record, uow.thesis.list_hypotheses(record.thesis_id)))
-    return results
+    record = uow.thesis.get_by_security(security_id)
+    if record is None or record.status in (ThesisStatus.DRAFT, ThesisStatus.CLOSED):
+        return []
+    if not permission.can_view_thesis(
+        actor, owner=record.owner, visibility=record.visibility, team=record.team
+    ):
+        return []
+    return [(record, uow.thesis.list_hypotheses(record.thesis_id))]

@@ -87,8 +87,10 @@ def create_app() -> FastAPI:
         assets,
         demo,
         documents,
+        evaluation,
         jobs,
         metrics,
+        quant,
         radar,
         review,
         reviews,
@@ -100,6 +102,8 @@ def create_app() -> FastAPI:
     application.include_router(securities.router, prefix="/api")
     application.include_router(assets.router, prefix="/api")
     application.include_router(metrics.router, prefix="/api")
+    application.include_router(evaluation.router, prefix="/api")
+    application.include_router(quant.router, prefix="/api")
     application.include_router(thesis.router, prefix="/api")
     application.include_router(workbench.router, prefix="/api")
     application.include_router(radar.router, prefix="/api")

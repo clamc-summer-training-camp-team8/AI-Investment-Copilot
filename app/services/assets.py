@@ -363,6 +363,8 @@ def create_thesis_revision(
     thesis = uow.thesis.get(thesis_id)
     if thesis is None:
         raise NotVisible("投资逻辑不存在")
+    if not thesis.is_current:
+        raise ValidationFailed("历史投资逻辑只读，请修订当前公司级逻辑")
     if thesis.owner != actor.user_id:
         raise HumanGateRequired("只有负责人可以创建修订草稿")
     active = uow.assets.active_thesis_revision(thesis_id)
@@ -423,6 +425,8 @@ def publish_thesis_revision(
     thesis = uow.thesis.get(record.thesis_id)
     if thesis is None:
         raise NotVisible("投资逻辑不存在")
+    if not thesis.is_current:
+        raise ValidationFailed("历史投资逻辑只读，请修订当前公司级逻辑")
     latest = uow.versions.latest(record.thesis_id)
     current_version = latest.version if latest else thesis.version
     if current_version != record.base_version:

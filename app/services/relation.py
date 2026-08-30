@@ -26,6 +26,8 @@ def _validate_target(
     thesis = uow.thesis.get(thesis_id)
     if evidence is None or thesis is None:
         raise ValidationFailed("证据或目标逻辑不存在")
+    if not thesis.is_current:
+        raise ValidationFailed("历史投资逻辑只读，请关联当前公司级逻辑")
     if evidence.security_id != thesis.security_id:
         raise ValidationFailed("证据只能关联同一证券范围内的逻辑")
     if hypothesis_id not in {item.hypothesis_id for item in uow.thesis.list_hypotheses(thesis_id)}:

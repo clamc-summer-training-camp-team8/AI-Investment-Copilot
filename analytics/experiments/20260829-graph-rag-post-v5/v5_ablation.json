@@ -1,0 +1,597 @@
+{
+  "schema_version": "graph-rag-ablation-v1",
+  "benchmark_version": "graph-rag-assisted-closed-pool-v3",
+  "generated_at": "2026-08-29T12:25:03.044684+00:00",
+  "gold_version": "graph-relevance-v5-blind",
+  "evaluation_role": "revealed_regression",
+  "weights_changed_between_variants": false,
+  "thresholds_changed_between_variants": false,
+  "variants": [
+    {
+      "variant": {
+        "name": "v1_baseline",
+        "enhanced_concepts": false,
+        "announcement_prior": false,
+        "bm25": false,
+        "chinese_vector": false,
+        "diversity": false,
+        "rank_stable_assist": false,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.68,
+      "mrr": 0.7972,
+      "ndcg_at_5": 0.6738,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 58,
+        "path_provenance_relevant_hits": 58,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 22,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 13,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q009",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": {
+        "name": "controlled_concepts_only",
+        "enhanced_concepts": true,
+        "announcement_prior": false,
+        "bm25": false,
+        "chinese_vector": false,
+        "diversity": false,
+        "rank_stable_assist": false,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.68,
+      "mrr": 0.7972,
+      "ndcg_at_5": 0.6747,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0009,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 58,
+        "path_provenance_relevant_hits": 58,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 22,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 13,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q009",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": {
+        "name": "announcement_prior_only",
+        "enhanced_concepts": false,
+        "announcement_prior": true,
+        "bm25": false,
+        "chinese_vector": false,
+        "diversity": false,
+        "rank_stable_assist": false,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.68,
+      "mrr": 0.7978,
+      "ndcg_at_5": 0.6736,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": 0.0,
+        "mrr": 0.0006,
+        "ndcg_at_5": -0.0002,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 58,
+        "path_provenance_relevant_hits": 58,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 22,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 13,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q009",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": {
+        "name": "bm25_only",
+        "enhanced_concepts": false,
+        "announcement_prior": false,
+        "bm25": true,
+        "chinese_vector": false,
+        "diversity": false,
+        "rank_stable_assist": false,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.68,
+      "mrr": 0.7972,
+      "ndcg_at_5": 0.6738,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 58,
+        "path_provenance_relevant_hits": 58,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 22,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 13,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q009",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": {
+        "name": "chinese_vector_only",
+        "enhanced_concepts": false,
+        "announcement_prior": false,
+        "bm25": false,
+        "chinese_vector": true,
+        "diversity": false,
+        "rank_stable_assist": false,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.68,
+      "mrr": 0.7972,
+      "ndcg_at_5": 0.6738,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_5": 0.0,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 58,
+        "path_provenance_relevant_hits": 58,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 22,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 13,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q009",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": {
+        "name": "diversity_only",
+        "enhanced_concepts": false,
+        "announcement_prior": false,
+        "bm25": false,
+        "chinese_vector": false,
+        "diversity": true,
+        "rank_stable_assist": false,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.6567,
+      "mrr": 0.8028,
+      "ndcg_at_5": 0.6661,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": -0.0233,
+        "mrr": 0.0056,
+        "ndcg_at_5": -0.0077,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 56,
+        "path_provenance_relevant_hits": 56,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 23,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 12,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": {
+        "name": "p0_assisted_release_candidate",
+        "enhanced_concepts": true,
+        "announcement_prior": true,
+        "bm25": true,
+        "chinese_vector": true,
+        "diversity": true,
+        "rank_stable_assist": true,
+        "announcement_penalty": 0.35,
+        "graph_text_weight": 0.35,
+        "graph_relation_weight": 0.65,
+        "thresholds_changed": false
+      },
+      "recall_at_5": 0.6372,
+      "mrr": 0.8062,
+      "ndcg_at_5": 0.6541,
+      "top1_correctness": 0.7,
+      "delta_vs_baseline": {
+        "recall_at_5": -0.0428,
+        "mrr": 0.009,
+        "ndcg_at_5": -0.0197,
+        "top1_correctness": 0.0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 54,
+        "path_provenance_relevant_hits": 54,
+        "path_provenance_rate": 1.0
+      },
+      "error_taxonomy": {
+        "failed_queries": 23,
+        "groups": {
+          "governance_hard_negative": {
+            "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+            "count": 0,
+            "query_ids": []
+          },
+          "duplicate_disclosures": {
+            "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+            "count": 12,
+            "query_ids": [
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q016",
+              "V5-Q017",
+              "V5-Q018",
+              "V5-Q021",
+              "V5-Q022",
+              "V5-Q024",
+              "V5-Q025",
+              "V5-Q026",
+              "V5-Q027"
+            ]
+          },
+          "too_many_positive_candidates": {
+            "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+            "count": 0,
+            "query_ids": []
+          },
+          "graph_cannot_change_top1": {
+            "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+            "count": 9,
+            "query_ids": [
+              "V5-Q003",
+              "V5-Q005",
+              "V5-Q007",
+              "V5-Q008",
+              "V5-Q014",
+              "V5-Q015",
+              "V5-Q017",
+              "V5-Q020",
+              "V5-Q030"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+  "schema_version": "gold-quality-v1",
+  "gold_version": "consensus-gold-v3-20260826",
+  "gold_state": "consensus",
+  "created_at": "2026-08-26T15:39:36.356767+08:00",
+  "source_package": "independent-gold-v3-20260826",
+  "summary": {
+    "total_samples": 360,
+    "consensus_samples": 199,
+    "pending_adjudication": 161,
+    "consensus_coverage": 0.5528,
+    "evaluation_ready": true,
+    "production_gold_ready": false,
+    "graph_rag_rollout_ready": false
+  },
+  "tasks": [
+    {
+      "task": "event",
+      "label": "事件语义",
+      "total": 120,
+      "consensus": 73,
+      "pending": 47,
+      "coverage": 0.6083,
+      "core_fields": [
+        "事件类别",
+        "主要关联假设",
+        "影响方向",
+        "影响强度",
+        "直接性"
+      ],
+      "file": "consensus_event_gold_v3.csv"
+    },
+    {
+      "task": "body_fact",
+      "label": "正文事实",
+      "total": 60,
+      "consensus": 31,
+      "pending": 29,
+      "coverage": 0.5167,
+      "core_fields": [
+        "是否存在可抽取事实",
+        "事实类型",
+        "变化方向",
+        "数值下限",
+        "数值上限",
+        "单位",
+        "事实发生期"
+      ],
+      "file": "consensus_body_fact_gold_v3.csv"
+    },
+    {
+      "task": "graph_relevance",
+      "label": "Graph RAG 相关性",
+      "total": 180,
+      "consensus": 95,
+      "pending": 85,
+      "coverage": 0.5278,
+      "core_fields": [
+        "相关性等级",
+        "关系路径可成立"
+      ],
+      "file": "consensus_graph_relevance_gold_v3.csv"
+    }
+  ],
+  "agreement": [
+    {
+      "task": "event",
+      "field": "事件类别",
+      "n": 120,
+      "agreement": 0.9083,
+      "cohen_kappa": 0.8834
+    },
+    {
+      "task": "event",
+      "field": "主要关联假设",
+      "n": 120,
+      "agreement": 0.7667,
+      "cohen_kappa": 0.6786
+    },
+    {
+      "task": "event",
+      "field": "影响方向",
+      "n": 120,
+      "agreement": 0.8917,
+      "cohen_kappa": 0.8188
+    },
+    {
+      "task": "event",
+      "field": "影响强度",
+      "n": 120,
+      "agreement": 0.7417,
+      "cohen_kappa": 0.6348
+    },
+    {
+      "task": "event",
+      "field": "直接性",
+      "n": 120,
+      "agreement": 0.8583,
+      "cohen_kappa": 0.7536
+    },
+    {
+      "task": "body_fact",
+      "field": "是否存在可抽取事实",
+      "n": 60,
+      "agreement": 0.8,
+      "cohen_kappa": 0.5041
+    },
+    {
+      "task": "body_fact",
+      "field": "事实类型",
+      "n": 60,
+      "agreement": 0.7833,
+      "cohen_kappa": 0.7324
+    },
+    {
+      "task": "body_fact",
+      "field": "变化方向",
+      "n": 60,
+      "agreement": 0.6333,
+      "cohen_kappa": 0.488
+    },
+    {
+      "task": "body_fact",
+      "field": "数值下限",
+      "n": 60,
+      "agreement": 0.65,
+      "cohen_kappa": 0.6211
+    },
+    {
+      "task": "body_fact",
+      "field": "数值上限",
+      "n": 60,
+      "agreement": 0.65,
+      "cohen_kappa": 0.6211
+    },
+    {
+      "task": "body_fact",
+      "field": "单位",
+      "n": 60,
+      "agreement": 0.7667,
+      "cohen_kappa": 0.6645
+    },
+    {
+      "task": "body_fact",
+      "field": "事实发生期",
+      "n": 60,
+      "agreement": 0.6167,
+      "cohen_kappa": 0.5809
+    },
+    {
+      "task": "graph_relevance",
+      "field": "相关性等级",
+      "n": 180,
+      "agreement": 0.6389,
+      "cohen_kappa": 0.5154
+    },
+    {
+      "task": "graph_relevance",
+      "field": "关系路径可成立",
+      "n": 180,
+      "agreement": 0.8278,
+      "cohen_kappa": 0.509
+    }
+  ],
+  "gates": [
+    {
+      "code": "workbook_validation",
+      "label": "工作簿结构与字段契约",
+      "status": "passed",
+      "current": true,
+      "target": true,
+      "message": "A/B 两份回收工作簿均通过固定字段、枚举、必填项与时间格式校验。"
+    },
+    {
+      "code": "independent_double_annotation",
+      "label": "独立双人标注覆盖",
+      "status": "passed",
+      "current": 360,
+      "target": 360,
+      "message": "全部样本均包含两份独立标注。"
+    },
+    {
+      "code": "consensus_evaluation_set",
+      "label": "高置信共识评测集",
+      "status": "passed",
+      "current": 3,
+      "target": 3,
+      "message": "三个任务均已冻结可复现的共识子集，可用于离线基线评测。"
+    },
+    {
+      "code": "event_direction_agreement",
+      "label": "事件方向一致性",
+      "status": "passed",
+      "current": 0.8188,
+      "target": 0.6,
+      "message": "Cohen's kappa 以 0.60 作为本轮稳定性参考线。"
+    },
+    {
+      "code": "body_fact_direction_agreement",
+      "label": "正文事实方向一致性",
+      "status": "warning",
+      "current": 0.488,
+      "target": 0.6,
+      "message": "低于参考线时仅使用精确一致样本，不将分歧样本硬并入金标。"
+    },
+    {
+      "code": "graph_relevance_agreement",
+      "label": "Graph RAG 相关性一致性",
+      "status": "warning",
+      "current": 0.5154,
+      "target": 0.6,
+      "message": "低于参考线说明关系相关性的边界仍需通过困难样本规则或裁决收敛。"
+    },
+    {
+      "code": "adjudication_complete",
+      "label": "分歧裁决完成",
+      "status": "blocked",
+      "current": 161,
+      "target": 0,
+      "message": "未裁决样本保留在审计队列中，不计入最终硬金标。"
+    },
+    {
+      "code": "graph_rag_system_benchmark",
+      "label": "Graph RAG 系统离线基准",
+      "status": "blocked",
+      "current": null,
+      "target": true,
+      "message": "共识数据已经就绪，但尚未记录当前 Graph RAG 的 Recall@K、MRR 与权限泄漏门禁。"
+    }
+  ],
+  "files": [
+    {
+      "path": "consensus_event_gold_v3.csv",
+      "rows": 73,
+      "sha256": "d5e0882ebb468242a608ee6ea14d6d28ab1ea7733252c9f026d36dd78b2e9c84"
+    },
+    {
+      "path": "consensus_body_fact_gold_v3.csv",
+      "rows": 31,
+      "sha256": "10557d64fe304c009af51fa5ba2ae75bb9732110405e07916c38c7e5876c139d"
+    },
+    {
+      "path": "consensus_graph_relevance_gold_v3.csv",
+      "rows": 95,
+      "sha256": "da084ae2a63284b3d7f8993ec88fd41f0604aa3205fafdc42b59bfa3e70116ae"
+    }
+  ],
+  "review_artifacts": {
+    "agreement_report": "review/agreement_report.json",
+    "adjudication_queue": "review/adjudication_queue.csv",
+    "adjudication_rows": 161
+  },
+  "source_sha256": {
+    "A": "8c0bf8d31def3d7a0be867c29a69de8ac534090a66964bf4b2ec5079698c9e60",
+    "B": "394b89b24a536d7953678f0928d6bf4547ab03f8a81b2fd543b4777b64b9e6f1"
+  }
+}

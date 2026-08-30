@@ -30,6 +30,8 @@ def create_task(
     thesis = uow.thesis.get(thesis_id)
     if thesis is None:
         raise NotVisible("逻辑不存在或无访问权限")
+    if not thesis.is_current:
+        raise ValidationFailed("历史投资逻辑只读，请在当前公司级逻辑发起复核")
     permission.ensure_thesis_visible(
         actor,
         thesis_id=thesis_id,

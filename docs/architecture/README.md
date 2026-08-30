@@ -5,6 +5,8 @@
 - 分层依赖的机器化约束见 [`layering.md`](layering.md)，由 `make lint-arch` 强制执行。
 - 模块所有权与协作流程见 [`../collaboration/README.md`](../collaboration/README.md)。
 - 重大取舍记录在 [`../adr/`](../adr/)。
+- Graph RAG 的建图、检索路径、文本融合、评测效果和发布状态见
+  [`Graph-RAG技术全景-20260830.md`](Graph-RAG技术全景-20260830.md)。
 
 ## 1. 架构从业务对象出发
 

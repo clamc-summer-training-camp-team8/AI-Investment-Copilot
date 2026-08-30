@@ -45,8 +45,8 @@ def engine() -> Iterator[Engine]:
                 "where table_schema='public' and table_name='thesis'"
             )
         ).scalars()
-        assert "draft_suggestions" in set(
-            thesis_columns
+        assert {"draft_suggestions", "is_current", "superseded_by_thesis_id"}.issubset(
+            set(thesis_columns)
         ), "数据库迁移落后于 ORM，请先执行 `.venv\\Scripts\\alembic.exe upgrade head`"
         segment_columns = conn.execute(
             text(

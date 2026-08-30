@@ -22,6 +22,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -160,6 +161,16 @@ class Thesis(Base):
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="草稿")
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment="同一公司仅一条当前维护逻辑；历史行只读保留",
+    )
+    superseded_by_thesis_id: Mapped[str | None] = mapped_column(
+        ForeignKey("thesis.thesis_id"),
+        comment="历史逻辑归并到的当前公司级逻辑",
+    )
 
     invalidation_require_all: Mapped[bool] = mapped_column(
         Boolean,
@@ -187,6 +198,12 @@ class Thesis(Base):
     __table_args__ = (
         CheckConstraint("char_length(title) <= 120", name="title_len"),
         CheckConstraint("version >= 0", name="version_nonneg"),
+        Index(
+            "uq_thesis_current_security_id",
+            "security_id",
+            unique=True,
+            postgresql_where=text("is_current"),
+        ),
         Index("ix_thesis_status", "status"),
         Index("ix_thesis_owner", "owner"),
     )
@@ -407,6 +424,7 @@ class Evidence(Base):
     ai_confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
     model_version: Mapped[str | None] = mapped_column(String(64))
     prompt_version: Mapped[str | None] = mapped_column(String(64))
+    retrieval_trace: Mapped[dict | None] = mapped_column(JSONB)
 
     confirmation_status: Mapped[str] = mapped_column(String(16), nullable=False, default="待确认")
     review_status: Mapped[str | None] = mapped_column(String(16))

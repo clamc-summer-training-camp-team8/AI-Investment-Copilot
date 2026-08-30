@@ -1074,6 +1074,413 @@ components:
       - action
       title: EvidenceRelationReviewIn
       type: object
+    EvidenceRetrievalTraceOut:
+      description: 证据生成时冻结的双路召回依据；正文仍从原文接口读取。
+      properties:
+        available:
+          title: Available
+          type: boolean
+        final_score:
+          title: Final Score
+          type: number
+        graph_paths:
+          items:
+            $ref: '#/components/schemas/GraphPathTraceOut'
+          title: Graph Paths
+          type: array
+        graph_snapshot:
+          anyOf:
+          - $ref: '#/components/schemas/GraphSnapshotTraceOut'
+          - type: 'null'
+        locator:
+          title: Locator
+          type: string
+        retrieval_mode:
+          title: Retrieval Mode
+          type: string
+        retrieval_version:
+          title: Retrieval Version
+          type: string
+        score_components:
+          $ref: '#/components/schemas/RetrievalScoreComponentsOut'
+      required:
+      - available
+      - retrieval_mode
+      - retrieval_version
+      - locator
+      - final_score
+      - score_components
+      - graph_paths
+      title: EvidenceRetrievalTraceOut
+      type: object
+    GoldAgreementOut:
+      properties:
+        agreement:
+          title: Agreement
+          type: number
+        cohen_kappa:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Cohen Kappa
+        field:
+          title: Field
+          type: string
+        n:
+          title: N
+          type: integer
+        task:
+          title: Task
+          type: string
+      required:
+      - task
+      - field
+      - n
+      - agreement
+      - cohen_kappa
+      title: GoldAgreementOut
+      type: object
+    GoldFileOut:
+      properties:
+        path:
+          title: Path
+          type: string
+        rows:
+          title: Rows
+          type: integer
+        sha256:
+          title: Sha256
+          type: string
+      required:
+      - path
+      - rows
+      - sha256
+      title: GoldFileOut
+      type: object
+    GoldQualityGateOut:
+      properties:
+        code:
+          title: Code
+          type: string
+        current:
+          anyOf:
+          - type: boolean
+          - type: integer
+          - type: number
+          - type: 'null'
+          title: Current
+        label:
+          title: Label
+          type: string
+        message:
+          title: Message
+          type: string
+        status:
+          enum:
+          - passed
+          - warning
+          - blocked
+          title: Status
+          type: string
+        target:
+          anyOf:
+          - type: boolean
+          - type: integer
+          - type: number
+          - type: 'null'
+          title: Target
+      required:
+      - code
+      - label
+      - status
+      - message
+      title: GoldQualityGateOut
+      type: object
+    GoldQualityReportOut:
+      properties:
+        agreement:
+          items:
+            $ref: '#/components/schemas/GoldAgreementOut'
+          title: Agreement
+          type: array
+        created_at:
+          title: Created At
+          type: string
+        files:
+          items:
+            $ref: '#/components/schemas/GoldFileOut'
+          title: Files
+          type: array
+        gates:
+          items:
+            $ref: '#/components/schemas/GoldQualityGateOut'
+          title: Gates
+          type: array
+        gold_state:
+          enum:
+          - consensus
+          - final
+          title: Gold State
+          type: string
+        gold_version:
+          title: Gold Version
+          type: string
+        quality_exceptions:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          title: Quality Exceptions
+          type: array
+        review_artifacts:
+          title: Review Artifacts
+          type: object
+        schema_version:
+          title: Schema Version
+          type: string
+        source_package:
+          title: Source Package
+          type: string
+        source_sha256:
+          additionalProperties:
+            type: string
+          title: Source Sha256
+          type: object
+        summary:
+          $ref: '#/components/schemas/GoldQualitySummaryOut'
+        system_benchmarks:
+          title: System Benchmarks
+          type: object
+        tasks:
+          items:
+            $ref: '#/components/schemas/GoldTaskQualityOut'
+          title: Tasks
+          type: array
+      required:
+      - schema_version
+      - gold_version
+      - gold_state
+      - created_at
+      - source_package
+      - summary
+      - tasks
+      - agreement
+      - gates
+      - files
+      - review_artifacts
+      - source_sha256
+      title: GoldQualityReportOut
+      type: object
+    GoldQualitySummaryOut:
+      properties:
+        adjudicated_samples:
+          default: 0
+          title: Adjudicated Samples
+          type: integer
+        consensus_coverage:
+          title: Consensus Coverage
+          type: number
+        consensus_samples:
+          title: Consensus Samples
+          type: integer
+        evaluation_eligible_samples:
+          default: 0
+          title: Evaluation Eligible Samples
+          type: integer
+        evaluation_ready:
+          title: Evaluation Ready
+          type: boolean
+        gold_coverage:
+          default: 0
+          title: Gold Coverage
+          type: number
+        gold_samples:
+          default: 0
+          title: Gold Samples
+          type: integer
+        graph_rag_rollout_ready:
+          title: Graph Rag Rollout Ready
+          type: boolean
+        pending_adjudication:
+          title: Pending Adjudication
+          type: integer
+        production_gold_ready:
+          title: Production Gold Ready
+          type: boolean
+        total_samples:
+          title: Total Samples
+          type: integer
+      required:
+      - total_samples
+      - consensus_samples
+      - pending_adjudication
+      - consensus_coverage
+      - evaluation_ready
+      - production_gold_ready
+      - graph_rag_rollout_ready
+      title: GoldQualitySummaryOut
+      type: object
+    GoldTaskQualityOut:
+      properties:
+        adjudicated:
+          default: 0
+          title: Adjudicated
+          type: integer
+        consensus:
+          title: Consensus
+          type: integer
+        core_fields:
+          items:
+            type: string
+          title: Core Fields
+          type: array
+        coverage:
+          title: Coverage
+          type: number
+        evaluation_eligible:
+          default: 0
+          title: Evaluation Eligible
+          type: integer
+        file:
+          title: File
+          type: string
+        final:
+          default: 0
+          title: Final
+          type: integer
+        label:
+          title: Label
+          type: string
+        pending:
+          title: Pending
+          type: integer
+        task:
+          title: Task
+          type: string
+        total:
+          title: Total
+          type: integer
+      required:
+      - task
+      - label
+      - total
+      - consensus
+      - pending
+      - coverage
+      - core_fields
+      - file
+      title: GoldTaskQualityOut
+      type: object
+    GraphLayerSnapshotOut:
+      properties:
+        content_hash:
+          title: Content Hash
+          type: string
+        layer:
+          title: Layer
+          type: string
+        node_count:
+          title: Node Count
+          type: integer
+      required:
+      - layer
+      - node_count
+      - content_hash
+      title: GraphLayerSnapshotOut
+      type: object
+    GraphPathTraceOut:
+      properties:
+        explanation:
+          title: Explanation
+          type: string
+        layers:
+          items:
+            type: string
+          title: Layers
+          type: array
+        node_ids:
+          items:
+            type: string
+          title: Node Ids
+          type: array
+        node_kinds:
+          items:
+            type: string
+          title: Node Kinds
+          type: array
+        provenance_locators:
+          items:
+            type: string
+          title: Provenance Locators
+          type: array
+        relations:
+          items:
+            type: string
+          title: Relations
+          type: array
+        score:
+          title: Score
+          type: number
+      required:
+      - score
+      - node_ids
+      - node_kinds
+      - layers
+      - relations
+      - provenance_locators
+      - explanation
+      title: GraphPathTraceOut
+      type: object
+    GraphSnapshotTraceOut:
+      properties:
+        as_of:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: As Of
+        builder_version:
+          title: Builder Version
+          type: string
+        built_at:
+          format: date-time
+          title: Built At
+          type: string
+        layers:
+          items:
+            $ref: '#/components/schemas/GraphLayerSnapshotOut'
+          title: Layers
+          type: array
+        schema_version:
+          title: Schema Version
+          type: string
+        security_ids:
+          items:
+            type: string
+          title: Security Ids
+          type: array
+        snapshot_id:
+          title: Snapshot Id
+          type: string
+        thesis_ids:
+          items:
+            type: string
+          title: Thesis Ids
+          type: array
+        vocabulary_version:
+          title: Vocabulary Version
+          type: string
+      required:
+      - snapshot_id
+      - schema_version
+      - builder_version
+      - vocabulary_version
+      - built_at
+      - thesis_ids
+      - security_ids
+      - layers
+      title: GraphSnapshotTraceOut
+      type: object
     HTTPValidationError:
       properties:
         detail:
@@ -1743,6 +2150,361 @@ components:
       - items
       title: PublishReadinessOut
       type: object
+    QuantBacktestIn:
+      properties:
+        bars:
+          items:
+            $ref: '#/components/schemas/QuantBarIn'
+          maxItems: 5000
+          minItems: 3
+          title: Bars
+          type: array
+        config:
+          $ref: '#/components/schemas/QuantConfigIn'
+        name:
+          default: 事件方向信号研究
+          maxLength: 100
+          minLength: 1
+          title: Name
+          type: string
+        signals:
+          items:
+            $ref: '#/components/schemas/QuantSignalIn'
+          maxItems: 1000
+          minItems: 1
+          title: Signals
+          type: array
+      required:
+      - bars
+      - signals
+      title: QuantBacktestIn
+      type: object
+    QuantBacktestOut:
+      properties:
+        generated_at:
+          format: date-time
+          title: Generated At
+          type: string
+        name:
+          title: Name
+          type: string
+        result:
+          $ref: '#/components/schemas/QuantResultOut'
+        run_id:
+          title: Run Id
+          type: string
+      required:
+      - run_id
+      - name
+      - generated_at
+      - result
+      title: QuantBacktestOut
+      type: object
+    QuantBarIn:
+      properties:
+        benchmark_close:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            type: number
+          - type: string
+          title: Benchmark Close
+        close:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            type: number
+          - type: string
+          title: Close
+        tradable:
+          default: true
+          title: Tradable
+          type: boolean
+        trading_date:
+          format: date
+          title: Trading Date
+          type: string
+      required:
+      - trading_date
+      - close
+      - benchmark_close
+      title: QuantBarIn
+      type: object
+    QuantConfigIn:
+      properties:
+        allow_short:
+          default: false
+          title: Allow Short
+          type: boolean
+        holding_days:
+          default: 20
+          maximum: 252.0
+          minimum: 1.0
+          title: Holding Days
+          type: integer
+        initial_capital:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            maximum: 1000000000000.0
+            type: number
+          - type: string
+          default: '1000000'
+          title: Initial Capital
+        slippage_bps:
+          anyOf:
+          - maximum: 1000.0
+            minimum: 0.0
+            type: number
+          - type: string
+          default: '5'
+          title: Slippage Bps
+        transaction_cost_bps:
+          anyOf:
+          - maximum: 1000.0
+            minimum: 0.0
+            type: number
+          - type: string
+          default: '10'
+          title: Transaction Cost Bps
+      title: QuantConfigIn
+      type: object
+    QuantDiagnosticsOut:
+      properties:
+        accepted_signal_count:
+          title: Accepted Signal Count
+          type: integer
+        input_signal_count:
+          title: Input Signal Count
+          type: integer
+        skipped_signal_count:
+          title: Skipped Signal Count
+          type: integer
+        skipped_signals:
+          items:
+            type: string
+          title: Skipped Signals
+          type: array
+        warnings:
+          items:
+            type: string
+          title: Warnings
+          type: array
+      required:
+      - input_signal_count
+      - accepted_signal_count
+      - skipped_signal_count
+      - skipped_signals
+      - warnings
+      title: QuantDiagnosticsOut
+      type: object
+    QuantEquityPointOut:
+      properties:
+        benchmark_equity:
+          title: Benchmark Equity
+          type: string
+        drawdown:
+          title: Drawdown
+          type: string
+        equity:
+          title: Equity
+          type: string
+        position:
+          title: Position
+          type: string
+        trading_date:
+          format: date
+          title: Trading Date
+          type: string
+      required:
+      - trading_date
+      - equity
+      - benchmark_equity
+      - drawdown
+      - position
+      title: QuantEquityPointOut
+      type: object
+    QuantMetricsOut:
+      properties:
+        annualized_return:
+          title: Annualized Return
+          type: string
+        annualized_volatility:
+          title: Annualized Volatility
+          type: string
+        average_exposure:
+          title: Average Exposure
+          type: string
+        benchmark_return:
+          title: Benchmark Return
+          type: string
+        excess_return:
+          title: Excess Return
+          type: string
+        final_equity:
+          title: Final Equity
+          type: string
+        initial_capital:
+          title: Initial Capital
+          type: string
+        max_drawdown:
+          title: Max Drawdown
+          type: string
+        sharpe_ratio:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sharpe Ratio
+        total_return:
+          title: Total Return
+          type: string
+        trade_count:
+          title: Trade Count
+          type: integer
+        turnover:
+          title: Turnover
+          type: string
+        win_rate:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Win Rate
+      required:
+      - initial_capital
+      - final_equity
+      - total_return
+      - benchmark_return
+      - excess_return
+      - annualized_return
+      - annualized_volatility
+      - sharpe_ratio
+      - max_drawdown
+      - win_rate
+      - turnover
+      - trade_count
+      - average_exposure
+      title: QuantMetricsOut
+      type: object
+    QuantResultOut:
+      properties:
+        diagnostics:
+          $ref: '#/components/schemas/QuantDiagnosticsOut'
+        equity_curve:
+          items:
+            $ref: '#/components/schemas/QuantEquityPointOut'
+          title: Equity Curve
+          type: array
+        methodology_version:
+          title: Methodology Version
+          type: string
+        metrics:
+          $ref: '#/components/schemas/QuantMetricsOut'
+        trades:
+          items:
+            $ref: '#/components/schemas/QuantTradeOut'
+          title: Trades
+          type: array
+      required:
+      - metrics
+      - equity_curve
+      - trades
+      - diagnostics
+      - methodology_version
+      title: QuantResultOut
+      type: object
+    QuantSignalIn:
+      properties:
+        confidence:
+          anyOf:
+          - maximum: 1.0
+            minimum: 0.0
+            type: number
+          - type: string
+          default: '1'
+          title: Confidence
+        direction:
+          enum:
+          - 支持
+          - 冲突
+          - 中性
+          title: Direction
+          type: string
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        generated_at:
+          format: date-time
+          title: Generated At
+          type: string
+        signal_id:
+          maxLength: 100
+          minLength: 1
+          title: Signal Id
+          type: string
+        strength:
+          default: 中
+          enum:
+          - 高
+          - 中
+          - 低
+          title: Strength
+          type: string
+      required:
+      - signal_id
+      - disclosed_at
+      - generated_at
+      - direction
+      title: QuantSignalIn
+      type: object
+    QuantTradeOut:
+      properties:
+        direction:
+          title: Direction
+          type: string
+        entry_date:
+          format: date
+          title: Entry Date
+          type: string
+        entry_price:
+          title: Entry Price
+          type: string
+        exit_date:
+          format: date
+          title: Exit Date
+          type: string
+        exit_price:
+          title: Exit Price
+          type: string
+        exit_reason:
+          title: Exit Reason
+          type: string
+        gross_return:
+          title: Gross Return
+          type: string
+        holding_days:
+          title: Holding Days
+          type: integer
+        net_return:
+          title: Net Return
+          type: string
+        position:
+          title: Position
+          type: string
+        signal_id:
+          title: Signal Id
+          type: string
+      required:
+      - signal_id
+      - direction
+      - entry_date
+      - exit_date
+      - entry_price
+      - exit_price
+      - position
+      - gross_return
+      - net_return
+      - holding_days
+      - exit_reason
+      title: QuantTradeOut
+      type: object
     ReprocessIn:
       properties:
         document_id:
@@ -1753,6 +2515,18 @@ components:
       required:
       - document_id
       title: ReprocessIn
+      type: object
+    RetrievalScoreComponentsOut:
+      properties:
+        graph:
+          default: 0.0
+          title: Graph
+          type: number
+        text:
+          default: 0.0
+          title: Text
+          type: number
+      title: RetrievalScoreComponentsOut
       type: object
     ReviewTaskCreateIn:
       properties:
@@ -3224,6 +3998,50 @@ paths:
       summary: Get Document Segment
       tags:
       - documents
+  /api/evaluation/gold-quality:
+    get:
+      operationId: get_gold_quality_api_evaluation_gold_quality_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoldQualityReportOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Gold Quality
+      tags:
+      - evaluation
   /api/evidence/{evidence_id}:
     get:
       description: 读取可核验的证据本体详情，不以单一逻辑关系作为详情字段。
@@ -3686,6 +4504,57 @@ paths:
       summary: Review Relation
       tags:
       - thesis
+  /api/evidence/{evidence_id}/retrieval-trace:
+    get:
+      description: 读取候选证据生成时冻结的文本/图双路召回依据。
+      operationId: get_evidence_retrieval_trace_api_evidence__evidence_id__retrieval_trace_get
+      parameters:
+      - in: path
+        name: evidence_id
+        required: true
+        schema:
+          title: Evidence Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceRetrievalTraceOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Evidence Retrieval Trace
+      tags:
+      - thesis
   /api/jobs:
     get:
       operationId: list_jobs_api_jobs_get
@@ -3963,6 +4832,56 @@ paths:
       summary: List Metrics
       tags:
       - metrics
+  /api/quant/backtests:
+    post:
+      operationId: create_backtest_api_quant_backtests_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuantBacktestIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuantBacktestOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Backtest
+      tags:
+      - quant
   /api/radar/evidence:
     get:
       operationId: list_radar_evidence_api_radar_evidence_get
@@ -4808,6 +5727,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ThesisOut'
           description: Successful Response
+        '409':
+          description: 该公司已经维护一条投资逻辑
         '422':
           content:
             application/json:

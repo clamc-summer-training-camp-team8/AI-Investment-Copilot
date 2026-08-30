@@ -24,7 +24,13 @@ class InvestmentLogicChangeAgent:
     @staticmethod
     def _context(candidate: CandidateHypothesis, chunks: list[RetrievedChunk]) -> str:
         lines = [f"目标假设：{candidate.statement}"]
-        lines.extend(f"{chunk.locator}: {chunk.content}" for chunk in chunks)
+        for chunk in chunks:
+            lines.append(f"{chunk.locator}: {chunk.content}")
+            paths = chunk.metadata.get("graph_paths", [])
+            if isinstance(paths, list):
+                for path in paths[:2]:
+                    if isinstance(path, dict) and path.get("explanation") and path.get("relations"):
+                        lines.append(f"[图检索路径] {path['explanation']}")
         return "\n".join(lines)
 
     def analyze(
@@ -44,6 +50,7 @@ class InvestmentLogicChangeAgent:
                     as_of=event.disclosure_time,
                     allowed_visibility=allowed_visibility,
                     top_k=top_k,
+                    seed_node_ids=frozenset({f"hypothesis:{candidate.hypothesis_id}"}),
                 )
             )
 

@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.timeutil import BUSINESS_TZ
-from app.db.models import Outcome, Security, Signal
+from app.db.models import Outcome, Security, Signal, Thesis
 
 pytestmark = pytest.mark.integration
 
@@ -95,3 +95,24 @@ def test_时间列往返保留时区(session: Session, security: Security) -> No
     assert loaded is not None
     assert loaded.generated_at.tzinfo is not None
     assert loaded.generated_at == _dt("2026-02-10", 19)
+
+
+def test_同一公司不能持久化第二条投资逻辑(session: Session, security: Security) -> None:
+    common = {
+        "security_id": security.security_id,
+        "direction": "观察",
+        "core_view": "公司级逻辑只允许一条",
+        "established_on": date(2026, 8, 26),
+        "owner": "researcher",
+        "visibility": "团队",
+        "status": "草稿",
+        "version": 0,
+        "invalidation_require_all": True,
+        "is_illustrative": True,
+    }
+    session.add(Thesis(thesis_id="THS-ONE", title="第一条", **common))
+    session.flush()
+    session.add(Thesis(thesis_id="THS-TWO", title="第二条", **common))
+
+    with pytest.raises(IntegrityError):
+        session.flush()

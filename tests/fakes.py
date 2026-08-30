@@ -284,8 +284,13 @@ class FakeThesisRepo:
                 return
         raise LookupError(record.mapping_id)
 
-    def find_by_security(self, security_id: str) -> list[ThesisRecord]:
-        return [replace(t) for t in self.theses.values() if t.security_id == security_id]
+    def get_by_security(self, security_id: str) -> ThesisRecord | None:
+        matching = [
+            t for t in self.theses.values() if t.security_id == security_id and t.is_current
+        ]
+        if len(matching) > 1:
+            raise ValueError(f"security {security_id} has multiple theses")
+        return replace(matching[0]) if matching else None
 
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]:
         """内存版分页查询。
@@ -293,7 +298,7 @@ class FakeThesisRepo:
         排序与 SQL 实现保持一致（established_on 倒序 + thesis_id 兜底），否则
         用 fake 写的分页测试通不过真实仓储。
         """
-        rows = list(self.theses.values())
+        rows = [row for row in self.theses.values() if row.is_current]
         if query.statuses:
             rows = [r for r in rows if r.status in query.statuses]
         if query.securities:

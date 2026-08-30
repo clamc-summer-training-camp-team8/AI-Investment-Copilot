@@ -277,6 +277,9 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
     matched_theses: list[str] = []
     deferred_count = 0
     extraction_mode = "none"
+    retrieval_mode = "baseline"
+    graph_snapshot_id: str | None = None
+    recall_rankings: list[dict[str, object]] = []
     security_candidates: list[dict[str, object]] = []
     if not security_id and not duplicate_document:
         with uow_scope() as uow:
@@ -395,6 +398,9 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                 candidate_count = len(chain.candidates)
                 matched_theses = chain.matched_theses
                 deferred_count = len(chain.deferred)
+                retrieval_mode = chain.retrieval_mode
+                graph_snapshot_id = chain.graph_snapshot_id
+                recall_rankings = [trace.to_dict() for trace in chain.recall_traces]
                 if new_events and not chain.matched_theses:
                     for event in new_events:
                         ingestion_service.create_review(
@@ -460,6 +466,9 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
         "candidate_evidence_count": candidate_count,
         "deferred_event_count": deferred_count,
         "event_extraction_mode": extraction_mode,
+        "retrieval_mode": retrieval_mode,
+        "graph_snapshot_id": graph_snapshot_id,
+        "recall_rankings": recall_rankings,
         "security_candidates": security_candidates,
         # 兼容旧客户端字段：上传资料现在不再错误地新建逻辑草稿。
         "draft_created": False,

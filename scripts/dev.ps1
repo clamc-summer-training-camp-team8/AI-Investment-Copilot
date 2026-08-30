@@ -244,7 +244,7 @@ if ($PortsReachable) {
     # P1 requires the pgvector extension binaries.  A healthy old postgres:16
     # container is still the wrong environment and must be recreated by Compose
     # (the named data volume is preserved).
-    & $Python -c "import psycopg; from app.core.config import settings; c=psycopg.connect(settings.database_url.replace('+psycopg',''), connect_timeout=2); row=c.execute(\"select extversion from pg_extension where extname='vector'\").fetchone(); c.close(); raise SystemExit(0 if row and row[0]=='0.8.6' else 1)"
+    & $Python -c 'import psycopg; from app.core.config import settings; c=psycopg.connect(settings.database_url.replace("+psycopg", ""), connect_timeout=2); row=c.execute("select extversion from pg_extension where extname=''vector''").fetchone(); c.close(); raise SystemExit(0 if row and row[0]=="0.8.6" else 1)'
     if ($LASTEXITCODE -ne 0) {
         $PortsReachable = $false
     }

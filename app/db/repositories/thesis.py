@@ -37,6 +37,8 @@ def _to_thesis(row: Thesis, *, participating: list[str] | None = None) -> Thesis
         visibility=row.visibility,
         team=row.team,
         version=row.version,
+        is_current=row.is_current,
+        superseded_by_thesis_id=row.superseded_by_thesis_id,
         horizon_end_on=row.horizon_end_on,
         next_review_at=row.next_review_at,
         source_document_id=row.source_document_id,
@@ -75,6 +77,8 @@ class SqlThesisRepo:
                 invalidation_require_all=record.invalidation_require_all,
                 draft_suggestions=record.draft_suggestions or None,
                 version=record.version,
+                is_current=record.is_current,
+                superseded_by_thesis_id=record.superseded_by_thesis_id,
                 source_document_id=record.source_document_id,
                 is_illustrative=record.is_illustrative,
             )
@@ -200,12 +204,15 @@ class SqlThesisRepo:
         row.confirmation_status = record.confirmation_status.value
         self._session.flush()
 
-    def find_by_security(self, security_id: str) -> list[ThesisRecord]:
-        rows = self._session.scalars(
-            select(Thesis).where(Thesis.security_id == security_id).order_by(Thesis.thesis_id)
-        ).all()
-        participating = self._participating_bulk([r.thesis_id for r in rows])
-        return [_to_thesis(r, participating=participating.get(r.thesis_id, [])) for r in rows]
+    def get_by_security(self, security_id: str) -> ThesisRecord | None:
+        row = self._session.scalar(
+            select(Thesis).where(Thesis.security_id == security_id, Thesis.is_current.is_(True))
+        )
+        return (
+            None
+            if row is None
+            else _to_thesis(row, participating=self._participating(row.thesis_id))
+        )
 
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]:
         """条件分页查询。
@@ -213,7 +220,7 @@ class SqlThesisRepo:
         总数用独立的 count 查询而不是 len(全量结果)：后者要把所有行拉进内存，
         分页就失去意义了。
         """
-        conditions: list[ColumnElement[bool]] = []
+        conditions: list[ColumnElement[bool]] = [Thesis.is_current.is_(True)]
         if query.statuses:
             conditions.append(Thesis.status.in_([s.value for s in query.statuses]))
         if query.securities:

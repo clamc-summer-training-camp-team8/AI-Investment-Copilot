@@ -21,7 +21,7 @@ from hashlib import sha256
 from app.ai.agents import AgentEvent, CandidateHypothesis
 from app.ai.errors import ModelUnavailable
 from app.ai.gateway import Gateway
-from app.ai.retrieval import KeywordRetriever, RetrievalDocument
+from app.ai.retrieval import KeywordRetriever, RetrievalDocument, RetrievalResult
 from app.ai.runtime import InvestmentResearchAgent
 from app.calc.rules import StatusSuggestion
 from app.core.config import RuleThresholds, Settings
@@ -32,8 +32,32 @@ from app.services import audit, thesis
 from app.services import evidence as evidence_service
 from app.services import relation as relation_service
 from app.services import status as status_service
+from app.services.graph_rag import (
+    GraphRagCorpus,
+    build_graph_rag_corpus,
+    build_graph_retriever_from_corpus,
+    graph_candidate_context,
+)
 from app.services.permission import Actor
-from app.services.ports import EvidenceRecord, UnitOfWork
+from app.services.ports import EvidenceRecord, HypothesisRecord, ThesisRecord, UnitOfWork
+
+
+@dataclass(frozen=True)
+class RecallTrace:
+    rank: int
+    thesis_id: str
+    text_score: float
+    graph_score: float
+    fused_score: float
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "rank": self.rank,
+            "thesis_id": self.thesis_id,
+            "text_score": self.text_score,
+            "graph_score": self.graph_score,
+            "fused_score": self.fused_score,
+        }
 
 
 @dataclass
@@ -45,6 +69,9 @@ class ChangeResult:
     suggestions: list[tuple[str, StatusSuggestion]]
     deferred: list[tuple[str, str]]
     matched_theses: list[str]
+    retrieval_mode: str
+    recall_traces: list[RecallTrace]
+    graph_snapshot_id: str | None = None
 
 
 def _pick_hypothesis(
@@ -100,6 +127,57 @@ def _bigrams(value: str) -> set[str]:
     }
 
 
+def _overlap_score(query_terms: set[str], content: str) -> float:
+    if not query_terms:
+        return 0.0
+    return len(query_terms & _bigrams(content)) / len(query_terms)
+
+
+def _rank_candidates(
+    recalled: list[tuple[ThesisRecord, list[HypothesisRecord]]],
+    *,
+    events: list[ExtractedEvent],
+    graph_corpus: GraphRagCorpus | None,
+    settings: Settings | None,
+) -> tuple[list[tuple[ThesisRecord, list[HypothesisRecord]]], list[RecallTrace]]:
+    if settings is None or not (settings.rag_graph_enabled or settings.rag_event_pilot_enabled):
+        return recalled, [
+            RecallTrace(index, record.thesis_id, 0.0, 0.0, 0.0)
+            for index, (record, _) in enumerate(recalled, start=1)
+        ]
+    query_terms = set().union(*(_bigrams(event.summary) for event in events)) if events else set()
+    graph_enabled = graph_corpus is not None
+    text_weight = settings.rag_graph_text_weight if settings and graph_enabled else 1.0
+    graph_weight = settings.rag_graph_relation_weight if settings and graph_enabled else 0.0
+    total_weight = text_weight + graph_weight or 1.0
+    scored: list[tuple[float, int, ThesisRecord, list[HypothesisRecord], float, float]] = []
+    for original_rank, (record, hypotheses) in enumerate(recalled):
+        text_context = " ".join(
+            [record.title, record.core_view, *(hypothesis.statement for hypothesis in hypotheses)]
+        )
+        text_score = _overlap_score(query_terms, text_context)
+        graph_score = (
+            _overlap_score(query_terms, graph_candidate_context(graph_corpus, record.thesis_id))
+            if graph_corpus
+            else 0.0
+        )
+        fused = (text_weight * text_score + graph_weight * graph_score) / total_weight
+        scored.append((fused, original_rank, record, hypotheses, text_score, graph_score))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    ranked = [(record, hypotheses) for _, _, record, hypotheses, _, _ in scored]
+    traces = [
+        RecallTrace(
+            rank=rank,
+            thesis_id=record.thesis_id,
+            text_score=round(text_score, 6),
+            graph_score=round(graph_score, 6),
+            fused_score=round(fused, 6),
+        )
+        for rank, (fused, _, record, _, text_score, graph_score) in enumerate(scored, start=1)
+    ]
+    return ranked, traces
+
+
 def _stable_id(prefix: str, *parts: str) -> str:
     digest = sha256("\x1f".join(parts).encode("utf-8")).hexdigest()[:24]
     return f"{prefix}-{digest}"
@@ -113,6 +191,45 @@ def _rag_selected(event_id: str, sample_rate: float) -> bool:
         return True
     bucket = int(sha256(event_id.encode("utf-8")).hexdigest()[:8], 16) / 0xFFFFFFFF
     return bucket < sample_rate
+
+
+def _retrieval_trace(result: RetrievalResult, *, locator: str) -> dict[str, object]:
+    """冻结前端所需的检索依据；不复制正文，也不保存查询之外的图节点。"""
+
+    selected = next((item for item in result.items if item.locator == locator), None)
+    if selected is None and result.items:
+        selected = result.items[0]
+    if selected is None:
+        return {
+            "available": False,
+            "retrieval_mode": "none",
+            "retrieval_version": result.retrieval_version,
+            "locator": locator,
+            "final_score": 0.0,
+            "score_components": {"text": 0.0, "graph": 0.0},
+            "graph_paths": [],
+            "graph_snapshot": None,
+        }
+
+    raw_components = selected.metadata.get("score_components")
+    components = raw_components if isinstance(raw_components, dict) else {}
+    raw_paths = selected.metadata.get("graph_paths")
+    paths = raw_paths if isinstance(raw_paths, list) else []
+    raw_snapshot = selected.metadata.get("graph_snapshot")
+    snapshot = raw_snapshot if isinstance(raw_snapshot, dict) and raw_snapshot else None
+    return {
+        "available": True,
+        "retrieval_mode": str(selected.metadata.get("retrieval_mode") or "text"),
+        "retrieval_version": result.retrieval_version,
+        "locator": selected.locator,
+        "final_score": float(selected.score),
+        "score_components": {
+            "text": float(components.get("text", selected.score)),
+            "graph": float(components.get("graph", 0.0)),
+        },
+        "graph_paths": [dict(path) for path in paths[:3] if isinstance(path, dict)],
+        "graph_snapshot": dict(snapshot) if snapshot else None,
+    }
 
 
 def _rag_context(
@@ -172,6 +289,29 @@ def process_events(
     """处理一批事件，产出候选证据与状态建议。"""
     kept, sources = dedupe_events(events)
     recalled = thesis.recall_candidates(uow, security_id=security_id, actor=actor)
+    graph_corpus = (
+        build_graph_rag_corpus(
+            uow,
+            thesis_ids=[record.thesis_id for record, _ in recalled],
+        )
+        if rag_settings and rag_settings.rag_graph_enabled and recalled
+        else None
+    )
+    recalled, recall_traces = _rank_candidates(
+        recalled,
+        events=kept,
+        graph_corpus=graph_corpus,
+        settings=rag_settings,
+    )
+    retrieval_mode = (
+        "text+graph"
+        if graph_corpus and rag_settings and rag_settings.rag_event_pilot_enabled
+        else "graph"
+        if graph_corpus
+        else "text"
+        if rag_settings and rag_settings.rag_event_pilot_enabled
+        else "baseline"
+    )
     candidates: list[EvidenceRecord] = []
     deferred: list[tuple[str, str]] = []
     suggestions: list[tuple[str, StatusSuggestion]] = []
@@ -186,7 +326,22 @@ def process_events(
         )
         for event in kept
     }
-    retriever = KeywordRetriever()
+    if retrieval_mode != "baseline":
+        for event in kept:
+            audit.record(
+                uow.audit,
+                actor=actor.user_id,
+                action="RAG候选逻辑排序",
+                object_type="event",
+                object_id=event.event_id,
+                detail={
+                    "retrieval_mode": retrieval_mode,
+                    "graph_snapshot_id": (
+                        graph_corpus.snapshot.snapshot_id if graph_corpus else None
+                    ),
+                    "candidates": [trace.to_dict() for trace in recall_traces],
+                },
+            )
     retrieval_documents: list[RetrievalDocument] = []
     for event in kept:
         locator = (locator_by_event or {}).get(event.event_id) or event.evidence_locator
@@ -214,12 +369,34 @@ def process_events(
             )
             for hit_locator, content in rag_contexts[event.event_id]
         )
-    retriever.add(retrieval_documents)
     if isinstance(ai, InvestmentResearchAgent):
         runtime = ai
+        if graph_corpus and rag_settings:
+            runtime.logic_change.retriever = build_graph_retriever_from_corpus(
+                graph_corpus,
+                text_retriever=runtime.logic_change.retriever,
+                text_weight=rag_settings.rag_graph_text_weight,
+                graph_weight=rag_settings.rag_graph_relation_weight,
+                max_hops=rag_settings.rag_graph_max_hops,
+                assist_only=rag_settings.rag_graph_assist_only,
+            )
         runtime.logic_change.retriever.add(retrieval_documents)
     else:
-        runtime = InvestmentResearchAgent.build(ai, retriever=retriever)
+        retriever = KeywordRetriever()
+        active_retriever = (
+            build_graph_retriever_from_corpus(
+                graph_corpus,
+                text_retriever=retriever,
+                text_weight=rag_settings.rag_graph_text_weight,
+                graph_weight=rag_settings.rag_graph_relation_weight,
+                max_hops=rag_settings.rag_graph_max_hops,
+                assist_only=rag_settings.rag_graph_assist_only,
+            )
+            if graph_corpus and rag_settings
+            else retriever
+        )
+        active_retriever.add(retrieval_documents)
+        runtime = InvestmentResearchAgent.build(ai, retriever=active_retriever)
 
     for record, hypotheses in recalled:
         touched = False
@@ -305,7 +482,8 @@ def process_events(
             if execution.result is None or not execution.result.impacts:
                 deferred.append((event.event_id, "Runtime 未生成候选影响，转人工"))
                 continue
-            outcome = execution.result.impacts[0].outcome
+            impact = execution.result.impacts[0]
+            outcome = impact.outcome
 
             audit.record_model_call(
                 uow.audit,
@@ -372,6 +550,7 @@ def process_events(
                 disclosed_at=event.disclosure_time,
                 occurred_at=event.occurred_on,
                 source_url=source_url,
+                retrieval_trace=_retrieval_trace(impact.retrieval, locator=locator),
             )
             evidence_service.create_candidate(uow, record=candidate, actor=actor.user_id)
             relation_service.create_candidate(
@@ -411,6 +590,9 @@ def process_events(
         suggestions=suggestions,
         deferred=deferred,
         matched_theses=[r.thesis_id for r, _ in recalled],
+        retrieval_mode=retrieval_mode,
+        recall_traces=recall_traces,
+        graph_snapshot_id=(graph_corpus.snapshot.snapshot_id if graph_corpus else None),
     )
 
 

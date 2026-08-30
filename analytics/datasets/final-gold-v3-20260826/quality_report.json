@@ -1,0 +1,416 @@
+{
+  "schema_version": "gold-quality-v2",
+  "gold_version": "final-gold-v3-20260826",
+  "gold_state": "final",
+  "created_at": "2026-08-26T16:37:32.453091+08:00",
+  "source_package": "independent-gold-v3-20260826",
+  "summary": {
+    "total_samples": 360,
+    "consensus_samples": 199,
+    "adjudicated_samples": 161,
+    "gold_samples": 360,
+    "evaluation_eligible_samples": 358,
+    "pending_adjudication": 0,
+    "consensus_coverage": 0.5528,
+    "gold_coverage": 1.0,
+    "evaluation_ready": true,
+    "production_gold_ready": true,
+    "graph_rag_rollout_ready": false
+  },
+  "tasks": [
+    {
+      "task": "event",
+      "label": "事件语义",
+      "total": 120,
+      "consensus": 73,
+      "adjudicated": 47,
+      "final": 120,
+      "evaluation_eligible": 119,
+      "pending": 0,
+      "coverage": 1.0,
+      "core_fields": [
+        "事件类别",
+        "主要关联假设",
+        "影响方向",
+        "影响强度",
+        "直接性"
+      ],
+      "file": "final_event_gold_v3.csv"
+    },
+    {
+      "task": "body_fact",
+      "label": "正文事实",
+      "total": 60,
+      "consensus": 31,
+      "adjudicated": 29,
+      "final": 60,
+      "evaluation_eligible": 59,
+      "pending": 0,
+      "coverage": 1.0,
+      "core_fields": [
+        "是否存在可抽取事实",
+        "事实类型",
+        "变化方向",
+        "数值下限",
+        "数值上限",
+        "单位",
+        "事实发生期"
+      ],
+      "file": "final_body_fact_gold_v3.csv"
+    },
+    {
+      "task": "graph_relevance",
+      "label": "Graph RAG 相关性",
+      "total": 180,
+      "consensus": 95,
+      "adjudicated": 85,
+      "final": 180,
+      "evaluation_eligible": 180,
+      "pending": 0,
+      "coverage": 1.0,
+      "core_fields": [
+        "相关性等级",
+        "关系路径可成立"
+      ],
+      "file": "final_graph_relevance_gold_v3.csv"
+    }
+  ],
+  "agreement": [
+    {
+      "task": "event",
+      "field": "事件类别",
+      "n": 120,
+      "agreement": 0.9083,
+      "cohen_kappa": 0.8834
+    },
+    {
+      "task": "event",
+      "field": "主要关联假设",
+      "n": 120,
+      "agreement": 0.7667,
+      "cohen_kappa": 0.6786
+    },
+    {
+      "task": "event",
+      "field": "影响方向",
+      "n": 120,
+      "agreement": 0.8917,
+      "cohen_kappa": 0.8188
+    },
+    {
+      "task": "event",
+      "field": "影响强度",
+      "n": 120,
+      "agreement": 0.7417,
+      "cohen_kappa": 0.6348
+    },
+    {
+      "task": "event",
+      "field": "直接性",
+      "n": 120,
+      "agreement": 0.8583,
+      "cohen_kappa": 0.7536
+    },
+    {
+      "task": "body_fact",
+      "field": "是否存在可抽取事实",
+      "n": 60,
+      "agreement": 0.8,
+      "cohen_kappa": 0.5041
+    },
+    {
+      "task": "body_fact",
+      "field": "事实类型",
+      "n": 60,
+      "agreement": 0.7833,
+      "cohen_kappa": 0.7324
+    },
+    {
+      "task": "body_fact",
+      "field": "变化方向",
+      "n": 60,
+      "agreement": 0.6333,
+      "cohen_kappa": 0.488
+    },
+    {
+      "task": "body_fact",
+      "field": "数值下限",
+      "n": 60,
+      "agreement": 0.65,
+      "cohen_kappa": 0.6211
+    },
+    {
+      "task": "body_fact",
+      "field": "数值上限",
+      "n": 60,
+      "agreement": 0.65,
+      "cohen_kappa": 0.6211
+    },
+    {
+      "task": "body_fact",
+      "field": "单位",
+      "n": 60,
+      "agreement": 0.7667,
+      "cohen_kappa": 0.6645
+    },
+    {
+      "task": "body_fact",
+      "field": "事实发生期",
+      "n": 60,
+      "agreement": 0.6167,
+      "cohen_kappa": 0.5809
+    },
+    {
+      "task": "graph_relevance",
+      "field": "相关性等级",
+      "n": 180,
+      "agreement": 0.6389,
+      "cohen_kappa": 0.5154
+    },
+    {
+      "task": "graph_relevance",
+      "field": "关系路径可成立",
+      "n": 180,
+      "agreement": 0.8278,
+      "cohen_kappa": 0.509
+    }
+  ],
+  "gates": [
+    {
+      "code": "workbook_validation",
+      "label": "工作簿结构与字段契约",
+      "status": "passed",
+      "current": true,
+      "target": true,
+      "message": "A/B 两份回收工作簿均通过固定字段、枚举、必填项与时间格式校验。"
+    },
+    {
+      "code": "adjudication_complete",
+      "label": "分歧裁决完成",
+      "status": "passed",
+      "current": 161,
+      "target": 161,
+      "message": "全部分歧、低置信或数据问题判断单元均已形成独立裁决记录。"
+    },
+    {
+      "code": "final_gold_freeze",
+      "label": "最终硬金标冻结",
+      "status": "passed",
+      "current": 360,
+      "target": 360,
+      "message": "三个任务的最终标签已冻结并生成逐文件 SHA-256。"
+    },
+    {
+      "code": "evaluation_eligibility",
+      "label": "离线评测可用样本",
+      "status": "warning",
+      "current": 358,
+      "target": 360,
+      "message": "保留存在原文不可提取、低置信或关键证据缺失的最终标签，但系统指标默认排除这些样本。"
+    },
+    {
+      "code": "graph_rag_system_benchmark",
+      "label": "Graph RAG 系统离线基准",
+      "status": "blocked",
+      "current": false,
+      "target": true,
+      "message": "graph-relevance-v5-blind 一次性盲测：Recall@5=0.6372，MRR=0.8062，Top-1=0.7000；权限/证券/未来泄漏=0/0/0。"
+    }
+  ],
+  "quality_exceptions": [
+    {
+      "task": "event",
+      "sample_id": "G3-E061",
+      "reason": "正文不可提取、低置信度、关键证据原文缺失"
+    },
+    {
+      "task": "body_fact",
+      "sample_id": "G3-B053",
+      "reason": "正文不可提取、低置信度"
+    }
+  ],
+  "files": [
+    {
+      "path": "final_event_gold_v3.csv",
+      "rows": 120,
+      "sha256": "b56c7ea97252a8b60aef11e24a1f30acf529ea8462c26ac293d287c227847b10"
+    },
+    {
+      "path": "final_body_fact_gold_v3.csv",
+      "rows": 60,
+      "sha256": "68ae2013d80eef982f3b102a6f5d7c8e7c9d1716f9fc04b92ef569ff0daa6efa"
+    },
+    {
+      "path": "final_graph_relevance_gold_v3.csv",
+      "rows": 180,
+      "sha256": "f19c70b9b95666cb66617f147ce9c27616b9792d61d037d9adc904b7edcfa036"
+    }
+  ],
+  "review_artifacts": {
+    "agreement_report": "_comparison_check/agreement_report.json",
+    "adjudication_rows": 161
+  },
+  "source_sha256": {
+    "A": "8c0bf8d31def3d7a0be867c29a69de8ac534090a66964bf4b2ec5079698c9e60",
+    "B": "394b89b24a536d7953678f0928d6bf4547ab03f8a81b2fd543b4777b64b9e6f1",
+    "adjudication": "f10cdf270bd25306500963c0d9ea959e11309ea5942b85289dacce865f0d84bb"
+  },
+  "system_benchmarks": {
+    "graph_rag": {
+      "benchmark_version": "graph-rag-assisted-closed-pool-v3",
+      "generated_at": "2026-08-29T12:22:55.970498+00:00",
+      "report_path": "analytics\\experiments\\graph-relevance-v5-blind\\benchmark.json",
+      "rollout_ready": false,
+      "raw_gates_passed": false,
+      "authoritative_blind": true,
+      "evaluated_queries": 30,
+      "positive_queries": 30,
+      "text_baseline": {
+        "evaluated_queries": 30,
+        "positive_queries": 30,
+        "recall_at_k": {
+          "1": 0.2422,
+          "3": 0.5267,
+          "5": 0.6372,
+          "10": 0.9656
+        },
+        "hit_rate_at_k": {
+          "1": 0.7,
+          "3": 0.9,
+          "5": 0.9333,
+          "10": 1.0
+        },
+        "ndcg_at_k": {
+          "1": 0.6365,
+          "3": 0.6284,
+          "5": 0.6541,
+          "10": 0.7872
+        },
+        "mrr": 0.8062,
+        "top1_correctness": 0.7,
+        "unjudged_result_count": 0
+      },
+      "graph_rag": {
+        "evaluated_queries": 30,
+        "positive_queries": 30,
+        "recall_at_k": {
+          "1": 0.2422,
+          "3": 0.5267,
+          "5": 0.6372,
+          "10": 0.9656
+        },
+        "hit_rate_at_k": {
+          "1": 0.7,
+          "3": 0.9,
+          "5": 0.9333,
+          "10": 1.0
+        },
+        "ndcg_at_k": {
+          "1": 0.6365,
+          "3": 0.6284,
+          "5": 0.6541,
+          "10": 0.7872
+        },
+        "mrr": 0.8062,
+        "top1_correctness": 0.7,
+        "unjudged_result_count": 0
+      },
+      "safety": {
+        "permission_leakage_count": 0,
+        "security_leakage_count": 0,
+        "future_leakage_count": 0,
+        "canary_content_leakage_count": 0,
+        "adversarial_canary_count": 90,
+        "path_provenance_valid": 54,
+        "path_provenance_relevant_hits": 54,
+        "path_provenance_rate": 1.0
+      },
+      "gates": [
+        {
+          "code": "minimum_positive_queries",
+          "current": 30,
+          "target": 20,
+          "passed": true
+        },
+        {
+          "code": "recall_at_5",
+          "current": 0.6372,
+          "target": 0.8,
+          "passed": false
+        },
+        {
+          "code": "mrr",
+          "current": 0.8062,
+          "target": 0.65,
+          "passed": true
+        },
+        {
+          "code": "ndcg_at_5",
+          "current": 0.6541,
+          "target": 0.75,
+          "passed": false
+        },
+        {
+          "code": "top1_correctness",
+          "current": 0.7,
+          "target": 0.7,
+          "passed": true
+        },
+        {
+          "code": "path_provenance_rate",
+          "current": 1.0,
+          "target": 0.95,
+          "passed": true
+        },
+        {
+          "code": "rank_stability_rate",
+          "current": 1.0,
+          "target": 1.0,
+          "passed": true
+        },
+        {
+          "code": "closed_pool_no_unjudged",
+          "current": 0,
+          "target": 0,
+          "passed": true
+        },
+        {
+          "code": "graph_recall_not_worse_than_text",
+          "current": 0.6372,
+          "target": 0.6372,
+          "passed": true
+        },
+        {
+          "code": "graph_mrr_not_worse_than_text",
+          "current": 0.8062,
+          "target": 0.8062,
+          "passed": true
+        },
+        {
+          "code": "permission_leakage",
+          "current": 0,
+          "target": 0,
+          "passed": true
+        },
+        {
+          "code": "security_leakage",
+          "current": 0,
+          "target": 0,
+          "passed": true
+        },
+        {
+          "code": "future_leakage",
+          "current": 0,
+          "target": 0,
+          "passed": true
+        },
+        {
+          "code": "canary_content_leakage",
+          "current": 0,
+          "target": 0,
+          "passed": true
+        }
+      ]
+    }
+  }
+}

@@ -6,8 +6,8 @@ from fastapi.testclient import TestClient
 
 from app.api.deps import get_uow
 from app.api.main import create_app
-from app.core.domain import HypothesisRecord, ThesisRecord
-from app.core.enums import Importance, ThesisStatus
+from app.core.domain import HypothesisRecord, SecurityRecord, ThesisRecord
+from app.core.enums import Importance, ThesisStatus, Visibility
 from tests.fakes import build_fake_uow
 
 
@@ -141,5 +141,71 @@ def test_mapping_rejects_metric_outside_dictionary() -> None:
             )
         assert response.status_code == 400
         assert "指标字典" in response.json()["detail"]
+    finally:
+        application.dependency_overrides.clear()
+
+
+def test_duplicate_company_draft_returns_visible_existing_thesis_without_calling_model() -> None:
+    uow = build_fake_uow()
+    uow.securities.add(SecurityRecord(security_id="688981", name="中芯国际"))
+    uow.thesis.add(
+        ThesisRecord(
+            thesis_id="THS-688981-MAIN",
+            security_id="688981",
+            title="公司级投资逻辑",
+            direction="观察",
+            core_view="只维护一条研究主线",
+            established_on=date(2026, 8, 1),
+            owner="analyst-mvp",
+            status=ThesisStatus.VALIDATING,
+            visibility=Visibility.PRIVATE,
+        )
+    )
+    application = create_app()
+    application.dependency_overrides[get_uow] = lambda: uow
+    try:
+        with TestClient(application) as client:
+            response = client.post(
+                "/api/theses/drafts",
+                headers={"X-User-Id": "analyst-mvp"},
+                json={"security_id": "688981", "view": "重复创建不应调用模型"},
+            )
+        assert response.status_code == 409
+        assert response.json()["detail"] == {
+            "code": "THESIS_ALREADY_EXISTS",
+            "message": "该公司已维护一条投资逻辑，请打开现有逻辑进行修订",
+            "thesis_id": "THS-688981-MAIN",
+        }
+    finally:
+        application.dependency_overrides.clear()
+
+
+def test_duplicate_company_conflict_does_not_disclose_hidden_thesis_id() -> None:
+    uow = build_fake_uow()
+    uow.securities.add(SecurityRecord(security_id="688981", name="中芯国际"))
+    uow.thesis.add(
+        ThesisRecord(
+            thesis_id="THS-SECRET",
+            security_id="688981",
+            title="私有逻辑",
+            direction="观察",
+            core_view="研究覆盖本身属于敏感信息",
+            established_on=date(2026, 8, 1),
+            owner="other-researcher",
+            status=ThesisStatus.VALIDATING,
+            visibility=Visibility.PRIVATE,
+        )
+    )
+    application = create_app()
+    application.dependency_overrides[get_uow] = lambda: uow
+    try:
+        with TestClient(application) as client:
+            response = client.post(
+                "/api/theses/drafts",
+                headers={"X-User-Id": "analyst-mvp"},
+                json={"security_id": "688981", "view": "重复创建"},
+            )
+        assert response.status_code == 409
+        assert "thesis_id" not in response.json()["detail"]
     finally:
         application.dependency_overrides.clear()

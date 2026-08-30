@@ -29,6 +29,18 @@ class EntityAmbiguous(ServiceError):
         self.candidates = candidates
 
 
+class ThesisAlreadyExists(ServiceError):
+    """同一公司已经有投资逻辑。→ 409
+
+    ``thesis_id`` 只在调用者有权看到既有逻辑时返回；否则不能借冲突响应探测
+    其他团队的研究覆盖。
+    """
+
+    def __init__(self, message: str, thesis_id: str | None = None) -> None:
+        super().__init__(message)
+        self.thesis_id = thesis_id
+
+
 class HumanGateRequired(ServiceError):
     """试图绕过人工确认闸门。→ 400
 

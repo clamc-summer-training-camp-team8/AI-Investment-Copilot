@@ -11,6 +11,8 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     check: <><path d="M5 12l4 4L19 6" /><path d="M4 4h16v16H4z" /></>,
     archive: <><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6" /></>,
     upload: <><path d="M12 16V4m0 0L7 9m5-5 5 5" /><path d="M5 15v4h14v-4" /></>,
+    quant: <><path d="M4 19V9m5 10V5m5 14v-7m5 7V3" /><path d="M3 21h18" /></>,
+    quality: <><path d="M12 3l7 3v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3z" /><path d="M8.5 12l2.2 2.2 4.8-5" /></>,
   }
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{paths[name]}</svg>
 }

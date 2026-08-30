@@ -243,6 +243,8 @@ def apply_decision(
         raise HumanGateRequired("状态变更必须填写原因（FR-S-003）")
     if action not in (ACCEPT, REJECT, MODIFY):
         raise ValidationFailed(f"未知的处置动作 {action!r}")
+    if not thesis.is_current:
+        raise ValidationFailed("历史投资逻辑只读，不能处置状态")
 
     record = uow.suggestions.get(suggestion_id)
     if record is None or record.thesis_id != thesis.thesis_id:

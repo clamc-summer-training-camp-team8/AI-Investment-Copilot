@@ -15,6 +15,10 @@ storage/
 *.sqlite3
 .DS_Store
 
+# Codex/文档工具的本地中间文件。
+/.codex_tmp/
+/.tmp/
+
 # 前端
 web/node_modules/
 web/dist/

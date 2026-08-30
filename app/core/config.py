@@ -95,6 +95,20 @@ class Settings(BaseSettings):
     rag_event_pilot_enabled: bool = False
     rag_event_pilot_sample_rate: float = Field(default=0.05, ge=0, le=1)
     rag_event_pilot_limit: int = Field(default=3, ge=1, le=10)
+    # Graph RAG 只扩展已确认的“逻辑—假设—变量—指标—事实—原文”关系。
+    # 默认关闭，避免在完成离线评测前改变现有候选上下文分布。
+    rag_graph_enabled: bool = False
+    # P0 下一迭代默认采用保序辅助：文本候选顺序不变，Graph 只附加路径并在
+    # 文本候选不足时回填。通过新的独立盲测后才允许关闭此保护进入全量重排。
+    rag_graph_assist_only: bool = True
+    rag_graph_text_weight: float = Field(default=0.35, ge=0, le=1)
+    rag_graph_relation_weight: float = Field(default=0.65, ge=0, le=1)
+    rag_graph_max_hops: int = Field(default=5, ge=1, le=8)
+
+    # 独立金标质量报告是离线冻结资产。API 只读展示，不在运行时改写评测结果。
+    gold_quality_report_path: Path = (
+        PROJECT_ROOT / "analytics" / "datasets" / "final-gold-v3-20260826" / "quality_report.json"
+    )
 
     # 本地开发可由受信任网关注入请求头；试点/生产必须使用带签名和过期时间的 JWT。
     auth_mode: str = Field(default="trusted_headers", pattern="^(trusted_headers|jwt)$")

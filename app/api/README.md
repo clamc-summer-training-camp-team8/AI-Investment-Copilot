@@ -86,6 +86,10 @@ MVP 阶段身份可简化（PRD 8.1 对身份系统预留接口）。但即使�
 - `/api/reviews/*`：当前研究员的复核任务列表、创建、查看和完成。
 - `/api/jobs/documents`：上传 PDF/DOCX/TXT 并进入异步处理队列。
 - `/api/jobs/{job_id}`：只允许任务创建者查询进度与结果。
+- `POST /api/quant/backtests`：研究验证型事件回测；需要身份，不产生交易指令，MVP 不持久化。
+- `GET /api/evaluation/gold-quality`：读取冻结的独立金标质量报告与功能发布门禁；报告缺失或损坏时返回 503，不使用演示值兜底。
+- `POST /api/theses/drafts`：每家公司只允许一条逻辑；重复创建返回 409
+  `THESIS_ALREADY_EXISTS`。调用者可见既有逻辑时附 `thesis_id`，不可见时不泄露 ID。
 
 ## 测试
 

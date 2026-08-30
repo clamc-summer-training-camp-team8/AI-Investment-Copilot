@@ -47,7 +47,8 @@ ingest.parse → ingest.segment → ingest.fingerprint
 
 ```
 ingest.extract_events → ingest.dedupe
-  → services.recall_candidates（召回候选逻辑与假设）
+  → services.recall_candidates（按证券召回唯一投资逻辑与假设）
+  → text ranking + rank-stable Graph assist（附加路径，必要时补位）
   → ai.analyze_impact
   → calc（预期差、趋势、失效判定）
   → services.evidence.create_candidates
@@ -55,6 +56,9 @@ ingest.extract_events → ingest.dedupe
 ```
 
 两条链路都停在候选状态。**worker 不允许推进到正式记录**，那需要人工动作。
+
+产品口径为每家公司一条投资逻辑，因此变化链不在同一证券内创建或竞争多条逻辑。Graph assist
+也不能越过证券、权限、时间或查询级候选白名单；默认关闭时链路继续使用文本基线。
 
 ## 性能目标
 

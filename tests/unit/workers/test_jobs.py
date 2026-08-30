@@ -47,6 +47,9 @@ async def test_document_job_runs_real_text_parse_without_model(tmp_path: Path, m
     assert result["content_hash"]
     assert result["persisted_document_id"] == "DOC-1"
     assert result["fact_count"] == 0
+    assert result["retrieval_mode"] == "baseline"
+    assert result["recall_rankings"] == []
+    assert result["graph_snapshot_id"] is None
     assert len(uow.documents.list_segments("DOC-1")) == 2
 
 

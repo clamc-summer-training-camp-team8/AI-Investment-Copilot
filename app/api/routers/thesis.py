@@ -18,7 +18,13 @@ from fastapi import APIRouter, HTTPException, Query
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.api.feed_presenter import to_feed_item
-from app.core.domain import MetricMappingRecord, ThesisQuery, ThesisRecord, UnitOfWork
+from app.core.domain import (
+    EvidenceRecord,
+    MetricMappingRecord,
+    ThesisQuery,
+    ThesisRecord,
+    UnitOfWork,
+)
 from app.core.enums import (
     ConfirmationStatus,
     ExpectationDirection,
@@ -38,6 +44,7 @@ from app.schemas.thesis import (
     EvidenceRelationMutationOut,
     EvidenceRelationOut,
     EvidenceRelationReviewIn,
+    EvidenceRetrievalTraceOut,
     HypothesisOut,
     HypothesisTrendOut,
     HypothesisUpdateIn,
@@ -67,6 +74,7 @@ from app.services.errors import (
     HumanGateRequired,
     IllegalTransition,
     NotVisible,
+    ThesisAlreadyExists,
     ValidationFailed,
 )
 from app.services.permission import Actor
@@ -163,7 +171,12 @@ def _mapping_out(record: MetricMappingRecord) -> MetricMappingOut:
     )
 
 
-@router.post("/theses/drafts", response_model=ThesisOut, status_code=201)
+@router.post(
+    "/theses/drafts",
+    response_model=ThesisOut,
+    status_code=201,
+    responses={409: {"description": "该公司已经维护一条投资逻辑"}},
+)
 def create_draft(
     payload: ThesisDraftIn,
     actor: ActorDep,
@@ -175,6 +188,30 @@ def create_draft(
         security = security_service.require(uow, payload.security_id)
     except ValidationFailed as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # 唯一逻辑检查必须早于 RAG 和模型调用，避免明知不能建卡仍消耗检索/模型资源。
+    existing = uow.thesis.get_by_security(security.security_id)
+    if existing is not None:
+        visible_id: str | None = None
+        try:
+            permission.ensure_thesis_visible(
+                actor,
+                thesis_id=existing.thesis_id,
+                owner=existing.owner,
+                visibility=existing.visibility,
+                team=existing.team,
+            )
+        except NotVisible:
+            pass
+        else:
+            visible_id = existing.thesis_id
+        detail: dict[str, object] = {
+            "code": "THESIS_ALREADY_EXISTS",
+            "message": "该公司已维护一条投资逻辑，请打开现有逻辑进行修订",
+        }
+        if visible_id is not None:
+            detail["thesis_id"] = visible_id
+        raise HTTPException(status_code=409, detail=detail)
     try:
         gateway = Gateway.build(conf)
     except ModelUnavailable as exc:
@@ -238,6 +275,11 @@ def create_draft(
             status_code=409,
             detail={"code": "ENTITY_AMBIGUOUS", "candidates": exc.candidates},
         ) from exc
+    except ThesisAlreadyExists as exc:
+        detail = {"code": "THESIS_ALREADY_EXISTS", "message": str(exc)}
+        if exc.thesis_id is not None:
+            detail["thesis_id"] = exc.thesis_id
+        raise HTTPException(status_code=409, detail=detail) from exc
     except ValidationFailed as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -490,29 +532,7 @@ def list_readable_evidence(
 @router.get("/evidence/{evidence_id}", response_model=EvidenceDetailOut)
 def get_evidence_detail(evidence_id: str, actor: ActorDep, uow: UowDep) -> EvidenceDetailOut:
     """读取可核验的证据本体详情，不以单一逻辑关系作为详情字段。"""
-    record = uow.evidence.get(evidence_id)
-    if record is None:
-        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
-    # 证据正文由可见的有效关联授权访问。原 Evidence.thesis_id 仅为旧模型兼容字段，
-    # 不应阻断后来新增到当前用户可见逻辑中的同一条证据。
-    relations = uow.relations.list_for_evidence(evidence_id)
-    if relations:
-        visible_relation = False
-        for relation in relations:
-            if relation.status.value == "已解除":
-                continue
-            try:
-                _require_visible(uow, actor, relation.thesis_id)
-                visible_relation = True
-                break
-            except HTTPException:
-                continue
-        if not visible_relation:
-            raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
-    else:
-        _require_visible(uow, actor, record.thesis_id)
-    if not permission.can_read_document(actor, visibility_label=record.source_visibility_label):
-        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    record = _require_visible_evidence(evidence_id, actor=actor, uow=uow)
     required = (
         record.security_id,
         record.fact_excerpt,
@@ -545,6 +565,58 @@ def get_evidence_detail(evidence_id: str, actor: ActorDep, uow: UowDep) -> Evide
         occurred_at=record.occurred_at,
         source_url=record.source_url,
     )
+
+
+def _require_visible_evidence(evidence_id: str, *, actor: Actor, uow: UnitOfWork) -> EvidenceRecord:
+    record = uow.evidence.get(evidence_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    # 证据正文由可见的有效关联授权访问。原 Evidence.thesis_id 仅为旧模型兼容字段，
+    # 不应阻断后来新增到当前用户可见逻辑中的同一条证据。
+    relations = uow.relations.list_for_evidence(evidence_id)
+    if relations:
+        visible_relation = False
+        for relation in relations:
+            if relation.status.value == "已解除":
+                continue
+            try:
+                _require_visible(uow, actor, relation.thesis_id)
+                visible_relation = True
+                break
+            except HTTPException:
+                continue
+        if not visible_relation:
+            raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    else:
+        _require_visible(uow, actor, record.thesis_id)
+    if not permission.can_read_document(actor, visibility_label=record.source_visibility_label):
+        raise HTTPException(status_code=404, detail="证据不存在或无访问权限")
+    return record
+
+
+@router.get(
+    "/evidence/{evidence_id}/retrieval-trace",
+    response_model=EvidenceRetrievalTraceOut,
+)
+def get_evidence_retrieval_trace(
+    evidence_id: str, actor: ActorDep, uow: UowDep
+) -> EvidenceRetrievalTraceOut:
+    """读取候选证据生成时冻结的文本/图双路召回依据。"""
+
+    record = _require_visible_evidence(evidence_id, actor=actor, uow=uow)
+    trace = record.retrieval_trace
+    if not trace:
+        return EvidenceRetrievalTraceOut(
+            available=False,
+            retrieval_mode="unavailable",
+            retrieval_version="unknown",
+            locator=record.evidence_locator,
+            final_score=0.0,
+            score_components={"text": 0.0, "graph": 0.0},
+            graph_paths=[],
+            graph_snapshot=None,
+        )
+    return EvidenceRetrievalTraceOut.model_validate(trace)
 
 
 @router.get("/evidence/{evidence_id}/relations", response_model=list[EvidenceRelationOut])

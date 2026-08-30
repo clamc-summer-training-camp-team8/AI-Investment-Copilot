@@ -66,6 +66,7 @@ def _to_evidence(row: Evidence, *, label: str = "内部") -> EvidenceRecord:
         disclosed_at=row.disclosed_at,
         occurred_at=row.occurred_at,
         source_url=row.source_url,
+        retrieval_trace=dict(row.retrieval_trace) if row.retrieval_trace else None,
     )
 
 
@@ -103,6 +104,7 @@ class SqlEvidenceRepo:
                 ai_confidence=record.ai_confidence,
                 model_version=record.model_version,
                 prompt_version=record.prompt_version,
+                retrieval_trace=record.retrieval_trace,
                 confirmation_status=record.confirmation_status.value,
                 review_status=record.review_status.value,
                 review_note=record.review_note,

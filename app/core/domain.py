@@ -103,6 +103,8 @@ class ThesisRecord:
     status: ThesisStatus = ThesisStatus.DRAFT
     visibility: str = "团队"
     version: int = 0
+    is_current: bool = True
+    superseded_by_thesis_id: str | None = None
     team: str | None = None
     horizon_end_on: date | None = None
     next_review_at: date | None = None
@@ -202,6 +204,8 @@ class EvidenceRecord:
     disclosed_at: datetime | None = None
     occurred_at: date | None = None
     source_url: str | None = None
+    # 证据生成时冻结的检索追踪；只包含分数、路径和快照清单，不复制原文正文。
+    retrieval_trace: dict[str, object] | None = None
 
 
 @dataclass
@@ -633,7 +637,7 @@ class ThesisRepo(Protocol):
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]: ...
     def add_mapping(self, record: MetricMappingRecord) -> None: ...
     def update_mapping(self, record: MetricMappingRecord) -> None: ...
-    def find_by_security(self, security_id: str) -> list[ThesisRecord]: ...
+    def get_by_security(self, security_id: str) -> ThesisRecord | None: ...
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]: ...
 
     """按条件分页查询，返回（当页记录, 满足条件的总数）。

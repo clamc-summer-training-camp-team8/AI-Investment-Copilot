@@ -3,24 +3,26 @@ import { useState } from 'react'
 import { NavLink, useParams, useSearchParams } from 'react-router-dom'
 import {
   createRelation, deactivateRelation, decideAdjudication, decideStatus, getAudit,
-  getDocumentSegment, getEvidence, getRadarEvidence, getRelations, getSuggestions,
+  getDocumentSegment, getEvidence, getEvidenceRetrievalTrace, getRadarEvidence, getRelations, getSuggestions,
   getPublishReadiness, getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks,
   listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listTheses,
   publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
   reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
   getAssetInventory, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
+  getGoldQuality, runQuantBacktest,
 } from './api'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
-import type { Adjudication, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, Relation, ReviewTask, ThesisDetail, ThesisRevision } from './types'
+import type { Adjudication, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, QuantBacktestRequest, QuantBacktestRun, QuantEquityPoint, Relation, ReviewTask, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function WorkbenchPage() {
   const summary = useQuery({ queryKey: ['workbench'], queryFn: getWorkbench })
   const tasks = useQuery({ queryKey: ['workbench-tasks'], queryFn: () => getWorkbenchTasks(20) })
+  const quality = useQuery({ queryKey: ['gold-quality'], queryFn: getGoldQuality })
   if (summary.isLoading || tasks.isLoading) return <LoadingState />
   if (summary.error || tasks.error || !summary.data || !tasks.data) return <ErrorState error={summary.error ?? tasks.error} />
   const first = tasks.data.items[0]
@@ -32,6 +34,7 @@ export function WorkbenchPage() {
   ] as const
   return <>
     <PageTitle eyebrow="研究员任务中心" title="今天最需要处理什么" description="按影响程度与披露时间排序，先完成最关键的证据核验。" />
+    {quality.data && <section className="product-status-strip" aria-label="当前产品质量状态"><div><span className="eyebrow">产品就绪状态</span><strong>{quality.data.summary.goldSamples} 条最终金标已冻结</strong><p>{quality.data.summary.adjudicatedSamples} 条分歧完成裁决 · {quality.data.summary.evaluationEligibleSamples} 条可用于系统评测</p></div><div className="status-strip-flags"><span className="flag-passed">FINAL GOLD READY</span><span className={quality.data.summary.graphRagRolloutReady ? 'flag-passed' : 'flag-blocked'}>GRAPH RAG {quality.data.summary.graphRagRolloutReady ? 'READY' : 'BENCHMARK PENDING'}</span><NavLink className="primary-link inline" to="/quality">查看门禁详情 →</NavLink></div></section>}
     <section className="hero-section"><div className="section-heading"><div><span className="eyebrow">今日首要事项</span><h2>{first ? '先处理这条变化' : '当前没有紧急事项'}</h2></div>{first && <PriorityBadge priority={first.priority} />}</div>{first ? <EvidenceEventRow item={first} featured /> : <EmptyState title="待办已清空" description="当前没有需要人工核验的证据。" />}</section>
     <section className="metric-grid">{metrics.map(([label, value, note]) => <div className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><p>{note}</p></div>)}</section>
     <section className="content-section"><div className="section-heading"><div><span className="eyebrow">全部待办</span><h2>待核验变化</h2></div><span className="muted">共 {tasks.data.total} 条</span></div><div className="evidence-list">{tasks.data.items.length ? tasks.data.items.map((item) => <EvidenceEventRow item={item} key={`${item.evidenceId}-${item.relationId}`} />) : <EmptyState title="没有待核验变化" description="新的公开信息进入系统后会显示在这里。" />}</div></section>
@@ -178,6 +181,7 @@ export function EvidencePage() {
   const requestedRelationId = params.get('relationId')
   const qc = useQueryClient()
   const evidence = useQuery({ queryKey: ['evidence', evidenceId], queryFn: () => getEvidence(evidenceId) })
+  const retrievalTrace = useQuery({ queryKey: ['evidence-retrieval-trace', evidenceId], queryFn: () => getEvidenceRetrievalTrace(evidenceId) })
   const relations = useQuery({ queryKey: ['relations', evidenceId], queryFn: () => getRelations(evidenceId) })
   const source = useQuery({ queryKey: ['source-segment', evidence.data?.evidenceLocator], queryFn: () => getDocumentSegment(evidence.data!.evidenceLocator), enabled: Boolean(evidence.data?.evidenceLocator) })
   const theses = useQuery({ queryKey: ['target-theses', evidence.data?.securityId], queryFn: () => listTheses(evidence.data!.securityId), enabled: Boolean(evidence.data?.securityId) })
@@ -200,12 +204,51 @@ export function EvidencePage() {
     <PageTitle eyebrow={`${item.securityId} · 公开披露`} title={item.sourceDocumentTitle} description={`披露于 ${formatDate(item.disclosedAt)}，请核验事实来源及其对投资假设的影响。`} />
     <section className="fact-panel"><div className="panel-label">原文回查</div><blockquote>{source.data?.content ?? item.factExcerpt}</blockquote>{source.error && <p className="inline-error">数据库原文段落暂不可用，当前展示证据摘录。</p>}<div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}{source.data?.contentKind === 'table_row' ? ` · 表 ${source.data.tableIndex} / 单元格 ${source.data.cellRange}` : ''}{source.data?.extractionMethod === 'ocr' ? ` · OCR${source.data.confidence == null ? '' : ` ${Math.round(source.data.confidence * 100)}%`}` : ''}{source.data?.locator ? ` · 定位 ${source.data.locator}` : ''}</span><SafeSourceLink url={item.sourceUrl} /></div></section>
     {context && <section className="content-section"><div className="section-heading"><div><span className="eyebrow">数据验证</span><h2>这条证据是否可用于研究判断</h2></div><span className="validation-summary">{context.validationItems.filter((v) => v.status === 'passed').length}/{context.validationItems.length} 项通过</span></div><ValidationChain items={context.validationItems} /></section>}
+    <RetrievalTracePanel trace={retrievalTrace.data} loading={retrievalTrace.isLoading} error={retrievalTrace.error} />
     <section className="impact-panel"><div><span className="eyebrow">当前影响</span><h2>{activeHypothesis?.statement ?? '选择一条有效关联后进行判断'}</h2><p>{activeThesis?.title ?? '当前没有可操作的逻辑关联'}</p><div className="badge-row">{activeRelation && <><DirectionBadge direction={activeRelation.direction} /><StatusBadge state={activeRelation.status} /><span className="badge neutral-badge">{strengthText[activeRelation.strength]}强度</span><span className="badge neutral-badge">AI {Math.round(item.aiConfidence * 100)}%</span></>}</div></div>{activeRelation?.canManage && activeRelation.status !== 'deactivated' && <div className="decision-panel"><span>你的判断</span><div className="button-row"><button className="button primary" onClick={() => setDialog({ relation: activeRelation, action: '确认' })}>确认关联</button><button className="button secondary" onClick={() => setDialog({ relation: activeRelation, action: '驳回' })}>驳回</button><button className="button ghost" onClick={() => setDialog({ relation: activeRelation, action: '暂不判断' })}>暂不判断</button></div></div>}</section>
     <InlineError error={action.error} />
     <details className="content-section disclosure"><summary>高级关联管理 <span>{relations.data.length} 条关联</span></summary><div className="relation-list">{relations.data.map((relation) => { const target = thesisMap.get(relation.thesisId); const hypothesis = target?.hypotheses.find((h) => h.hypothesisId === relation.hypothesisId); return <article className={`relation-row ${relation.status === 'deactivated' ? 'disabled' : ''}`} key={relation.relationId}><div><div className="badge-row"><StatusBadge state={relation.status} /><DirectionBadge direction={relation.direction} /></div><h3>{hypothesis?.statement ?? '假设信息待加载'}</h3><p>{target?.title ?? relation.thesisId}</p><small>关联理由：{relation.reason || '未填写'} · 创建人：{relation.createdBy}{relation.reviewedBy ? ` · 审核人：${relation.reviewedBy}` : ''}</small></div>{relation.canManage && relation.status !== 'deactivated' && <div className="relation-actions"><button className="button secondary" onClick={() => setEditing(relation)}>修改</button><button className="button danger-link" onClick={() => setDialog({ relation, action: '解除' })}>解除</button></div>}</article> })}</div><RelationForm evidenceId={evidenceId} thesisList={manageableTheses.data} editing={editing} onDone={async () => { setEditing(null); await invalidate() }} /></details>
     <details className="content-section disclosure technical"><summary>技术信息</summary><dl><dt>证据 ID</dt><dd>{item.evidenceId}</dd><dt>来源文档 ID</dt><dd>{item.sourceDocumentId}</dd><dt>原文定位</dt><dd>{item.evidenceLocator}</dd><dt>模型版本</dt><dd>{item.modelVersion}</dd><dt>提示词版本</dt><dd>{item.promptVersion}</dd></dl></details>
     {dialog && <ConfirmDialog title={dialog.action === '解除' ? '解除这条证据关联' : `${dialog.action}这条证据关联`} description={dialog.action === '解除' ? '解除后该关联保留为历史记录，不再参与状态建议。' : '本次人工判断将被记录并刷新受影响逻辑的状态建议。'} confirmText={dialog.action} danger={dialog.action === '解除' || dialog.action === '驳回'} requireReason={dialog.action === '解除'} onClose={() => setDialog(null)} onConfirm={(reason) => action.mutate({ relation: dialog.relation, action: dialog.action, reason })} />}
   </>
+}
+
+function RetrievalTracePanel({ trace, loading, error }: { trace?: EvidenceRetrievalTrace; loading: boolean; error: Error | null }) {
+  if (loading) return <section className="retrieval-trace-panel"><span className="eyebrow">召回依据</span><p className="muted">正在读取文本与关系图追踪…</p></section>
+  if (error) return <section className="retrieval-trace-panel"><span className="eyebrow">召回依据</span><p className="inline-error">召回追踪暂不可用，不影响证据核验。</p></section>
+  if (!trace?.available) return <details className="retrieval-trace-panel"><summary><span><small>召回依据</small>历史证据未记录检索追踪</span><em>不影响原文核验</em></summary><p className="retrieval-empty">该证据生成于追踪字段启用前，仍可依据原文和人工关联进行判断。</p></details>
+  const text = Math.max(0, Math.min(trace.scoreComponents.text, 1))
+  const graph = Math.max(0, Math.min(trace.scoreComponents.graph, 1))
+  const finalScore = Math.max(0, Math.min(trace.finalScore, 1))
+  const mode = text > 0 && graph > 0 ? '文本 + 关系图' : graph > 0 ? '关系图' : '文本'
+  return <details className="retrieval-trace-panel" open>
+    <summary><span><small>召回依据</small>为什么匹配到这条证据？</span><em>{mode}</em></summary>
+    <div className="retrieval-trace-body">
+      <div className="retrieval-score-list">
+        <ScoreBar label="文本相关度" value={text} tone="text" />
+        <ScoreBar label="图谱相关度" value={graph} tone="graph" />
+        <ScoreBar label="融合得分" value={finalScore} tone="fused" />
+      </div>
+      <div className="retrieval-paths">
+        <h3>关系路径</h3>
+        {trace.graphPaths.length ? trace.graphPaths.map((path, index) => <article key={`${path.explanation}-${index}`}>
+          <div className="layer-sequence">{path.layers.map((layer, layerIndex) => <span key={`${layer}-${layerIndex}`}>{layer.replace('层', '')}</span>)}</div>
+          <p>{path.explanation}</p>
+          <small>路径置信 {path.score.toFixed(3)}{path.provenanceLocators.length ? ` · 来源 ${path.provenanceLocators.join('、')}` : ''}</small>
+        </article>) : <p className="retrieval-empty">本次由文本链路命中，没有使用关系图路径。</p>}
+      </div>
+      <dl className="retrieval-meta">
+        <dt>检索版本</dt><dd>{trace.retrievalVersion}</dd>
+        <dt>证据定位</dt><dd>{trace.locator}</dd>
+        <dt>图快照</dt><dd>{trace.graphSnapshot?.snapshotId ?? '未使用图快照'}</dd>
+        {trace.graphSnapshot && <><dt>知识层规模</dt><dd>{trace.graphSnapshot.layers.map((layer) => `${layer.layer} ${layer.nodeCount}`).join(' · ')}</dd></>}
+      </dl>
+    </div>
+  </details>
+}
+
+function ScoreBar({ label, value, tone }: { label: string; value: number; tone: 'text' | 'graph' | 'fused' }) {
+  return <div className="retrieval-score"><span>{label}</span><div><i className={`score-${tone}`} style={{ width: `${Math.round(value * 100)}%` }} /></div><strong>{value.toFixed(3)}</strong></div>
 }
 
 function RelationForm({ evidenceId, thesisList, editing, onDone }: { evidenceId: string; thesisList: ThesisDetail[]; editing: Relation | null; onDone: () => void | Promise<void> }) {
@@ -221,13 +264,25 @@ function RelationForm({ evidenceId, thesisList, editing, onDone }: { evidenceId:
 
 export function ReviewsPage() {
   const adjudications = useQuery({ queryKey: ['adjudications'], queryFn: listAdjudications })
+  const quality = useQuery({ queryKey: ['gold-quality'], queryFn: getGoldQuality })
   const tasks = useQuery({ queryKey: ['review-tasks'], queryFn: listReviewTasks })
   const ingestion = useQuery({ queryKey: ['ingestion-reviews'], queryFn: listIngestionReviews })
   const jobs = useQuery({ queryKey: ['processing-jobs'], queryFn: listProcessingJobs })
   if (adjudications.isLoading || tasks.isLoading || ingestion.isLoading || jobs.isLoading) return <LoadingState />
   if (adjudications.error || tasks.error || ingestion.error || jobs.error || !adjudications.data || !tasks.data || !ingestion.data || !jobs.data) return <ErrorState error={adjudications.error ?? tasks.error ?? ingestion.error ?? jobs.error} />
   const deadLetters = jobs.data.filter((item) => ['failed', 'dead_letter'].includes(item.status))
-  return <><PageTitle eyebrow="质量治理" title="复核与复盘" description="统一处理资料归属、假设匹配、低置信、失败重放与独立导师裁决。" /><section className="content-section"><div className="section-heading"><div><span className="eyebrow">资料复核</span><h2>新资料人工队列</h2></div><span className="muted">{ingestion.data.filter((item) => item.status === 'pending').length} 条待处理</span></div>{ingestion.data.length ? <div className="review-list">{ingestion.data.map((item) => <IngestionReviewCard key={item.reviewId} item={item} />)}</div> : <EmptyState title="没有资料复核项" description="未归属证券、无法匹配假设、低置信事件和处理失败会显示在这里。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">失败恢复</span><h2>死信与任务重放</h2></div><span className="muted">{deadLetters.length} 条可重放</span></div>{deadLetters.length ? <div className="review-list">{deadLetters.map((job) => <ProcessingJobCard key={job.jobId} job={job} />)}</div> : <EmptyState title="没有失败任务" description="达到重试上限的任务会持久化在这里，可在原件保留期内重放。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">产品复核</span><h2>分配给我的逻辑任务</h2></div><span className="muted">{tasks.data.filter((item) => item.state === '待处理').length} 条待处理</span></div>{tasks.data.length ? <div className="review-list">{tasks.data.map((task) => <ReviewTaskCard key={task.taskId} task={task} />)}</div> : <EmptyState title="没有复核任务" description="重大事件或人工发起的逻辑任务会显示在这里。" />}</section><section className="content-section"><div className="section-heading"><div><span className="eyebrow">独立评测</span><h2>导师裁决队列</h2></div><span className="muted">{adjudications.data.filter((item) => !item.resolved).length} 条待裁决</span></div>{adjudications.data.length ? <div className="review-list">{adjudications.data.map((item) => <AdjudicationCard key={item.eventId} item={item} />)}</div> : <EmptyState title="没有待裁决样本" description="存在独立标注分歧时会进入此队列。" />}</section></>
+  return <>
+    <PageTitle eyebrow="质量治理" title="复核与复盘" description="统一处理资料归属、假设匹配、低置信、失败重放与独立导师裁决。" />
+    {quality.data?.summary.productionGoldReady && <section className="adjudication-complete"><div><span className="flag-passed">FINAL GOLD READY</span><h2>161 条独立金标分歧已全部裁决</h2><p>最终 360 条硬金标已冻结，其中 358 条可进入系统评测；2 条原文异常样本仅保留审计。</p></div><NavLink className="button secondary" to="/quality">查看质量报告</NavLink></section>}
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">资料复核</span><h2>新资料人工队列</h2></div><span className="muted">{ingestion.data.filter((item) => item.status === 'pending').length} 条待处理</span></div>{ingestion.data.length ? <div className="review-list">{ingestion.data.map((item) => <IngestionReviewCard key={item.reviewId} item={item} />)}</div> : <EmptyState title="没有资料复核项" description="未归属证券、无法匹配假设、低置信事件和处理失败会显示在这里。" />}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">失败恢复</span><h2>死信与任务重放</h2></div><span className="muted">{deadLetters.length} 条可重放</span></div>{deadLetters.length ? <div className="review-list">{deadLetters.map((job) => <ProcessingJobCard key={job.jobId} job={job} />)}</div> : <EmptyState title="没有失败任务" description="达到重试上限的任务会持久化在这里，可在原件保留期内重放。" />}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">产品复核</span><h2>分配给我的逻辑任务</h2></div><span className="muted">{tasks.data.filter((item) => item.state === '待处理').length} 条待处理</span></div>{tasks.data.length ? <div className="review-list">{tasks.data.map((task) => <ReviewTaskCard key={task.taskId} task={task} />)}</div> : <EmptyState title="没有复核任务" description="重大事件或人工发起的逻辑任务会显示在这里。" />}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">持续评测</span><h2>在线抽样裁决队列</h2></div><span className="muted">{adjudications.data.filter((item) => !item.resolved).length} 条待裁决</span></div>{adjudications.data.length ? <div className="review-list">{adjudications.data.map((item) => <AdjudicationCard key={item.eventId} item={item} />)}</div> : <EmptyState title="当前没有新增分歧" description="冻结金标已完成；后续线上抽样产生的新分歧会进入此队列。" />}</section>
+  </>
+}
+
+export function NotFoundPage() {
+  return <section className="not-found-page"><span className="mono">404 / ROUTE NOT FOUND</span><h1>这个研究页面不存在</h1><p>链接可能已过期，或当前账户没有可访问的对应入口。你可以返回任务工作台继续处理。</p><NavLink className="button primary" to="/workbench">返回工作台</NavLink></section>
 }
 
 export function AssetPage() {
@@ -282,6 +337,128 @@ function AdjudicationCard({ item }: { item: Adjudication }) {
   const [reason, setReason] = useState('')
   const mutation = useMutation({ mutationFn: () => decideAdjudication(item.eventId, { hypothesis, direction, reason }), onSuccess: () => qc.invalidateQueries({ queryKey: ['adjudications'] }) })
   return <article className="review-card"><div className="review-header"><div><span className={`badge ${item.resolved ? 'status-confirmed' : 'priority-medium'}`}>{item.resolved ? '已裁决' : '待裁决'}</span><h2>{item.company} · {item.title}</h2></div><span className="muted">{item.category}</span></div><div className="review-comparison"><p><strong>标注 A</strong>{item.annotatorAHypothesis} · {item.annotatorADirection}</p><p><strong>标注 B</strong>{item.annotatorBHypothesis} · {item.annotatorBDirection}</p></div>{item.resolved ? <p className="review-result"><strong>独立裁决：</strong>{item.decidedHypothesis} · {item.decidedDirection}<br />{item.decisionReason}</p> : <div className="adjudication-form"><label>关联假设<input value={hypothesis} onChange={(event) => setHypothesis(event.target.value)} /></label><label>方向<select value={direction} onChange={(event) => setDirection(event.target.value)}><option>支持</option><option>冲突</option><option>中性</option><option>无关</option></select></label><label className="decision-reason">裁决理由<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="独立阅读原文后填写理由" /></label><button className="button primary" disabled={!hypothesis.trim() || reason.trim().length < 2 || mutation.isPending} onClick={() => mutation.mutate()}>提交独立裁决</button><InlineError error={mutation.error} /></div>}</article>
+}
+
+function gateValue(value: GoldQualityGate['current']) {
+  if (value == null) return '待运行'
+  if (typeof value === 'boolean') return value ? '是' : '否'
+  if (value > 0 && value < 1) return value.toFixed(4)
+  return String(value)
+}
+
+export function QualityPage() {
+  const report = useQuery({ queryKey: ['gold-quality'], queryFn: getGoldQuality })
+  if (report.isLoading) return <LoadingState text="正在读取冻结金标与质量门禁…" />
+  if (report.error || !report.data) return <ErrorState error={report.error} />
+  const data = report.data
+  const summary = data.summary
+  const benchmark = data.graphRagBenchmark
+  const selectedAgreement = data.agreement.filter((item) => [
+    'event.影响方向', 'body_fact.变化方向', 'graph_relevance.相关性等级', 'graph_relevance.关系路径可成立',
+  ].includes(`${item.task}.${item.field}`))
+  const metrics = [
+    ['最终硬金标', summary.goldSamples, `${(summary.goldCoverage * 100).toFixed(0)}% 已完成裁决与冻结`],
+    ['独立裁决', summary.adjudicatedSamples, `${summary.consensusSamples} 个双人共识 + ${summary.adjudicatedSamples} 个裁决`],
+    ['评测可用', summary.evaluationEligibleSamples, `${summary.totalSamples - summary.evaluationEligibleSamples} 个源文件异常样本仅保留审计`],
+    ['Graph RAG 放量', summary.graphRagRolloutReady ? '可放量' : '受控关闭', summary.graphRagRolloutReady ? '全部发布门禁已通过' : benchmark ? '系统基准存在未通过项' : '系统基准尚未运行'],
+  ] as const
+  return <>
+    <PageTitle eyebrow="EVALUATION & RELEASE GATES" title="质量中心" description="把独立金标、评测结果和功能放量条件放在同一条可审计链路中；共识集可评测，最终金标与 Graph RAG 放量必须分别过门禁。" />
+    <section className={`quality-release ${summary.graphRagRolloutReady ? 'release-ready' : 'release-blocked'}`}>
+      <div><span className="eyebrow">当前发布结论</span><h2>{summary.productionGoldReady ? '最终硬金标已冻结，可进入系统评测' : summary.evaluationReady ? '共识金标已可用于离线评测' : '评测数据尚未就绪'}</h2><p>版本 {data.goldVersion} · 状态 {data.goldState === 'consensus' ? '双人共识冻结' : '161 条分歧已完成独立裁决'} · 生成于 {formatDate(data.createdAt)}</p></div>
+      <div className="release-flags"><span className={summary.evaluationReady ? 'flag-passed' : 'flag-blocked'}>离线评测 {summary.evaluationReady ? 'READY' : 'BLOCKED'}</span><span className={summary.productionGoldReady ? 'flag-passed' : 'flag-blocked'}>最终金标 {summary.productionGoldReady ? 'READY' : 'PENDING'}</span><span className={summary.graphRagRolloutReady ? 'flag-passed' : 'flag-blocked'}>GRAPH RAG {summary.graphRagRolloutReady ? 'READY' : 'OFF'}</span></div>
+    </section>
+    <section className="metric-grid">{metrics.map(([label, value, note]) => <article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><p>{note}</p></article>)}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">冻结数据集</span><h2>三类任务覆盖</h2></div><span className="mono muted">{data.sourcePackage}</span></div><div className="quality-task-grid">{data.tasks.map((task) => <article className="quality-task-card" key={task.task}><div><span>{task.label}</span><strong>{task.final} / {task.total}</strong></div><div className="quality-progress" aria-label={`${task.label}最终金标覆盖率 ${(task.coverage * 100).toFixed(1)}%`}><i style={{ width: `${task.coverage * 100}%` }} /></div><p>{task.consensus} 共识 + {task.adjudicated} 裁决 · {task.evaluationEligible} 可评测</p><small>{task.coreFields.join(' · ')}</small></article>)}</div></section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">双人一致性</span><h2>关键字段 Cohen&apos;s κ</h2></div><span className="muted">0.60 为本轮稳定性参考线</span></div><div className="quality-agreement-table"><div className="quality-table-head"><span>任务</span><span>字段</span><span>一致率</span><span>Cohen&apos;s κ</span><span>判断</span></div>{selectedAgreement.map((metric) => { const passed = (metric.cohenKappa ?? 0) >= .6; const task = data.tasks.find((item) => item.task === metric.task); return <div key={`${metric.task}-${metric.field}`}><strong>{task?.label ?? metric.task}</strong><span>{metric.field}</span><span>{(metric.agreement * 100).toFixed(1)}%</span><span className="mono">{metric.cohenKappa?.toFixed(4) ?? '—'}</span><span className={`quality-state ${passed ? 'gate-passed' : 'gate-warning'}`}>{passed ? '通过' : '需收敛'}</span></div> })}</div></section>
+    {benchmark && <section className="content-section benchmark-section"><div className="section-heading"><div><span className="eyebrow">GRAPH RAG SYSTEM BENCHMARK</span><h2>文本基线与关系图融合实测</h2></div><span className={`quality-state ${benchmark.rolloutReady ? 'gate-passed' : 'gate-warning'}`}>{benchmark.rolloutReady ? '全部通过' : '继续受控'}</span></div><p className="benchmark-intro">最终相关性金标共覆盖 {benchmark.evaluatedQueries} 个查询，其中 {benchmark.positiveQueries} 个包含相关候选。Recall 使用相关集合的宏平均召回率；MRR 使用首个相关结果排名。金标标签不参与建图。</p><div className="benchmark-table"><div><span>指标</span><span>文本基线</span><span>Graph RAG</span><span>目标</span></div><div><strong>Recall@5</strong><span>{(benchmark.textBaseline.recallAtK['5'] * 100).toFixed(2)}%</span><span>{(benchmark.graphRag.recallAtK['5'] * 100).toFixed(2)}%</span><span>≥ 80%</span></div><div><strong>MRR</strong><span>{benchmark.textBaseline.mrr.toFixed(4)}</span><span>{benchmark.graphRag.mrr.toFixed(4)}</span><span>≥ 0.65</span></div><div><strong>NDCG@5</strong><span>{benchmark.textBaseline.ndcgAtK['5'].toFixed(4)}</span><span>{benchmark.graphRag.ndcgAtK['5'].toFixed(4)}</span><span>≥ 0.75</span></div><div><strong>Top-1 正确率</strong><span>{(benchmark.textBaseline.top1Correctness * 100).toFixed(2)}%</span><span>{(benchmark.graphRag.top1Correctness * 100).toFixed(2)}%</span><span>≥ 70%</span></div></div><div className="benchmark-safety"><article><strong>{benchmark.safety.adversarialCanaryCount}</strong><span>对抗诱饵</span></article><article><strong>{benchmark.safety.permissionLeakageCount}</strong><span>权限泄漏</span></article><article><strong>{benchmark.safety.securityLeakageCount}</strong><span>跨证券泄漏</span></article><article><strong>{benchmark.safety.futureLeakageCount}</strong><span>未来信息泄漏</span></article><article><strong>{(benchmark.safety.pathProvenanceRate * 100).toFixed(0)}%</strong><span>路径来源完整</span></article></div>{!benchmark.rolloutReady && <div className="benchmark-failures"><strong>未通过的放量条件</strong>{benchmark.gates.filter((gate) => !gate.passed).map((gate) => <span key={gate.code}><b>{gate.code}</b> · 当前 {gateValue(gate.current)} / 目标 {gateValue(gate.target)}</span>)}</div>}<small className="mono muted">{benchmark.benchmarkVersion} · {benchmark.reportPath}</small></section>}
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">发布门禁</span><h2>可以做什么、还不能做什么</h2></div></div><div className="quality-gates">{data.gates.map((gate) => <article key={gate.code} className={`quality-gate gate-${gate.status}`}><span className="gate-marker">{gate.status === 'passed' ? '✓' : gate.status === 'warning' ? '!' : '×'}</span><div><div className="gate-title"><strong>{gate.label}</strong><span>{gate.status === 'passed' ? '通过' : gate.status === 'warning' ? '注意' : '阻断'}</span></div><p>{gate.message}</p>{(gate.current != null || gate.target != null) && <small className="mono">CURRENT {gateValue(gate.current)} · TARGET {gateValue(gate.target)}</small>}</div></article>)}</div>{data.qualityExceptions.length > 0 && <div className="quality-exceptions"><div><strong>评测排除清单</strong><span>{data.qualityExceptions.length} 条，仅保留审计</span></div>{data.qualityExceptions.map((item) => <p key={`${item.task}-${item.sampleId}`}><span className="mono">{item.sampleId}</span><span>{data.tasks.find((task) => task.task === item.task)?.label}</span><span>{item.reason}</span></p>)}</div>}</section>
+  </>
+}
+
+function quantDemoInput(config: QuantBacktestRequest['config']): QuantBacktestRequest {
+  const bars: QuantBacktestRequest['bars'] = []
+  const cursor = new Date(Date.UTC(2026, 0, 5))
+  while (bars.length < 80) {
+    const weekday = cursor.getUTCDay()
+    if (weekday !== 0 && weekday !== 6) {
+      const index = bars.length
+      bars.push({
+        tradingDate: cursor.toISOString().slice(0, 10),
+        close: Number((100 + index * .13 + Math.sin(index / 4) * 2.8 + Math.sin(index / 11) * 1.4).toFixed(2)),
+        benchmarkClose: Number((100 + index * .07 + Math.sin(index / 8) * 1.1).toFixed(2)),
+      })
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  }
+  const signalSpecs = [
+    [6, '支持', '高', .88], [23, '冲突', '中', .78], [39, '支持', '高', .91], [58, '支持', '中', .72],
+  ] as const
+  return {
+    name: '事件方向信号 · 受控演示', bars, config,
+    signals: signalSpecs.map(([index, direction, strength, confidence], order) => ({
+      signalId: `DEMO-SIG-${order + 1}`,
+      disclosedAt: `${bars[index].tradingDate}T08:30:00+08:00`,
+      generatedAt: `${bars[index].tradingDate}T18:00:00+08:00`,
+      direction, strength, confidence,
+    })),
+  }
+}
+
+function percent(value: number | undefined) {
+  return value == null ? '—' : `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)}%`
+}
+
+function money(value: number) {
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0 }).format(value)
+}
+
+function QuantCurve({ points }: { points: QuantEquityPoint[] }) {
+  if (points.length < 2) return null
+  const width = 900
+  const height = 250
+  const padding = 22
+  const all = points.flatMap((point) => [point.equity, point.benchmarkEquity])
+  const minimum = Math.min(...all)
+  const maximum = Math.max(...all)
+  const range = maximum - minimum || 1
+  const line = (key: 'equity' | 'benchmarkEquity') => points.map((point, index) => {
+    const x = padding + index * (width - padding * 2) / (points.length - 1)
+    const y = height - padding - (point[key] - minimum) * (height - padding * 2) / range
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  return <div className="quant-chart"><div className="chart-legend"><span className="strategy-line">策略净值</span><span className="benchmark-line">基准净值</span></div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="策略与基准净值曲线"><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="chart-axis" /><polyline points={line('benchmarkEquity')} className="chart-benchmark" /><polyline points={line('equity')} className="chart-strategy" /></svg><div className="chart-dates"><span>{points[0].tradingDate}</span><span>{points.at(-1)?.tradingDate}</span></div></div>
+}
+
+export function QuantPage() {
+  const [holdingDays, setHoldingDays] = useState(20)
+  const [costBps, setCostBps] = useState(10)
+  const [slippageBps, setSlippageBps] = useState(5)
+  const [allowShort, setAllowShort] = useState(false)
+  const [run, setRun] = useState<QuantBacktestRun | null>(null)
+  const mutation = useMutation({
+    mutationFn: () => runQuantBacktest(quantDemoInput({
+      initialCapital: 1_000_000, holdingDays, transactionCostBps: costBps, slippageBps, allowShort,
+    })),
+    onSuccess: setRun,
+  })
+  const metrics = run?.metrics
+  const metricItems = metrics ? [
+    ['策略收益', percent(metrics.totalReturn), `基准 ${percent(metrics.benchmarkReturn)}`],
+    ['超额收益', percent(metrics.excessReturn), '已扣交易摩擦'],
+    ['最大回撤', percent(metrics.maxDrawdown), '峰值至谷值'],
+    ['夏普比率', metrics.sharpeRatio?.toFixed(2) ?? '—', `年化波动 ${percent(metrics.annualizedVolatility)}`],
+  ] : []
+  return <>
+    <PageTitle eyebrow="QUANT RESEARCH LAB" title="量化实验" description="把已确认的研究信号转成可复算的历史验证；结果只用于研究评估，不产生交易或调仓指令。" actions={<button className="button primary" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? '正在计算…' : run ? '重新运行' : '运行受控演示'}</button>} />
+    <section className="quant-config hero-section"><div className="section-heading"><div><span className="eyebrow">策略口径</span><h2>事件信号 · T+1 执行</h2></div><span className="quant-safety">NO LOOK-AHEAD · COST-AWARE</span></div><div className="quant-controls"><label>持有交易日<input type="number" min="1" max="252" value={holdingDays} onChange={(event) => setHoldingDays(Number(event.target.value))} /></label><label>交易成本（bps）<input type="number" min="0" max="1000" value={costBps} onChange={(event) => setCostBps(Number(event.target.value))} /></label><label>滑点（bps）<input type="number" min="0" max="1000" value={slippageBps} onChange={(event) => setSlippageBps(Number(event.target.value))} /></label><label className="quant-toggle"><input type="checkbox" checked={allowShort} onChange={(event) => setAllowShort(event.target.checked)} /><span>允许做空</span></label></div><p className="quant-dataset-note">当前使用 80 个交易日、4 条事件信号的受控演示数据。API 已支持接收真实复权行情和独立信号；生产接入前仍需完成交易日历与行情授权。</p><InlineError error={mutation.error} /></section>
+    {!run ? <EmptyState title="尚未运行回测" description="设置持有期和交易摩擦后运行演示，系统将输出净值、风险和逐笔交易。" /> : <>
+      <section className="metric-grid quant-metrics">{metricItems.map(([label, value, note]) => <article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><p>{note}</p></article>)}</section>
+      <section className="content-section quant-result"><div className="section-heading"><div><span className="eyebrow">净值对照</span><h2>策略与基准</h2></div><span className="mono run-id">{run.runId}</span></div><QuantCurve points={run.equityCurve} /><div className="quant-summary"><span>期末净值<strong>¥ {money(metrics!.finalEquity)}</strong></span><span>交易次数<strong>{metrics!.tradeCount}</strong></span><span>胜率<strong>{percent(metrics!.winRate)}</strong></span><span>累计换手<strong>{metrics!.turnover.toFixed(2)}×</strong></span><span>平均暴露<strong>{percent(metrics!.averageExposure)}</strong></span></div></section>
+      <section className="content-section"><div className="section-heading"><div><span className="eyebrow">交易审计</span><h2>逐笔记录</h2></div><span className="filter-count">信号 {run.diagnostics.acceptedSignalCount}/{run.diagnostics.inputSignalCount} 进入回测</span></div><div className="quant-table-wrap"><table className="quant-table"><thead><tr><th>信号</th><th>方向 / 仓位</th><th>建仓</th><th>退出</th><th>持有</th><th>净收益</th><th>退出原因</th></tr></thead><tbody>{run.trades.map((trade) => <tr key={`${trade.signalId}-${trade.entryDate}`}><td className="mono">{trade.signalId}</td><td>{trade.direction} · {(Math.abs(trade.position) * 100).toFixed(0)}%</td><td>{trade.entryDate}<small>¥{trade.entryPrice.toFixed(2)}</small></td><td>{trade.exitDate}<small>¥{trade.exitPrice.toFixed(2)}</small></td><td>{trade.holdingDays} 日</td><td className={trade.netReturn >= 0 ? 'quant-positive' : 'quant-negative'}>{percent(trade.netReturn)}</td><td>{trade.exitReason}</td></tr>)}</tbody></table></div></section>
+      <section className="content-section quant-methodology"><div><span className="eyebrow">方法与限制</span><h2>{run.methodologyVersion}</h2><p>信号在生成后的下一可交易日执行；披露晚于生成的信号会被隔离；每次仓位变化扣除成本与滑点；回测结束强制平仓。</p></div><ul>{run.diagnostics.warnings.map((warning) => <li key={warning}>{warning}</li>)}{run.diagnostics.skippedSignals.map((warning) => <li key={warning}>{warning}</li>)}</ul></section>
+    </>}
+  </>
 }
 
 function SafeSourceLink({ url }: { url: string }) {

@@ -10,6 +10,7 @@ PRD 层级：AI 与规则层（模型侧）
 ```
 ai/
 ├── agents/      五类业务能力及共享输入输出类型
+├── graph_rag.py 可解释的投资知识图与图路径检索
 ├── skills/      四个模型任务的版本化 SKILL.md
 ├── contracts/   契约校验器（Schema 本体在 contracts/ai/）
 ├── prompts/     提示词模板，带版本号
@@ -82,6 +83,15 @@ HTTP 4xx 视为不可重试配置错误；408、429、5xx 和网络错误可重�
 - 不写数据库。
 - 不做数值计算。
 - 不自行改状态。所有输出都是候选，人工闸门在 `app/services`。
+
+Graph RAG 同样遵守该边界：图是关系库正式对象按来源、观测、语义、研究和摘要层形成的只读
+投影，默认只沿已确认边进行单向跨层遍历；它只返回带原文 locator 的候选上下文、图快照和
+路径解释，不创建或确认任何业务关系。实现与验收口径见
+[`../../docs/architecture/Graph-RAG实现说明.md`](../../docs/architecture/Graph-RAG实现说明.md)。
+
+下一发布候选使用 `graph-assist-rank-stable-v1`：文本候选保持原相对次序，Graph 只附加路径、
+图分和快照，并在文本不足 K 条时补位。评测查询可携带候选文档白名单，所有文本与图路径均须
+留在白名单内；`RAG_GRAPH_ENABLED` 默认关闭，v5 独立盲测通过前不得绕过质量报告开启。
 
 ## 测试
 

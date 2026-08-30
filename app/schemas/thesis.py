@@ -198,6 +198,52 @@ class EvidenceDetailOut(Base):
         return None if value is None else str(value)
 
 
+class RetrievalScoreComponentsOut(Base):
+    text: float = 0.0
+    graph: float = 0.0
+
+
+class GraphPathTraceOut(Base):
+    score: float
+    node_ids: list[str]
+    node_kinds: list[str]
+    layers: list[str]
+    relations: list[str]
+    provenance_locators: list[str]
+    explanation: str
+
+
+class GraphLayerSnapshotOut(Base):
+    layer: str
+    node_count: int
+    content_hash: str
+
+
+class GraphSnapshotTraceOut(Base):
+    snapshot_id: str
+    schema_version: str
+    builder_version: str
+    vocabulary_version: str
+    built_at: datetime
+    as_of: datetime | None = None
+    thesis_ids: list[str]
+    security_ids: list[str]
+    layers: list[GraphLayerSnapshotOut]
+
+
+class EvidenceRetrievalTraceOut(Base):
+    """证据生成时冻结的双路召回依据；正文仍从原文接口读取。"""
+
+    available: bool
+    retrieval_mode: str
+    retrieval_version: str
+    locator: str
+    final_score: float
+    score_components: RetrievalScoreComponentsOut
+    graph_paths: list[GraphPathTraceOut]
+    graph_snapshot: GraphSnapshotTraceOut | None = None
+
+
 class EvidenceRelationOut(Base):
     """当前单关联模型的只读兼容输出，为多关联表迁移预留 response 形状。"""
 
