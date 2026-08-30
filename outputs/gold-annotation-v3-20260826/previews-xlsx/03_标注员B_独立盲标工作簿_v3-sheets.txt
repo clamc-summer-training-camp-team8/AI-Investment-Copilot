@@ -1,0 +1,6 @@
+{"kind":"sheet","id":"ws/coy75q","name":"使用说明","index":0,"range":"A1:H11","address":"A1:H11"}
+{"kind":"sheet","id":"ws/e4ue2e","name":"进度","index":1,"range":"A1:D8","address":"A1:D8"}
+{"kind":"sheet","id":"ws/5ohbej","name":"事件语义_120","index":2,"range":"A1:Z121","address":"A1:Z121"}
+{"kind":"sheet","id":"ws/w9i0vz","name":"正文事实_60","index":3,"range":"A1:X61","address":"A1:X61"}
+{"kind":"sheet","id":"ws/l1f30x","name":"GraphRAG相关性_180","index":4,"range":"A1:S181","address":"A1:S181"}
+{"kind":"sheet","id":"ws/rhvdxh","name":"枚举字典","index":5,"range":"A1:L10","address":"A1:L10"}

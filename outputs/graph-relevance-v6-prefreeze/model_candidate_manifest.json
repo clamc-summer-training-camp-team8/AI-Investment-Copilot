@@ -1,0 +1,74 @@
+{
+  "schema_version": "graph-rag-v6-prefreeze-v1",
+  "gold_version": "graph-relevance-v6-blind",
+  "state": "implementation_and_thresholds_ready_candidate_pool_pending",
+  "prepared_at": "2026-08-29T21:00:00+08:00",
+  "release_candidate": "graph-evidence-fusion-v1",
+  "candidate_pool_sha256": null,
+  "implementation_sha256": {
+    "app/ai/retrieval.py": "47d6dbd1bb89a749c780164a24dbfa59af2b07c6167d8fbba249918add1f88e5",
+    "app/ai/graph_rag.py": "62b281fd40c93c20a2e7a453da54acf11ae3f254165cd5a97b77683e00d905e5",
+    "app/services/graph_rag.py": "b680be25308be13a731d71d980ba339d44a6bed9cc8b687990d356cd1b7bbf20",
+    "analytics/evaluation/graph_rag_benchmark.py": "be146f135c867f454b372f3f815da30ace81639b4a07b03489edbfe12e55a4ee"
+  },
+  "weights": {
+    "fusion_text": 0.25,
+    "fusion_bm25": 0.5,
+    "fusion_graph": 1.0,
+    "fusion_report_prior": 1.0,
+    "fusion_rrf_k": 1,
+    "graph_internal_text": 0.35,
+    "graph_internal_relation": 0.65
+  },
+  "threshold_policy": {
+    "minimum_positive_queries": 20,
+    "recall_at_5": 0.8,
+    "mrr": 0.65,
+    "ndcg_at_5": 0.75,
+    "top1_correctness": 0.7,
+    "path_provenance_rate": 0.95,
+    "candidate_pool_compliance_rate": 1.0,
+    "maximum_recall_regression_vs_text": 0.01,
+    "maximum_unjudged_results": 0,
+    "maximum_permission_leaks": 0,
+    "maximum_security_leaks": 0,
+    "maximum_future_leaks": 0,
+    "maximum_canary_content_leaks": 0
+  },
+  "revealed_regression": {
+    "v3": {
+      "report_sha256": "ccf00fdeb50c44ab8a6c2d43dc43606c2e6ba7a2f0fceb5542e18e9e052da434",
+      "recall_at_5": 0.8079,
+      "mrr": 0.8867,
+      "ndcg_at_5": 0.8581,
+      "top1_correctness": 0.7778,
+      "gates_passed": "14/14"
+    },
+    "v4": {
+      "report_sha256": "243e44ef20696f2d660514ecc2f6580750212e7617bb7c5ba0a167c5650e5ca7",
+      "recall_at_5": 0.8315,
+      "mrr": 0.8762,
+      "ndcg_at_5": 0.8107,
+      "top1_correctness": 0.7333,
+      "gates_passed": "14/14"
+    },
+    "v5": {
+      "report_sha256": "4dbb55456d5ea04e8fe699dcdd35db71ec507f75289ff18f1ea2b83058d5f08a",
+      "recall_at_5": 0.8656,
+      "mrr": 0.9042,
+      "ndcg_at_5": 0.8283,
+      "top1_correctness": 0.8333,
+      "gates_passed": "14/14"
+    }
+  },
+  "authorization": {
+    "revealed_regression_may_authorize_rollout": false,
+    "v6_one_time_blind_required": true,
+    "graph_rag_remains_disabled": true
+  },
+  "pending_external_dependency": {
+    "code": "local_postgresql_unavailable",
+    "detail": "Docker Desktop cannot start because a protected stale dockerInference socket prevents backend initialization.",
+    "required_action": "Restore the local PostgreSQL service, then run scripts/prepare_graph_rag_v6_blind.ps1."
+  }
+}

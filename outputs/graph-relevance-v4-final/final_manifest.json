@@ -1,0 +1,16 @@
+{
+  "schema_version": "graph-relevance-v4-final-v1",
+  "gold_version": "graph-relevance-v4-blind",
+  "state": "one_time_evaluation_completed",
+  "sealed_at": "2026-08-26T14:35:19.724720+00:00",
+  "researcher_attestation": "用户于 2026-08-26 确认 Graph RAG v4 专业研究员独立盲标已完成；标注员 FIN-R01",
+  "queries": 30,
+  "rows": 240,
+  "gold_sha256": "220548b120d28fe7fd636db1f915cdfd26da8b06511744355c2ce13d160cfba9",
+  "candidate_pool_sha256": "3a98b42a107da4a912d5c77a83c3582ff35eba8c4272ed75a19de17604d4c5a6",
+  "model_lock_sha256": "0943b758a2effb9952cf15c18ebe130294fe1e8da14b875bbd6ed86e786c4303",
+  "model_locked_at": "2026-08-26T13:02:18.613399+00:00",
+  "one_time_evaluation_consumed": true,
+  "consumed_at": "2026-08-26T14:35:29.363596+00:00",
+  "benchmark_sha256": "085160c05c8ad85dc216a80544cff0ab972a098fd4f00a31cc7b0f0f1e8f86b8"
+}

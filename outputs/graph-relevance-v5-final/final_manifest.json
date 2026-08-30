@@ -1,0 +1,17 @@
+{
+  "schema_version": "graph-relevance-blind-final-v2",
+  "gold_version": "graph-relevance-v5-blind",
+  "state": "one_time_evaluation_completed",
+  "sealed_at": "2026-08-29T12:22:34.332033+00:00",
+  "researcher_attestation": "Professional researcher B-CODEX-FIN-01 independently completed all 300 graph-relevance-v5-blind labels. Returned workbook SHA-256: f54a3484aaa5ea1900d1ac3b07c6d43dd5d6430dfe83fafdb38383689845036f. User confirmed completion on 2026-08-29.",
+  "queries": 30,
+  "rows": 300,
+  "gold_sha256": "c3adbaf12abceeb54420e36d88cf36f0ddd17a32cd7039f7a5c1ea3326d58035",
+  "gold_file": "final_graph_relevance_gold_v5.csv",
+  "candidate_pool_sha256": "d9b27f54d65964cb24a3539c3c3ce16533c8f616b90d7b7f2ff8e8be92782a54",
+  "model_lock_sha256": "f2512c9ea232452398a9d3856e86c6b0109f2dc8e15b215bbaa3abc715305b88",
+  "model_locked_at": "2026-08-26T17:33:23.762134+00:00",
+  "one_time_evaluation_consumed": true,
+  "consumed_at": "2026-08-29T12:22:55.988573+00:00",
+  "benchmark_sha256": "3e43c740a8ee18da7c777f93471bb1d2cd71d28044170e69da341ea61c6ac630"
+}

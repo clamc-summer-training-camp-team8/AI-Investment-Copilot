@@ -19,8 +19,10 @@ storage/
 /.codex_tmp/
 /.tmp/
 
+# Node 依赖不入库，包括 outputs 内用于生成预览的临时依赖。
+node_modules/
+
 # 前端
-web/node_modules/
 web/dist/
 web/.vite/
 

@@ -1,0 +1,17 @@
+{
+  "schema_version": "graph-rag-model-lock-v1",
+  "gold_version": "graph-relevance-v5-blind",
+  "locked_at": "2026-08-26T17:33:23.762134+00:00",
+  "git_revision": "c1aef4fbb9e76f7b8ab5bd57475540992ed4c5cd",
+  "candidate_pool_sha256": "d9b27f54d65964cb24a3539c3c3ce16533c8f616b90d7b7f2ff8e8be92782a54",
+  "implementation_sha256": {
+    "app/ai/retrieval.py": "47d6dbd1bb89a749c780164a24dbfa59af2b07c6167d8fbba249918add1f88e5",
+    "app/ai/graph_rag.py": "e1b506c7a95a80212bf7bdbf8a7aac9625828136cf7a76ffb279b237de763e23",
+    "analytics/evaluation/graph_rag_benchmark.py": "5dced7975b39520a40435d68234fe1f03878e3f40d4833d2873e6d4b279efaee"
+  },
+  "weights": {
+    "text": 0.35,
+    "graph": 0.65
+  },
+  "thresholds_changed_after_v3": false
+}
