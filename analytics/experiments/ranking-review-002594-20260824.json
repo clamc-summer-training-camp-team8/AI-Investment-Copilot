@@ -1,0 +1,1260 @@
+{
+  "security_id": "002594",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "object_type": "document_segment",
+  "instructions": "仅评价给定条目。主逻辑的经营事实、业绩、销量、价格、产能、产品审批、可验证指标及重要反证优先；会议通知、制度、法律意见、权益变动和重复材料降权。",
+  "candidates": [
+    {
+      "object_id": "DOC-EVT-002594-00308#paragraph-1",
+      "base_score": 0.8805,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.6775,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6775,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00308#paragraph-1"
+      ],
+      "content": "公告标题：年报信息披露重大差错责任追究制度（2025年10月）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00274#paragraph-1",
+      "base_score": 0.876,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.655,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.655,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00274#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（二零二五年中期业绩公告）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00363#paragraph-1",
+      "base_score": 0.876,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.655,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.655,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00363#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（二零二五年年度业绩公布）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00221#paragraph-1",
+      "base_score": 0.874,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.645,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.645,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00221#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（2024年年报）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00226#paragraph-1",
+      "base_score": 0.874,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.645,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.645,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00226#paragraph-1"
+      ],
+      "content": "公告标题：2025年第一季度业绩预告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00275#paragraph-1",
+      "base_score": 0.8725,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.6375,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6375,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00275#paragraph-1"
+      ],
+      "content": "公告标题：半年报董事会决议公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00189#paragraph-1",
+      "base_score": 0.8305,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.8275,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.8275,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00189#paragraph-1"
+      ],
+      "content": "公告标题：H股公告(建议采纳2025年员工持股计划（草案）、建议采纳2025年员工持股计划管理办法、建议授权董事会及其授权人士全权办理2025年员工持股计划相关事项及临时股东会通告)"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00110#paragraph-1",
+      "base_score": 0.8185,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7675,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7675,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00110#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至2023年12月31日止年度之末期股息-更新宣派股息相关信息及派息金额、公司预设派发货币相关信息及股息派发日）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00318#paragraph-1",
+      "base_score": 0.8155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7525,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7525,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00318#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（于二零二五年十二月五日（星期五）临时股东会（「临时股东会」）或其任何续会适用的H股持有人代表委任表格）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00090#paragraph-1",
+      "base_score": 0.815,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.75,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.75,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00090#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（于二零二四年六月六日举行的股东周年大会（「股东周年大会」）或其任何续会适用的H股持有人代表委任表格）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00248#paragraph-1",
+      "base_score": 0.815,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.75,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.75,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00248#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（于二零二五年六月六日举行的股东周年大会（「股东周年大会」）或其任何续会适用的H股持有人代表委任表格）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00373#paragraph-1",
+      "base_score": 0.815,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.75,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.75,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00373#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（于二零二六年六月九日举行的股东周年大会（「股东周年大会」）或其任何续会适用的H股持有人代表委任表格）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00088#paragraph-1",
+      "base_score": 0.811,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.73,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.73,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00088#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二三年十二月三十一日止年度的末期股息-更新香港过户登记处相关信息及其他信息）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00192#paragraph-1",
+      "base_score": 0.811,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.73,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.73,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00192#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（于二零二五年四月十五日（星期二）临时股东会或其任何续会适用的H股持有人代表委任表格）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00108#paragraph-1",
+      "base_score": 0.8105,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7275,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7275,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00108#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二三年十二月三十一日止年度的末期股息-更新公司汇率、预设派发货币相关信息）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00002#paragraph-1",
+      "base_score": 0.81,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.725,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.725,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00002#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（股份发行人及根据《上市规则》第十九B章上市的香港预托证券发行人的证券变动月报表）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00196#paragraph-1",
+      "base_score": 0.806,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.705,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.705,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00196#paragraph-1"
+      ],
+      "content": "公告标题：关于董事会战略委员会调整为董事会战略及可持续发展委员会并修订相关制度的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00177#paragraph-1",
+      "base_score": 0.8055,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7025,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7025,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00177#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上的股东及其一致行动人持股比例被动稀释触及1%整数倍的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00288#paragraph-1",
+      "base_score": 0.8055,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7025,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7025,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00288#paragraph-1"
+      ],
+      "content": "公告标题：防范控股股东、实际控制人及其他关联方资金占用管理制度（2025年10月）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00116#paragraph-1",
+      "base_score": 0.805,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00116#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（致非登记股东之通知信函及回条-以电子方式发布公司通讯之安排）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00115#paragraph-1",
+      "base_score": 0.8045,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6975,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6975,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00115#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（致登记股东之通知信函及回条-以电子方式发布公司通讯之安排）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00245#paragraph-1",
+      "base_score": 0.8035,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6925,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6925,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00245#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二四年十二月三十一日止年度之末期股息(更新)）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00306#paragraph-1",
+      "base_score": 0.8035,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6925,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6925,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00306#paragraph-1"
+      ],
+      "content": "公告标题：董事和高级管理人员所持本公司股份变动管理制度（2025年10月）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00371#paragraph-1",
+      "base_score": 0.8035,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6925,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6925,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00371#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二五年十二月三十一日止年度之末期股息(更新)）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00027#paragraph-1",
+      "base_score": 0.803,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.69,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.69,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00027#paragraph-1"
+      ],
+      "content": "公告标题：关于回购股份事项前十名股东及前十名无限售条件股东持股情况的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00113#paragraph-1",
+      "base_score": 0.803,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.69,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.69,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00113#paragraph-1"
+      ],
+      "content": "公告标题：关于2022年员工持股计划第二个锁定期届满暨解锁条件成就的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00260#paragraph-1",
+      "base_score": 0.803,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.69,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.69,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00260#paragraph-1"
+      ],
+      "content": "公告标题：关于2022年员工持股计划第三个锁定期届满暨解锁条件成就的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00045#paragraph-1",
+      "base_score": 0.8025,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6875,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6875,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00045#paragraph-1"
+      ],
+      "content": "公告标题：关于公司在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00250#paragraph-1",
+      "base_score": 0.8025,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6875,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6875,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00250#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二四年十二月三十一日止年度之红股(更新)）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00336#paragraph-1",
+      "base_score": 0.8025,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6875,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6875,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00336#paragraph-1"
+      ],
+      "content": "公告标题：2025年度非经营性资金占用及其他关联资金往来情况的专项说明"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00097#paragraph-1",
+      "base_score": 0.802,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6849999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6849999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00097#paragraph-1"
+      ],
+      "content": "公告标题：关于回购股份用于注销并减少注册资本暨通知债权人的第二次公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00098#paragraph-1",
+      "base_score": 0.802,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6849999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6849999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00098#paragraph-1"
+      ],
+      "content": "公告标题：关于回购股份用于注销并减少注册资本暨通知债权人的第三次公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00355#paragraph-1",
+      "base_score": 0.802,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6849999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6849999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00355#paragraph-1"
+      ],
+      "content": "公告标题：关于2025年员工持股计划第一个锁定期解锁条件未成就的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00040#paragraph-1",
+      "base_score": 0.8015,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00040#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东参与转融通证券出借业务期限届满的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00208#paragraph-1",
+      "base_score": 0.8015,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00208#paragraph-1"
+      ],
+      "content": "公告标题：关于在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00222#paragraph-1",
+      "base_score": 0.8015,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00222#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二四年十二月三十一日止年度的末期股息）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00351#paragraph-1",
+      "base_score": 0.8015,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00351#paragraph-1"
+      ],
+      "content": "公告标题：2025年度非经营性资金占用及其他关联资金往来情况汇总表"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00364#paragraph-1",
+      "base_score": 0.8015,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00364#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二五年十二月三十一日止年度的末期股息）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00232#paragraph-1",
+      "base_score": 0.801,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6799999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6799999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00232#paragraph-1"
+      ],
+      "content": "公告标题：关于2024年度利润分配及资本公积金转增股本方案的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00235#paragraph-1",
+      "base_score": 0.801,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6799999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6799999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00235#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至2024年12月31日止年度之末期股息）"
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "review_version": "logic-topic-current-model-review-v1-20260830",
+  "reviewer": "current_codex_model",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "scope": "仅复核具备综合主逻辑候选资格的主题；依据导出的主题陈述、指标和至多三条支持/冲突证据。模型不确认事实，只评估主题完整性、因果清晰度、公司特异性与主主题资格。",
+  "judgements": [
+    {
+      "topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "score": 0.78,
+      "confidence": 0.77,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_COMPANY_SPECIFIC", "MODEL_CONFLICT_NON_CORE"],
+      "citation_locators": ["DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe", "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735"],
+      "rationale": "工业收入、现金流和ROE改善能够支撑中药与健康消费主线；海外收入下滑需要保留为约束，但占比很低，未直接推翻主线。"
+    },
+    {
+      "topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "score": 0.70,
+      "confidence": 0.80,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_PARTIAL", "MODEL_CASH_CONVERSION_RISK"],
+      "citation_locators": ["DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783", "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk"],
+      "rationale": "新能源转型、销量与盈利改善构成明确主线；收入同比受重述口径影响，且现金流和归母利润存在反证，因此保留主主题资格但降低语义复核分。"
+    },
+    {
+      "topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "score": 0.68,
+      "confidence": 0.75,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_COMPANY_SPECIFIC", "MODEL_SUPPORT_NEEDS_BODY_EVIDENCE"],
+      "citation_locators": ["DOC-EVT-002371-00163#evidence-2e9090616f2eab31", "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361"],
+      "rationale": "国产替代和晶圆厂扩产是公司特异性较强的主线；当前支持侧主要为公告标题，尚需补订单、交付或收入正文证据，研发投入与利润压力应持续监控。"
+    },
+    {
+      "topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "score": 0.68,
+      "confidence": 0.76,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_QUARTERLY_SLOWDOWN_RISK"],
+      "citation_locators": ["DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b", "DOC-EVT-002594-00197#evidence-5a23324ad5a18672"],
+      "rationale": "销量、出口、垂直整合与毛利率构成可验证主线；四季度收入同比下降说明主线需要接受短期需求和价格压力检验。"
+    },
+    {
+      "topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "score": 0.82,
+      "confidence": 0.85,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_BALANCED_COUNTER_EVIDENCE"],
+      "citation_locators": ["DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076", "DOC-STG-4691c635bc37d4aa600c29ac#evidence-ce505d247d6e564a"],
+      "rationale": "交付、车型周期、收入和毛利修复的传导链完整；亏损尚未转正是明确反证，已被主题本身纳入。"
+    },
+    {
+      "topic_id": "TOPIC-83fd1189389801533ab2f2bf",
+      "score": 0.20,
+      "confidence": 0.94,
+      "primary_approved": false,
+      "reason_codes": ["MODEL_INSUFFICIENT_EVIDENCE", "MODEL_PRIMARY_REJECTED"],
+      "citation_locators": [],
+      "rationale": "当前导出包没有支持或冲突证据，也没有指标，不能作为主主题。"
+    },
+    {
+      "topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "score": 0.76,
+      "confidence": 0.80,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_R_AND_D_COST_RISK"],
+      "citation_locators": ["DOC-EVT-600276-00691#evidence-566b0c6f4263bd01", "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc"],
+      "rationale": "创新药放量和对外授权对冲集采缺口的主线清晰；研发费用及营业成本上升是直接约束，需与收入兑现同步验证。"
+    },
+    {
+      "topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "score": 0.76,
+      "confidence": 0.79,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_RISK_EVIDENCE_PARTIAL"],
+      "citation_locators": ["DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d", "DOC-EVT-603259-00453#evidence-0129534744e52f15"],
+      "rationale": "收入和持续经营利润改善支持研发外包主线；地缘政治与产能利用率风险仍需要补充更直接的正文证据。"
+    },
+    {
+      "topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "score": 0.72,
+      "confidence": 0.84,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_OFFICIAL_BODY_EVIDENCE", "MODEL_CAPEX_RISK"],
+      "citation_locators": ["DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e", "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee"],
+      "rationale": "2025年报正文已直接披露收入、利润、现金流，以及存储供需优化、价量齐升和定制化存储、AI MCU需求对增长的带动；投资现金流扩大保留为扩张与回报兑现约束。"
+    },
+    {
+      "topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "score": 0.76,
+      "confidence": 0.88,
+      "primary_approved": true,
+      "reason_codes": ["MODEL_CAUSAL_CHAIN_CLEAR", "MODEL_OFFICIAL_BODY_EVIDENCE", "MODEL_CAPEX_RISK"],
+      "citation_locators": ["DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757", "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c"],
+      "rationale": "2025年报正文直接给出销售收入增长、93.5%产能利用率、毛利率改善和产能规模，能够支撑利用率回升到收入和盈利改善的主线；资本开支现金流压力仍是需要持续跟踪的反证。"
+    },
+    {
+      "topic_id": "TOPIC-783091f1749bc5f830e26bce",
+      "score": 0.40,
+      "confidence": 0.90,
+      "primary_approved": false,
+      "reason_codes": ["MODEL_NO_SUPPORTING_EVIDENCE", "MODEL_PRIMARY_REJECTED"],
+      "citation_locators": ["DOC-688981-2023FY#evidence-95dc72cb7a2f5b5f"],
+      "rationale": "仅存在历史下行期反证，未提供可支持需求与利用率修复的同时间边界证据，不能作为当前主主题。"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "dataset_version": "p1-geely-quarterly-restated-official-source-seed-20260824",
+  "status": "staged_requires_human_review",
+  "records": [
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited First Quarterly Results 2025",
+      "published_at": "2025-05-15T00:00:00+08:00",
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2025/05/2025051500213.pdf",
+      "facts": [
+        "2025年第一季度收入724.95亿元，同比增长25%；2024年同期重述收入582.25亿元。",
+        "2025年第一季度销量70.38万辆，同比增长48%；归母净利润56.72亿元，同比增长264%。",
+        "该公告以2024年未经审计且重述的可比数为基础。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量"],
+      "evidence_direction": "支持",
+      "review_note": "该公告直接验证本地2024Q1的重述可比数582.25亿元；其2025Q1当期数724.95亿元仍为当时口径，不能作为本地后续重述值726.92亿元的披露日期。后者以2026Q1公告的重述同比数为准；该日期也不得外推到2024Q2及以后季度。"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited First Quarterly Results 2026",
+      "published_at": "2026-04-29T00:00:00+08:00",
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/2026042900391.pdf",
+      "facts": [
+        "2026年第一季度收入837.76亿元，2025年同期为726.92亿元；毛利146.64亿元，2025年同期为114.46亿元。",
+        "2026年第一季度毛利率约17.5%，高于2025年同期约15.7%。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量"],
+      "evidence_direction": "支持",
+      "review_note": "港交所季度公告；收入和毛利率与本地原始数据匹配。"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited First Quarterly Results 2026 — profit comparability risk",
+      "published_at": "2026-04-29T00:00:00+08:00",
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/2026042900391.pdf",
+      "facts": [
+        "2026年第一季度归母净利润41.66亿元，低于2025年同期的56.73亿元，尽管收入和毛利同比提升。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "规模与毛利改善未必同步转化为归母利润增长；该事实作为盈利质量的反证候选。"
+    }
+  ]
+}

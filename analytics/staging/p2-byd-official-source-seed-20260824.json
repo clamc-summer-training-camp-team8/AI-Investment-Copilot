@@ -1,0 +1,36 @@
+{
+  "dataset_version": "p2-byd-official-source-seed-20260824",
+  "status": "staged_requires_human_review",
+  "records": [
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "source_type": "exchange_designated_disclosure",
+      "title": "比亚迪股份有限公司2025年年度报告",
+      "published_at": "2026-03-30T00:00:00+08:00",
+      "source_url": "https://www.chinamoney.com.cn/chinese/cwbg/20260330/3307255.html",
+      "facts": [
+        "2025年营业收入8039.65亿元，较2024年的7771.02亿元增长3.46%。",
+        "2025年第四季度营业收入2376.99亿元，同比下降13.52%。"
+      ],
+      "hypothesis_targets": ["需求与出货"],
+      "evidence_direction": "支持",
+      "review_note": "中国货币网发布的年度报告入口；全年收入保持增长作为需求侧候选支持，但季度收入回落同时保留在同一来源事实中。"
+    },
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "source_type": "exchange_designated_disclosure",
+      "title": "比亚迪股份有限公司2025年年度报告 — profitability risk",
+      "published_at": "2026-03-30T00:00:00+08:00",
+      "source_url": "https://www.chinamoney.com.cn/chinese/cwbg/20260330/3307255.html",
+      "facts": [
+        "2025年归属于母公司所有者的净利润326.19亿元，较2024年的402.54亿元下降18.97%。",
+        "2025年第四季度毛利率17.44%，低于2024年第四季度的19.66%。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "年度利润和季度毛利率回落作为盈利质量的反证候选；需结合价格、产品结构和海外业务后续拆解，不能单独解释成投资结论。"
+    }
+  ]
+}

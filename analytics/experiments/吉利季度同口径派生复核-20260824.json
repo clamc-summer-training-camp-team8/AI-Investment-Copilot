@@ -1,0 +1,63 @@
+{
+  "security_id": "00175",
+  "company": "吉利汽车",
+  "status": "reviewed_derivation_not_direct_quarterly_disclosure",
+  "rule": "仅当被减数与减数均为同一合并范围、同一重述口径且精确金额可追溯至官方公告时允许派生；派生值不得回填为单季度首次披露日期。",
+  "derivations": [
+    {
+      "period": "2024Q2",
+      "formula": "2024H1 restated 118,792,689 - 2024Q1 restated 58,225,000",
+      "derived_revenue_thousand_rmb": 60567689,
+      "local_revenue_thousand_rmb": 60567689,
+      "result": "exact_match",
+      "source_urls": [
+        "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+        "https://www.geelyauto.com.hk/wp-content/uploads/2025/05/2025051500213.pdf"
+      ]
+    },
+    {
+      "period": "2024Q3",
+      "formula": "2024 9M restated 189,534,000 - 2024H1 restated 118,792,689",
+      "derived_revenue_thousand_rmb": 70741311,
+      "local_revenue_thousand_rmb": 70741311,
+      "result": "exact_match",
+      "source_urls": [
+        "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+        "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf"
+      ]
+    },
+    {
+      "period": "2024Q4",
+      "formula": "2024FY restated 275,910,484 - 2024 9M restated 189,534,000",
+      "derived_revenue_thousand_rmb": 86376484,
+      "local_revenue_thousand_rmb": 86376484,
+      "result": "exact_match",
+      "source_urls": [
+        "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf",
+        "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf"
+      ]
+    },
+    {
+      "period": "2025Q2",
+      "formula": "2025H1 150,284,734 - 2025Q1 restated 72,692,000",
+      "derived_revenue_thousand_rmb": 77592734,
+      "local_revenue_thousand_rmb": 77592734,
+      "result": "exact_match",
+      "source_urls": [
+        "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+        "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/2026042900391.pdf"
+      ]
+    },
+    {
+      "period": "2025Q4",
+      "formula": "2025FY 345,232,201 - 2025 9M 239,477,000",
+      "derived_revenue_thousand_rmb": 105755201,
+      "local_revenue_thousand_rmb": 105755201,
+      "result": "exact_match",
+      "source_urls": [
+        "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf",
+        "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf"
+      ]
+    }
+  ]
+}

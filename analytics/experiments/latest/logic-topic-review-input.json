@@ -1,0 +1,3624 @@
+{
+  "review_version": "logic-topic-model-review-v1-20260830",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "instructions": "Review topic distinctness, company specificity, causal clarity and whether it may be a primary topic. Cite only supplied locators; do not invent facts.",
+  "topics": [
+    {
+      "topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "security_id": "000538",
+      "company": "云南白药",
+      "name": "云南白药2025Q1观察：中药与健康消费",
+      "statement": "中药与健康消费品，增长平稳，毛利率与渠道结构是主要观察点，历史上曾因证券投资造成业绩波动",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-000538-2025Q1",
+        "THS-000538-2025Q2",
+        "THS-000538-2025Q3",
+        "THS-000538-2025Q4",
+        "THS-000538-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.74549674,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8022878092568111,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.8,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9928571428571428,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_CAUSAL_CHAIN_CLEAR",
+        "MODEL_COMPANY_SPECIFIC",
+        "MODEL_CONFLICT_NON_CORE",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-93babda0fe9d2bb84508bb41",
+            "excerpt": "2025年营业收入411.87亿元，同比增长2.88%；归母净利润51.53亿元，同比增长8.51%；扣非归母净利润48.65亿元，同比增长7.55%。；工业收入160.16亿元，同比增长10.7%，占营业收入比重38.89%，同比提升2.75个百分点。；经营活动现金流净额46.00亿元，同比增长7.04%；加权平均净资产收益率13.02%，同比提升1.03个百分点。",
+            "locator": "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+            "disclosed_at": "2026-04-01T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-b60d6c0eaaecb95a735c00f9",
+            "excerpt": "2025年国外收入1.09亿元，同比下降69.58%，在总收入中占比0.26%。",
+            "locator": "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735",
+            "disclosed_at": "2026-04-01T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-000538-00140",
+            "excerpt": "公告标题：关于对安国市聚药堂药业有限公司进行全资收购的公告",
+            "locator": "DOC-EVT-000538-00140#evidence-f4da28a0bf3f4617",
+            "disclosed_at": "2025-08-16T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-000538-00154",
+            "excerpt": "公告标题：2025年半年度报告（英文版）",
+            "locator": "DOC-EVT-000538-00154#evidence-a8722c2da904ed3e",
+            "disclosed_at": "2025-09-19T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-000538-00228",
+            "excerpt": "公告标题：2025年年度报告（英文版）",
+            "locator": "DOC-EVT-000538-00228#evidence-49ed5485256ad421",
+            "disclosed_at": "2026-04-21T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-8767e61958edd6d2f275567b",
+      "security_id": "000538",
+      "company": "云南白药",
+      "name": "产能与扩张",
+      "statement": "渠道与品牌投入保持，不出现商誉或投资大额减值",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-000538-2025Q1",
+        "THS-000538-2025Q2",
+        "THS-000538-2025Q3",
+        "THS-000538-2025Q4",
+        "THS-000538-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.20796494,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7592988488340151,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.625,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-b60d6c0eaaecb95a735c00f9",
+            "excerpt": "2025年国外收入1.09亿元，同比下降69.58%，在总收入中占比0.26%。",
+            "locator": "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735",
+            "disclosed_at": "2026-04-01T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-000538-00140",
+            "excerpt": "公告标题：关于对安国市聚药堂药业有限公司进行全资收购的公告",
+            "locator": "DOC-EVT-000538-00140#evidence-f4da28a0bf3f4617",
+            "disclosed_at": "2025-08-16T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-b6607c9b27c397ad42329284",
+      "security_id": "000538",
+      "company": "云南白药",
+      "name": "需求与出货",
+      "statement": "工业药品与健康品渠道保持稳定，不出现持续负增长",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-000538-2025Q1",
+        "THS-000538-2025Q2",
+        "THS-000538-2025Q3",
+        "THS-000538-2025Q4",
+        "THS-000538-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.61546494,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7592988488340151,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 1.0,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-93babda0fe9d2bb84508bb41",
+            "excerpt": "2025年营业收入411.87亿元，同比增长2.88%；归母净利润51.53亿元，同比增长8.51%；扣非归母净利润48.65亿元，同比增长7.55%。；工业收入160.16亿元，同比增长10.7%，占营业收入比重38.89%，同比提升2.75个百分点。；经营活动现金流净额46.00亿元，同比增长7.04%；加权平均净资产收益率13.02%，同比提升1.03个百分点。",
+            "locator": "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+            "disclosed_at": "2026-04-01T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-b9cd787dbfc9ef8a6a42a616",
+      "security_id": "000538",
+      "company": "云南白药",
+      "name": "盈利质量",
+      "statement": "毛利率随产品结构与原料成本波动，不持续低于历史区间",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-000538-2025Q1",
+        "THS-000538-2025Q2",
+        "THS-000538-2025Q3",
+        "THS-000538-2025Q4",
+        "THS-000538-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.57844772,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8022878092568111,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6733333333333333,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9566666666666667,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-d97bde4916e077c2a93721f9",
+            "excerpt": "2025年营业收入411.87亿元，同比增长2.88%；归母净利润51.53亿元，同比增长8.51%；扣非归母净利润48.65亿元，同比增长7.55%。；工业收入160.16亿元，同比增长10.7%，占营业收入比重38.89%，同比提升2.75个百分点。；经营活动现金流净额46.00亿元，同比增长7.04%；加权平均净资产收益率13.02%，同比提升1.03个百分点。",
+            "locator": "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+            "disclosed_at": "2026-04-01T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-000538-00154",
+            "excerpt": "公告标题：2025年半年度报告（英文版）",
+            "locator": "DOC-EVT-000538-00154#evidence-a8722c2da904ed3e",
+            "disclosed_at": "2025-09-19T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-000538-00228",
+            "excerpt": "公告标题：2025年年度报告（英文版）",
+            "locator": "DOC-EVT-000538-00228#evidence-49ed5485256ad421",
+            "disclosed_at": "2026-04-21T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-000538-00131",
+            "excerpt": "公告标题：2024年年度报告（英文版）",
+            "locator": "DOC-EVT-000538-00131#evidence-bfce01527d202744",
+            "disclosed_at": "2025-04-23T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-24fa07016072125a0c3aa715",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "name": "盈利质量",
+      "statement": "平台化与规模效应改善毛利率，新能源转型不持续拖累盈利",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-00175-2025Q1",
+        "THS-00175-2025Q2",
+        "THS-00175-2025Q3",
+        "THS-00175-2025Q4",
+        "THS-00175-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.44716381,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9867947312196229,
+        "persistence": 0.775,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.8185185185185184,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.998148148148148,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-bd51960db5da5476144f2768",
+            "excerpt": "2025年第三季度收入891.92亿元，同比增加27%；销量76.10万辆，同比增长43%。同期2024年比较数已按重述口径列示。；截至2025年9月30日止九个月收入2,394.77亿元，同比增长26%；毛利395.12亿元，较上年同期307.86亿元提升。；2025年第三季度归母净利润38.20亿元，同比增长59%；剔除若干非经常性项目后，前三季度归母净利润106.20亿元，同比增长59%。",
+            "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-financial-highlights",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-38f2edd16b1e89189e2d76f5",
+            "excerpt": "截至2025年6月30日止六个月收入150,284,734千元；2024年同期经重述收入118,792,689千元，同比增长27%。；同期毛利24,718,739千元，2024年同期经重述毛利19,868,348千元；总销量1,409,180辆，同比增长47%。；该H1重述数与本地2024Q1+Q2收入完全一致，并可作为2024Q2同口径派生复核的累计端点。",
+            "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-financial-highlights",
+            "disclosed_at": "2025-08-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-679f3a3796473c5867487820",
+            "excerpt": "2025年第一季度收入约725亿元，同比增长25%；毛利率15.8%。；第一季度总销量70.4万辆，同比增长48%；新能源销量33.9万辆。；归母净利润56.7亿元，同比增长264%；极氪、领克与吉利品牌的供应链、制造及销售渠道整合计划旨在提升经营效率。",
+            "locator": "DOC-STG-dea2e4f5358ea0030f3120f2#evidence-7f8f3ab4f72e03fc",
+            "disclosed_at": "2025-05-16T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-b8f9e5679817afff864ddf08",
+            "excerpt": "截至2025年6月30日止六个月归属公司权益持有人利润9,289,807千元，低于2024年同期经重述的10,789,540千元，同比下降14%；同期处置附属公司视同收益及待售资产减值相关项目由2024年的7,726,187千元降至零。",
+            "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+            "disclosed_at": "2025-08-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-2e1df90930856b1e8411f67a",
+            "excerpt": "截至2026年6月30日止六个月，归母净利润约90.91亿元，同比约下降1.8%，与核心归母净利润改善并不完全一致。；同期经营现金流约199.24亿元，同比明显下降；应作为利润向现金转化的待复核反证，而非由收入增长自动覆盖。",
+            "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk",
+            "disclosed_at": "2026-08-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-812c32daa1add85e0e925dff",
+            "excerpt": "截至2025年9月30日，集团录得流动负债净额约78.74亿元；管理层认为这不会对持续经营能力造成重大影响，并列示营运现金流、备用融资及资产负债表优化计划作为依据。",
+            "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-liquidity-risk",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-00175-00286",
+            "excerpt": "公告标题：海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+            "locator": "DOC-EVT-00175-00286#evidence-fbc6a5f665ae666c",
+            "disclosed_at": "2025-11-17T19:22:07+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00226",
+            "excerpt": "公告标题：海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第二季度未经审核财务业绩公布",
+            "locator": "DOC-EVT-00175-00226#evidence-4edfbd3df0acc943",
+            "disclosed_at": "2025-08-14T18:22:09+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00187",
+            "excerpt": "公告标题：海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第一季度未经审核财务业绩公布",
+            "locator": "DOC-EVT-00175-00187#evidence-98d690953fcae4cc",
+            "disclosed_at": "2025-05-15T18:38:08+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "name": "吉利汽车2025Q1观察：整车",
+      "statement": "新能源转型见效，销量与出口双增长支撑收入，平台整合与毛利率改善是核心观察点。港股披露频率低于 A 股",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-00175-2025Q1",
+        "THS-00175-2025Q2",
+        "THS-00175-2025Q3",
+        "THS-00175-2025Q4",
+        "THS-00175-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.73045448,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9867947312196229,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.825,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_CAUSAL_CHAIN_PARTIAL",
+        "MODEL_CASH_CONVERSION_RISK",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-35a9793ef731ae3370fd0fef",
+            "excerpt": "2025年第三季度收入891.92亿元，同比增加27%；销量76.10万辆，同比增长43%。同期2024年比较数已按重述口径列示。；截至2025年9月30日止九个月收入2,394.77亿元，同比增长26%；毛利395.12亿元，较上年同期307.86亿元提升。；2025年第三季度归母净利润38.20亿元，同比增长59%；剔除若干非经常性项目后，前三季度归母净利润106.20亿元，同比增长59%。",
+            "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-financial-highlights",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-38f2edd16b1e89189e2d76f5",
+            "excerpt": "截至2025年6月30日止六个月收入150,284,734千元；2024年同期经重述收入118,792,689千元，同比增长27%。；同期毛利24,718,739千元，2024年同期经重述毛利19,868,348千元；总销量1,409,180辆，同比增长47%。；该H1重述数与本地2024Q1+Q2收入完全一致，并可作为2024Q2同口径派生复核的累计端点。",
+            "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-financial-highlights",
+            "disclosed_at": "2025-08-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-1f0275f5c5a24df7d12f3533",
+            "excerpt": "2025年收入3452.32亿元；2024年重述比较收入2759.10亿元，同比增长25%。；2024年原始收入2401.94亿元，经共同控制下企业合并、领克及目标公司收购和合并抵销调整后重述为2759.10亿元。；公司说明，相关共同控制下企业合并按合并会计法处理，并按香港会计准则对2024年比较期间进行重述。",
+            "locator": "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+            "disclosed_at": "2026-04-27T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-b8f9e5679817afff864ddf08",
+            "excerpt": "截至2025年6月30日止六个月归属公司权益持有人利润9,289,807千元，低于2024年同期经重述的10,789,540千元，同比下降14%；同期处置附属公司视同收益及待售资产减值相关项目由2024年的7,726,187千元降至零。",
+            "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-gross-profit-and-one-off",
+            "disclosed_at": "2025-08-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-2e1df90930856b1e8411f67a",
+            "excerpt": "截至2026年6月30日止六个月，归母净利润约90.91亿元，同比约下降1.8%，与核心归母净利润改善并不完全一致。；同期经营现金流约199.24亿元，同比明显下降；应作为利润向现金转化的待复核反证，而非由收入增长自动覆盖。",
+            "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk",
+            "disclosed_at": "2026-08-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-812c32daa1add85e0e925dff",
+            "excerpt": "截至2025年9月30日，集团录得流动负债净额约78.74亿元；管理层认为这不会对持续经营能力造成重大影响，并列示营运现金流、备用融资及资产负债表优化计划作为依据。",
+            "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-liquidity-risk",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-00175-00286",
+            "excerpt": "公告标题：海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+            "locator": "DOC-EVT-00175-00286#evidence-fbc6a5f665ae666c",
+            "disclosed_at": "2025-11-17T19:22:07+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00226",
+            "excerpt": "公告标题：海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第二季度未经审核财务业绩公布",
+            "locator": "DOC-EVT-00175-00226#evidence-4edfbd3df0acc943",
+            "disclosed_at": "2025-08-14T18:22:09+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00187",
+            "excerpt": "公告标题：海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第一季度未经审核财务业绩公布",
+            "locator": "DOC-EVT-00175-00187#evidence-98d690953fcae4cc",
+            "disclosed_at": "2025-05-15T18:38:08+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-43a7b6176c8f3730898f5d3c",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "name": "产能与扩张",
+      "statement": "品牌与平台整合按计划推进，不出现大额整合损失",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-00175-2025Q1",
+        "THS-00175-2025Q2",
+        "THS-00175-2025Q3",
+        "THS-00175-2025Q4",
+        "THS-00175-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.2147793,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.941040531165702,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.6090909090909091,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9954545454545454,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-1f0275f5c5a24df7d12f3533",
+            "excerpt": "2025年收入3452.32亿元；2024年重述比较收入2759.10亿元，同比增长25%。；2024年原始收入2401.94亿元，经共同控制下企业合并、领克及目标公司收购和合并抵销调整后重述为2759.10亿元。；公司说明，相关共同控制下企业合并按合并会计法处理，并按香港会计准则对2024年比较期间进行重述。",
+            "locator": "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+            "disclosed_at": "2026-04-27T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-033f642a5f005de135a3938a",
+            "excerpt": "2025年第一季度收入约725亿元，同比增长25%；毛利率15.8%。；第一季度总销量70.4万辆，同比增长48%；新能源销量33.9万辆。；归母净利润56.7亿元，同比增长264%；极氪、领克与吉利品牌的供应链、制造及销售渠道整合计划旨在提升经营效率。",
+            "locator": "DOC-STG-dea2e4f5358ea0030f3120f2#evidence-7f8f3ab4f72e03fc",
+            "disclosed_at": "2025-05-16T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-e2dbd436f51226cf32c35411",
+            "excerpt": "2025年上半年收入1503亿元，同比增长27%。；2025年上半年总销量140.9万辆，同比增长47%；新能源销量超过72.5万辆，同比增长126%。；上半年出口超过18万辆；整体毛利率16.4%。",
+            "locator": "DOC-STG-e20a4497565fca8615cd436f#evidence-95c3f210461fafed",
+            "disclosed_at": "2025-08-14T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-fb75701767b0b1da514299da",
+            "excerpt": "2025年出口批发420,097辆，同比增长1%，而集团总销量同比增长39%。",
+            "locator": "DOC-STG-e4e2045de8310388be8d3710#evidence-fca183d5d4be387a",
+            "disclosed_at": "2026-03-18T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-00175-00449",
+            "excerpt": "公告标题：自愿公布收购西班牙一间目标公司34%的股权及成立一间合营公司从事乘用车合约生产",
+            "locator": "DOC-EVT-00175-00449#evidence-7118e31cc2c62473",
+            "disclosed_at": "2026-07-23T17:48:11+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00143",
+            "excerpt": "公告标题：完成须予披露及关连交易(1)极氪收购领克销售股份；及(2)极氪认购领克新增资本",
+            "locator": "DOC-EVT-00175-00143#evidence-c66e6f85eb048071",
+            "disclosed_at": "2025-02-14T16:36:12+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00407",
+            "excerpt": "公告标题：自愿公布发行于二零二八年到期之人民币20亿元中期票据",
+            "locator": "DOC-EVT-00175-00407#evidence-4a30441d1bf5c009",
+            "disclosed_at": "2026-05-10T18:46:10+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-fe4f8c0980f579f4ca1f57d4",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "name": "需求与出货",
+      "statement": "新能源车型销量放量带动整体销量增长，出口贡献增量",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-00175-2025Q1",
+        "THS-00175-2025Q2",
+        "THS-00175-2025Q3",
+        "THS-00175-2025Q4",
+        "THS-00175-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.56892307,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9867947312196229,
+        "persistence": 0.775,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.7783333333333333,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9866666666666665,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-35a9793ef731ae3370fd0fef",
+            "excerpt": "2025年第三季度收入891.92亿元，同比增加27%；销量76.10万辆，同比增长43%。同期2024年比较数已按重述口径列示。；截至2025年9月30日止九个月收入2,394.77亿元，同比增长26%；毛利395.12亿元，较上年同期307.86亿元提升。；2025年第三季度归母净利润38.20亿元，同比增长59%；剔除若干非经常性项目后，前三季度归母净利润106.20亿元，同比增长59%。",
+            "locator": "DOC-STG-33988aadaba3d45eace58a9a#body-q3-2025-financial-highlights",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-6e2677695c6af52a5f7cba22",
+            "excerpt": "截至2025年6月30日止六个月收入150,284,734千元；2024年同期经重述收入118,792,689千元，同比增长27%。；同期毛利24,718,739千元，2024年同期经重述毛利19,868,348千元；总销量1,409,180辆，同比增长47%。；该H1重述数与本地2024Q1+Q2收入完全一致，并可作为2024Q2同口径派生复核的累计端点。",
+            "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-financial-highlights",
+            "disclosed_at": "2025-08-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-70fe92ee92cddaab9584542b",
+            "excerpt": "2025年收入3452.32亿元；2024年重述比较收入2759.10亿元，同比增长25%。；2024年原始收入2401.94亿元，经共同控制下企业合并、领克及目标公司收购和合并抵销调整后重述为2759.10亿元。；公司说明，相关共同控制下企业合并按合并会计法处理，并按香港会计准则对2024年比较期间进行重述。",
+            "locator": "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+            "disclosed_at": "2026-04-27T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-00175-00211",
+            "excerpt": "公告标题：(I) 未经审核之二零二五年六月销量 及 (II) 修订二零二五年销量目标",
+            "locator": "DOC-EVT-00175-00211#evidence-70c2c5be14fe0207",
+            "disclosed_at": "2025-07-01T18:08:29+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00323",
+            "excerpt": "公告标题：未经审核之二零二五年十二月销量及二零二六年销量目标",
+            "locator": "DOC-EVT-00175-00323#evidence-91924fff082e2d62",
+            "disclosed_at": "2026-01-01T18:06:07+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-00175-00299",
+            "excerpt": "公告标题：未经审核之二零二五年十一月销量",
+            "locator": "DOC-EVT-00175-00299#evidence-92e78d90673bbed4",
+            "disclosed_at": "2025-12-01T16:36:29+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-25e71499eb391ef41027ff4c",
+      "security_id": "002371",
+      "company": "北方华创",
+      "name": "需求与出货",
+      "statement": "半导体设备订单随晶圆厂扩产与国产化率提升保持增长",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002371-2025Q1",
+        "THS-002371-2025Q2",
+        "THS-002371-2025Q3",
+        "THS-002371-2025Q4",
+        "THS-002371-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.61671058,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7842116984574725,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 1.0,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-92e51998811c999abda2a41e",
+            "excerpt": "2025年上半年营业收入161.42亿元，同比增长29.51%，公司披露主要由订单增加带动销售量增长。；2025年上半年归属于上市公司股东的净利润32.08亿元，同比增长14.97%。；报告期内完成收购芯源微，补强光刻工序配套装备能力，并计划通过市场、技术和供应链协同优化资源配置。",
+            "locator": "DOC-STG-65632d0e2e4f726f8a737dcd#evidence-f94fccf0eefd8297",
+            "disclosed_at": "2025-08-29T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-9b18c97aa4c244577afc875c",
+            "excerpt": "2025年营业收入393.53亿元，同比增长30.85%。；2025年归属于上市公司股东的净利润55.22亿元，同比下降1.77%；扣非后归母净利润同比下降4.22%。；2025年计入当期损益的研发费用54.35亿元，同比增长46.96%。",
+            "locator": "DOC-STG-b9b66663bb71bc561264471a#evidence-2a22aa37bb31464e",
+            "disclosed_at": "2026-04-18T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "security_id": "002371",
+      "company": "北方华创",
+      "name": "北方华创2025Q1观察：半导体设备",
+      "statement": "前道设备国产化核心标的，晶圆厂扩产与国产化率提升支撑订单与收入，需跟踪毛利率与交付节奏",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002371-2025Q1",
+        "THS-002371-2025Q2",
+        "THS-002371-2025Q3",
+        "THS-002371-2025Q4",
+        "THS-002371-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.71695726,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9392551595698544,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.7666666666666666,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9833333333333333,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_COMPANY_SPECIFIC",
+        "MODEL_SUPPORT_NEEDS_BODY_EVIDENCE",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-1f0bae650b4af9f4d4f43352",
+            "excerpt": "2025年上半年营业收入161.42亿元，同比增长29.51%，公司披露主要由订单增加带动销售量增长。；2025年上半年归属于上市公司股东的净利润32.08亿元，同比增长14.97%。；报告期内完成收购芯源微，补强光刻工序配套装备能力，并计划通过市场、技术和供应链协同优化资源配置。",
+            "locator": "DOC-STG-65632d0e2e4f726f8a737dcd#evidence-f94fccf0eefd8297",
+            "disclosed_at": "2025-08-29T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-9b18c97aa4c244577afc875c",
+            "excerpt": "2025年营业收入393.53亿元，同比增长30.85%。；2025年归属于上市公司股东的净利润55.22亿元，同比下降1.77%；扣非后归母净利润同比下降4.22%。；2025年计入当期损益的研发费用54.35亿元，同比增长46.96%。",
+            "locator": "DOC-STG-b9b66663bb71bc561264471a#evidence-2a22aa37bb31464e",
+            "disclosed_at": "2026-04-18T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00163",
+            "excerpt": "公告标题：关于向全资子公司增资并参与设立北京集成电路装备产业投资并购二期基金暨关联交易的进展公告",
+            "locator": "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+            "disclosed_at": "2025-02-18T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-7b5284bc61296c9c99581238",
+            "excerpt": "2025年归属于上市公司股东的净利润55.22亿元，同比下降1.77%；扣非后归母净利润同比下降4.22%。；公司披露研发费用54.35亿元，同比增长46.96%，高研发投入是年度利润承压的相关背景之一。",
+            "locator": "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361",
+            "disclosed_at": "2026-04-18T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-002371-00411",
+            "excerpt": "公告标题：关于注册发行非金融企业债务融资工具及应收账款资产支持商业票据的公告",
+            "locator": "DOC-EVT-002371-00411#evidence-b360855082dcf0a6",
+            "disclosed_at": "2026-07-22T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00279",
+            "excerpt": "公告标题：年报信息披露重大差错责任追究制度（2025年10月）",
+            "locator": "DOC-EVT-002371-00279#evidence-ab939ee1f83bad6b",
+            "disclosed_at": "2025-10-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00189",
+            "excerpt": "公告标题：2025年第一季度业绩预告",
+            "locator": "DOC-EVT-002371-00189#evidence-93c600d57244fd5c",
+            "disclosed_at": "2025-04-08T08:51:52+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-96cb37b8319ce9a70ef21e58",
+      "security_id": "002371",
+      "company": "北方华创",
+      "name": "盈利质量",
+      "statement": "规模效应与国产化推进支撑毛利率，不因竞争加剧显著下滑",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002371-2025Q1",
+        "THS-002371-2025Q2",
+        "THS-002371-2025Q3",
+        "THS-002371-2025Q4",
+        "THS-002371-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.45094772,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8022878092568111,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6733333333333333,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9566666666666667,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-7b5284bc61296c9c99581238",
+            "excerpt": "2025年归属于上市公司股东的净利润55.22亿元，同比下降1.77%；扣非后归母净利润同比下降4.22%。；公司披露研发费用54.35亿元，同比增长46.96%，高研发投入是年度利润承压的相关背景之一。",
+            "locator": "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361",
+            "disclosed_at": "2026-04-18T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-002371-00279",
+            "excerpt": "公告标题：年报信息披露重大差错责任追究制度（2025年10月）",
+            "locator": "DOC-EVT-002371-00279#evidence-ab939ee1f83bad6b",
+            "disclosed_at": "2025-10-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00189",
+            "excerpt": "公告标题：2025年第一季度业绩预告",
+            "locator": "DOC-EVT-002371-00189#evidence-93c600d57244fd5c",
+            "disclosed_at": "2025-04-08T08:51:52+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00252",
+            "excerpt": "公告标题：2025年半年度报告摘要",
+            "locator": "DOC-EVT-002371-00252#evidence-e9281a4cc6a6801e",
+            "disclosed_at": "2025-08-29T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-a8d7064b2c0198be496f7bc5",
+      "security_id": "002371",
+      "company": "北方华创",
+      "name": "产能与扩张",
+      "statement": "产能与交付能力跟上订单增长，合同负债转化不出现明显滞后",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002371-2025Q1",
+        "THS-002371-2025Q2",
+        "THS-002371-2025Q3",
+        "THS-002371-2025Q4",
+        "THS-002371-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.32946276,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9392551595698544,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.52,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9700000000000001,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-1f0bae650b4af9f4d4f43352",
+            "excerpt": "2025年上半年营业收入161.42亿元，同比增长29.51%，公司披露主要由订单增加带动销售量增长。；2025年上半年归属于上市公司股东的净利润32.08亿元，同比增长14.97%。；报告期内完成收购芯源微，补强光刻工序配套装备能力，并计划通过市场、技术和供应链协同优化资源配置。",
+            "locator": "DOC-STG-65632d0e2e4f726f8a737dcd#evidence-f94fccf0eefd8297",
+            "disclosed_at": "2025-08-29T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00163",
+            "excerpt": "公告标题：关于向全资子公司增资并参与设立北京集成电路装备产业投资并购二期基金暨关联交易的进展公告",
+            "locator": "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+            "disclosed_at": "2025-02-18T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002371-00192",
+            "excerpt": "公告标题：关于向全资子公司增资并参与北京电控产业投资有限公司增资暨关联交易的公告",
+            "locator": "DOC-EVT-002371-00192#evidence-2a7a7b3e63c71242",
+            "disclosed_at": "2025-04-19T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-002371-00411",
+            "excerpt": "公告标题：关于注册发行非金融企业债务融资工具及应收账款资产支持商业票据的公告",
+            "locator": "DOC-EVT-002371-00411#evidence-b360855082dcf0a6",
+            "disclosed_at": "2026-07-22T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-0e2262371f45bc6fee91a038",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "name": "需求与出货",
+      "statement": "新能源汽车销量保持增长，出口占比提升对冲国内价格压力",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002594-2025Q1",
+        "THS-002594-2025Q2",
+        "THS-002594-2025Q3",
+        "THS-002594-2025Q4",
+        "THS-002594-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.58554525,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9609050283063585,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6675,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9549999999999998,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-8387647fd1953dc45294fba1",
+            "excerpt": "2025年营业收入8039.65亿元，较2024年的7771.02亿元增长3.46%。；2025年第四季度营业收入2376.99亿元，同比下降13.52%。",
+            "locator": "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+            "disclosed_at": "2026-03-30T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-002594-00328",
+            "excerpt": "公告标题：2025年12月产销快报",
+            "locator": "DOC-EVT-002594-00328#evidence-860112f093ebce63",
+            "disclosed_at": "2026-01-05T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00322",
+            "excerpt": "公告标题：2025年11月产销快报",
+            "locator": "DOC-EVT-002594-00322#evidence-fc2c6d4bb27c997c",
+            "disclosed_at": "2025-12-02T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00313",
+            "excerpt": "公告标题：2025年10月产销快报",
+            "locator": "DOC-EVT-002594-00313#evidence-bd08f6c8af68d83d",
+            "disclosed_at": "2025-11-03T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-311d9d4c5e71ba3e9530d08b",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "name": "产能与扩张",
+      "statement": "海外工厂与产能扩张按计划落地，不出现大额投资减值",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002594-2025Q1",
+        "THS-002594-2025Q2",
+        "THS-002594-2025Q3",
+        "THS-002594-2025Q4",
+        "THS-002594-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.2025,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "name": "比亚迪2025Q1观察：整车与动力电池",
+      "statement": "新能源汽车销量与出口结构改善支撑收入，垂直一体化对冲价格战，需跟踪毛利率与海外扩张落地",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002594-2025Q1",
+        "THS-002594-2025Q2",
+        "THS-002594-2025Q3",
+        "THS-002594-2025Q4",
+        "THS-002594-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.71104835,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9609050283063585,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.7,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9642857142857144,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_CAUSAL_CHAIN_CLEAR",
+        "MODEL_QUARTERLY_SLOWDOWN_RISK",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-8387647fd1953dc45294fba1",
+            "excerpt": "2025年营业收入8039.65亿元，较2024年的7771.02亿元增长3.46%。；2025年第四季度营业收入2376.99亿元，同比下降13.52%。",
+            "locator": "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+            "disclosed_at": "2026-03-30T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-2c83e334b18c97465e2a8791",
+            "excerpt": "2025年归属于母公司所有者的净利润326.19亿元，较2024年的402.54亿元下降18.97%。；2025年第四季度毛利率17.44%，低于2024年第四季度的19.66%。",
+            "locator": "DOC-STG-815081a89a1024a5c85c2d8b#evidence-5a65ad6662b47d13",
+            "disclosed_at": "2026-03-30T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00197",
+            "excerpt": "公告标题：关于2024年度计提信用及资产减值损失的公告",
+            "locator": "DOC-EVT-002594-00197#evidence-5a23324ad5a18672",
+            "disclosed_at": "2025-03-25T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-002594-00308",
+            "excerpt": "公告标题：年报信息披露重大差错责任追究制度（2025年10月）",
+            "locator": "DOC-EVT-002594-00308#evidence-ab939ee1f83bad6b",
+            "disclosed_at": "2025-10-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00363",
+            "excerpt": "公告标题：H股公告（二零二五年年度业绩公布）",
+            "locator": "DOC-EVT-002594-00363#evidence-e3b9948ecd3fb961",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00274",
+            "excerpt": "公告标题：H股公告（二零二五年中期业绩公告）",
+            "locator": "DOC-EVT-002594-00274#evidence-a98219ef1dc64117",
+            "disclosed_at": "2025-08-30T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-a863a2c3563a19aea586a5a6",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "name": "盈利质量",
+      "statement": "规模效应与垂直一体化维持毛利率，价格战不导致盈利持续恶化",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-002594-2025Q1",
+        "THS-002594-2025Q2",
+        "THS-002594-2025Q3",
+        "THS-002594-2025Q4",
+        "THS-002594-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.45031606,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8007656836746456,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6694444444444445,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9555555555555554,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-2c83e334b18c97465e2a8791",
+            "excerpt": "2025年归属于母公司所有者的净利润326.19亿元，较2024年的402.54亿元下降18.97%。；2025年第四季度毛利率17.44%，低于2024年第四季度的19.66%。",
+            "locator": "DOC-STG-815081a89a1024a5c85c2d8b#evidence-5a65ad6662b47d13",
+            "disclosed_at": "2026-03-30T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00197",
+            "excerpt": "公告标题：关于2024年度计提信用及资产减值损失的公告",
+            "locator": "DOC-EVT-002594-00197#evidence-5a23324ad5a18672",
+            "disclosed_at": "2025-03-25T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-002594-00308",
+            "excerpt": "公告标题：年报信息披露重大差错责任追究制度（2025年10月）",
+            "locator": "DOC-EVT-002594-00308#evidence-ab939ee1f83bad6b",
+            "disclosed_at": "2025-10-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00363",
+            "excerpt": "公告标题：H股公告（二零二五年年度业绩公布）",
+            "locator": "DOC-EVT-002594-00363#evidence-e3b9948ecd3fb961",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-002594-00274",
+            "excerpt": "公告标题：H股公告（二零二五年中期业绩公告）",
+            "locator": "DOC-EVT-002594-00274#evidence-a98219ef1dc64117",
+            "disclosed_at": "2025-08-30T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-4d1ed9514551f6dad2f1262e",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "name": "盈利质量",
+      "statement": "毛利率随规模与技术服务收入改善，不回落到历史低位",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-09868-2025Q1",
+        "THS-09868-2025Q2",
+        "THS-09868-2025Q3",
+        "THS-09868-2025Q4",
+        "THS-09868-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.44558972,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7812388591809217,
+        "persistence": 0.775,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.9027777777777777,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-1459dcd977833de5b49fcb1e",
+            "excerpt": "2025年第二季度总收入182.7亿元，同比增长125.3%；车辆交付103,181辆，同比增长241.6%。；第二季度毛利率17.3%，较2024年同期提升3.3个百分点，较第一季度提升1.7个百分点。；第二季度净亏损4.8亿元，较第一季度的6.6亿元收窄，但盈利仍未转正。",
+            "locator": "DOC-STG-79d20b4c151a964968401125#evidence-5173798e77abcaf7",
+            "disclosed_at": "2025-08-19T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-103e5c005bc63b7ff31bb088",
+            "excerpt": "2025年第四季度总收入222.5亿元，同比增长38.2%。；第四季度毛利率21.3%，较2024年同期提升6.9个百分点。；2025年全年总收入767.2亿元，同比增长87.7%；全年毛利率18.9%。",
+            "locator": "DOC-STG-baa9ea42ad51c3579f4798f1#evidence-1aa45a35a8180e14",
+            "disclosed_at": "2026-03-20T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-ce1061e7eec27a38ec175bd2",
+            "excerpt": "2025年第三季度总收入203.8亿元，同比增长101.8%；车辆交付116,007辆，同比增长149.3%。；第三季度整体毛利率20.1%，环比提升2.8个百分点；净亏损3.8亿元，较第二季度继续收窄。",
+            "locator": "DOC-STG-8d951b7bca180a0796e35829#evidence-c0ede46ad6a3a270",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-c5f3cdf5f4660827bb06cb48",
+            "excerpt": "2025年第三季度整车毛利率13.1%，低于第二季度的14.3%；公司披露环比下降主要受产品代际切换影响。",
+            "locator": "DOC-STG-8d951b7bca180a0796e35829#evidence-b60ad3c87c1c900f",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-56e733d069bb08a0af8fcbcc",
+            "excerpt": "2024年第一季度净亏损13.7亿元，较2023年同期收窄，但仍未实现盈利。",
+            "locator": "DOC-STG-2f4989a7983e7119b8793b8e#evidence-f557e721eabcd874",
+            "disclosed_at": "2024-05-21T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-2153fcb96f9987ce9622f0c4",
+            "excerpt": "2024年第二季度净亏损12.8亿元，较第一季度收窄，但仍未实现盈利。",
+            "locator": "DOC-STG-3b24ff543282d85f3d948c13#evidence-7546eedd1ad83f59",
+            "disclosed_at": "2024-08-20T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-09868-00151",
+            "excerpt": "公告标题：截至2025年12月31日止年度之全年业绩公告",
+            "locator": "DOC-EVT-09868-00151#evidence-05c5a51887ec545c",
+            "disclosed_at": "2026-03-20T17:22:09+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-09868-00119",
+            "excerpt": "公告标题：截至2025年6月30日止六个月之中期业绩公告",
+            "locator": "DOC-EVT-09868-00119#evidence-2fe79f2b78739271",
+            "disclosed_at": "2025-08-19T23:59:59+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-09868-00084",
+            "excerpt": "公告标题：截至2024年12月31日止年度之全年业绩公告",
+            "locator": "DOC-EVT-09868-00084#evidence-7f7d6530cd71bc4a",
+            "disclosed_at": "2025-03-18T18:12:28+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-50c9e925a116c8c0419f7a3e",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "name": "需求与出货",
+      "statement": "智能车交付量保持增长，新车型周期带动需求回升",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-09868-2025Q1",
+        "THS-09868-2025Q2",
+        "THS-09868-2025Q3",
+        "THS-09868-2025Q4",
+        "THS-09868-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.56481249,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9609050283063585,
+        "persistence": 0.775,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.7586206896551724,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9810344827586207,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-a3adb296e4ed96abd6dadfae",
+            "excerpt": "2025年第二季度总收入182.7亿元，同比增长125.3%；车辆交付103,181辆，同比增长241.6%。；第二季度毛利率17.3%，较2024年同期提升3.3个百分点，较第一季度提升1.7个百分点。；第二季度净亏损4.8亿元，较第一季度的6.6亿元收窄，但盈利仍未转正。",
+            "locator": "DOC-STG-79d20b4c151a964968401125#evidence-5173798e77abcaf7",
+            "disclosed_at": "2025-08-19T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-e57c9c6fbebd57af6555e5ee",
+            "excerpt": "2025年第四季度总收入222.5亿元，同比增长38.2%。；第四季度毛利率21.3%，较2024年同期提升6.9个百分点。；2025年全年总收入767.2亿元，同比增长87.7%；全年毛利率18.9%。",
+            "locator": "DOC-STG-baa9ea42ad51c3579f4798f1#evidence-1aa45a35a8180e14",
+            "disclosed_at": "2026-03-20T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-be780aeab0de5c6210c7b0e9",
+            "excerpt": "2025年第三季度总收入203.8亿元，同比增长101.8%；车辆交付116,007辆，同比增长149.3%。；第三季度整体毛利率20.1%，环比提升2.8个百分点；净亏损3.8亿元，较第二季度继续收窄。",
+            "locator": "DOC-STG-8d951b7bca180a0796e35829#evidence-c0ede46ad6a3a270",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-09868-00141",
+            "excerpt": "公告标题：自愿公告2025年12 月及第四季度智能车交付数据",
+            "locator": "DOC-EVT-09868-00141#evidence-e47afe1163091fe7",
+            "disclosed_at": "2026-01-01T18:52:07+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-09868-00178",
+            "excerpt": "公告标题：自愿公告 2026年6月及第二季度智能车交付数据",
+            "locator": "DOC-EVT-09868-00178#evidence-f1dae8333c538002",
+            "disclosed_at": "2026-07-01T18:52:29+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-09868-00154",
+            "excerpt": "公告标题：自愿公告 2026年3月及第一季度智能车交付数据",
+            "locator": "DOC-EVT-09868-00154#evidence-d74dd2c78cc6ea4b",
+            "disclosed_at": "2026-04-01T17:26:12+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "name": "小鹏汽车2025Q1观察：新势力整车",
+      "statement": "新势力整车厂，交付量与车型周期决定收入，毛利率从负值修复中，盈利质量仍是主要风险。港股仅披露中报与年报，季度颗粒度不足",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-09868-2025Q1",
+        "THS-09868-2025Q2",
+        "THS-09868-2025Q3",
+        "THS-09868-2025Q4",
+        "THS-09868-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.77059246,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9609050283063585,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.8970588235294117,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_CAUSAL_CHAIN_CLEAR",
+        "MODEL_BALANCED_COUNTER_EVIDENCE",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-1459dcd977833de5b49fcb1e",
+            "excerpt": "2025年第二季度总收入182.7亿元，同比增长125.3%；车辆交付103,181辆，同比增长241.6%。；第二季度毛利率17.3%，较2024年同期提升3.3个百分点，较第一季度提升1.7个百分点。；第二季度净亏损4.8亿元，较第一季度的6.6亿元收窄，但盈利仍未转正。",
+            "locator": "DOC-STG-79d20b4c151a964968401125#evidence-5173798e77abcaf7",
+            "disclosed_at": "2025-08-19T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-103e5c005bc63b7ff31bb088",
+            "excerpt": "2025年第四季度总收入222.5亿元，同比增长38.2%。；第四季度毛利率21.3%，较2024年同期提升6.9个百分点。；2025年全年总收入767.2亿元，同比增长87.7%；全年毛利率18.9%。",
+            "locator": "DOC-STG-baa9ea42ad51c3579f4798f1#evidence-1aa45a35a8180e14",
+            "disclosed_at": "2026-03-20T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-be780aeab0de5c6210c7b0e9",
+            "excerpt": "2025年第三季度总收入203.8亿元，同比增长101.8%；车辆交付116,007辆，同比增长149.3%。；第三季度整体毛利率20.1%，环比提升2.8个百分点；净亏损3.8亿元，较第二季度继续收窄。",
+            "locator": "DOC-STG-8d951b7bca180a0796e35829#evidence-c0ede46ad6a3a270",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-c5f3cdf5f4660827bb06cb48",
+            "excerpt": "2025年第三季度整车毛利率13.1%，低于第二季度的14.3%；公司披露环比下降主要受产品代际切换影响。",
+            "locator": "DOC-STG-8d951b7bca180a0796e35829#evidence-b60ad3c87c1c900f",
+            "disclosed_at": "2025-11-17T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-56e733d069bb08a0af8fcbcc",
+            "excerpt": "2024年第一季度净亏损13.7亿元，较2023年同期收窄，但仍未实现盈利。",
+            "locator": "DOC-STG-2f4989a7983e7119b8793b8e#evidence-f557e721eabcd874",
+            "disclosed_at": "2024-05-21T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-STG-2153fcb96f9987ce9622f0c4",
+            "excerpt": "2024年第二季度净亏损12.8亿元，较第一季度收窄，但仍未实现盈利。",
+            "locator": "DOC-STG-3b24ff543282d85f3d948c13#evidence-7546eedd1ad83f59",
+            "disclosed_at": "2024-08-20T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-09868-00141",
+            "excerpt": "公告标题：自愿公告2025年12 月及第四季度智能车交付数据",
+            "locator": "DOC-EVT-09868-00141#evidence-e47afe1163091fe7",
+            "disclosed_at": "2026-01-01T18:52:07+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-09868-00178",
+            "excerpt": "公告标题：自愿公告 2026年6月及第二季度智能车交付数据",
+            "locator": "DOC-EVT-09868-00178#evidence-f1dae8333c538002",
+            "disclosed_at": "2026-07-01T18:52:29+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-09868-00154",
+            "excerpt": "公告标题：自愿公告 2026年3月及第一季度智能车交付数据",
+            "locator": "DOC-EVT-09868-00154#evidence-d74dd2c78cc6ea4b",
+            "disclosed_at": "2026-04-01T17:26:12+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-e4f842c6228d188b6fa81d2c",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "name": "产能与扩张",
+      "statement": "研发与产能投入可持续，现金流不出现明显恶化",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-09868-2025Q1",
+        "THS-09868-2025Q2",
+        "THS-09868-2025Q3",
+        "THS-09868-2025Q4",
+        "THS-09868-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.34700046,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.6400091266891378,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.8,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-b02f9ee8209d300965181f1b",
+            "excerpt": "2025年全年交付429,445辆，同比增长126%。；2025年12月交付37,508辆，同比增长2%。；2025年海外市场交付45,008辆，同比增长96%，年末覆盖60个国家和地区。",
+            "locator": "DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076",
+            "disclosed_at": "2026-01-01T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-0e0a9bb08ea1855f08459e00",
+      "security_id": "300274",
+      "company": "阳光电源",
+      "name": "经营",
+      "statement": "新增海外订单能够按计划转化为收入",
+      "direction": "看多",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-SG-001"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.2875,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.45,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-83fd1189389801533ab2f2bf",
+      "security_id": "300274",
+      "company": "阳光电源",
+      "name": "全球光储龙头的盈利韧性与结构性增长",
+      "statement": "储能业务增长与海外盈利质量构成核心验证主线；新增公开事实须经人工确认后才能进入正式证据链。",
+      "direction": "看多",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-SG-001"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.26475,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.45,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.9,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "MODEL_INSUFFICIENT_EVIDENCE",
+        "MODEL_PRIMARY_REJECTED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-a85257e7b50e55e9f9b83638",
+      "security_id": "300274",
+      "company": "阳光电源",
+      "name": "盈利",
+      "statement": "海外项目盈利质量稳定",
+      "direction": "看多",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-SG-001"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.2875,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.45,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-bb43d7276a41a064cbbe9f6b",
+      "security_id": "300274",
+      "company": "阳光电源",
+      "name": "行业",
+      "statement": "全球储能装机需求保持增长",
+      "direction": "看多",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-SG-001"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.2875,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.45,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-0013380d90f394122380c724",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "name": "盈利质量",
+      "statement": "创新药占比提升支撑高毛利率，集采降价不导致盈利持续恶化",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-600276-2025Q1",
+        "THS-600276-2025Q2",
+        "THS-600276-2025Q3",
+        "THS-600276-2025Q4",
+        "THS-600276-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.45477698,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7916933830963551,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.7038461538461538,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9653846153846154,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-881a03234299ba0526f5c3ad",
+            "excerpt": "2025年营业收入316.29亿元，2024年为279.85亿元。；2025年营业成本43.63亿元，2024年为38.48亿元；研发费用69.61亿元，2024年为65.83亿元。；2025年归属于母公司股东的净利润77.11亿元，2024年为63.37亿元。",
+            "locator": "DOC-STG-6373c2ccb19928d61912612d#evidence-12901ae54908c887",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-4658bd61e9448e4728ffcefb",
+            "excerpt": "2025年研发费用69.61亿元，高于2024年的65.83亿元；营业成本43.63亿元，高于2024年的38.48亿元。",
+            "locator": "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-600276-00386",
+            "excerpt": "公告标题：H股公告-截至2025年6月30日止六个月之中期业绩公告",
+            "locator": "DOC-EVT-600276-00386#evidence-eb29ee504ab4305f",
+            "disclosed_at": "2025-08-21T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00488",
+            "excerpt": "公告标题：恒瑞医药关于公司药品纳入国家医保目录的公告",
+            "locator": "DOC-EVT-600276-00488#evidence-deb878a673d821fe",
+            "disclosed_at": "2025-12-08T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00381",
+            "excerpt": "公告标题：恒瑞医药2025年半年度报告摘要",
+            "locator": "DOC-EVT-600276-00381#evidence-12ceaad602247fcd",
+            "disclosed_at": "2025-08-21T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "name": "恒瑞医药2025Q1观察：创新药",
+      "statement": "创新药转型期，创新药放量与对外授权接续仿制药集采缺口，毛利率高但集采与研发成败是关键观察点",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-600276-2025Q1",
+        "THS-600276-2025Q2",
+        "THS-600276-2025Q3",
+        "THS-600276-2025Q4",
+        "THS-600276-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.73380479,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9682319842046982,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.685,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9599999999999997,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_CAUSAL_CHAIN_CLEAR",
+        "MODEL_R_AND_D_COST_RISK",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-881a03234299ba0526f5c3ad",
+            "excerpt": "2025年营业收入316.29亿元，2024年为279.85亿元。；2025年营业成本43.63亿元，2024年为38.48亿元；研发费用69.61亿元，2024年为65.83亿元。；2025年归属于母公司股东的净利润77.11亿元，2024年为63.37亿元。",
+            "locator": "DOC-STG-6373c2ccb19928d61912612d#evidence-12901ae54908c887",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00293",
+            "excerpt": "公告标题：恒瑞医药关于与Merck KGaA, Darmstadt, Germany签署SHR7280项目授权许可协议的公告",
+            "locator": "DOC-EVT-600276-00293#evidence-c76c66fe9183fbcb",
+            "disclosed_at": "2025-04-08T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00257",
+            "excerpt": "公告标题：恒瑞医药关于与Merck Sharp & Dohme LLC签署HRS-5346项目授权许可协议的公告",
+            "locator": "DOC-EVT-600276-00257#evidence-fa201cdf35b4a179",
+            "disclosed_at": "2025-03-26T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-4658bd61e9448e4728ffcefb",
+            "excerpt": "2025年研发费用69.61亿元，高于2024年的65.83亿元；营业成本43.63亿元，高于2024年的38.48亿元。",
+            "locator": "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00661",
+            "excerpt": "公告标题：恒瑞医药关于撤回药品注册申请的公告",
+            "locator": "DOC-EVT-600276-00661#evidence-6b06b834fbd6d671",
+            "disclosed_at": "2026-06-24T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-600276-00669",
+            "excerpt": "公告标题：恒瑞医药关于药品上市许可申请获受理并纳入优先审评程序的提示性公告",
+            "locator": "DOC-EVT-600276-00669#evidence-980bff7bab029811",
+            "disclosed_at": "2026-07-03T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00543",
+            "excerpt": "公告标题：恒瑞医药关于药品上市许可申请获受理并纳入优先审评程序的提示性公告",
+            "locator": "DOC-EVT-600276-00543#evidence-980bff7bab029811",
+            "disclosed_at": "2026-02-25T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00541",
+            "excerpt": "公告标题：恒瑞医药关于药品上市许可申请获受理并纳入优先审评程序的提示性公告",
+            "locator": "DOC-EVT-600276-00541#evidence-980bff7bab029811",
+            "disclosed_at": "2026-02-11T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-a4cd49c67899032bf56b4fda",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "name": "产能与扩张",
+      "statement": "研发投入强度维持，管线推进不出现关键品种研发失败",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-600276-2025Q1",
+        "THS-600276-2025Q2",
+        "THS-600276-2025Q3",
+        "THS-600276-2025Q4",
+        "THS-600276-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.31003482,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7506963480952707,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.95,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-EVT-600276-00596",
+            "excerpt": "公告标题：恒瑞医药关于对参股公司上海瑞宏迪医药有限公司增资暨关联交易的公告",
+            "locator": "DOC-EVT-600276-00596#evidence-935e944ad6b961c1",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-600276-00358",
+            "excerpt": "公告标题：恒瑞医药关于收购控股子公司少数股东股权暨关联交易的公告",
+            "locator": "DOC-EVT-600276-00358#evidence-c510128fe6a9b24d",
+            "disclosed_at": "2025-07-26T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-c17ab0abf20ee67df32dd7db",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "name": "需求与出货",
+      "statement": "创新药放量与授权合作收入接续仿制药集采下滑，研发管线持续推进",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-600276-2025Q1",
+        "THS-600276-2025Q2",
+        "THS-600276-2025Q3",
+        "THS-600276-2025Q4",
+        "THS-600276-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.47670525,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9682319842046982,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6555555555555556,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.951587301587302,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.7
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-a423616261ce529f28f70fc2",
+            "excerpt": "2025年营业收入316.29亿元，2024年为279.85亿元。；2025年营业成本43.63亿元，2024年为38.48亿元；研发费用69.61亿元，2024年为65.83亿元。；2025年归属于母公司股东的净利润77.11亿元，2024年为63.37亿元。",
+            "locator": "DOC-STG-6373c2ccb19928d61912612d#evidence-12901ae54908c887",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00293",
+            "excerpt": "公告标题：恒瑞医药关于与Merck KGaA, Darmstadt, Germany签署SHR7280项目授权许可协议的公告",
+            "locator": "DOC-EVT-600276-00293#evidence-c76c66fe9183fbcb",
+            "disclosed_at": "2025-04-08T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00257",
+            "excerpt": "公告标题：恒瑞医药关于与Merck Sharp & Dohme LLC签署HRS-5346项目授权许可协议的公告",
+            "locator": "DOC-EVT-600276-00257#evidence-fa201cdf35b4a179",
+            "disclosed_at": "2025-03-26T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-EVT-600276-00661",
+            "excerpt": "公告标题：恒瑞医药关于撤回药品注册申请的公告",
+            "locator": "DOC-EVT-600276-00661#evidence-6b06b834fbd6d671",
+            "disclosed_at": "2026-06-24T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-600276-00669",
+            "excerpt": "公告标题：恒瑞医药关于药品上市许可申请获受理并纳入优先审评程序的提示性公告",
+            "locator": "DOC-EVT-600276-00669#evidence-980bff7bab029811",
+            "disclosed_at": "2026-07-03T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00543",
+            "excerpt": "公告标题：恒瑞医药关于药品上市许可申请获受理并纳入优先审评程序的提示性公告",
+            "locator": "DOC-EVT-600276-00543#evidence-980bff7bab029811",
+            "disclosed_at": "2026-02-25T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-600276-00541",
+            "excerpt": "公告标题：恒瑞医药关于药品上市许可申请获受理并纳入优先审评程序的提示性公告",
+            "locator": "DOC-EVT-600276-00541#evidence-980bff7bab029811",
+            "disclosed_at": "2026-02-11T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "security_id": "603259",
+      "company": "药明康德",
+      "name": "药明康德2025Q1观察：医药研发外包",
+      "statement": "全球医药研发外包龙头，订单随创新药投入周期波动，地缘政治与产能利用率是核心风险点",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603259-2025Q1",
+        "THS-603259-2025Q2",
+        "THS-603259-2025Q3",
+        "THS-603259-2025Q4",
+        "THS-603259-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.74177894,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9627315527884076,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.7666666666666666,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9833333333333334,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_CAUSAL_CHAIN_CLEAR",
+        "MODEL_RISK_EVIDENCE_PARTIAL",
+        "MODEL_PRIMARY_APPROVED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-8f12219af600e40567271127",
+            "excerpt": "2025年营业收入454.56亿元，2024年为392.41亿元。；2025年归属于母公司股东的净利润191.51亿元，2024年为94.50亿元。；2025年持续经营净利润179.78亿元，终止经营净利润13.55亿元。",
+            "locator": "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+            "disclosed_at": "2026-03-23T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-defcbf9bab2c1257fe9a5450",
+            "excerpt": "2025年年度报告分别披露持续经营净利润179.78亿元和终止经营净利润13.55亿元，利润评价需要拆分持续经营与终止经营口径。",
+            "locator": "DOC-STG-b0eff25b42af189e28cd80b6#evidence-0c01302b09d86594",
+            "disclosed_at": "2026-03-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603259-00453",
+            "excerpt": "公告标题：关于2025年度计提资产减值准备的公告",
+            "locator": "DOC-EVT-603259-00453#evidence-0129534744e52f15",
+            "disclosed_at": "2026-03-24T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-603259-00523",
+            "excerpt": "公告标题：2026年半年度报告摘要",
+            "locator": "DOC-EVT-603259-00523#evidence-6cf707f9c0508b79",
+            "disclosed_at": "2026-08-04T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603259-00351",
+            "excerpt": "公告标题：2025年半年度报告摘要",
+            "locator": "DOC-EVT-603259-00351#evidence-e9281a4cc6a6801e",
+            "disclosed_at": "2025-07-29T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603259-00470",
+            "excerpt": "公告标题：2026年第一季度报告",
+            "locator": "DOC-EVT-603259-00470#evidence-9a499114064e791b",
+            "disclosed_at": "2026-04-28T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-640437c535f65f84263e00dc",
+      "security_id": "603259",
+      "company": "药明康德",
+      "name": "盈利质量",
+      "statement": "产能利用率与项目结构支撑毛利率，不因价格竞争持续走低",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603259-2025Q1",
+        "THS-603259-2025Q2",
+        "THS-603259-2025Q3",
+        "THS-603259-2025Q4",
+        "THS-603259-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.46277943,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9627315527884076,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.7,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9642857142857143,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-8f12219af600e40567271127",
+            "excerpt": "2025年营业收入454.56亿元，2024年为392.41亿元。；2025年归属于母公司股东的净利润191.51亿元，2024年为94.50亿元。；2025年持续经营净利润179.78亿元，终止经营净利润13.55亿元。",
+            "locator": "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+            "disclosed_at": "2026-03-23T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-defcbf9bab2c1257fe9a5450",
+            "excerpt": "2025年年度报告分别披露持续经营净利润179.78亿元和终止经营净利润13.55亿元，利润评价需要拆分持续经营与终止经营口径。",
+            "locator": "DOC-STG-b0eff25b42af189e28cd80b6#evidence-0c01302b09d86594",
+            "disclosed_at": "2026-03-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603259-00453",
+            "excerpt": "公告标题：关于2025年度计提资产减值准备的公告",
+            "locator": "DOC-EVT-603259-00453#evidence-0129534744e52f15",
+            "disclosed_at": "2026-03-24T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-603259-00523",
+            "excerpt": "公告标题：2026年半年度报告摘要",
+            "locator": "DOC-EVT-603259-00523#evidence-6cf707f9c0508b79",
+            "disclosed_at": "2026-08-04T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603259-00351",
+            "excerpt": "公告标题：2025年半年度报告摘要",
+            "locator": "DOC-EVT-603259-00351#evidence-e9281a4cc6a6801e",
+            "disclosed_at": "2025-07-29T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603259-00470",
+            "excerpt": "公告标题：2026年第一季度报告",
+            "locator": "DOC-EVT-603259-00470#evidence-9a499114064e791b",
+            "disclosed_at": "2026-04-28T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-9fb7c44705e9bd4d5b4a3aaf",
+      "security_id": "603259",
+      "company": "药明康德",
+      "name": "产能与扩张",
+      "statement": "新增产能与地缘政治风险可控，海外基地建设按计划推进",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603259-2025Q1",
+        "THS-603259-2025Q2",
+        "THS-603259-2025Q3",
+        "THS-603259-2025Q4",
+        "THS-603259-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.2025,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.45,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-f5cddba17d87908fc2011aac",
+      "security_id": "603259",
+      "company": "药明康德",
+      "name": "需求与出货",
+      "statement": "CXO 订单与在手订单随全球创新药研发投入回暖恢复增长",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603259-2025Q1",
+        "THS-603259-2025Q2",
+        "THS-603259-2025Q3",
+        "THS-603259-2025Q4",
+        "THS-603259-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.61482159,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.746431715399265,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 1.0,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-eb89341cd017c0a58a5cb200",
+            "excerpt": "2025年营业收入454.56亿元，2024年为392.41亿元。；2025年归属于母公司股东的净利润191.51亿元，2024年为94.50亿元。；2025年持续经营净利润179.78亿元，终止经营净利润13.55亿元。",
+            "locator": "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+            "disclosed_at": "2026-03-23T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-29683ee9505ebb76df4ec39d",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "name": "需求与出货",
+      "statement": "存储与 MCU 需求随消费电子与工业复苏回升，库存周期见底",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603986-2025Q1",
+        "THS-603986-2025Q2",
+        "THS-603986-2025Q3",
+        "THS-603986-2025Q4",
+        "THS-603986-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.59789291,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.757858283255199,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.825,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-fa3df7d89ec7eb518da38de5",
+            "excerpt": "2025年营业收入92.03亿元，同比增长25.12%；归母净利润16.48亿元，同比增长49.47%。；公司披露收入增长主要受存储行业供需结构优化、产品价量齐升，以及定制化存储和AI MCU等新产品需求增长带动。；经营活动现金流净额21.29亿元，同比增长4.74%。",
+            "locator": "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00374",
+            "excerpt": "公告标题：兆易创新关于全资子公司开立募集资金专户并签订四方监管协议的公告",
+            "locator": "DOC-EVT-603986-00374#evidence-d0899e9dd90a86a3",
+            "disclosed_at": "2025-09-19T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-4fabf0c0ee4626f78e01eb30",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "name": "盈利质量",
+      "statement": "毛利率随产品结构改善回升，不因存储价格波动持续走低",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603986-2025Q1",
+        "THS-603986-2025Q2",
+        "THS-603986-2025Q3",
+        "THS-603986-2025Q4",
+        "THS-603986-2026Q1"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.47708659,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9008226879875295,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6818181818181819,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9590909090909091,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.7
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-5baca93a3eeca3d0e2b6d9a5",
+            "excerpt": "2025年营业收入92.03亿元，同比增长25.12%；归母净利润16.48亿元，同比增长49.47%。；公司披露收入增长主要受存储行业供需结构优化、产品价量齐升，以及定制化存储和AI MCU等新产品需求增长带动。；经营活动现金流净额21.29亿元，同比增长4.74%。",
+            "locator": "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-EVT-603986-00491",
+            "excerpt": "公告标题：兆易创新关于股票交易风险提示的公告",
+            "locator": "DOC-EVT-603986-00491#evidence-038b15e224a9a874",
+            "disclosed_at": "2026-06-30T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-603986-00361",
+            "excerpt": "公告标题：兆易创新2025年半年度报告摘要",
+            "locator": "DOC-EVT-603986-00361#evidence-7512f28103f74922",
+            "disclosed_at": "2025-08-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00468",
+            "excerpt": "公告标题：兆易创新2026年第一季度报告",
+            "locator": "DOC-EVT-603986-00468#evidence-ac6f7cda081af553",
+            "disclosed_at": "2026-04-30T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00440",
+            "excerpt": "公告标题：兆易创新2025年年度报告摘要",
+            "locator": "DOC-EVT-603986-00440#evidence-f902792e0b66a208",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-8d1c242c5d9975d707a84ab0",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "name": "产能与扩张",
+      "statement": "新品研发与产能储备按计划推进，不出现存货大额跌价",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603986-2025Q1",
+        "THS-603986-2025Q2",
+        "THS-603986-2025Q3",
+        "THS-603986-2025Q4",
+        "THS-603986-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.20446276,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9392551595698544,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.5375,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9749999999999999,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-EVT-603986-00410",
+            "excerpt": "公告标题：兆易创新关于使用A股部分募集资金向全资子公司及全资孙公司增资以实施DRAM募投项目的公告",
+            "locator": "DOC-EVT-603986-00410#evidence-d5d10482a1f8576b",
+            "disclosed_at": "2026-01-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00359",
+            "excerpt": "公告标题：兆易创新关于增加汽车电子募投项目实施主体和地点并使用部分募集资金向全资子公司增资的公告",
+            "locator": "DOC-EVT-603986-00359#evidence-58561dbc7ae00eef",
+            "disclosed_at": "2025-08-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00501",
+            "excerpt": "公告标题：兆易创新关于使用A股部分募集资金向全资子公司增资以实施DRAM募投项目的公告",
+            "locator": "DOC-EVT-603986-00501#evidence-1e1e2f09d0867c0b",
+            "disclosed_at": "2026-07-22T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-f2a990380d551f39d49d31a1",
+            "excerpt": "2025年投资活动产生的现金流量净额为流出13.91亿元，2024年为流出6.69亿元。",
+            "locator": "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          }
+        ],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "name": "兆易创新2025Q1观察：存储与MCU设计",
+      "statement": "存储与 MCU 设计商，需求随下游复苏与库存去化回升，毛利率对存储价格周期高度敏感，需跟踪产品结构",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-603986-2025Q1",
+        "THS-603986-2025Q2",
+        "THS-603986-2025Q3",
+        "THS-603986-2025Q4",
+        "THS-603986-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.44295726,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.9392551595698544,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.7666666666666666,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9833333333333333,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_TITLE_ONLY_SUPPORT",
+        "MODEL_PRIMARY_REJECTED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-5baca93a3eeca3d0e2b6d9a5",
+            "excerpt": "2025年营业收入92.03亿元，同比增长25.12%；归母净利润16.48亿元，同比增长49.47%。；公司披露收入增长主要受存储行业供需结构优化、产品价量齐升，以及定制化存储和AI MCU等新产品需求增长带动。；经营活动现金流净额21.29亿元，同比增长4.74%。",
+            "locator": "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00410",
+            "excerpt": "公告标题：兆易创新关于使用A股部分募集资金向全资子公司及全资孙公司增资以实施DRAM募投项目的公告",
+            "locator": "DOC-EVT-603986-00410#evidence-d5d10482a1f8576b",
+            "disclosed_at": "2026-01-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00359",
+            "excerpt": "公告标题：兆易创新关于增加汽车电子募投项目实施主体和地点并使用部分募集资金向全资子公司增资的公告",
+            "locator": "DOC-EVT-603986-00359#evidence-58561dbc7ae00eef",
+            "disclosed_at": "2025-08-23T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-f2a990380d551f39d49d31a1",
+            "excerpt": "2025年投资活动产生的现金流量净额为流出13.91亿元，2024年为流出6.69亿元。",
+            "locator": "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00491",
+            "excerpt": "公告标题：兆易创新关于股票交易风险提示的公告",
+            "locator": "DOC-EVT-603986-00491#evidence-038b15e224a9a874",
+            "disclosed_at": "2026-06-30T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-603986-00361",
+            "excerpt": "公告标题：兆易创新2025年半年度报告摘要",
+            "locator": "DOC-EVT-603986-00361#evidence-7512f28103f74922",
+            "disclosed_at": "2025-08-23T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00468",
+            "excerpt": "公告标题：兆易创新2026年第一季度报告",
+            "locator": "DOC-EVT-603986-00468#evidence-ac6f7cda081af553",
+            "disclosed_at": "2026-04-30T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-603986-00440",
+            "excerpt": "公告标题：兆易创新2025年年度报告摘要",
+            "locator": "DOC-EVT-603986-00440#evidence-f902792e0b66a208",
+            "disclosed_at": "2026-03-31T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "中芯国际2025Q1观察：晶圆代工",
+      "statement": "成熟制程代工龙头，国产替代与产能利用率回升支撑收入，折旧与价格压力是盈利的主要观察点",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2025Q1",
+        "THS-688981-2025Q2",
+        "THS-688981-2025Q3",
+        "THS-688981-2025Q4",
+        "THS-688981-2026Q1"
+      ],
+      "existing_rank": 1,
+      "existing_score": 0.66964751,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8923097063067758,
+        "persistence": 0.9,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.8666666666666667,
+        "causal_strength": 0.7,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9642857142857142,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 0.8666666666666667,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_SUPPORT_NEEDS_BODY_EVIDENCE",
+        "MODEL_CAPEX_RISK",
+        "MODEL_PRIMARY_REJECTED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-48369e952646b6a54427be88",
+            "excerpt": "2025年销售收入673.23亿元，同比增长16.5%；产能利用率93.5%，同比提升8个百分点。；2025年毛利率22%，同比提升3个百分点；折合8英寸标准逻辑的月产能规模超过100万片。；公司披露持续推进产能扩建，并推进中芯北方少数股权收购和中芯南方增资扩股。",
+            "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00245",
+            "excerpt": "公告标题：中芯国际关于订立中芯南方新合资合同及新增资扩股协议暨关联交易的公告",
+            "locator": "DOC-EVT-688981-00245#evidence-65ba0acf1fed8914",
+            "disclosed_at": "2025-12-30T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-b993af10eac846200430582a",
+            "excerpt": "2025年投资活动所用现金净额为64.95亿元，高于2024年的45.18亿元。",
+            "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00209",
+            "excerpt": "公告标题：中芯国际关于2025年前三季度计提资产减值准备的公告",
+            "locator": "DOC-EVT-688981-00209#evidence-7640b2a7d034dd20",
+            "disclosed_at": "2025-11-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00215",
+            "excerpt": "公告标题：中芯国际关于终止出售参股公司中芯宁波股权的公告",
+            "locator": "DOC-EVT-688981-00215#evidence-c6a9244ee795ea00",
+            "disclosed_at": "2025-11-29T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-688981-00337",
+            "excerpt": "公告标题：中芯国际集成电路制造有限公司关于发行股份购买资产暨关联交易事项获得中国证券监督管理委员会同意注册批复的公告",
+            "locator": "DOC-EVT-688981-00337#evidence-68e3cbc0e3a01eba",
+            "disclosed_at": "2026-05-22T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00321",
+            "excerpt": "公告标题：中芯国际关于上海证券交易所科创板并购重组委员会审核公司发行股份购买资产暨关联交易事项会议安排的公告",
+            "locator": "DOC-EVT-688981-00321#evidence-62ac71374d7b4377",
+            "disclosed_at": "2026-05-01T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00188",
+            "excerpt": "公告标题：中芯国际关于发行股份购买资产暨关联交易停牌前一个交易日前十大股东和前十大流通股股东持股情况的公告",
+            "locator": "DOC-EVT-688981-00188#evidence-a9e3c9d493f46b69",
+            "disclosed_at": "2025-09-09T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-1577fa6bb74fb1383519980f",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "需求与出货",
+      "statement": "成熟制程产能利用率与晶圆出货保持增长，国产替代需求是主要驱动",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2025Q1",
+        "THS-688981-2025Q2",
+        "THS-688981-2025Q3",
+        "THS-688981-2025Q4",
+        "THS-688981-2026Q1"
+      ],
+      "existing_rank": 3,
+      "existing_score": 0.61503482,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.7506963480952707,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 1.0,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-001",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-777941d4cd062365c1a67152",
+            "excerpt": "2025年销售收入673.23亿元，同比增长16.5%；产能利用率93.5%，同比提升8个百分点。；2025年毛利率22%，同比提升3个百分点；折合8英寸标准逻辑的月产能规模超过100万片。；公司披露持续推进产能扩建，并推进中芯北方少数股权收购和中芯南方增资扩股。",
+            "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          }
+        ],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-4221a5efffc3a9f0977c249b",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "产能消化",
+      "statement": "国内替代需求应带动产能消化，平均产能利用率不低于80%",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2023FY"
+      ],
+      "existing_rank": 5,
+      "existing_score": 0.3909375,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.50625,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.65,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-SMIC-CAPACITY-UTILIZATION",
+          "name": "平均产能利用率"
+        }
+      ],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-783091f1749bc5f830e26bce",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "中芯国际：下行周期后的需求与产能修复",
+      "statement": "半导体下行周期是暂时的，国内替代需求与产能利用率修复将支撑收入恢复并稳定盈利能力",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2023FY"
+      ],
+      "existing_rank": 2,
+      "existing_score": 0.62207487,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.18874633654269923,
+        "persistence": 0.71875,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 1.0,
+        "causal_strength": 1.0,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 0.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.9,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.95
+      },
+      "reason_codes": [
+        "THESIS_NORMALIZED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_ELIGIBLE",
+        "COUNTER_EVIDENCE_COVERED",
+        "MODEL_NO_SUPPORTING_EVIDENCE",
+        "MODEL_PRIMARY_REJECTED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-SMIC-CAPACITY-UTILIZATION",
+          "name": "平均产能利用率"
+        },
+        {
+          "metric_id": "MET-SMIC-ANNUAL-REVENUE-YOY",
+          "name": "营业收入同比"
+        },
+        {
+          "metric_id": "MET-SMIC-ANNUAL-GROSS-MARGIN",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [],
+        "冲突": [
+          {
+            "evidence_id": "EVD-688981-2023FY-RISK",
+            "excerpt": "2023年营业收入同比-8.6%、毛利率21.9%、平均产能利用率75.0%，分别低于0%、25%、80%的历史逻辑阈值。",
+            "locator": "DOC-688981-2023FY#evidence-95dc72cb7a2f5b5f",
+            "disclosed_at": "2024-03-29T00:00:00+08:00"
+          }
+        ],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-96d4286f07495d858bfd3780",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "需求复苏",
+      "statement": "国内替代需求推动营业收入恢复，营业收入同比不应转负",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2023FY"
+      ],
+      "existing_rank": 7,
+      "existing_score": 0.35537482,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.18874633654269923,
+        "persistence": 0.50625,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 1.0,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 1.0,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.95
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-SMIC-ANNUAL-REVENUE-YOY",
+          "name": "营业收入同比"
+        }
+      ],
+      "evidence": {
+        "支持": [],
+        "冲突": [
+          {
+            "evidence_id": "EVD-688981-2023FY-RISK",
+            "excerpt": "2023年营业收入同比-8.6%、毛利率21.9%、平均产能利用率75.0%，分别低于0%、25%、80%的历史逻辑阈值。",
+            "locator": "DOC-688981-2023FY#evidence-95dc72cb7a2f5b5f",
+            "disclosed_at": "2024-03-29T00:00:00+08:00"
+          }
+        ],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-9d6c8ea30aabf2cd5015bb4d",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "产能与扩张",
+      "statement": "资本开支与扩产节奏匹配下游需求，先进制程投入不出现大额减值",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2025Q1",
+        "THS-688981-2025Q2",
+        "THS-688981-2025Q3",
+        "THS-688981-2025Q4",
+        "THS-688981-2026Q1"
+      ],
+      "existing_rank": 8,
+      "existing_score": 0.19294882,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8923097063067758,
+        "persistence": 0.55,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.0,
+        "causal_strength": 0.47333333333333333,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9566666666666664,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 0.6,
+        "unresolved_conflict_severity": 0.8
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-48369e952646b6a54427be88",
+            "excerpt": "2025年销售收入673.23亿元，同比增长16.5%；产能利用率93.5%，同比提升8个百分点。；2025年毛利率22%，同比提升3个百分点；折合8英寸标准逻辑的月产能规模超过100万片。；公司披露持续推进产能扩建，并推进中芯北方少数股权收购和中芯南方增资扩股。",
+            "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00245",
+            "excerpt": "公告标题：中芯国际关于订立中芯南方新合资合同及新增资扩股协议暨关联交易的公告",
+            "locator": "DOC-EVT-688981-00245#evidence-65ba0acf1fed8914",
+            "disclosed_at": "2025-12-30T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-STG-b993af10eac846200430582a",
+            "excerpt": "2025年投资活动所用现金净额为64.95亿元，高于2024年的45.18亿元。",
+            "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-688981-00337",
+            "excerpt": "公告标题：中芯国际集成电路制造有限公司关于发行股份购买资产暨关联交易事项获得中国证券监督管理委员会同意注册批复的公告",
+            "locator": "DOC-EVT-688981-00337#evidence-68e3cbc0e3a01eba",
+            "disclosed_at": "2026-05-22T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00321",
+            "excerpt": "公告标题：中芯国际关于上海证券交易所科创板并购重组委员会审核公司发行股份购买资产暨关联交易事项会议安排的公告",
+            "locator": "DOC-EVT-688981-00321#evidence-62ac71374d7b4377",
+            "disclosed_at": "2026-05-01T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00188",
+            "excerpt": "公告标题：中芯国际关于发行股份购买资产暨关联交易停牌前一个交易日前十大股东和前十大流通股股东持股情况的公告",
+            "locator": "DOC-EVT-688981-00188#evidence-a9e3c9d493f46b69",
+            "disclosed_at": "2025-09-09T00:00:00+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "topic_id": "TOPIC-e8b9927b20a453599102bf38",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "盈利韧性",
+      "statement": "产能利用率修复应稳定盈利能力，毛利率不低于25%",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2023FY"
+      ],
+      "existing_rank": 6,
+      "existing_score": 0.3909375,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.4,
+        "persistence": 0.50625,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.65,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.35,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 0.35,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.0
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "METRIC_VERIFIABLE",
+        "PRIMARY_TOPIC_GATE_FAILED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-SMIC-ANNUAL-GROSS-MARGIN",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [],
+        "冲突": [],
+        "中性": []
+      }
+    },
+    {
+      "topic_id": "TOPIC-e948b957b623427b6348eea2",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "name": "盈利质量",
+      "statement": "毛利率随产能利用率回升，折旧压力不导致盈利持续恶化",
+      "direction": "观察",
+      "horizon": "12M",
+      "source_thesis_ids": [
+        "THS-688981-2025Q1",
+        "THS-688981-2025Q2",
+        "THS-688981-2025Q3",
+        "THS-688981-2025Q4",
+        "THS-688981-2026Q1"
+      ],
+      "existing_rank": 4,
+      "existing_score": 0.47069658,
+      "features": {
+        "novelty": 0.5,
+        "recency": 0.8254699895845196,
+        "persistence": 1.0,
+        "completeness": 0.5,
+        "traceability": 1.0,
+        "verifiability": 0.5,
+        "causal_strength": 0.6634615384615385,
+        "direct_relevance": 0.5,
+        "source_authority": 0.5,
+        "evidence_strength": 0.9538461538461536,
+        "low_value_penalty": 1.0,
+        "statement_clarity": 0.5,
+        "temporal_validity": 1.0,
+        "conflict_attention": 1.0,
+        "company_specificity": 0.85,
+        "business_materiality": 1.0,
+        "unresolved_conflict_severity": 0.7
+      },
+      "reason_codes": [
+        "HYPOTHESIS_CLUSTERED",
+        "COMPANY_SCOPED",
+        "AS_OF_VALID",
+        "CROSS_PERIOD_PERSISTENT",
+        "METRIC_VERIFIABLE",
+        "DIRECT_EVIDENCE",
+        "PRIMARY_TOPIC_GATE_FAILED",
+        "COUNTER_EVIDENCE_COVERED"
+      ],
+      "metrics": [
+        {
+          "metric_id": "MET-002",
+          "name": "毛利率"
+        }
+      ],
+      "evidence": {
+        "支持": [
+          {
+            "evidence_id": "EVD-STG-b7ba80e3cb5ef181f92a5fe4",
+            "excerpt": "2025年销售收入673.23亿元，同比增长16.5%；产能利用率93.5%，同比提升8个百分点。；2025年毛利率22%，同比提升3个百分点；折合8英寸标准逻辑的月产能规模超过100万片。；公司披露持续推进产能扩建，并推进中芯北方少数股权收购和中芯南方增资扩股。",
+            "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+            "disclosed_at": "2026-03-26T00:00:00+08:00"
+          }
+        ],
+        "冲突": [
+          {
+            "evidence_id": "EVD-EVT-688981-00209",
+            "excerpt": "公告标题：中芯国际关于2025年前三季度计提资产减值准备的公告",
+            "locator": "DOC-EVT-688981-00209#evidence-7640b2a7d034dd20",
+            "disclosed_at": "2025-11-14T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00215",
+            "excerpt": "公告标题：中芯国际关于终止出售参股公司中芯宁波股权的公告",
+            "locator": "DOC-EVT-688981-00215#evidence-c6a9244ee795ea00",
+            "disclosed_at": "2025-11-29T00:00:00+08:00"
+          }
+        ],
+        "中性": [
+          {
+            "evidence_id": "EVD-EVT-688981-00276",
+            "excerpt": "公告标题：港股公告：中芯国际截至2025年12月31日止三个月未经审核业绩公布",
+            "locator": "DOC-EVT-688981-00276#evidence-7937e9d4ae0bb893",
+            "disclosed_at": "2026-02-11T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00107",
+            "excerpt": "公告标题：港股公告：中芯国际截至2024年12月31日止三个月未经审核业绩公布",
+            "locator": "DOC-EVT-688981-00107#evidence-27e116008d528daa",
+            "disclosed_at": "2025-02-12T00:00:00+08:00"
+          },
+          {
+            "evidence_id": "EVD-EVT-688981-00333",
+            "excerpt": "公告标题：港股公告：中芯国际截至2026年3月31日止三个月未经审核业绩公布",
+            "locator": "DOC-EVT-688981-00333#evidence-60f4d48a5ffab799",
+            "disclosed_at": "2026-05-15T00:00:00+08:00"
+          }
+        ]
+      }
+    }
+  ]
+}

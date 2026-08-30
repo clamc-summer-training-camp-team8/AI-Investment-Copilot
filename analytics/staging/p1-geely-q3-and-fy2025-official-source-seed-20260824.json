@@ -1,0 +1,51 @@
+{
+  "dataset_version": "p1-geely-q3-and-fy2025-official-source-seed-20260824",
+  "status": "staged_requires_human_review",
+  "records": [
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited Third Quarterly Results 2025 — growth and profitability",
+      "published_at": "2025-11-17T00:00:00+08:00",
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "facts": [
+        "2025年第三季度收入891.92亿元，同比增加27%；销量76.10万辆，同比增长43%。同期2024年比较数已按重述口径列示。",
+        "截至2025年9月30日止九个月收入2,394.77亿元，同比增长26%；毛利395.12亿元，较上年同期307.86亿元提升。",
+        "2025年第三季度归母净利润38.20亿元，同比增长59%；剔除若干非经常性项目后，前三季度归母净利润106.20亿元，同比增长59%。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量"],
+      "evidence_direction": "支持",
+      "review_note": "港交所法定季度公告。单季收入与本地2025Q3按公告的人民币百万元单位取整后相符；该来源支持重述口径下的方向和量级，不把公告未提供的千元精度视为直接披露。"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited Third Quarterly Results 2025 — liquidity risk",
+      "published_at": "2025-11-17T00:00:00+08:00",
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf",
+      "facts": [
+        "截至2025年9月30日，集团录得流动负债净额约78.74亿元；管理层认为这不会对持续经营能力造成重大影响，并列示营运现金流、备用融资及资产负债表优化计划作为依据。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "法定公告中披露的流动性约束，应作为主逻辑的反证候选；不得因管理层持续经营判断而删除该风险事实。"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "annual_report",
+      "title": "Geely Automobile Holdings Limited Annual Report 2025 — restated annual revenue reconciliation",
+      "published_at": "2026-04-27T00:00:00+08:00",
+      "source_url": "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf",
+      "facts": [
+        "2025年收入345,232,201千元；2024年重述收入275,910,484千元。2025年本地四个季度收入之和与345,232,201千元精确一致。",
+        "年报说明收入来自汽车及相关服务、汽车零部件、合作制造，以及研发服务和许可收入；披露口径为集团合并口径。"
+      ],
+      "hypothesis_targets": ["需求与出货"],
+      "evidence_direction": "支持",
+      "review_note": "年报用于确认本地年度与重述合并范围的一致性，不用于倒推或伪造2025Q4单季首次披露日期。"
+    }
+  ]
+}

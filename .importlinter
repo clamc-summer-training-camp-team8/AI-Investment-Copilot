@@ -16,7 +16,7 @@ layers =
     app.api
     app.workers
     app.services
-    app.ai | app.ingest | app.calc
+    app.ai | app.ingest | app.calc | app.ranking
     app.db
     app.core
 
@@ -33,6 +33,7 @@ forbidden_modules =
     app.workers
     app.ingest
     app.schemas
+    app.ranking
 
 [importlinter:contract:core-purity]
 name = app.core 不得依赖任何兄弟模块
@@ -45,6 +46,7 @@ forbidden_modules =
     app.calc
     app.db
     app.ingest
+    app.ranking
     app.schemas
     app.services
     app.workers

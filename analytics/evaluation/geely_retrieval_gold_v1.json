@@ -1,0 +1,59 @@
+{
+  "version": "geely-retrieval-gold-v1-20260824",
+  "purpose": "吉利排序先验RAG：验证Top-K是否命中与问题直接相关的官方来源。仅评估检索与排序，不生成投资结论。",
+  "cases": [
+    {
+      "case_id": "GEELY-RET-01",
+      "query": "吉利2025年第三季度收入和销量增长是否有官方重述口径证据？",
+      "expected_source_urls": ["https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-02",
+      "query": "吉利2026年一季度毛利率改善，但归母利润表现如何？",
+      "expected_source_urls": ["https://www.geelyauto.com.hk/wp-content/uploads/2026/04/2026042900391.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-03",
+      "query": "吉利前三季度核心利润改善与归母利润的差异是什么？",
+      "expected_source_urls": ["https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-04",
+      "query": "吉利共同控制下合并导致的重述口径应如何处理？",
+      "expected_source_urls": ["https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-05",
+      "query": "吉利2025年第三季度的流动性和流动负债风险是什么？",
+      "expected_source_urls": ["https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1117/2025111700285.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-06",
+      "query": "吉利2025年海外收入的地区结构如何？",
+      "expected_source_urls": ["https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-07",
+      "query": "吉利2025年全年收入与本地季度序列是否一致？",
+      "expected_source_urls": ["https://www.geelyauto.com.hk/wp-content/uploads/2026/04/c00175_2025-annual-report.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-08",
+      "query": "截至2026年8月，吉利最新中期业绩的收入、毛利和现金流有哪些相反信号？",
+      "expected_source_urls": ["https://www.geelyauto.com.hk/announcement-of-interim-results-for-the-six-months-ended-30-june-2026/"]
+    },
+    {
+      "case_id": "GEELY-RET-09",
+      "query": "吉利2024年二季度收入如何在经重述的H1口径下进行复核？",
+      "expected_source_urls": ["https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf"]
+    },
+    {
+      "case_id": "GEELY-RET-10",
+      "query": "吉利2025年二季度收入是否有同口径的H1和Q1重述数据可以验证？",
+      "expected_source_urls": [
+        "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+        "https://www.geelyauto.com.hk/wp-content/uploads/2026/04/2026042900391.pdf"
+      ]
+    }
+  ]
+}

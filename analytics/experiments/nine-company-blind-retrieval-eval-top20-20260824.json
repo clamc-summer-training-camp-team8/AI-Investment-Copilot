@@ -1,0 +1,892 @@
+{
+  "gold_version": "nine-company-blind-retrieval-gold-v1-20260824",
+  "annotation_status": "accepted_as_human_gold_by_product_owner",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "summary": {
+    "cases": 18,
+    "top_k": 20,
+    "prior": {
+      "recall_at_k": 0.6944,
+      "mrr": 0.5042,
+      "ndcg_at_k": 1.059
+    },
+    "baseline": {
+      "recall_at_k": 0.6944,
+      "mrr": 0.4733,
+      "ndcg_at_k": 0.9047
+    },
+    "future_leakage_count": 0,
+    "invalid_citation_count": 0,
+    "missing_gold_titles": [],
+    "gate": {
+      "passed": true
+    }
+  },
+  "results": [
+    {
+      "case_id": "000538-S",
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "支持",
+      "query": "云南白药2025年工业业务增长、现金流和净资产收益率表现如何？",
+      "expected_document_titles": [
+        "云南白药集团股份有限公司2025年年度报告全文"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-97eb5210b24f05a76f263553"
+      ],
+      "snapshot_id": "RPS-4b750f1a61dae6e21b1b8ae8",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 0.5,
+        "ndcg_at_k": 1.2677825608059992
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 0.1111111111111111,
+        "ndcg_at_k": 0.5510299956639813
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-000538-00219",
+        "DOC-STG-97eb5210b24f05a76f263553",
+        "DOC-EVT-000538-00216",
+        "DOC-EVT-000538-00213",
+        "DOC-STG-97eb5210b24f05a76f263553",
+        "DOC-EVT-000538-00230",
+        "DOC-EVT-000538-00117",
+        "DOC-EVT-000538-00209",
+        "DOC-EVT-000538-00139",
+        "DOC-EVT-000538-00208",
+        "DOC-EVT-000538-00204",
+        "DOC-EVT-000538-00207",
+        "DOC-EVT-000538-00201",
+        "DOC-EVT-000538-00196",
+        "DOC-STG-97eb5210b24f05a76f263553",
+        "DOC-EVT-000538-00211",
+        "DOC-EVT-000538-00183",
+        "DOC-EVT-000538-00152",
+        "DOC-EVT-000538-00182",
+        "DOC-EVT-000538-00146"
+      ]
+    },
+    {
+      "case_id": "000538-C",
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "冲突",
+      "query": "云南白药国际化扩张有哪些海外收入下降的约束？",
+      "expected_document_titles": [
+        "云南白药集团股份有限公司2025年年度报告全文 — overseas-growth risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-97eb5210b24f05a76f263553"
+      ],
+      "snapshot_id": "RPS-4b750f1a61dae6e21b1b8ae8",
+      "prior": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "baseline": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-000538-00039",
+        "DOC-EVT-000538-00085",
+        "DOC-EVT-000538-00046",
+        "DOC-EVT-000538-00117",
+        "DOC-EVT-000538-00197",
+        "DOC-EVT-000538-00223",
+        "DOC-EVT-000538-00081",
+        "DOC-EVT-000538-00139",
+        "DOC-EVT-000538-00116",
+        "DOC-EVT-000538-00024",
+        "DOC-EVT-000538-00217",
+        "DOC-EVT-000538-00219",
+        "DOC-EVT-000538-00213",
+        "DOC-EVT-000538-00209",
+        "DOC-EVT-000538-00230",
+        "DOC-EVT-000538-00202",
+        "DOC-EVT-000538-00212",
+        "DOC-EVT-000538-00016",
+        "DOC-EVT-000538-00216",
+        "DOC-EVT-000538-00022"
+      ]
+    },
+    {
+      "case_id": "600276-S",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "支持",
+      "query": "恒瑞医药2025年收入和归母净利润增长由哪份年度披露支持？",
+      "expected_document_titles": [
+        "恒瑞医药2025年年度报告"
+      ],
+      "expected_document_ids": [
+        "DOC-EVT-600276-00592",
+        "DOC-STG-6373c2ccb19928d61912612d"
+      ],
+      "snapshot_id": "RPS-95e084f4caf37529f81f3f1c",
+      "prior": {
+        "recall_at_k": 0.5,
+        "mrr": 0.25,
+        "ndcg_at_k": 0.425110947661799
+      },
+      "baseline": {
+        "recall_at_k": 0.5,
+        "mrr": 0.5,
+        "ndcg_at_k": 0.5578858913022597
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00607",
+        "DOC-EVT-600276-00592",
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00579",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00059",
+        "DOC-EVT-600276-00410",
+        "DOC-EVT-600276-00591",
+        "DOC-EVT-600276-00616",
+        "DOC-EVT-600276-00592",
+        "DOC-EVT-600276-00280",
+        "DOC-EVT-600276-00593",
+        "DOC-EVT-600276-00579",
+        "DOC-EVT-600276-00273",
+        "DOC-EVT-600276-00276",
+        "DOC-EVT-600276-00613",
+        "DOC-EVT-600276-00640"
+      ]
+    },
+    {
+      "case_id": "600276-C",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "冲突",
+      "query": "恒瑞医药盈利兑现需要关注研发费用和营业成本的什么压力？",
+      "expected_document_titles": [
+        "恒瑞医药2025年年度报告 — R&D cost constraint"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-6373c2ccb19928d61912612d"
+      ],
+      "snapshot_id": "RPS-95e084f4caf37529f81f3f1c",
+      "prior": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "baseline": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-600276-00081",
+        "DOC-EVT-600276-00100",
+        "DOC-EVT-600276-00255",
+        "DOC-EVT-600276-00185",
+        "DOC-EVT-600276-00332",
+        "DOC-EVT-600276-00001",
+        "DOC-EVT-600276-00116",
+        "DOC-EVT-600276-00041",
+        "DOC-EVT-600276-00373",
+        "DOC-EVT-600276-00165",
+        "DOC-EVT-600276-00057",
+        "DOC-EVT-600276-00619",
+        "DOC-EVT-600276-00644",
+        "DOC-EVT-600276-00178",
+        "DOC-EVT-600276-00598",
+        "DOC-EVT-600276-00456",
+        "DOC-EVT-600276-00341",
+        "DOC-EVT-600276-00546",
+        "DOC-EVT-600276-00271",
+        "DOC-EVT-600276-00075"
+      ]
+    },
+    {
+      "case_id": "603259-S",
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "支持",
+      "query": "药明康德2025年营业收入和归母净利润的年度表现如何？",
+      "expected_document_titles": [
+        "无锡药明康德新药开发股份有限公司2025年年度报告"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-b0eff25b42af189e28cd80b6"
+      ],
+      "snapshot_id": "RPS-87e634ed4c904d24961e0bb4",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.893579288608651
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.6309297535714575
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-b0eff25b42af189e28cd80b6",
+        "DOC-STG-b0eff25b42af189e28cd80b6",
+        "DOC-EVT-603259-00473",
+        "DOC-EVT-603259-00440",
+        "DOC-EVT-603259-00466",
+        "DOC-EVT-603259-00465",
+        "DOC-EVT-603259-00448",
+        "DOC-EVT-603259-00331",
+        "DOC-EVT-603259-00427",
+        "DOC-EVT-603259-00281",
+        "DOC-EVT-603259-00398",
+        "DOC-EVT-603259-00434",
+        "DOC-STG-b0eff25b42af189e28cd80b6",
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00472",
+        "DOC-EVT-603259-00385",
+        "DOC-EVT-603259-00464",
+        "DOC-EVT-603259-00372"
+      ]
+    },
+    {
+      "case_id": "603259-C",
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "冲突",
+      "query": "评价药明康德2025年利润质量时为什么需要拆分持续经营和终止经营？",
+      "expected_document_titles": [
+        "无锡药明康德新药开发股份有限公司2025年年度报告 — profit-comparability constraint"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-b0eff25b42af189e28cd80b6"
+      ],
+      "snapshot_id": "RPS-87e634ed4c904d24961e0bb4",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 2.1309297535714578
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 2.1309297535714578
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-b0eff25b42af189e28cd80b6",
+        "DOC-STG-b0eff25b42af189e28cd80b6",
+        "DOC-STG-b0eff25b42af189e28cd80b6",
+        "DOC-EVT-603259-00473",
+        "DOC-EVT-603259-00440",
+        "DOC-EVT-603259-00466",
+        "DOC-EVT-603259-00465",
+        "DOC-EVT-603259-00349",
+        "DOC-EVT-603259-00281",
+        "DOC-EVT-603259-00448",
+        "DOC-EVT-603259-00382",
+        "DOC-EVT-603259-00393",
+        "DOC-EVT-603259-00434",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00472",
+        "DOC-EVT-603259-00234",
+        "DOC-EVT-603259-00277",
+        "DOC-EVT-603259-00390",
+        "DOC-EVT-603259-00441",
+        "DOC-EVT-603259-00397"
+      ]
+    },
+    {
+      "case_id": "00175-S",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "支持",
+      "query": "吉利汽车2025年全年收入、核心利润和销量增长的官方年度锚点是什么？",
+      "expected_document_titles": [
+        "Geely Automobile 2025 Annual Results"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-e4e2045de8310388be8d3710"
+      ],
+      "snapshot_id": "RPS-2d68add844b0bc318f53ad8e",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 0.125,
+        "ndcg_at_k": 0.6045297031036166
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 0.2,
+        "ndcg_at_k": 0.6759176335524295
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-72911a9f22df9c15fc19390b",
+        "DOC-STG-72911a9f22df9c15fc19390b",
+        "DOC-STG-72911a9f22df9c15fc19390b",
+        "DOC-STG-e20a4497565fca8615cd436f",
+        "DOC-STG-dea2e4f5358ea0030f3120f2",
+        "DOC-STG-dea2e4f5358ea0030f3120f2",
+        "DOC-STG-80d17e3173ffb179e04e906e",
+        "DOC-STG-e4e2045de8310388be8d3710",
+        "DOC-STG-80d17e3173ffb179e04e906e",
+        "DOC-STG-e4e2045de8310388be8d3710",
+        "DOC-STG-b07023bf1def3341aeffb1b5",
+        "DOC-STG-33988aadaba3d45eace58a9a",
+        "DOC-STG-1b9447a02df600b7043bf833",
+        "DOC-STG-e20a4497565fca8615cd436f",
+        "DOC-STG-3fe5f8f88463e19aa434c043",
+        "DOC-STG-b07023bf1def3341aeffb1b5",
+        "DOC-STG-33988aadaba3d45eace58a9a",
+        "DOC-STG-85132d67131026f7858afa24",
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26",
+        "DOC-STG-33988aadaba3d45eace58a9a"
+      ]
+    },
+    {
+      "case_id": "00175-C",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "冲突",
+      "query": "吉利2025年海外出口增速为什么没有同步集团总销量增长？",
+      "expected_document_titles": [
+        "Geely Automobile 2025 Annual Results — export-growth risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-e4e2045de8310388be8d3710"
+      ],
+      "snapshot_id": "RPS-2d68add844b0bc318f53ad8e",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 0.2,
+        "ndcg_at_k": 1.0212161362318561
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 0.25,
+        "ndcg_at_k": 1.0801789003451283
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-e20a4497565fca8615cd436f",
+        "DOC-STG-72911a9f22df9c15fc19390b",
+        "DOC-STG-e20a4497565fca8615cd436f",
+        "DOC-STG-72911a9f22df9c15fc19390b",
+        "DOC-STG-e4e2045de8310388be8d3710",
+        "DOC-STG-85132d67131026f7858afa24",
+        "DOC-STG-e4e2045de8310388be8d3710",
+        "DOC-STG-1b9447a02df600b7043bf833",
+        "DOC-STG-e4e2045de8310388be8d3710",
+        "DOC-STG-33988aadaba3d45eace58a9a",
+        "DOC-STG-1b9447a02df600b7043bf833",
+        "DOC-STG-85132d67131026f7858afa24",
+        "DOC-STG-72911a9f22df9c15fc19390b",
+        "DOC-STG-dea2e4f5358ea0030f3120f2",
+        "DOC-STG-dea2e4f5358ea0030f3120f2",
+        "DOC-STG-1b9447a02df600b7043bf833",
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26",
+        "DOC-STG-b07023bf1def3341aeffb1b5",
+        "DOC-STG-80d17e3173ffb179e04e906e",
+        "DOC-STG-3fe5f8f88463e19aa434c043"
+      ]
+    },
+    {
+      "case_id": "002594-S",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "支持",
+      "query": "比亚迪2025年年度营业收入和新能源汽车销量表现如何？",
+      "expected_document_titles": [
+        "比亚迪股份有限公司2025年年度报告"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-815081a89a1024a5c85c2d8b"
+      ],
+      "snapshot_id": "RPS-8247c50ce3eb940204d68866",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.886887778381273
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.6309297535714575
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-815081a89a1024a5c85c2d8b",
+        "DOC-STG-815081a89a1024a5c85c2d8b",
+        "DOC-EVT-002594-00372",
+        "DOC-EVT-002594-00189",
+        "DOC-EVT-002594-00342",
+        "DOC-EVT-002594-00343",
+        "DOC-EVT-002594-00273",
+        "DOC-EVT-002594-00178",
+        "DOC-EVT-002594-00335",
+        "DOC-EVT-002594-00389",
+        "DOC-EVT-002594-00169",
+        "DOC-EVT-002594-00272",
+        "DOC-EVT-002594-00241",
+        "DOC-STG-815081a89a1024a5c85c2d8b",
+        "DOC-EVT-002594-00226",
+        "DOC-EVT-002594-00230",
+        "DOC-EVT-002594-00107",
+        "DOC-EVT-002594-00278",
+        "DOC-EVT-002594-00292",
+        "DOC-EVT-002594-00181"
+      ]
+    },
+    {
+      "case_id": "002594-C",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "冲突",
+      "query": "比亚迪2025年收入增长但利润率承压的证据是什么？",
+      "expected_document_titles": [
+        "比亚迪股份有限公司2025年年度报告 — profitability risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-815081a89a1024a5c85c2d8b"
+      ],
+      "snapshot_id": "RPS-8247c50ce3eb940204d68866",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 2.1309297535714578
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 2.1309297535714578
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-815081a89a1024a5c85c2d8b",
+        "DOC-STG-815081a89a1024a5c85c2d8b",
+        "DOC-STG-815081a89a1024a5c85c2d8b",
+        "DOC-EVT-002594-00389",
+        "DOC-EVT-002594-00168",
+        "DOC-EVT-002594-00226",
+        "DOC-EVT-002594-00273",
+        "DOC-EVT-002594-00278",
+        "DOC-EVT-002594-00317",
+        "DOC-EVT-002594-00308",
+        "DOC-EVT-002594-00169",
+        "DOC-EVT-002594-00241",
+        "DOC-EVT-002594-00342",
+        "DOC-EVT-002594-00226",
+        "DOC-EVT-002594-00230",
+        "DOC-EVT-002594-00335",
+        "DOC-EVT-002594-00301",
+        "DOC-EVT-002594-00358",
+        "DOC-EVT-002594-00372",
+        "DOC-EVT-002594-00238"
+      ]
+    },
+    {
+      "case_id": "09868-S",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "支持",
+      "query": "小鹏汽车2025年第三季度收入、交付量和整体毛利率改善情况如何？",
+      "expected_document_titles": [
+        "XPENG Reports Third Quarter 2025 Unaudited Financial Results"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-8d951b7bca180a0796e35829"
+      ],
+      "snapshot_id": "RPS-aa94b112dd553c9c878577d2",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 0.5,
+        "ndcg_at_k": 1.306847387123887
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg_at_k": 1.1368528072345416
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-baa9ea42ad51c3579f4798f1",
+        "DOC-STG-8d951b7bca180a0796e35829",
+        "DOC-STG-2f4989a7983e7119b8793b8e",
+        "DOC-STG-172a402e958673054e3184c5",
+        "DOC-STG-8d951b7bca180a0796e35829",
+        "DOC-STG-baa9ea42ad51c3579f4798f1",
+        "DOC-STG-2f4989a7983e7119b8793b8e",
+        "DOC-STG-172a402e958673054e3184c5",
+        "DOC-STG-3b24ff543282d85f3d948c13",
+        "DOC-STG-8d951b7bca180a0796e35829",
+        "DOC-STG-79d20b4c151a964968401125",
+        "DOC-STG-13cdc15a4890f6f4810e5e82",
+        "DOC-STG-3b24ff543282d85f3d948c13",
+        "DOC-STG-79d20b4c151a964968401125",
+        "DOC-EVT-09868-00135",
+        "DOC-EVT-09868-00012",
+        "DOC-STG-4691c635bc37d4aa600c29ac",
+        "DOC-STG-12f04d1947711c4522114c9b",
+        "DOC-EVT-09868-00129",
+        "DOC-STG-4691c635bc37d4aa600c29ac"
+      ]
+    },
+    {
+      "case_id": "09868-C",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "冲突",
+      "query": "小鹏2025年第三季度整车毛利率环比下降的约束是什么？",
+      "expected_document_titles": [
+        "XPENG Reports Third Quarter 2025 Unaudited Financial Results — vehicle-margin risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-8d951b7bca180a0796e35829"
+      ],
+      "snapshot_id": "RPS-aa94b112dd553c9c878577d2",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.5016163675870788
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-8d951b7bca180a0796e35829",
+        "DOC-EVT-09868-00141",
+        "DOC-EVT-09868-00129",
+        "DOC-STG-2f4989a7983e7119b8793b8e",
+        "DOC-STG-13cdc15a4890f6f4810e5e82",
+        "DOC-STG-baa9ea42ad51c3579f4798f1",
+        "DOC-STG-172a402e958673054e3184c5",
+        "DOC-EVT-09868-00086",
+        "DOC-EVT-09868-00135",
+        "DOC-STG-3b24ff543282d85f3d948c13",
+        "DOC-EVT-09868-00129",
+        "DOC-STG-8d951b7bca180a0796e35829",
+        "DOC-EVT-09868-00141",
+        "DOC-EVT-09868-00150",
+        "DOC-EVT-09868-00086",
+        "DOC-STG-baa9ea42ad51c3579f4798f1",
+        "DOC-STG-2f4989a7983e7119b8793b8e",
+        "DOC-STG-13cdc15a4890f6f4810e5e82",
+        "DOC-STG-8d951b7bca180a0796e35829",
+        "DOC-EVT-09868-00157"
+      ]
+    },
+    {
+      "case_id": "002371-S",
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "支持",
+      "query": "北方华创2025年上半年订单、收入和芯源微收购带来哪些经营支持？",
+      "expected_document_titles": [
+        "北方华创科技集团股份有限公司2025年半年度报告全文"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-65632d0e2e4f726f8a737dcd"
+      ],
+      "snapshot_id": "RPS-fc1ff72b765f46dbe7b0fe3f",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.6309297535714575
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.4306765580733931
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-65632d0e2e4f726f8a737dcd",
+        "DOC-STG-65632d0e2e4f726f8a737dcd",
+        "DOC-STG-b9b66663bb71bc561264471a",
+        "DOC-EVT-002371-00325",
+        "DOC-EVT-002371-00323",
+        "DOC-EVT-002371-00293",
+        "DOC-STG-b9b66663bb71bc561264471a",
+        "DOC-EVT-002371-00327",
+        "DOC-EVT-002371-00235",
+        "DOC-EVT-002371-00403",
+        "DOC-EVT-002371-00324",
+        "DOC-EVT-002371-00305",
+        "DOC-EVT-002371-00095",
+        "DOC-EVT-002371-00343",
+        "DOC-EVT-002371-00255",
+        "DOC-EVT-002371-00252",
+        "DOC-EVT-002371-00251",
+        "DOC-EVT-002371-00308",
+        "DOC-EVT-002371-00322",
+        "DOC-EVT-002371-00300"
+      ]
+    },
+    {
+      "case_id": "002371-C",
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "冲突",
+      "query": "北方华创2025年收入增长时为何仍需关注净利润下降和研发投入压力？",
+      "expected_document_titles": [
+        "北方华创科技集团股份有限公司2025年年度报告全文 — profitability risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-b9b66663bb71bc561264471a"
+      ],
+      "snapshot_id": "RPS-fc1ff72b765f46dbe7b0fe3f",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 2.1309297535714578
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.7430599943425638
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-STG-b9b66663bb71bc561264471a",
+        "DOC-STG-b9b66663bb71bc561264471a",
+        "DOC-STG-b9b66663bb71bc561264471a",
+        "DOC-STG-65632d0e2e4f726f8a737dcd",
+        "DOC-STG-65632d0e2e4f726f8a737dcd",
+        "DOC-EVT-002371-00325",
+        "DOC-EVT-002371-00323",
+        "DOC-EVT-002371-00293",
+        "DOC-EVT-002371-00327",
+        "DOC-EVT-002371-00380",
+        "DOC-EVT-002371-00365",
+        "DOC-EVT-002371-00324",
+        "DOC-EVT-002371-00334",
+        "DOC-EVT-002371-00313",
+        "DOC-EVT-002371-00273",
+        "DOC-EVT-002371-00326",
+        "DOC-EVT-002371-00335",
+        "DOC-EVT-002371-00322",
+        "DOC-EVT-002371-00369",
+        "DOC-EVT-002371-00283"
+      ]
+    },
+    {
+      "case_id": "603986-S",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "支持",
+      "query": "兆易创新2025年收入利润增长与存储产品需求改善有什么官方证据？",
+      "expected_document_titles": [
+        "兆易创新科技集团股份有限公司2025年年度报告"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-cbc7908c85b568240b1e7508"
+      ],
+      "snapshot_id": "RPS-701fad1441e852e6a0d5befb",
+      "prior": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "baseline": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-603986-00383",
+        "DOC-EVT-603986-00380",
+        "DOC-EVT-603986-00369",
+        "DOC-EVT-603986-00329",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00446",
+        "DOC-EVT-603986-00361",
+        "DOC-EVT-603986-00450",
+        "DOC-EVT-603986-00388",
+        "DOC-EVT-603986-00450",
+        "DOC-EVT-603986-00383",
+        "DOC-EVT-603986-00460",
+        "DOC-EVT-603986-00441",
+        "DOC-EVT-603986-00369",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00456",
+        "DOC-EVT-603986-00408",
+        "DOC-EVT-603986-00440",
+        "DOC-EVT-603986-00440",
+        "DOC-EVT-603986-00342"
+      ]
+    },
+    {
+      "case_id": "603986-C",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "冲突",
+      "query": "兆易创新扩张回报为什么需要关注投资活动现金流扩大流出？",
+      "expected_document_titles": [
+        "兆易创新科技集团股份有限公司2025年年度报告 — capital-allocation risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-cbc7908c85b568240b1e7508"
+      ],
+      "snapshot_id": "RPS-701fad1441e852e6a0d5befb",
+      "prior": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "baseline": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-603986-00017",
+        "DOC-EVT-603986-00294",
+        "DOC-EVT-603986-00010",
+        "DOC-EVT-603986-00192",
+        "DOC-EVT-603986-00164",
+        "DOC-EVT-603986-00337",
+        "DOC-EVT-603986-00034",
+        "DOC-EVT-603986-00087",
+        "DOC-EVT-603986-00305",
+        "DOC-EVT-603986-00318",
+        "DOC-EVT-603986-00217",
+        "DOC-EVT-603986-00453",
+        "DOC-EVT-603986-00015",
+        "DOC-EVT-603986-00012",
+        "DOC-EVT-603986-00082",
+        "DOC-EVT-603986-00181",
+        "DOC-EVT-603986-00340",
+        "DOC-EVT-603986-00005",
+        "DOC-EVT-603986-00077",
+        "DOC-EVT-603986-00326"
+      ]
+    },
+    {
+      "case_id": "688981-S",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "支持",
+      "query": "中芯国际2025年收入、产能利用率和毛利率改善情况如何？",
+      "expected_document_titles": [
+        "中芯国际集成电路制造有限公司2025年年度报告"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9"
+      ],
+      "snapshot_id": "RPS-3a963596012cefb178c1cf5b",
+      "prior": {
+        "recall_at_k": 1.0,
+        "mrr": 0.5,
+        "ndcg_at_k": 1.1309297535714575
+      },
+      "baseline": {
+        "recall_at_k": 1.0,
+        "mrr": 0.125,
+        "ndcg_at_k": 0.5857030312130485
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-688981-2023FY",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9",
+        "DOC-EVT-688981-00210",
+        "DOC-EVT-688981-00167",
+        "DOC-688981-2023FY",
+        "DOC-EVT-688981-00147",
+        "DOC-EVT-688981-00210",
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00166",
+        "DOC-EVT-688981-00343",
+        "DOC-EVT-688981-00166",
+        "DOC-EVT-688981-00294",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00289",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00297",
+        "DOC-EVT-688981-00209",
+        "DOC-EVT-688981-00272",
+        "DOC-688981-2023FY"
+      ]
+    },
+    {
+      "case_id": "688981-C",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "冲突",
+      "query": "中芯国际产能扩张需要关注投资活动现金流的什么约束？",
+      "expected_document_titles": [
+        "中芯国际集成电路制造有限公司2025年年度报告 — capital-intensity risk"
+      ],
+      "expected_document_ids": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9"
+      ],
+      "snapshot_id": "RPS-3a963596012cefb178c1cf5b",
+      "prior": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "baseline": {
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "future_leakage_count": 0,
+      "invalid_citation_count": 0,
+      "returned_document_ids": [
+        "DOC-EVT-688981-00246",
+        "DOC-EVT-688981-00344",
+        "DOC-EVT-688981-00049",
+        "DOC-EVT-688981-00346",
+        "DOC-EVT-688981-00033",
+        "DOC-EVT-688981-00054",
+        "DOC-EVT-688981-00187",
+        "DOC-EVT-688981-00022",
+        "DOC-EVT-688981-00309",
+        "DOC-EVT-688981-00328",
+        "DOC-EVT-688981-00206",
+        "DOC-EVT-688981-00181",
+        "DOC-EVT-688981-00036",
+        "DOC-EVT-688981-00315",
+        "DOC-EVT-688981-00181",
+        "DOC-EVT-688981-00258",
+        "DOC-EVT-688981-00045",
+        "DOC-EVT-688981-00355",
+        "DOC-EVT-688981-00187",
+        "DOC-EVT-688981-00343"
+      ]
+    }
+  ]
+}

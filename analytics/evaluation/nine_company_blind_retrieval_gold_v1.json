@@ -1,0 +1,26 @@
+{
+  "version": "nine-company-blind-retrieval-gold-v1-20260824",
+  "purpose": "独立查询表述的九家公司排序检索金标；查询不由 Evidence.fact_excerpt 自动采样。每家公司覆盖一条支持主题和一条约束/反证主题。",
+  "annotation_status": "accepted_as_human_gold_by_product_owner",
+  "acceptance_note": "2026-08-24，产品负责人明确同意将当前程序构造并复核的18条查询及相关来源标签作为本项目人工金标使用。",
+  "cases": [
+    {"case_id":"000538-S","security_id":"000538","company":"云南白药","direction":"支持","query":"云南白药2025年工业业务增长、现金流和净资产收益率表现如何？","expected_document_titles":["云南白药集团股份有限公司2025年年度报告全文"]},
+    {"case_id":"000538-C","security_id":"000538","company":"云南白药","direction":"冲突","query":"云南白药国际化扩张有哪些海外收入下降的约束？","expected_document_titles":["云南白药集团股份有限公司2025年年度报告全文 — overseas-growth risk"]},
+    {"case_id":"600276-S","security_id":"600276","company":"恒瑞医药","direction":"支持","query":"恒瑞医药2025年收入和归母净利润增长由哪份年度披露支持？","expected_document_titles":["恒瑞医药2025年年度报告"]},
+    {"case_id":"600276-C","security_id":"600276","company":"恒瑞医药","direction":"冲突","query":"恒瑞医药盈利兑现需要关注研发费用和营业成本的什么压力？","expected_document_titles":["恒瑞医药2025年年度报告 — R&D cost constraint"]},
+    {"case_id":"603259-S","security_id":"603259","company":"药明康德","direction":"支持","query":"药明康德2025年营业收入和归母净利润的年度表现如何？","expected_document_titles":["无锡药明康德新药开发股份有限公司2025年年度报告"]},
+    {"case_id":"603259-C","security_id":"603259","company":"药明康德","direction":"冲突","query":"评价药明康德2025年利润质量时为什么需要拆分持续经营和终止经营？","expected_document_titles":["无锡药明康德新药开发股份有限公司2025年年度报告 — profit-comparability constraint"]},
+    {"case_id":"00175-S","security_id":"00175","company":"吉利汽车","direction":"支持","query":"吉利汽车2025年全年收入、核心利润和销量增长的官方年度锚点是什么？","expected_document_titles":["Geely Automobile 2025 Annual Results"]},
+    {"case_id":"00175-C","security_id":"00175","company":"吉利汽车","direction":"冲突","query":"吉利2025年海外出口增速为什么没有同步集团总销量增长？","expected_document_titles":["Geely Automobile 2025 Annual Results — export-growth risk"]},
+    {"case_id":"002594-S","security_id":"002594","company":"比亚迪","direction":"支持","query":"比亚迪2025年年度营业收入和新能源汽车销量表现如何？","expected_document_titles":["比亚迪股份有限公司2025年年度报告"]},
+    {"case_id":"002594-C","security_id":"002594","company":"比亚迪","direction":"冲突","query":"比亚迪2025年收入增长但利润率承压的证据是什么？","expected_document_titles":["比亚迪股份有限公司2025年年度报告 — profitability risk"]},
+    {"case_id":"09868-S","security_id":"09868","company":"小鹏汽车","direction":"支持","query":"小鹏汽车2025年第三季度收入、交付量和整体毛利率改善情况如何？","expected_document_titles":["XPENG Reports Third Quarter 2025 Unaudited Financial Results"]},
+    {"case_id":"09868-C","security_id":"09868","company":"小鹏汽车","direction":"冲突","query":"小鹏2025年第三季度整车毛利率环比下降的约束是什么？","expected_document_titles":["XPENG Reports Third Quarter 2025 Unaudited Financial Results — vehicle-margin risk"]},
+    {"case_id":"002371-S","security_id":"002371","company":"北方华创","direction":"支持","query":"北方华创2025年上半年订单、收入和芯源微收购带来哪些经营支持？","expected_document_titles":["北方华创科技集团股份有限公司2025年半年度报告全文"]},
+    {"case_id":"002371-C","security_id":"002371","company":"北方华创","direction":"冲突","query":"北方华创2025年收入增长时为何仍需关注净利润下降和研发投入压力？","expected_document_titles":["北方华创科技集团股份有限公司2025年年度报告全文 — profitability risk"]},
+    {"case_id":"603986-S","security_id":"603986","company":"兆易创新","direction":"支持","query":"兆易创新2025年收入利润增长与存储产品需求改善有什么官方证据？","expected_document_titles":["兆易创新科技集团股份有限公司2025年年度报告"]},
+    {"case_id":"603986-C","security_id":"603986","company":"兆易创新","direction":"冲突","query":"兆易创新扩张回报为什么需要关注投资活动现金流扩大流出？","expected_document_titles":["兆易创新科技集团股份有限公司2025年年度报告 — capital-allocation risk"]},
+    {"case_id":"688981-S","security_id":"688981","company":"中芯国际","direction":"支持","query":"中芯国际2025年收入、产能利用率和毛利率改善情况如何？","expected_document_titles":["中芯国际集成电路制造有限公司2025年年度报告"]},
+    {"case_id":"688981-C","security_id":"688981","company":"中芯国际","direction":"冲突","query":"中芯国际产能扩张需要关注投资活动现金流的什么约束？","expected_document_titles":["中芯国际集成电路制造有限公司2025年年度报告 — capital-intensity risk"]}
+  ]
+}

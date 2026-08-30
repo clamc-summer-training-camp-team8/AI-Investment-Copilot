@@ -1,0 +1,36 @@
+{
+  "dataset_version": "p1-geely-h1-2025-restated-official-source-seed-20260824",
+  "status": "staged_requires_human_review",
+  "records": [
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited Interim Results 2025 — restated H1 growth",
+      "published_at": "2025-08-14T00:00:00+08:00",
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+      "facts": [
+        "截至2025年6月30日止六个月收入150,284,734千元；2024年同期经重述收入118,792,689千元，同比增长27%。",
+        "同期毛利24,718,739千元，2024年同期经重述毛利19,868,348千元；总销量1,409,180辆，同比增长47%。",
+        "该H1重述数与本地2024Q1+Q2收入完全一致，并可作为2024Q2同口径派生复核的累计端点。"
+      ],
+      "hypothesis_targets": ["需求与出货", "盈利质量"],
+      "evidence_direction": "支持",
+      "review_note": "港交所法定中期业绩公告，表内以人民币千元披露并明确2024年比较数经重述。用于H1直接事实及同口径季度派生复核；不能把H1公布日写成2024Q2的直接首次披露日。"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "source_type": "exchange_designated_disclosure",
+      "title": "Geely Automobile Holdings Limited Interim Results 2025 — reported profit divergence",
+      "published_at": "2025-08-14T00:00:00+08:00",
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0814/2025081400145.pdf",
+      "facts": [
+        "截至2025年6月30日止六个月归属公司权益持有人利润9,289,807千元，低于2024年同期经重述的10,789,540千元，同比下降14%；同期处置附属公司视同收益及待售资产减值相关项目由2024年的7,726,187千元降至零。"
+      ],
+      "hypothesis_targets": ["盈利质量"],
+      "evidence_direction": "冲突",
+      "review_note": "收入、毛利和销量增长不等于报告归母利润同步改善。该来源作为盈利质量反证候选，并保留一次性项目变化的解释背景。"
+    }
+  ]
+}

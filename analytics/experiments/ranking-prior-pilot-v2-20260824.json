@@ -1,0 +1,470 @@
+{
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "profile": "primary_context",
+  "embedding_version": "hash-char-2gram-v1",
+  "cases": [
+    {
+      "security_id": "688981",
+      "query": "先进制程 产能 利用率 盈利质量",
+      "snapshot_id": "RPS-74fbff0c9264a889616e6963",
+      "returned": 10,
+      "candidate_pool": 100,
+      "prior_coverage": 1.0,
+      "changed_positions": 8,
+      "entered_top_k": [
+        "DOC-EVT-688981-00012#paragraph-1",
+        "DOC-EVT-688981-00073#paragraph-1",
+        "DOC-EVT-688981-00212#paragraph-1",
+        "DOC-EVT-688981-00246#paragraph-1",
+        "DOC-EVT-688981-00306#paragraph-1",
+        "DOC-EVT-688981-00332#paragraph-1",
+        "DOC-EVT-688981-00360#paragraph-1"
+      ],
+      "exited_top_k": [
+        "DOC-EVT-688981-00095#paragraph-1",
+        "DOC-EVT-688981-00236#paragraph-1",
+        "DOC-EVT-688981-00243#paragraph-1",
+        "DOC-EVT-688981-00263#paragraph-1",
+        "DOC-EVT-688981-00277#paragraph-1",
+        "DOC-EVT-688981-00310#paragraph-1",
+        "DOC-EVT-688981-00348#paragraph-1"
+      ],
+      "low_value_top_k": 0,
+      "duplicate_top_k": 0,
+      "results": [
+        {
+          "final_rank": 1,
+          "relevance_rank": 1,
+          "rank_delta": 0,
+          "retrieval_score": 0.7,
+          "prior_score": 0.8555,
+          "final_score": 0.7622,
+          "locator": "DOC-688981-2023FY#paragraph-3",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "本年营业收入、归属于上市公司股东的净利润、毛利率以及净利率下降，主要是由于：过去一年，半导体行业处于周期底部，全球市场需求疲软，行业库存较高，去库存缓慢，且同业竞争激烈。受此影响，集团平均产能利用率降低，晶圆销售数量减少，产品组合变动。此外"
+        },
+        {
+          "final_rank": 2,
+          "relevance_rank": 2,
+          "rank_delta": 0,
+          "retrieval_score": 0.693,
+          "prior_score": 0.816,
+          "final_score": 0.7422,
+          "locator": "DOC-688981-2023FY#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公司全年销售收入人民币453亿元，调整波动幅度好于行业平均水平，毛利率为22%，年平均产能利用率为75%，基本符合年初指引。"
+        },
+        {
+          "final_rank": 3,
+          "relevance_rank": 9,
+          "rank_delta": 6,
+          "retrieval_score": 0.644,
+          "prior_score": 0.7945,
+          "final_score": 0.7042,
+          "locator": "DOC-EVT-688981-00074#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际2024年半年度报告"
+        },
+        {
+          "final_rank": 4,
+          "relevance_rank": 11,
+          "rank_delta": 7,
+          "retrieval_score": 0.63,
+          "prior_score": 0.7955,
+          "final_score": 0.6962,
+          "locator": "DOC-EVT-688981-00073#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际2024年半年度报告摘要"
+        },
+        {
+          "final_rank": 5,
+          "relevance_rank": 15,
+          "rank_delta": 10,
+          "retrieval_score": 0.602,
+          "prior_score": 0.8195,
+          "final_score": 0.689,
+          "locator": "DOC-EVT-688981-00306#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：上海东洲资产评估有限公司关于中芯国际集成电路制造有限公司发行股份购买资产暨关联交易申请的审核问询函中资产评估相关问题回复核查意见"
+        },
+        {
+          "final_rank": 6,
+          "relevance_rank": 14,
+          "rank_delta": 8,
+          "retrieval_score": 0.609,
+          "prior_score": 0.797,
+          "final_score": 0.6842,
+          "locator": "DOC-EVT-688981-00360#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际经修订及重述组织章程大纲及细则"
+        },
+        {
+          "final_rank": 7,
+          "relevance_rank": 16,
+          "rank_delta": 9,
+          "retrieval_score": 0.595,
+          "prior_score": 0.797,
+          "final_score": 0.6758,
+          "locator": "DOC-EVT-688981-00212#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际信息披露暂缓与豁免业务管理制度"
+        },
+        {
+          "final_rank": 8,
+          "relevance_rank": 19,
+          "rank_delta": 11,
+          "retrieval_score": 0.574,
+          "prior_score": 0.815,
+          "final_score": 0.6704,
+          "locator": "DOC-EVT-688981-00012#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：华夏上证科创板50成份交易型开放式指数证券投资基金关于所持中芯国际集成电路制造有限公司境内股票变动的提示性公告"
+        },
+        {
+          "final_rank": 9,
+          "relevance_rank": 18,
+          "rank_delta": 9,
+          "retrieval_score": 0.581,
+          "prior_score": 0.797,
+          "final_score": 0.6674,
+          "locator": "DOC-EVT-688981-00332#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际关于修订公司组织章程细则的公告"
+        },
+        {
+          "final_rank": 10,
+          "relevance_rank": 20,
+          "rank_delta": 10,
+          "retrieval_score": 0.546,
+          "prior_score": 0.815,
+          "final_score": 0.6536,
+          "locator": "DOC-EVT-688981-00246#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：国家集成电路产业投资基金股份有限公司及其一致行动人关于所持中芯国际集成电路制造有限公司境内股票变动的提示性公告"
+        }
+      ]
+    },
+    {
+      "security_id": "600276",
+      "query": "创新药 临床 管线 商业化 收入",
+      "snapshot_id": "RPS-5e21f7484042a4b9fe1d6024",
+      "returned": 6,
+      "candidate_pool": 100,
+      "prior_coverage": 1.0,
+      "changed_positions": 2,
+      "entered_top_k": [],
+      "exited_top_k": [],
+      "low_value_top_k": 1,
+      "duplicate_top_k": 0,
+      "results": [
+        {
+          "final_rank": 1,
+          "relevance_rank": 1,
+          "rank_delta": 0,
+          "retrieval_score": 0.7,
+          "prior_score": 0.796,
+          "final_score": 0.7384,
+          "locator": "DOC-EVT-600276-00244#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于药品临床试验进展的公告"
+        },
+        {
+          "final_rank": 2,
+          "relevance_rank": 6,
+          "rank_delta": 4,
+          "retrieval_score": 0.665,
+          "prior_score": 0.7985,
+          "final_score": 0.7184,
+          "locator": "DOC-EVT-600276-00020#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于获得药物临床试验批准通知书的公告"
+        },
+        {
+          "final_rank": 3,
+          "relevance_rank": 3,
+          "rank_delta": 0,
+          "retrieval_score": 0.686,
+          "prior_score": 0.6155,
+          "final_score": 0.6578,
+          "locator": "DOC-EVT-600276-00502#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "NEAR_DUPLICATE"
+          ],
+          "content_preview": "公告标题：恒瑞医药2025年第二次临时股东会会议资料"
+        },
+        {
+          "final_rank": 4,
+          "relevance_rank": 4,
+          "rank_delta": 0,
+          "retrieval_score": 0.679,
+          "prior_score": 0.6155,
+          "final_score": 0.6536,
+          "locator": "DOC-EVT-600276-00510#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "NEAR_DUPLICATE"
+          ],
+          "content_preview": "公告标题：恒瑞医药2025年第二次临时股东会决议公告"
+        },
+        {
+          "final_rank": 5,
+          "relevance_rank": 5,
+          "rank_delta": 0,
+          "retrieval_score": 0.672,
+          "prior_score": 0.617,
+          "final_score": 0.65,
+          "locator": "DOC-EVT-600276-00489#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "NEAR_DUPLICATE"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于召开2025年第二次临时股东会的通知"
+        },
+        {
+          "final_rank": 6,
+          "relevance_rank": 2,
+          "rank_delta": -4,
+          "retrieval_score": 0.693,
+          "prior_score": 0.3885,
+          "final_score": 0.5712,
+          "locator": "DOC-EVT-600276-00509#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "LOW_VALUE_DISCLOSURE",
+            "NEAR_DUPLICATE"
+          ],
+          "content_preview": "公告标题：恒瑞医药2025年第二次临时股东会法律意见书"
+        }
+      ]
+    },
+    {
+      "security_id": "002594",
+      "query": "新能源汽车 销量 毛利率 海外扩张",
+      "snapshot_id": "RPS-a50d15969736d0e8c7e14ea5",
+      "returned": 10,
+      "candidate_pool": 100,
+      "prior_coverage": 1.0,
+      "changed_positions": 7,
+      "entered_top_k": [
+        "DOC-EVT-002594-00108#paragraph-1"
+      ],
+      "exited_top_k": [
+        "DOC-EVT-002594-00358#paragraph-1"
+      ],
+      "low_value_top_k": 0,
+      "duplicate_top_k": 0,
+      "results": [
+        {
+          "final_rank": 1,
+          "relevance_rank": 1,
+          "rank_delta": 0,
+          "retrieval_score": 0.7,
+          "prior_score": 0.7965,
+          "final_score": 0.7386,
+          "locator": "DOC-EVT-002594-00017#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于“质量回报双提升”行动方案的公告"
+        },
+        {
+          "final_rank": 2,
+          "relevance_rank": 2,
+          "rank_delta": 0,
+          "retrieval_score": 0.693,
+          "prior_score": 0.7975,
+          "final_score": 0.7348,
+          "locator": "DOC-EVT-002594-00338#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于“质量回报双提升”行动方案的进展公告"
+        },
+        {
+          "final_rank": 3,
+          "relevance_rank": 3,
+          "rank_delta": 0,
+          "retrieval_score": 0.686,
+          "prior_score": 0.801,
+          "final_score": 0.732,
+          "locator": "DOC-EVT-002594-00232#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于2024年度利润分配及资本公积金转增股本方案的公告"
+        },
+        {
+          "final_rank": 4,
+          "relevance_rank": 5,
+          "rank_delta": 1,
+          "retrieval_score": 0.672,
+          "prior_score": 0.7985,
+          "final_score": 0.7226,
+          "locator": "DOC-EVT-002594-00173#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：境外发行证券与上市相关保密和档案管理工作制度"
+        },
+        {
+          "final_rank": 5,
+          "relevance_rank": 7,
+          "rank_delta": 2,
+          "retrieval_score": 0.616,
+          "prior_score": 0.7935,
+          "final_score": 0.687,
+          "locator": "DOC-EVT-002594-00033#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：H股公告（暂停办理过户）"
+        },
+        {
+          "final_rank": 6,
+          "relevance_rank": 8,
+          "rank_delta": 2,
+          "retrieval_score": 0.602,
+          "prior_score": 0.8015,
+          "final_score": 0.6818,
+          "locator": "DOC-EVT-002594-00208#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告"
+        },
+        {
+          "final_rank": 7,
+          "relevance_rank": 6,
+          "rank_delta": -1,
+          "retrieval_score": 0.665,
+          "prior_score": 0.6905,
+          "final_score": 0.6752,
+          "locator": "DOC-EVT-002594-00330#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE",
+            "NEAR_DUPLICATE"
+          ],
+          "content_preview": "公告标题：2026年1月产销快报"
+        },
+        {
+          "final_rank": 8,
+          "relevance_rank": 9,
+          "rank_delta": 1,
+          "retrieval_score": 0.588,
+          "prior_score": 0.8055,
+          "final_score": 0.675,
+          "locator": "DOC-EVT-002594-00177#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于持股5%以上的股东及其一致行动人持股比例被动稀释触及1%整数倍的公告"
+        },
+        {
+          "final_rank": 9,
+          "relevance_rank": 10,
+          "rank_delta": 1,
+          "retrieval_score": 0.581,
+          "prior_score": 0.7955,
+          "final_score": 0.6668,
+          "locator": "DOC-EVT-002594-00301#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：对外担保制度（2025年10月）"
+        },
+        {
+          "final_rank": 10,
+          "relevance_rank": 12,
+          "rank_delta": 2,
+          "retrieval_score": 0.567,
+          "prior_score": 0.8105,
+          "final_score": 0.6644,
+          "locator": "DOC-EVT-002594-00108#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：H股公告（截至二零二三年十二月三十一日止年度的末期股息-更新公司汇率、预设派发货币相关信息）"
+        }
+      ]
+    }
+  ]
+}

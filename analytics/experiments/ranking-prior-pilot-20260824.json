@@ -1,0 +1,497 @@
+{
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "profile": "primary_context",
+  "embedding_version": "hash-char-2gram-v1",
+  "cases": [
+    {
+      "security_id": "688981",
+      "query": "先进制程 产能 利用率 盈利质量",
+      "snapshot_id": "RPS-016a311e178bbd01558365d9",
+      "returned": 10,
+      "prior_coverage": 1.0,
+      "changed_positions": 0,
+      "results": [
+        {
+          "final_rank": 1,
+          "relevance_rank": 1,
+          "rank_delta": 0,
+          "retrieval_score": 0.7,
+          "prior_score": 0.8455,
+          "final_score": 0.7582,
+          "locator": "DOC-688981-2023FY#paragraph-3",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "本年营业收入、归属于上市公司股东的净利润、毛利率以及净利率下降，主要是由于：过去一年，半导体行业处于周期底部，全球市场需求疲软，行业库存较高，去库存缓慢，且同业竞争激烈。受此影响，集团平均产能利用率降低，晶圆销售数量减少，产品组合变动。此外"
+        },
+        {
+          "final_rank": 2,
+          "relevance_rank": 2,
+          "rank_delta": 0,
+          "retrieval_score": 0.686,
+          "prior_score": 0.806,
+          "final_score": 0.734,
+          "locator": "DOC-688981-2023FY#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公司全年销售收入人民币453亿元，调整波动幅度好于行业平均水平，毛利率为22%，年平均产能利用率为75%，基本符合年初指引。"
+        },
+        {
+          "final_rank": 3,
+          "relevance_rank": 3,
+          "rank_delta": 0,
+          "retrieval_score": 0.672,
+          "prior_score": 0.804,
+          "final_score": 0.7248,
+          "locator": "DOC-EVT-688981-00236#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：上海市锦天城律师事务所关于中芯国际集成电路制造有限公司内幕信息知情人登记制度的制定和执行情况的专项核查意见"
+        },
+        {
+          "final_rank": 4,
+          "relevance_rank": 4,
+          "rank_delta": 0,
+          "retrieval_score": 0.658,
+          "prior_score": 0.8005,
+          "final_score": 0.715,
+          "locator": "DOC-EVT-688981-00243#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：上海市锦天城律师事务所关于中芯国际集成电路制造有限公司发行股份购买资产暨关联交易之法律意见书"
+        },
+        {
+          "final_rank": 5,
+          "relevance_rank": 5,
+          "rank_delta": 0,
+          "retrieval_score": 0.644,
+          "prior_score": 0.794,
+          "final_score": 0.704,
+          "locator": "DOC-EVT-688981-00277#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：上海市锦天城律师事务所关于2026年第一次临时股东大会的法律意见书"
+        },
+        {
+          "final_rank": 6,
+          "relevance_rank": 6,
+          "rank_delta": 0,
+          "retrieval_score": 0.63,
+          "prior_score": 0.8045,
+          "final_score": 0.6998,
+          "locator": "DOC-EVT-688981-00348#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：上海市锦天城律师事务所关于中芯国际集成电路制造有限公司发行股份购买资产暨关联交易标的资产过户情况之法律意见书"
+        },
+        {
+          "final_rank": 7,
+          "relevance_rank": 7,
+          "rank_delta": 0,
+          "retrieval_score": 0.616,
+          "prior_score": 0.784,
+          "final_score": 0.6832,
+          "locator": "DOC-EVT-688981-00095#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际投资者关系管理制度"
+        },
+        {
+          "final_rank": 8,
+          "relevance_rank": 8,
+          "rank_delta": 0,
+          "retrieval_score": 0.602,
+          "prior_score": 0.8035,
+          "final_score": 0.6826,
+          "locator": "DOC-EVT-688981-00263#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：国泰海通证券股份有限公司关于中芯国际集成电路制造有限公司内幕信息知情人登记制度的制定和执行情况的核查意见"
+        },
+        {
+          "final_rank": 9,
+          "relevance_rank": 9,
+          "rank_delta": 0,
+          "retrieval_score": 0.588,
+          "prior_score": 0.7845,
+          "final_score": 0.6666,
+          "locator": "DOC-EVT-688981-00074#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：中芯国际2024年半年度报告"
+        },
+        {
+          "final_rank": 10,
+          "relevance_rank": 10,
+          "rank_delta": 0,
+          "retrieval_score": 0.574,
+          "prior_score": 0.803,
+          "final_score": 0.6656,
+          "locator": "DOC-EVT-688981-00310#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：上海市锦天城律师事务所关于中芯国际集成电路制造有限公司发行股份购买资产暨关联交易之补充法律意见书（二）"
+        }
+      ]
+    },
+    {
+      "security_id": "600276",
+      "query": "创新药 临床 管线 商业化 收入",
+      "snapshot_id": "RPS-ecc7d6546e54434d60f36bb1",
+      "returned": 10,
+      "prior_coverage": 1.0,
+      "changed_positions": 0,
+      "results": [
+        {
+          "final_rank": 1,
+          "relevance_rank": 1,
+          "rank_delta": 0,
+          "retrieval_score": 0.7,
+          "prior_score": 0.786,
+          "final_score": 0.7344,
+          "locator": "DOC-EVT-600276-00244#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于药品临床试验进展的公告"
+        },
+        {
+          "final_rank": 2,
+          "relevance_rank": 2,
+          "rank_delta": 0,
+          "retrieval_score": 0.686,
+          "prior_score": 0.7885,
+          "final_score": 0.727,
+          "locator": "DOC-EVT-600276-00509#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药2025年第二次临时股东会法律意见书"
+        },
+        {
+          "final_rank": 3,
+          "relevance_rank": 3,
+          "rank_delta": 0,
+          "retrieval_score": 0.672,
+          "prior_score": 0.788,
+          "final_score": 0.7184,
+          "locator": "DOC-EVT-600276-00502#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药2025年第二次临时股东会会议资料"
+        },
+        {
+          "final_rank": 4,
+          "relevance_rank": 4,
+          "rank_delta": 0,
+          "retrieval_score": 0.658,
+          "prior_score": 0.788,
+          "final_score": 0.71,
+          "locator": "DOC-EVT-600276-00510#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药2025年第二次临时股东会决议公告"
+        },
+        {
+          "final_rank": 5,
+          "relevance_rank": 5,
+          "rank_delta": 0,
+          "retrieval_score": 0.644,
+          "prior_score": 0.7895,
+          "final_score": 0.7022,
+          "locator": "DOC-EVT-600276-00489#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于召开2025年第二次临时股东会的通知"
+        },
+        {
+          "final_rank": 6,
+          "relevance_rank": 6,
+          "rank_delta": 0,
+          "retrieval_score": 0.63,
+          "prior_score": 0.7885,
+          "final_score": 0.6934,
+          "locator": "DOC-EVT-600276-00020#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于获得药物临床试验批准通知书的公告"
+        },
+        {
+          "final_rank": 7,
+          "relevance_rank": 7,
+          "rank_delta": 0,
+          "retrieval_score": 0.616,
+          "prior_score": 0.7885,
+          "final_score": 0.685,
+          "locator": "DOC-EVT-600276-00023#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于获得药物临床试验批准通知书的公告"
+        },
+        {
+          "final_rank": 8,
+          "relevance_rank": 8,
+          "rank_delta": 0,
+          "retrieval_score": 0.602,
+          "prior_score": 0.7885,
+          "final_score": 0.6766,
+          "locator": "DOC-EVT-600276-00032#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于获得药物临床试验批准通知书的公告"
+        },
+        {
+          "final_rank": 9,
+          "relevance_rank": 9,
+          "rank_delta": 0,
+          "retrieval_score": 0.588,
+          "prior_score": 0.7885,
+          "final_score": 0.6682,
+          "locator": "DOC-EVT-600276-00033#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于获得药物临床试验批准通知书的公告"
+        },
+        {
+          "final_rank": 10,
+          "relevance_rank": 10,
+          "rank_delta": 0,
+          "retrieval_score": 0.574,
+          "prior_score": 0.7885,
+          "final_score": 0.6598,
+          "locator": "DOC-EVT-600276-00034#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：恒瑞医药关于获得药物临床试验批准通知书的公告"
+        }
+      ]
+    },
+    {
+      "security_id": "002594",
+      "query": "新能源汽车 销量 毛利率 海外扩张",
+      "snapshot_id": "RPS-7db584f1bc1791253000240d",
+      "returned": 10,
+      "prior_coverage": 1.0,
+      "changed_positions": 6,
+      "results": [
+        {
+          "final_rank": 1,
+          "relevance_rank": 1,
+          "rank_delta": 0,
+          "retrieval_score": 0.7,
+          "prior_score": 0.7865,
+          "final_score": 0.7346,
+          "locator": "DOC-EVT-002594-00017#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于“质量回报双提升”行动方案的公告"
+        },
+        {
+          "final_rank": 2,
+          "relevance_rank": 2,
+          "rank_delta": 0,
+          "retrieval_score": 0.686,
+          "prior_score": 0.7875,
+          "final_score": 0.7266,
+          "locator": "DOC-EVT-002594-00338#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于“质量回报双提升”行动方案的进展公告"
+        },
+        {
+          "final_rank": 3,
+          "relevance_rank": 6,
+          "rank_delta": 3,
+          "retrieval_score": 0.63,
+          "prior_score": 0.863,
+          "final_score": 0.7232,
+          "locator": "DOC-EVT-002594-00330#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "公告标题：2026年1月产销快报"
+        },
+        {
+          "final_rank": 4,
+          "relevance_rank": 3,
+          "rank_delta": -1,
+          "retrieval_score": 0.672,
+          "prior_score": 0.791,
+          "final_score": 0.7196,
+          "locator": "DOC-EVT-002594-00232#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于2024年度利润分配及资本公积金转增股本方案的公告"
+        },
+        {
+          "final_rank": 5,
+          "relevance_rank": 7,
+          "rank_delta": 2,
+          "retrieval_score": 0.616,
+          "prior_score": 0.863,
+          "final_score": 0.7148,
+          "locator": "DOC-EVT-002594-00365#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "公告标题：2026年3月产销快报"
+        },
+        {
+          "final_rank": 6,
+          "relevance_rank": 4,
+          "rank_delta": -2,
+          "retrieval_score": 0.658,
+          "prior_score": 0.786,
+          "final_score": 0.7092,
+          "locator": "DOC-EVT-002594-00358#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：关于2025年度利润分配方案的公告"
+        },
+        {
+          "final_rank": 7,
+          "relevance_rank": 8,
+          "rank_delta": 1,
+          "retrieval_score": 0.602,
+          "prior_score": 0.863,
+          "final_score": 0.7064,
+          "locator": "DOC-EVT-002594-00378#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "公告标题：2026年4月产销快报"
+        },
+        {
+          "final_rank": 8,
+          "relevance_rank": 5,
+          "rank_delta": -3,
+          "retrieval_score": 0.644,
+          "prior_score": 0.7885,
+          "final_score": 0.7018,
+          "locator": "DOC-EVT-002594-00173#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR"
+          ],
+          "content_preview": "公告标题：境外发行证券与上市相关保密和档案管理工作制度"
+        },
+        {
+          "final_rank": 9,
+          "relevance_rank": 9,
+          "rank_delta": 0,
+          "retrieval_score": 0.588,
+          "prior_score": 0.863,
+          "final_score": 0.698,
+          "locator": "DOC-EVT-002594-00381#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "公告标题：2026年5月产销快报"
+        },
+        {
+          "final_rank": 10,
+          "relevance_rank": 10,
+          "rank_delta": 0,
+          "retrieval_score": 0.574,
+          "prior_score": 0.863,
+          "final_score": 0.6896,
+          "locator": "DOC-EVT-002594-00390#paragraph-1",
+          "reason_codes": [
+            "SECURITY_MATCH",
+            "AS_OF_VALID",
+            "TRACEABLE_LOCATOR",
+            "EVIDENCE_LINKED",
+            "METRIC_VERIFIABLE"
+          ],
+          "content_preview": "公告标题：2026年7月产销快报"
+        }
+      ]
+    }
+  ]
+}

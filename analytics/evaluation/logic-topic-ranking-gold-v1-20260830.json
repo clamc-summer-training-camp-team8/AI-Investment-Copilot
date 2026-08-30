@@ -1,0 +1,746 @@
+{
+  "version": "logic-topic-ranking-gold-v1-20260830",
+  "annotation_status": "accepted_as_human_gold_by_product_owner",
+  "acceptance_note": "沿用产品负责人已接受的程序金标口径；本集用于主题排序回归门禁，不能替代独立研究员双盲标注。",
+  "case_count": 45,
+  "cases": [
+    {
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "expected_primary_name": "云南白药2025Q1观察：中药与健康消费",
+      "citation_locators": [
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735"
+      ],
+      "case_id": "000538-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "expected_primary_name": "云南白药2025Q1观察：中药与健康消费",
+      "citation_locators": [
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735"
+      ],
+      "case_id": "000538-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-b6607c9b27c397ad42329284",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "expected_primary_name": "云南白药2025Q1观察：中药与健康消费",
+      "citation_locators": [
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735"
+      ],
+      "case_id": "000538-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-b9cd787dbfc9ef8a6a42a616",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "expected_primary_name": "云南白药2025Q1观察：中药与健康消费",
+      "citation_locators": [
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735"
+      ],
+      "case_id": "000538-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-8767e61958edd6d2f275567b",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-211f72d4ac8ad25994e308d6",
+      "expected_primary_name": "云南白药2025Q1观察：中药与健康消费",
+      "citation_locators": [
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-f7e023c6d49f22fe",
+        "DOC-STG-97eb5210b24f05a76f263553#evidence-55665b0cbeb93735"
+      ],
+      "case_id": "000538-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "expected_primary_name": "吉利汽车2025Q1观察：整车",
+      "citation_locators": [
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+        "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk"
+      ],
+      "case_id": "00175-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "expected_primary_name": "吉利汽车2025Q1观察：整车",
+      "citation_locators": [
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+        "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk"
+      ],
+      "case_id": "00175-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-fe4f8c0980f579f4ca1f57d4",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "expected_primary_name": "吉利汽车2025Q1观察：整车",
+      "citation_locators": [
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+        "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk"
+      ],
+      "case_id": "00175-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-24fa07016072125a0c3aa715",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "expected_primary_name": "吉利汽车2025Q1观察：整车",
+      "citation_locators": [
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+        "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk"
+      ],
+      "case_id": "00175-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-43a7b6176c8f3730898f5d3c",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-37b665454cbd4e5c4ca5d219",
+      "expected_primary_name": "吉利汽车2025Q1观察：整车",
+      "citation_locators": [
+        "DOC-STG-377e0d9e7c6f773d8ba4cc26#evidence-7532a51796dff783",
+        "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk"
+      ],
+      "case_id": "00175-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "expected_primary_name": "北方华创2025Q1观察：半导体设备",
+      "citation_locators": [
+        "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+        "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361"
+      ],
+      "case_id": "002371-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "expected_primary_name": "北方华创2025Q1观察：半导体设备",
+      "citation_locators": [
+        "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+        "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361"
+      ],
+      "case_id": "002371-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-25e71499eb391ef41027ff4c",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "expected_primary_name": "北方华创2025Q1观察：半导体设备",
+      "citation_locators": [
+        "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+        "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361"
+      ],
+      "case_id": "002371-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-96cb37b8319ce9a70ef21e58",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "expected_primary_name": "北方华创2025Q1观察：半导体设备",
+      "citation_locators": [
+        "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+        "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361"
+      ],
+      "case_id": "002371-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-a8d7064b2c0198be496f7bc5",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-91e0557aae13c958b6a6d4fe",
+      "expected_primary_name": "北方华创2025Q1观察：半导体设备",
+      "citation_locators": [
+        "DOC-EVT-002371-00163#evidence-2e9090616f2eab31",
+        "DOC-STG-b9b66663bb71bc561264471a#evidence-2372d5d6c1719361"
+      ],
+      "case_id": "002371-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "expected_primary_name": "比亚迪2025Q1观察：整车与动力电池",
+      "citation_locators": [
+        "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+        "DOC-EVT-002594-00197#evidence-5a23324ad5a18672"
+      ],
+      "case_id": "002594-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "expected_primary_name": "比亚迪2025Q1观察：整车与动力电池",
+      "citation_locators": [
+        "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+        "DOC-EVT-002594-00197#evidence-5a23324ad5a18672"
+      ],
+      "case_id": "002594-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-0e2262371f45bc6fee91a038",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "expected_primary_name": "比亚迪2025Q1观察：整车与动力电池",
+      "citation_locators": [
+        "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+        "DOC-EVT-002594-00197#evidence-5a23324ad5a18672"
+      ],
+      "case_id": "002594-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-a863a2c3563a19aea586a5a6",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "expected_primary_name": "比亚迪2025Q1观察：整车与动力电池",
+      "citation_locators": [
+        "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+        "DOC-EVT-002594-00197#evidence-5a23324ad5a18672"
+      ],
+      "case_id": "002594-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-311d9d4c5e71ba3e9530d08b",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-7cd9f190170f2ecc82236bbb",
+      "expected_primary_name": "比亚迪2025Q1观察：整车与动力电池",
+      "citation_locators": [
+        "DOC-STG-815081a89a1024a5c85c2d8b#evidence-2665c4c143d3399b",
+        "DOC-EVT-002594-00197#evidence-5a23324ad5a18672"
+      ],
+      "case_id": "002594-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "expected_primary_name": "小鹏汽车2025Q1观察：新势力整车",
+      "citation_locators": [
+        "DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076",
+        "DOC-STG-4691c635bc37d4aa600c29ac#evidence-ce505d247d6e564a"
+      ],
+      "case_id": "09868-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "expected_primary_name": "小鹏汽车2025Q1观察：新势力整车",
+      "citation_locators": [
+        "DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076",
+        "DOC-STG-4691c635bc37d4aa600c29ac#evidence-ce505d247d6e564a"
+      ],
+      "case_id": "09868-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-50c9e925a116c8c0419f7a3e",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "expected_primary_name": "小鹏汽车2025Q1观察：新势力整车",
+      "citation_locators": [
+        "DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076",
+        "DOC-STG-4691c635bc37d4aa600c29ac#evidence-ce505d247d6e564a"
+      ],
+      "case_id": "09868-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-4d1ed9514551f6dad2f1262e",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "expected_primary_name": "小鹏汽车2025Q1观察：新势力整车",
+      "citation_locators": [
+        "DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076",
+        "DOC-STG-4691c635bc37d4aa600c29ac#evidence-ce505d247d6e564a"
+      ],
+      "case_id": "09868-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-e4f842c6228d188b6fa81d2c",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-c670812c261bf554b7fce40d",
+      "expected_primary_name": "小鹏汽车2025Q1观察：新势力整车",
+      "citation_locators": [
+        "DOC-STG-13cdc15a4890f6f4810e5e82#evidence-97a636d9f5bcc076",
+        "DOC-STG-4691c635bc37d4aa600c29ac#evidence-ce505d247d6e564a"
+      ],
+      "case_id": "09868-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "expected_primary_name": "恒瑞医药2025Q1观察：创新药",
+      "citation_locators": [
+        "DOC-EVT-600276-00691#evidence-566b0c6f4263bd01",
+        "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc"
+      ],
+      "case_id": "600276-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "expected_primary_name": "恒瑞医药2025Q1观察：创新药",
+      "citation_locators": [
+        "DOC-EVT-600276-00691#evidence-566b0c6f4263bd01",
+        "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc"
+      ],
+      "case_id": "600276-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-c17ab0abf20ee67df32dd7db",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "expected_primary_name": "恒瑞医药2025Q1观察：创新药",
+      "citation_locators": [
+        "DOC-EVT-600276-00691#evidence-566b0c6f4263bd01",
+        "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc"
+      ],
+      "case_id": "600276-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-0013380d90f394122380c724",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "expected_primary_name": "恒瑞医药2025Q1观察：创新药",
+      "citation_locators": [
+        "DOC-EVT-600276-00691#evidence-566b0c6f4263bd01",
+        "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc"
+      ],
+      "case_id": "600276-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-a4cd49c67899032bf56b4fda",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-6d7ec7b1116bf60b808153f4",
+      "expected_primary_name": "恒瑞医药2025Q1观察：创新药",
+      "citation_locators": [
+        "DOC-EVT-600276-00691#evidence-566b0c6f4263bd01",
+        "DOC-STG-6373c2ccb19928d61912612d#evidence-5c72de65bc2e04dc"
+      ],
+      "case_id": "600276-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "expected_primary_name": "药明康德2025Q1观察：医药研发外包",
+      "citation_locators": [
+        "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+        "DOC-EVT-603259-00453#evidence-0129534744e52f15"
+      ],
+      "case_id": "603259-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "expected_primary_name": "药明康德2025Q1观察：医药研发外包",
+      "citation_locators": [
+        "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+        "DOC-EVT-603259-00453#evidence-0129534744e52f15"
+      ],
+      "case_id": "603259-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-f5cddba17d87908fc2011aac",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "expected_primary_name": "药明康德2025Q1观察：医药研发外包",
+      "citation_locators": [
+        "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+        "DOC-EVT-603259-00453#evidence-0129534744e52f15"
+      ],
+      "case_id": "603259-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-640437c535f65f84263e00dc",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "expected_primary_name": "药明康德2025Q1观察：医药研发外包",
+      "citation_locators": [
+        "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+        "DOC-EVT-603259-00453#evidence-0129534744e52f15"
+      ],
+      "case_id": "603259-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-9fb7c44705e9bd4d5b4a3aaf",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-01cf6a43d509aa5dec57ae72",
+      "expected_primary_name": "药明康德2025Q1观察：医药研发外包",
+      "citation_locators": [
+        "DOC-STG-b0eff25b42af189e28cd80b6#evidence-c97bc3e86ac86c0d",
+        "DOC-EVT-603259-00453#evidence-0129534744e52f15"
+      ],
+      "case_id": "603259-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "expected_primary_name": "兆易创新2025Q1观察：存储与MCU设计",
+      "citation_locators": [
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee"
+      ],
+      "case_id": "603986-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "expected_primary_name": "兆易创新2025Q1观察：存储与MCU设计",
+      "citation_locators": [
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee"
+      ],
+      "case_id": "603986-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-29683ee9505ebb76df4ec39d",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "expected_primary_name": "兆易创新2025Q1观察：存储与MCU设计",
+      "citation_locators": [
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee"
+      ],
+      "case_id": "603986-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-4fabf0c0ee4626f78e01eb30",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "expected_primary_name": "兆易创新2025Q1观察：存储与MCU设计",
+      "citation_locators": [
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee"
+      ],
+      "case_id": "603986-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“产能与扩张”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-8d1c242c5d9975d707a84ab0",
+      "comparison_name": "产能与扩张"
+    },
+    {
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-8fda45eff455d9094f688fd6",
+      "expected_primary_name": "兆易创新2025Q1观察：存储与MCU设计",
+      "citation_locators": [
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-cfff8a15f632c65e",
+        "DOC-STG-cbc7908c85b568240b1e7508#evidence-4e8207f0ea4485ee"
+      ],
+      "case_id": "603986-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    },
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "expected_primary_name": "中芯国际2025Q1观察：晶圆代工",
+      "citation_locators": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c"
+      ],
+      "case_id": "688981-TOP1",
+      "case_type": "top_1",
+      "prompt": "在当前公司、方向和期限下，应优先返回哪条主投资逻辑？"
+    },
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "expected_primary_name": "中芯国际2025Q1观察：晶圆代工",
+      "citation_locators": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c"
+      ],
+      "case_id": "688981-PAIR-1",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“中芯国际：下行周期后的需求与产能修复”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-783091f1749bc5f830e26bce",
+      "comparison_name": "中芯国际：下行周期后的需求与产能修复"
+    },
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "expected_primary_name": "中芯国际2025Q1观察：晶圆代工",
+      "citation_locators": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c"
+      ],
+      "case_id": "688981-PAIR-2",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“需求与出货”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-1577fa6bb74fb1383519980f",
+      "comparison_name": "需求与出货"
+    },
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "expected_primary_name": "中芯国际2025Q1观察：晶圆代工",
+      "citation_locators": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c"
+      ],
+      "case_id": "688981-PAIR-3",
+      "case_type": "pairwise",
+      "prompt": "主逻辑与“盈利质量”相比，哪条应优先？",
+      "comparison_topic_id": "TOPIC-e948b957b623427b6348eea2",
+      "comparison_name": "盈利质量"
+    },
+    {
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "观察",
+      "horizon": "12M",
+      "expected_primary_topic_id": "TOPIC-023ccbf106341b07f6bd41f0",
+      "expected_primary_name": "中芯国际2025Q1观察：晶圆代工",
+      "citation_locators": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-d4f5e0e6d627a757",
+        "DOC-STG-9809c47c16a6c5a5d3e896c9#evidence-52e2f6940122495c"
+      ],
+      "case_id": "688981-GATE",
+      "case_type": "primary_gate",
+      "prompt": "当前候选是否满足主投资逻辑的指标、直接证据与模型复核门槛？",
+      "expected_primary_eligible": true
+    }
+  ]
+}

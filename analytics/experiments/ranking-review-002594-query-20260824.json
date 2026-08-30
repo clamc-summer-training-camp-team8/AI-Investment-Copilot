@@ -1,0 +1,1287 @@
+{
+  "security_id": "002594",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "object_type": "document_segment",
+  "query": "新能源汽车 销量 毛利率 海外扩张",
+  "instructions": "仅评价给定条目。主逻辑的经营事实、业绩、销量、价格、产能、产品审批、可验证指标及重要反证优先；会议通知、制度、法律意见、权益变动和重复材料降权。",
+  "candidates": [
+    {
+      "object_id": "DOC-EVT-002594-00017#paragraph-1",
+      "base_score": 0.7965,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6575,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6575,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00017#paragraph-1"
+      ],
+      "content": "公告标题：关于“质量回报双提升”行动方案的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00338#paragraph-1",
+      "base_score": 0.7975,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6625,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6625,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00338#paragraph-1"
+      ],
+      "content": "公告标题：关于“质量回报双提升”行动方案的进展公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00232#paragraph-1",
+      "base_score": 0.801,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6799999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6799999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00232#paragraph-1"
+      ],
+      "content": "公告标题：关于2024年度利润分配及资本公积金转增股本方案的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00358#paragraph-1",
+      "base_score": 0.6135,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.655,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.655,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00358#paragraph-1"
+      ],
+      "content": "公告标题：关于2025年度利润分配方案的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00173#paragraph-1",
+      "base_score": 0.7985,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6675,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6675,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00173#paragraph-1"
+      ],
+      "content": "公告标题：境外发行证券与上市相关保密和档案管理工作制度"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00330#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00330#paragraph-1"
+      ],
+      "content": "公告标题：2026年1月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00365#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00365#paragraph-1"
+      ],
+      "content": "公告标题：2026年3月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00378#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00378#paragraph-1"
+      ],
+      "content": "公告标题：2026年4月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00381#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00381#paragraph-1"
+      ],
+      "content": "公告标题：2026年5月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00390#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00390#paragraph-1"
+      ],
+      "content": "公告标题：2026年7月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00332#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00332#paragraph-1"
+      ],
+      "content": "公告标题：2026年2月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00388#paragraph-1",
+      "base_score": 0.6905,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00388#paragraph-1"
+      ],
+      "content": "公告标题：2026年6月产销快报"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00033#paragraph-1",
+      "base_score": 0.7935,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6425,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6425,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00033#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（暂停办理过户）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00143#paragraph-1",
+      "base_score": 0.611,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6425,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.6425,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00143#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（暂停办理过户）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00208#paragraph-1",
+      "base_score": 0.8015,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00208#paragraph-1"
+      ],
+      "content": "公告标题：关于在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00359#paragraph-1",
+      "base_score": 0.619,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6825,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.6825,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00359#paragraph-1"
+      ],
+      "content": "公告标题：关于在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00177#paragraph-1",
+      "base_score": 0.8055,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7025,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7025,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00177#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上的股东及其一致行动人持股比例被动稀释触及1%整数倍的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00301#paragraph-1",
+      "base_score": 0.7955,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6525,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6525,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00301#paragraph-1"
+      ],
+      "content": "公告标题：对外担保制度（2025年10月）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00077#paragraph-1",
+      "base_score": 0.79,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.625,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.625,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00077#paragraph-1"
+      ],
+      "content": "公告标题：回购报告书"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00108#paragraph-1",
+      "base_score": 0.8105,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7275,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7275,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00108#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二三年十二月三十一日止年度的末期股息-更新公司汇率、预设派发货币相关信息）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00220#paragraph-1",
+      "base_score": 0.796,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.655,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.655,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00220#paragraph-1"
+      ],
+      "content": "公告标题：关于2024年度利润分配方案的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00045#paragraph-1",
+      "base_score": 0.8025,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6875,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6875,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00045#paragraph-1"
+      ],
+      "content": "公告标题：关于公司在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00374#paragraph-1",
+      "base_score": 0.614,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6575,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.6575,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00374#paragraph-1"
+      ],
+      "content": "公告标题：提名委员会实施细则（2026年4月）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00383#paragraph-1",
+      "base_score": 0.7895,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6224999999999999,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6224999999999999,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00383#paragraph-1"
+      ],
+      "content": "公告标题：自愿公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00375#paragraph-1",
+      "base_score": 0.69,
+      "feature_scores": {
+        "business_materiality": 0.85,
+        "evidence_strength": 0.7,
+        "persistence": 0.7,
+        "verifiability": 1.0,
+        "company_specificity": 1.0,
+        "causal_strength": 0.8,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.95,
+        "completeness": 0.6375,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.6375,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "EVIDENCE_LINKED",
+        "METRIC_VERIFIABLE",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00375#paragraph-1"
+      ],
+      "content": "公告标题：2026年一季度报告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00385#paragraph-1",
+      "base_score": 0.621,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6925,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.6925,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00385#paragraph-1"
+      ],
+      "content": "公告标题：H股公告（截至二零二五年十二月三十一日止年度之末期股息（更新））"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00064#paragraph-1",
+      "base_score": 0.7915,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6325,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.6325,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00064#paragraph-1"
+      ],
+      "content": "公告标题：内部控制审计报告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00195#paragraph-1",
+      "base_score": 0.609,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.6325,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.6325,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00195#paragraph-1"
+      ],
+      "content": "公告标题：内部控制审计报告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00004#paragraph-1",
+      "base_score": 0.798,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00004#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00005#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00005#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00008#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00008#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00016#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00016#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00026#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00026#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00069#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00069#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00073#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00073#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00078#paragraph-1",
+      "base_score": 0.6155,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.665,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.665,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00078#paragraph-1"
+      ],
+      "content": "公告标题：关于持股5%以上股东部分股份解除质押的公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00046#paragraph-1",
+      "base_score": 0.793,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.64,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.64,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00046#paragraph-1"
+      ],
+      "content": "公告标题：2023年社会责任报告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00288#paragraph-1",
+      "base_score": 0.8055,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.7025,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.7025,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00288#paragraph-1"
+      ],
+      "content": "公告标题：防范控股股东、实际控制人及其他关联方资金占用管理制度（2025年10月）"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00057#paragraph-1",
+      "base_score": 0.791,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.63,
+        "temporal_validity": 1.0,
+        "novelty": 0.8,
+        "traceability": 1.0,
+        "statement_clarity": 0.63,
+        "low_value_penalty": 0.0
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00057#paragraph-1"
+      ],
+      "content": "公告标题：监事会决议公告"
+    },
+    {
+      "object_id": "DOC-EVT-002594-00201#paragraph-1",
+      "base_score": 0.6085,
+      "feature_scores": {
+        "business_materiality": 0.55,
+        "evidence_strength": 0.5,
+        "persistence": 0.7,
+        "verifiability": 0.55,
+        "company_specificity": 1.0,
+        "causal_strength": 0.5,
+        "recency": 0.7,
+        "conflict_attention": 0.1,
+        "source_authority": 0.9,
+        "direct_relevance": 0.55,
+        "completeness": 0.63,
+        "temporal_validity": 1.0,
+        "novelty": 0.2,
+        "traceability": 1.0,
+        "statement_clarity": 0.63,
+        "low_value_penalty": 0.35
+      },
+      "reason_codes": [
+        "SECURITY_MATCH",
+        "AS_OF_VALID",
+        "TRACEABLE_LOCATOR",
+        "NEAR_DUPLICATE"
+      ],
+      "citation_locators": [
+        "DOC-EVT-002594-00201#paragraph-1"
+      ],
+      "content": "公告标题：监事会决议公告"
+    }
+  ]
+}
