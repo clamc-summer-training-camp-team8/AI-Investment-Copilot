@@ -499,6 +499,7 @@ def upload_material(
             parser_version="demo-v1",
             raw_path=str(stored_path),
             body="\n".join(segment[3] for segment in SEGMENTS),
+            content_status="完整正文",
             visibility_label="公开",
             is_illustrative=False,
         )

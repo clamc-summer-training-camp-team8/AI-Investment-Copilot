@@ -11,10 +11,42 @@ import type {
   AssetInventory, AssetSearchHit,
   ThesisRevision, ThesisRevisionDiff,
   QuantBacktestRequest, QuantBacktestRun,
+  PortfolioBacktestRequest, PortfolioBacktestRun, QuantCatalog, QuantMarketDataset,
   GoldQualityReport,
 } from './types'
 
 export const useMock = import.meta.env.VITE_USE_MOCK === 'true'
+
+export interface AuthUser {
+  userId: string
+  teams: string[]
+  mustChangePassword: boolean
+}
+
+export interface AuthSession {
+  accessToken: string
+  expiresIn: number
+  user: AuthUser
+}
+
+export interface AuthConfig {
+  loginRequired: boolean
+  passwordChangeSupported: boolean
+}
+
+const accessTokenKey = 'ai-investment-copilot.access-token'
+
+export function getAccessToken() {
+  return sessionStorage.getItem(accessTokenKey)
+}
+
+export function setAccessToken(token: string) {
+  sessionStorage.setItem(accessTokenKey, token)
+}
+
+export function clearAccessToken() {
+  sessionStorage.removeItem(accessTokenKey)
+}
 
 // 受控演示也保留最小交互状态，避免确认、复核、重放等操作提交后又恢复成初始画面。
 const mockRelationStates = new Map<string, ConfirmationState>()
@@ -37,11 +69,23 @@ function toStatus(value: unknown): ConfirmationState {
 /** 浏览器只走 Vite 代理；身份头由开发代理或生产网关注入。 */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const isForm = init?.body instanceof FormData
+  const token = getAccessToken()
   const response = await fetch(path, {
     ...init,
-    headers: { ...(isForm ? {} : { 'Content-Type': 'application/json' }), ...(init?.headers ?? {}) },
+    headers: {
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers ?? {}),
+    },
   })
-  if (response.status === 401) throw new Error('身份服务不可用，请刷新页面或联系管理员。')
+  if (response.status === 401) {
+    if (token) {
+      clearAccessToken()
+      window.dispatchEvent(new Event('copilot:unauthorized'))
+    }
+    const detail = await response.json().catch(() => null) as { detail?: unknown } | null
+    throw new Error(typeof detail?.detail === 'string' ? detail.detail : '登录已失效，请重新登录。')
+  }
   if (response.status === 403) throw new Error('当前账户可查看该对象，但没有此操作权限。')
   if (response.status === 404) throw new Error('对象不存在、已解除关联或无访问权限。')
   if (!response.ok) {
@@ -50,6 +94,48 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(typeof detail?.detail === 'string' ? detail.detail : typeof structured?.message === 'string' ? structured.message : `请求失败（${response.status}）`)
   }
   return response.json() as Promise<T>
+}
+
+function toAuthUser(value: { user_id: string; teams: string[]; must_change_password: boolean }): AuthUser {
+  return {
+    userId: value.user_id,
+    teams: value.teams,
+    mustChangePassword: value.must_change_password,
+  }
+}
+
+export async function getAuthConfig(): Promise<AuthConfig> {
+  const value = await request<{ login_required: boolean; password_change_supported: boolean }>('/api/auth/config')
+  return { loginRequired: value.login_required, passwordChangeSupported: value.password_change_supported }
+}
+
+export async function getCurrentUser(): Promise<AuthUser> {
+  const value = await request<{ user_id: string; teams: string[]; must_change_password: boolean }>('/api/auth/me')
+  return toAuthUser(value)
+}
+
+export async function login(userId: string, password: string): Promise<AuthSession> {
+  const value = await request<{
+    access_token: string
+    expires_in: number
+    user: { user_id: string; teams: string[]; must_change_password: boolean }
+  }>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId, password }),
+  })
+  return { accessToken: value.access_token, expiresIn: value.expires_in, user: toAuthUser(value.user) }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<AuthSession> {
+  const value = await request<{
+    access_token: string
+    expires_in: number
+    user: { user_id: string; teams: string[]; must_change_password: boolean }
+  }>('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  })
+  return { accessToken: value.access_token, expiresIn: value.expires_in, user: toAuthUser(value.user) }
 }
 
 function toThesis(item: Record<string, unknown>): ThesisDetail {
@@ -469,7 +555,7 @@ export async function getDocumentSegment(locator: string): Promise<DocumentSegme
 }
 
 export async function getAssetInventory(): Promise<AssetInventory> {
-  if (useMock) return { documents: 3789, revisions: 3789, ingestionRuns: 7578, segments: 3789, facts: 0, singleSegmentDocuments: 3789, pendingAuthorization: 3789, missingObjectArchive: 3789, semanticRuns: 3789, artifactSegments: 7578, artifactFacts: 0, artifactEvents: 3788 }
+  if (useMock) return { documents: 3792, revisions: 7582, ingestionRuns: 11373, segments: 4275, facts: 0, singleSegmentDocuments: 3790, pendingAuthorization: 0, missingObjectArchive: 0, semanticRuns: 3793, artifactSegments: 8275, artifactFacts: 1, artifactEvents: 7578, embeddings: 4275, titleIndexDocuments: 3784, archivedSourceDocuments: 3792, authorizationVerifiedDocuments: 3792 }
   const item = await request<Record<string, unknown>>('/api/assets/inventory')
   return {
     documents: Number(item.documents), revisions: Number(item.revisions),
@@ -479,6 +565,10 @@ export async function getAssetInventory(): Promise<AssetInventory> {
     missingObjectArchive: Number(item.missing_object_archive),
     semanticRuns: Number(item.semantic_runs), artifactSegments: Number(item.artifact_segments),
     artifactFacts: Number(item.artifact_facts), artifactEvents: Number(item.artifact_events),
+    embeddings: Number(item.embeddings),
+    titleIndexDocuments: Number(item.title_index_documents),
+    archivedSourceDocuments: Number(item.archived_source_documents),
+    authorizationVerifiedDocuments: Number(item.authorization_verified_documents),
   }
 }
 
@@ -500,6 +590,7 @@ export async function searchAssets(query: string): Promise<AssetSearchHit[]> {
     vectorRank: item.vector_rank == null ? undefined : Number(item.vector_rank),
     ingestionRunId: item.ingestion_run_id ? String(item.ingestion_run_id) : undefined,
     embeddingVersion: item.embedding_version ? String(item.embedding_version) : undefined,
+    contentStatus: String(item.content_status ?? '待核验'),
   }))
 }
 
@@ -629,6 +720,111 @@ export async function runQuantBacktest(payload: QuantBacktestRequest): Promise<Q
       skippedSignals: (diagnostics.skipped_signals ?? []) as string[], warnings: (diagnostics.warnings ?? []) as string[],
     },
   }
+}
+
+function toMarketDataset(item: Record<string, unknown>): QuantMarketDataset {
+  return {
+    datasetId: String(item.dataset_id), dataVersion: String(item.data_version),
+    manifestSha256: String(item.manifest_sha256), authorizationStatus: String(item.authorization_status),
+    adjustment: String(item.adjustment), coverageStart: String(item.coverage_start),
+    coverageEnd: String(item.coverage_end), securities: (item.securities ?? []) as string[],
+    capabilities: (item.capabilities ?? {}) as Record<string, boolean>,
+    limitations: (item.limitations ?? []) as string[], status: String(item.status),
+  }
+}
+
+function toPortfolioRun(item: Record<string, unknown>): PortfolioBacktestRun {
+  const raw = item.result as Record<string, unknown>
+  const signalResearch = (raw.signal_research ?? {}) as Record<string, unknown>
+  const risk = (raw.risk_attribution ?? {}) as Record<string, unknown>
+  const diagnostics = (raw.diagnostics ?? {}) as Record<string, unknown>
+  return {
+    runId: String(item.run_id), name: String(item.name), marketDatasetId: String(item.market_dataset_id),
+    signalSetId: String(item.signal_set_id), methodologyVersion: String(item.methodology_version),
+    evaluationTrack: String(item.evaluation_track), generatedAt: String(item.generated_at),
+    parameters: (item.parameters ?? {}) as Record<string, unknown>,
+    result: {
+      metrics: (raw.metrics ?? {}) as Record<string, number | string | null>,
+      equityCurve: (raw.equity_curve ?? []) as Array<Record<string, number | string>>,
+      walkForward: (raw.walk_forward ?? []) as Array<Record<string, number | string>>,
+      signalResearch: {
+        observationCount: Number(signalResearch.observation_count ?? 0),
+        ic: signalResearch.ic as number | string | null | undefined,
+        rankIc: signalResearch.rank_ic as number | string | null | undefined,
+        quantileReturns: (signalResearch.quantile_returns ?? {}) as Record<string, number | string>,
+      },
+      riskAttribution: {
+        security: (risk.security ?? {}) as Record<string, number | string>,
+        industry: (risk.industry ?? {}) as Record<string, number | string>,
+        factorExposure: (risk.factor_exposure ?? {}) as Record<string, number | string>,
+        residual: (risk.residual ?? 0) as number | string,
+      },
+      diagnostics: {
+        acceptedSignalCount: Number(diagnostics.accepted_signal_count ?? 0),
+        inputSignalCount: Number(diagnostics.input_signal_count ?? 0),
+        skippedSignals: (diagnostics.skipped_signals ?? []) as string[],
+        blockedTrades: (diagnostics.blocked_trades ?? []) as string[],
+        warnings: (diagnostics.warnings ?? []) as string[],
+      },
+    },
+  }
+}
+
+export async function getQuantCatalog(): Promise<QuantCatalog> {
+  if (useMock) return {
+    defaultMarketDatasetId: null, marketDatasets: [], signalSets: [],
+    evaluationSeparation: {
+      semanticEvaluation: 'gold_semantic_accuracy', retrievalEvaluation: 'retrieval_ranking_quality',
+      alphaValidation: 'alpha_validation', hardRule: '回测收益不得替代金标准确率、检索门禁或人工确认',
+    },
+  }
+  const body = await request<Record<string, unknown>>('/api/quant/catalog')
+  const separation = body.evaluation_separation as Record<string, unknown>
+  return {
+    defaultMarketDatasetId: body.default_market_dataset_id == null ? null : String(body.default_market_dataset_id),
+    marketDatasets: ((body.market_datasets ?? []) as Array<Record<string, unknown>>).map(toMarketDataset),
+    signalSets: ((body.signal_sets ?? []) as Array<Record<string, unknown>>).map((item) => ({
+      signalSetId: String(item.signal_set_id), name: String(item.name), version: String(item.version),
+      contentSha256: String(item.content_sha256), signalCount: Number(item.signal_count),
+      humanConfirmedOnly: Boolean(item.human_confirmed_only), evaluationTrack: String(item.evaluation_track),
+      status: String(item.status),
+    })),
+    evaluationSeparation: {
+      semanticEvaluation: String(separation.semantic_evaluation),
+      retrievalEvaluation: String(separation.retrieval_evaluation),
+      alphaValidation: String(separation.alpha_validation), hardRule: String(separation.hard_rule),
+    },
+  }
+}
+
+export async function registerDefaultMarketDataset(): Promise<QuantMarketDataset> {
+  if (useMock) throw new Error('Mock 模式不登记真实行情')
+  return toMarketDataset(await request<Record<string, unknown>>('/api/quant/market-datasets/register-default', { method: 'POST' }))
+}
+
+export async function runPortfolioBacktest(payload: PortfolioBacktestRequest): Promise<PortfolioBacktestRun> {
+  if (useMock) throw new Error('Mock 模式不运行 Alpha 验证')
+  const body = {
+    name: payload.name, market_dataset_id: payload.marketDatasetId, signal_set_id: payload.signalSetId,
+    security_ids: payload.securityIds, start: payload.start, end: payload.end,
+    config: {
+      initial_capital: payload.config.initialCapital, rolling_window_days: payload.config.rollingWindowDays,
+      walk_forward_days: payload.config.walkForwardDays, rebalance_days: payload.config.rebalanceDays,
+      transaction_cost_bps: payload.config.transactionCostBps, slippage_bps: payload.config.slippageBps,
+      max_security_weight: payload.config.maxSecurityWeight, max_industry_weight: payload.config.maxIndustryWeight,
+      capacity_participation_rate: payload.config.capacityParticipationRate,
+      neutralize_industry: payload.config.neutralizeIndustry,
+      neutralize_market_cap: payload.config.neutralizeMarketCap,
+      enforce_capacity: payload.config.enforceCapacity, allow_short: payload.config.allowShort,
+    },
+  }
+  return toPortfolioRun(await request<Record<string, unknown>>('/api/quant/portfolio-backtests', { method: 'POST', body: JSON.stringify(body) }))
+}
+
+export async function listPortfolioBacktests(): Promise<PortfolioBacktestRun[]> {
+  if (useMock) return []
+  const body = await request<Array<Record<string, unknown>>>('/api/quant/portfolio-backtests')
+  return body.map(toPortfolioRun)
 }
 
 function mockGoldQuality(): GoldQualityReport {

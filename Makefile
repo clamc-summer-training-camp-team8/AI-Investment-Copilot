@@ -1,4 +1,4 @@
-.PHONY: help install hooks fmt lint lint-arch lint-contracts openapi type test test-integration check migrate revision seed asset-inventory backfill-assets rebuild-search build-embeddings evaluate-p1 backup restore-drill clean
+.PHONY: help install hooks fmt lint lint-arch lint-contracts lint-assets openapi type test test-integration check migrate revision seed asset-inventory backfill-assets backfill-source-archives rebuild-search build-embeddings evaluate-p1 backup restore-drill clean
 .DEFAULT_GOAL := help
 
 PY := python3
@@ -10,6 +10,7 @@ help:
 	@echo "lint              ruff 检查"
 	@echo "lint-arch         分层依赖契约检查"
 	@echo "lint-contracts    contracts/ 下 Schema 合法性检查 + OpenAPI 契约未漂移"
+	@echo "lint-assets       受控数据资产 SHA-256 与保留策略检查"
 	@echo "openapi           由 app/api 重新导出 contracts/api/openapi.yaml"
 	@echo "type              mypy 类型检查"
 	@echo "test              单元 + 契约测试（不需要数据库）"
@@ -20,6 +21,7 @@ help:
 	@echo "seed              导入样例包到本地库"
 	@echo "asset-inventory   盘点历史文档、修订、运行与授权状态"
 	@echo "backfill-assets    追加历史正文的语义切片、事实与事件运行"
+	@echo "backfill-source-archives  只追加回填历史原件、授权核验与归档运行"
 	@echo "rebuild-search    从事实表重建权限感知的切片索引"
 	@echo "build-embeddings  按模型版本增量生成 pgvector embedding"
 	@echo "evaluate-p1       运行独立金标基线与 RAG 离线评测"
@@ -51,6 +53,9 @@ lint-contracts:
 	$(PY) -m scripts.check_contracts
 	$(PY) -m scripts.export_openapi --check
 
+lint-assets:
+	$(PY) -m scripts.check_governed_assets --check
+
 openapi:
 	$(PY) -m scripts.export_openapi
 
@@ -64,7 +69,7 @@ test-integration:
 	pytest tests/integration -q
 
 # 与 CI 的三个 job 一致：lint / arch / test
-check: lint lint-arch lint-contracts type test
+check: lint lint-arch lint-contracts lint-assets type test
 
 migrate:
 	alembic upgrade head
@@ -81,6 +86,9 @@ asset-inventory:
 
 backfill-assets:
 	$(PY) -m scripts.backfill_asset_derivatives
+
+backfill-source-archives:
+	$(PY) -m scripts.backfill_source_archives
 
 rebuild-search:
 	$(PY) -m scripts.rebuild_search_index

@@ -57,6 +57,44 @@ def test_archive_upload_is_hash_addressed_and_removes_spool(tmp_path: Path) -> N
     assert path.exists() is False
 
 
+def test_same_source_object_gets_append_only_revision_for_each_document(tmp_path: Path) -> None:
+    first_path = tmp_path / "first.txt"
+    second_path = tmp_path / "second.txt"
+    first_path.write_text("同一不可变原件", encoding="utf-8")
+    second_path.write_text("同一不可变原件", encoding="utf-8")
+    uow = build_fake_uow()
+    store = MemoryObjectStore()
+    actor = Actor(user_id="researcher-1")
+
+    first, first_duplicate = assets.archive_upload(
+        uow,
+        path=first_path,
+        document_id="DOC-1",
+        source_filename="first.txt",
+        media_type="text/plain",
+        published_at=datetime.fromisoformat("2026-08-12T09:00:00+08:00"),
+        actor=actor,
+        object_store=store,  # type: ignore[arg-type]
+    )
+    second, second_duplicate = assets.archive_upload(
+        uow,
+        path=second_path,
+        document_id="DOC-2",
+        source_filename="second.txt",
+        media_type="text/plain",
+        published_at=datetime.fromisoformat("2026-08-12T09:00:00+08:00"),
+        actor=actor,
+        object_store=store,  # type: ignore[arg-type]
+    )
+
+    assert first_duplicate is False
+    assert second_duplicate is True
+    assert first.revision_id != second.revision_id
+    assert first.object_key == second.object_key
+    assert second.document_id == "DOC-2"
+    assert len(uow.assets.revisions) == 2
+
+
 def test_ingestion_runs_are_append_only_for_reprocessing() -> None:
     uow = build_fake_uow()
     uow.assets.add_revision(

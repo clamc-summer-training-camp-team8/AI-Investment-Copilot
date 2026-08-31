@@ -1,0 +1,39 @@
+{
+	email {$ACME_EMAIL}
+	# Browsers commonly omit SNI for literal IP URLs.  Use the configured site
+	# as the default certificate subject so the temporary IP-based integration
+	# entrance can still complete TLS before a real domain is attached.
+	default_sni {$INTEGRATION_SITE_ADDRESS}
+	admin off
+}
+
+{$INTEGRATION_SITE_ADDRESS} {
+	tls {$INTEGRATION_TLS_ARGUMENT}
+	encode zstd gzip
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	@gateway_health path /healthz
+	respond @gateway_health "ok" 200
+
+	route {
+		@root path /
+		redir @root /operations 302
+
+		@api path /api/*
+		reverse_proxy @api api:8000
+
+		reverse_proxy web:80
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

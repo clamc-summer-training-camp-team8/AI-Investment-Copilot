@@ -46,6 +46,9 @@ class SourceRecord:
     base_url: str | None = None
     license_note: str | None = None
     active: bool = True
+    authorization_basis: str | None = None
+    authorization_verified_by: str | None = None
+    authorization_verified_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -420,6 +423,7 @@ class DocumentRecord:
     raw_path: str | None = None
     body: str | None = None
     visibility_label: str = "内部"
+    content_status: str = "待核验"
     is_illustrative: bool = False
     ingested_at: datetime | None = None
     deleted_at: datetime | None = None
@@ -439,6 +443,10 @@ class DocumentRevisionRecord:
     source_id: str | None = None
     source_url: str | None = None
     authorization_status: str = "待确认"
+    authorization_basis: str | None = None
+    authorization_verified_by: str | None = None
+    authorization_verified_at: datetime | None = None
+    content_status: str = "待核验"
     uploaded_by: str = "system"
     published_at: datetime | None = None
     created_at: datetime | None = None
@@ -500,6 +508,7 @@ class AssetSearchHitRecord:
     embedding_version: str | None = None
     published_at: datetime | None = None
     source: str = ""
+    content_status: str = "待核验"
 
 
 @dataclass(frozen=True)
@@ -674,6 +683,7 @@ class AssetRepo(Protocol):
     def add_revision(self, record: DocumentRevisionRecord) -> None: ...
     def get_revision(self, revision_id: str) -> DocumentRevisionRecord | None: ...
     def find_revision_by_hash(self, content_hash: str) -> DocumentRevisionRecord | None: ...
+    def latest_archived_revision(self, document_id: str) -> DocumentRevisionRecord | None: ...
     def document_id_by_source_url(self, source_url: str) -> str | None: ...
     def update_revision(self, record: DocumentRevisionRecord) -> None: ...
     def add_run(self, record: IngestionRunRecord) -> None: ...
@@ -866,6 +876,68 @@ class AdjudicationDecisionRepo(Protocol):
     def add(self, record: AdjudicationDecisionRecord) -> AdjudicationDecisionRecord: ...
 
 
+@dataclass(frozen=True)
+class QuantMarketDatasetRecord:
+    dataset_id: str
+    data_version: str
+    manifest_path: str
+    manifest_sha256: str
+    source_policy_id: str
+    authorization_status: str
+    adjustment: str
+    coverage_start: date
+    coverage_end: date
+    securities: list[str]
+    capabilities: dict[str, bool]
+    limitations: list[str]
+    status: str
+    frozen_by: str
+    frozen_at: datetime
+
+
+@dataclass(frozen=True)
+class QuantSignalSetRecord:
+    signal_set_id: str
+    name: str
+    version: str
+    content_sha256: str
+    signals: list[dict]
+    signal_count: int
+    human_confirmed_only: bool
+    evaluation_track: str
+    status: str
+    frozen_by: str
+    frozen_at: datetime
+
+
+@dataclass(frozen=True)
+class QuantBacktestRecord:
+    run_id: str
+    name: str
+    market_dataset_id: str
+    signal_set_id: str
+    methodology_version: str
+    parameters: dict
+    result: dict
+    evaluation_track: str
+    requested_by: str
+    generated_at: datetime
+
+
+class QuantRepo(Protocol):
+    def add_market_dataset(self, record: QuantMarketDatasetRecord) -> None: ...
+    def get_market_dataset(self, dataset_id: str) -> QuantMarketDatasetRecord | None: ...
+    def list_market_datasets(self) -> list[QuantMarketDatasetRecord]: ...
+    def add_signal_set(self, record: QuantSignalSetRecord) -> None: ...
+    def get_signal_set(self, signal_set_id: str) -> QuantSignalSetRecord | None: ...
+    def list_signal_sets(self) -> list[QuantSignalSetRecord]: ...
+    def add_backtest(self, record: QuantBacktestRecord) -> None: ...
+    def get_backtest(self, run_id: str) -> QuantBacktestRecord | None: ...
+    def list_backtests(
+        self, requested_by: str, *, limit: int = 50
+    ) -> list[QuantBacktestRecord]: ...
+
+
 @dataclass
 class UnitOfWork:
     """一次业务动作的仓储集合。
@@ -892,3 +964,4 @@ class UnitOfWork:
     adjudications: AdjudicationDecisionRepo
     assets: AssetRepo
     ranking: RankingPriorRepo
+    quant: QuantRepo

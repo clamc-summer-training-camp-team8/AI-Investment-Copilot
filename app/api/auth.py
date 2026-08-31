@@ -15,7 +15,9 @@ class AuthenticationFailed(ValueError):
     """The request did not carry a valid authenticated identity."""
 
 
-def verify_bearer_token(token: str, settings: Settings) -> Actor:
+def verify_bearer_token(
+    token: str, settings: Settings, *, allow_password_change_required: bool = False
+) -> Actor:
     if settings.auth_jwt_secret is None:
         raise AuthenticationFailed("服务端未配置 AUTH_JWT_SECRET")
     secret = settings.auth_jwt_secret.get_secret_value()
@@ -44,4 +46,14 @@ def verify_bearer_token(token: str, settings: Settings) -> Actor:
         teams = raw_teams
     else:
         raise AuthenticationFailed("Bearer token 的 teams 必须是字符串数组")
-    return Actor(user_id=subject.strip(), teams=frozenset(item.strip() for item in teams if item))
+    if claims.get("must_change_password") is True and not allow_password_change_required:
+        raise AuthenticationFailed("必须先修改初始密码")
+    raw_labels = claims.get("document_labels", ["公开", "内部"])
+    if not isinstance(raw_labels, list) or not all(isinstance(item, str) for item in raw_labels):
+        raise AuthenticationFailed("Bearer token 的 document_labels 必须是字符串数组")
+    return Actor(
+        user_id=subject.strip(),
+        teams=frozenset(item.strip() for item in teams if item),
+        is_admin=claims.get("is_admin") is True,
+        document_labels=frozenset(item.strip() for item in raw_labels if item),
+    )

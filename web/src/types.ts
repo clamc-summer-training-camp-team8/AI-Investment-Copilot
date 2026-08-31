@@ -354,6 +354,10 @@ export interface AssetInventory {
   artifactSegments: number
   artifactFacts: number
   artifactEvents: number
+  embeddings: number
+  titleIndexDocuments: number
+  archivedSourceDocuments: number
+  authorizationVerifiedDocuments: number
 }
 
 export interface AssetSearchHit {
@@ -367,6 +371,7 @@ export interface AssetSearchHit {
   vectorRank?: number
   ingestionRunId?: string
   embeddingVersion?: string
+  contentStatus: string
 }
 
 export interface ThesisRevision {
@@ -466,6 +471,102 @@ export interface QuantBacktestRun {
     skippedSignalCount: number
     skippedSignals: string[]
     warnings: string[]
+  }
+}
+
+export interface QuantMarketDataset {
+  datasetId: string
+  dataVersion: string
+  manifestSha256: string
+  authorizationStatus: string
+  adjustment: string
+  coverageStart: string
+  coverageEnd: string
+  securities: string[]
+  capabilities: Record<string, boolean>
+  limitations: string[]
+  status: string
+}
+
+export interface QuantSignalSet {
+  signalSetId: string
+  name: string
+  version: string
+  contentSha256: string
+  signalCount: number
+  humanConfirmedOnly: boolean
+  evaluationTrack: string
+  status: string
+}
+
+export interface QuantCatalog {
+  defaultMarketDatasetId: string | null
+  marketDatasets: QuantMarketDataset[]
+  signalSets: QuantSignalSet[]
+  evaluationSeparation: {
+    semanticEvaluation: string
+    retrievalEvaluation: string
+    alphaValidation: string
+    hardRule: string
+  }
+}
+
+export interface PortfolioBacktestRequest {
+  name: string
+  marketDatasetId: string
+  signalSetId: string
+  securityIds: string[]
+  start?: string
+  end?: string
+  config: {
+    initialCapital: number
+    rollingWindowDays: number
+    walkForwardDays: number
+    rebalanceDays: number
+    transactionCostBps: number
+    slippageBps: number
+    maxSecurityWeight: number
+    maxIndustryWeight: number
+    capacityParticipationRate: number
+    neutralizeIndustry: boolean
+    neutralizeMarketCap: boolean
+    enforceCapacity: boolean
+    allowShort: boolean
+  }
+}
+
+export interface PortfolioBacktestRun {
+  runId: string
+  name: string
+  marketDatasetId: string
+  signalSetId: string
+  methodologyVersion: string
+  evaluationTrack: string
+  generatedAt: string
+  parameters: Record<string, unknown>
+  result: {
+    metrics: Record<string, number | string | null>
+    equityCurve: Array<Record<string, number | string>>
+    walkForward: Array<Record<string, number | string>>
+    signalResearch: {
+      observationCount: number
+      ic?: number | string | null
+      rankIc?: number | string | null
+      quantileReturns: Record<string, number | string>
+    }
+    riskAttribution: {
+      security: Record<string, number | string>
+      industry: Record<string, number | string>
+      factorExposure: Record<string, number | string>
+      residual: number | string
+    }
+    diagnostics: {
+      acceptedSignalCount: number
+      inputSignalCount: number
+      skippedSignals: string[]
+      blockedTrades: string[]
+      warnings: string[]
+    }
   }
 }
 

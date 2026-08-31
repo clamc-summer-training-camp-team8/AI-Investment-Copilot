@@ -5,6 +5,16 @@ venv/
 .env
 .env.*
 !.env.example
+!deploy/integration/.env.integration.example
+deploy/.env.integration
+deploy/release.env
+deploy/integration/users.caddy
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
@@ -18,6 +28,8 @@ storage/
 # Codex/文档工具的本地中间文件。
 /.codex_tmp/
 /.tmp/
+/outputs/.tmp-*/
+/outputs/.*_tmp_path.txt
 
 # Node 依赖不入库，包括 outputs 内用于生成预览的临时依赖。
 node_modules/

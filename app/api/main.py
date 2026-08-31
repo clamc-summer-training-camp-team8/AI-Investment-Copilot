@@ -26,6 +26,9 @@ def create_app() -> FastAPI:
             "系统输出候选信号与状态建议，不产生任何交易、评级或调仓指令。"
         ),
         debug=settings.debug,
+        docs_url="/docs" if settings.env == "local" else None,
+        redoc_url=None,
+        openapi_url="/openapi.json" if settings.env == "local" else None,
     )
     application.add_middleware(
         CORSMiddleware,
@@ -86,6 +89,7 @@ def create_app() -> FastAPI:
     from app.api.routers import (
         agent,
         assets,
+        authentication,
         demo,
         documents,
         evaluation,
@@ -101,6 +105,7 @@ def create_app() -> FastAPI:
         workbench,
     )
 
+    application.include_router(authentication.router, prefix="/api")
     application.include_router(securities.router, prefix="/api")
     application.include_router(agent.router, prefix="/api")
     application.include_router(assets.router, prefix="/api")

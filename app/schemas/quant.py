@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -112,3 +112,99 @@ class QuantBacktestOut(_FromAttributes):
     name: str
     generated_at: datetime
     result: QuantResultOut
+
+
+class FrozenSignalIn(QuantSignalIn):
+    security_id: Annotated[str, Field(min_length=1, max_length=64)]
+    confirmation_status: Literal["已确认"]
+    source_evidence_id: Annotated[str, Field(min_length=1, max_length=96)]
+    source_relation_id: Annotated[str, Field(min_length=1, max_length=96)]
+
+
+class FreezeSignalSetIn(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=255)]
+    version: Annotated[str, Field(min_length=1, max_length=96)]
+    signals: Annotated[list[FrozenSignalIn], Field(min_length=1, max_length=10000)]
+
+
+class QuantMarketDatasetOut(_FromAttributes):
+    dataset_id: str
+    data_version: str
+    manifest_sha256: str
+    source_policy_id: str
+    authorization_status: str
+    adjustment: str
+    coverage_start: date
+    coverage_end: date
+    securities: list[str]
+    capabilities: dict[str, bool]
+    limitations: list[str]
+    status: str
+    frozen_by: str
+    frozen_at: datetime
+
+
+class QuantSignalSetOut(_FromAttributes):
+    signal_set_id: str
+    name: str
+    version: str
+    content_sha256: str
+    signal_count: int
+    human_confirmed_only: bool
+    evaluation_track: str
+    status: str
+    frozen_by: str
+    frozen_at: datetime
+
+
+class EvaluationSeparationOut(BaseModel):
+    semantic_evaluation: str = "gold_semantic_accuracy"
+    retrieval_evaluation: str = "retrieval_ranking_quality"
+    alpha_validation: str = "alpha_validation"
+    hard_rule: str = "回测收益不得替代金标准确率、检索门禁或人工确认"
+
+
+class QuantCatalogOut(BaseModel):
+    default_market_dataset_id: str | None = None
+    market_datasets: list[QuantMarketDatasetOut]
+    signal_sets: list[QuantSignalSetOut]
+    evaluation_separation: EvaluationSeparationOut = Field(default_factory=EvaluationSeparationOut)
+
+
+class PortfolioConfigIn(BaseModel):
+    initial_capital: Annotated[Decimal, Field(gt=0)] = Decimal("1000000")
+    rolling_window_days: Annotated[int, Field(ge=2, le=756)] = 60
+    walk_forward_days: Annotated[int, Field(ge=1, le=252)] = 20
+    rebalance_days: Annotated[int, Field(ge=1, le=252)] = 5
+    transaction_cost_bps: Annotated[Decimal, Field(ge=0, le=1000)] = Decimal(10)
+    slippage_bps: Annotated[Decimal, Field(ge=0, le=1000)] = Decimal(5)
+    max_security_weight: Annotated[Decimal, Field(gt=0, le=1)] = Decimal("0.20")
+    max_industry_weight: Annotated[Decimal, Field(gt=0, le=1)] = Decimal("0.40")
+    capacity_participation_rate: Annotated[Decimal, Field(gt=0, le=1)] = Decimal("0.10")
+    neutralize_industry: bool = True
+    neutralize_market_cap: bool = False
+    enforce_capacity: bool = True
+    allow_short: bool = True
+
+
+class PortfolioBacktestIn(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=255)] = "组合事件信号研究"
+    market_dataset_id: Annotated[str, Field(min_length=1, max_length=96)]
+    signal_set_id: Annotated[str, Field(min_length=1, max_length=96)]
+    security_ids: Annotated[list[str], Field(min_length=1, max_length=1000)]
+    start: date | None = None
+    end: date | None = None
+    config: PortfolioConfigIn = Field(default_factory=PortfolioConfigIn)
+
+
+class PortfolioBacktestOut(_FromAttributes):
+    run_id: str
+    name: str
+    market_dataset_id: str
+    signal_set_id: str
+    methodology_version: str
+    parameters: dict[str, Any]
+    result: dict[str, Any]
+    evaluation_track: str
+    requested_by: str
+    generated_at: datetime

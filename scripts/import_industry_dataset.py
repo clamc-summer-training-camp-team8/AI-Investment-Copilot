@@ -309,7 +309,7 @@ def _seed_events_and_evidence(
         document_id = _document_id(item["event_id"])
         source_url = item["url"]
         title = item["title"]
-        source_text = f"公告标题：{title}"
+        source_text = f"公告标题（非正文）：{title}"
         content_hash = _source_hash(source_url, title, item["disclosure_time"])
         session.merge(
             Document(
@@ -322,13 +322,15 @@ def _seed_events_and_evidence(
                 content_hash=content_hash,
                 parser_version=ANNOUNCEMENT_VERSION,
                 raw_path=source_url,
-                # 数据集未保存公告正文；这里保存的仅是逐字来源标题，不能冒充正文。
-                body=source_text,
+                # 数据集未保存公告正文。标题只作为元数据索引，不写入正文列。
+                body=None,
+                content_status="标题索引",
                 visibility_label="公开",
                 is_illustrative=False,
             )
         )
         # DocumentSegment 的主键是自增 ID，不能用 merge 判断重复；按唯一定位键更新。
+        # 现有引用路由使用 paragraph ordinal；真实性边界由 content_status/content_kind 表达。
         locator = f"{document_id}#paragraph-1"
         segment = (
             session.query(DocumentSegment)
@@ -345,10 +347,14 @@ def _seed_events_and_evidence(
                     locator=locator,
                     ordinal=1,
                     content=source_text,
+                    content_kind="title_index",
+                    extraction_method="metadata",
                 )
             )
         else:
             segment.content = source_text
+            segment.content_kind = "title_index"
+            segment.extraction_method = "metadata"
         session.merge(
             Event(
                 event_id=item["event_id"],
@@ -387,7 +393,7 @@ def _seed_events_and_evidence(
                 strength_score=Decimal("0.70"),
                 horizon="中期",
                 is_direct=False,
-                evidence_locator=f"{document_id}#paragraph-1",
+                evidence_locator=locator,
                 # 只使用公开数据集已保存的标题，完整正文通过 source_url 打开核验。
                 fact_excerpt=source_text,
                 source_document_id=document_id,
@@ -400,7 +406,10 @@ def _seed_events_and_evidence(
                 prompt_version="human-double-label-v1",
                 confirmation_status="待确认",
                 review_status="通过",
-                review_note=("双标注一致；本地数据包仅保留公告标题，完整原文请通过公开链接核验。"),
+                review_note=(
+                    "双标注一致；当前内容状态为“标题索引”，不是公告正文；"
+                    "完整原件通过公开链接核验。"
+                ),
             )
         )
         # 新库先跑迁移再导入时没有历史 Evidence 可回填，导入脚本需同时创建初始关联。

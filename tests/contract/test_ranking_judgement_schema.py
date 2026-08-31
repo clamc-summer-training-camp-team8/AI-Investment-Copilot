@@ -13,6 +13,10 @@ def test_ranking_judgement_contract_accepts_structured_result() -> None:
     Draft202012Validator.check_schema(schema)
     Draft202012Validator(schema).validate(
         {
+            "model_version": "ranking-judge-v1",
+            "prompt_version": "ranking-judge-prompt-v1",
+            "generated_at": "2026-08-30T10:00:00Z",
+            "ai_status": "候选",
             "verdict": "accept",
             "confidence": 0.9,
             "ranking": [

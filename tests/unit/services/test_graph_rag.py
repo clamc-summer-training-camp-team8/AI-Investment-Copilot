@@ -22,7 +22,12 @@ from app.core.enums import (
     Importance,
     ThesisStatus,
 )
-from app.services.graph_rag import build_graph_rag_corpus, build_graph_retriever
+from app.services.graph_rag import (
+    build_graph_rag_corpus,
+    build_graph_retriever,
+    graph_snapshot_metadata,
+    verify_graph_snapshot_metadata,
+)
 from tests.fakes import build_fake_uow
 
 
@@ -184,6 +189,11 @@ def test_service_生成稳定快照并记录各知识层清单() -> None:
     assert counts[GraphLayer.OBSERVATION] >= 1
     assert counts[GraphLayer.SEMANTIC] >= 2
     assert counts[GraphLayer.RESEARCH] >= 4
+
+    metadata = graph_snapshot_metadata(first.snapshot)
+    assert verify_graph_snapshot_metadata(metadata) is True
+    metadata["layers"][0]["content_hash"] = "0" * 64
+    assert verify_graph_snapshot_metadata(metadata) is False
 
 
 def test_service_as_of_在构建阶段排除未来来源() -> None:

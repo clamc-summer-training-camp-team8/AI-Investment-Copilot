@@ -23,6 +23,9 @@ class AssetInventoryOut(Base):
     artifact_facts: int = 0
     artifact_events: int = 0
     embeddings: int = 0
+    title_index_documents: int = 0
+    archived_source_documents: int = 0
+    authorization_verified_documents: int = 0
 
 
 class IngestionRunOut(Base):
@@ -60,6 +63,7 @@ class AssetSearchHitOut(Base):
     vector_rank: float | None = None
     ingestion_run_id: str | None = None
     embedding_version: str | None = None
+    content_status: str = "待核验"
 
 
 class DocumentVisibilityIn(Base):

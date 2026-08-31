@@ -33,6 +33,9 @@ from app.core.domain import (
     MetricDefinitionRecord,
     MetricMappingRecord,
     ObservationRecord,
+    QuantBacktestRecord,
+    QuantMarketDatasetRecord,
+    QuantSignalSetRecord,
     RankingPriorItemRecord,
     RankingPriorSnapshotRecord,
     ReviewTaskRecord,
@@ -90,6 +93,16 @@ class FakeAssetRepo:
         record = next((x for x in self.revisions.values() if x.content_hash == content_hash), None)
         return None if record is None else replace(record)
 
+    def latest_archived_revision(self, document_id: str) -> DocumentRevisionRecord | None:
+        records = [
+            item
+            for item in self.revisions.values()
+            if item.canonical_document_id == document_id
+            and item.object_key is not None
+            and item.tombstoned_at is None
+        ]
+        return replace(records[-1]) if records else None
+
     def document_id_by_source_url(self, source_url: str) -> str | None:
         record = next((x for x in self.revisions.values() if x.source_url == source_url), None)
         return record.canonical_document_id if record else None
@@ -143,6 +156,14 @@ class FakeAssetRepo:
                 item.object_key is None for item in self.revisions.values()
             ),
             "embeddings": 0,
+            "title_index_documents": 0,
+            "archived_source_documents": sum(
+                item.object_key is not None for item in self.revisions.values()
+            ),
+            "authorization_verified_documents": sum(
+                item.authorization_status in {"公开披露已核验", "用户授权上传", "项目自有"}
+                for item in self.revisions.values()
+            ),
         }
 
     def add_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None:
@@ -738,6 +759,41 @@ class FakeAdjudicationDecisionRepo:
         return replace(record)
 
 
+class FakeQuantRepo:
+    def __init__(self) -> None:
+        self.datasets: dict[str, QuantMarketDatasetRecord] = {}
+        self.signal_sets: dict[str, QuantSignalSetRecord] = {}
+        self.backtests: dict[str, QuantBacktestRecord] = {}
+
+    def add_market_dataset(self, record: QuantMarketDatasetRecord) -> None:
+        self.datasets[record.dataset_id] = record
+
+    def get_market_dataset(self, dataset_id: str) -> QuantMarketDatasetRecord | None:
+        return self.datasets.get(dataset_id)
+
+    def list_market_datasets(self) -> list[QuantMarketDatasetRecord]:
+        return sorted(self.datasets.values(), key=lambda item: item.frozen_at, reverse=True)
+
+    def add_signal_set(self, record: QuantSignalSetRecord) -> None:
+        self.signal_sets[record.signal_set_id] = record
+
+    def get_signal_set(self, signal_set_id: str) -> QuantSignalSetRecord | None:
+        return self.signal_sets.get(signal_set_id)
+
+    def list_signal_sets(self) -> list[QuantSignalSetRecord]:
+        return sorted(self.signal_sets.values(), key=lambda item: item.frozen_at, reverse=True)
+
+    def add_backtest(self, record: QuantBacktestRecord) -> None:
+        self.backtests.setdefault(record.run_id, record)
+
+    def get_backtest(self, run_id: str) -> QuantBacktestRecord | None:
+        return self.backtests.get(run_id)
+
+    def list_backtests(self, requested_by: str, *, limit: int = 50) -> list[QuantBacktestRecord]:
+        rows = [row for row in self.backtests.values() if row.requested_by == requested_by]
+        return sorted(rows, key=lambda item: item.generated_at, reverse=True)[:limit]
+
+
 def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
     return UnitOfWork(
         securities=FakeSecurityRepo(),
@@ -758,4 +814,5 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         adjudications=FakeAdjudicationDecisionRepo(),
         assets=FakeAssetRepo(),
         ranking=FakeRankingPriorRepo(),
+        quant=FakeQuantRepo(),
     )

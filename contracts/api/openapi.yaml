@@ -185,6 +185,10 @@ components:
       type: object
     AssetInventoryOut:
       properties:
+        archived_source_documents:
+          default: 0
+          title: Archived Source Documents
+          type: integer
         artifact_events:
           default: 0
           title: Artifact Events
@@ -196,6 +200,10 @@ components:
         artifact_segments:
           default: 0
           title: Artifact Segments
+          type: integer
+        authorization_verified_documents:
+          default: 0
+          title: Authorization Verified Documents
           type: integer
         documents:
           title: Documents
@@ -231,6 +239,10 @@ components:
         single_segment_documents:
           title: Single Segment Documents
           type: integer
+        title_index_documents:
+          default: 0
+          title: Title Index Documents
+          type: integer
       required:
       - documents
       - revisions
@@ -244,6 +256,10 @@ components:
       properties:
         content:
           title: Content
+          type: string
+        content_status:
+          default: 待核验
+          title: Content Status
           type: string
         document_id:
           title: Document Id
@@ -341,6 +357,58 @@ components:
       - page
       title: AuditPage
       type: object
+    AuthConfigOut:
+      properties:
+        login_required:
+          title: Login Required
+          type: boolean
+        password_change_supported:
+          title: Password Change Supported
+          type: boolean
+      required:
+      - login_required
+      - password_change_supported
+      title: AuthConfigOut
+      type: object
+    AuthSessionOut:
+      properties:
+        access_token:
+          title: Access Token
+          type: string
+        expires_in:
+          title: Expires In
+          type: integer
+        token_type:
+          default: bearer
+          title: Token Type
+          type: string
+        user:
+          $ref: '#/components/schemas/AuthUserOut'
+      required:
+      - access_token
+      - expires_in
+      - user
+      title: AuthSessionOut
+      type: object
+    AuthUserOut:
+      properties:
+        must_change_password:
+          title: Must Change Password
+          type: boolean
+        teams:
+          items:
+            type: string
+          title: Teams
+          type: array
+        user_id:
+          title: User Id
+          type: string
+      required:
+      - user_id
+      - teams
+      - must_change_password
+      title: AuthUserOut
+      type: object
     Body_upload_demo_material_api_demo_theses__thesis_id__documents_post:
       properties:
         demo_case_id:
@@ -384,6 +452,23 @@ components:
       required:
       - file
       title: Body_upload_document_api_jobs_documents_post
+      type: object
+    ChangePasswordIn:
+      properties:
+        current_password:
+          maxLength: 256
+          minLength: 1
+          title: Current Password
+          type: string
+        new_password:
+          maxLength: 128
+          minLength: 10
+          title: New Password
+          type: string
+      required:
+      - current_password
+      - new_password
+      title: ChangePasswordIn
       type: object
     CitationContextOut:
       properties:
@@ -569,6 +654,26 @@ components:
       required:
       - visibility_label
       title: DocumentVisibilityIn
+      type: object
+    EvaluationSeparationOut:
+      properties:
+        alpha_validation:
+          default: alpha_validation
+          title: Alpha Validation
+          type: string
+        hard_rule:
+          default: 回测收益不得替代金标准确率、检索门禁或人工确认
+          title: Hard Rule
+          type: string
+        retrieval_evaluation:
+          default: retrieval_ranking_quality
+          title: Retrieval Evaluation
+          type: string
+        semantic_evaluation:
+          default: gold_semantic_accuracy
+          title: Semantic Evaluation
+          type: string
+      title: EvaluationSeparationOut
       type: object
     EvidenceActionIn:
       description: 证据处置入参（FR-R-004 的四个动作）。
@@ -1153,6 +1258,99 @@ components:
       - graph_paths
       title: EvidenceRetrievalTraceOut
       type: object
+    FreezeSignalSetIn:
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          title: Name
+          type: string
+        signals:
+          items:
+            $ref: '#/components/schemas/FrozenSignalIn'
+          maxItems: 10000
+          minItems: 1
+          title: Signals
+          type: array
+        version:
+          maxLength: 96
+          minLength: 1
+          title: Version
+          type: string
+      required:
+      - name
+      - version
+      - signals
+      title: FreezeSignalSetIn
+      type: object
+    FrozenSignalIn:
+      properties:
+        confidence:
+          anyOf:
+          - maximum: 1.0
+            minimum: 0.0
+            type: number
+          - type: string
+          default: '1'
+          title: Confidence
+        confirmation_status:
+          const: 已确认
+          title: Confirmation Status
+          type: string
+        direction:
+          enum:
+          - 支持
+          - 冲突
+          - 中性
+          title: Direction
+          type: string
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        generated_at:
+          format: date-time
+          title: Generated At
+          type: string
+        security_id:
+          maxLength: 64
+          minLength: 1
+          title: Security Id
+          type: string
+        signal_id:
+          maxLength: 100
+          minLength: 1
+          title: Signal Id
+          type: string
+        source_evidence_id:
+          maxLength: 96
+          minLength: 1
+          title: Source Evidence Id
+          type: string
+        source_relation_id:
+          maxLength: 96
+          minLength: 1
+          title: Source Relation Id
+          type: string
+        strength:
+          default: 中
+          enum:
+          - 高
+          - 中
+          - 低
+          title: Strength
+          type: string
+      required:
+      - signal_id
+      - disclosed_at
+      - generated_at
+      - direction
+      - security_id
+      - confirmation_status
+      - source_evidence_id
+      - source_relation_id
+      title: FrozenSignalIn
+      type: object
     GoldAgreementOut:
       properties:
         agreement:
@@ -1593,6 +1791,11 @@ components:
       type: object
     HypothesisOut:
       properties:
+        causal_level:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Causal Level
         hypothesis_id:
           title: Hypothesis Id
           type: string
@@ -1607,6 +1810,11 @@ components:
           - type: string
           - type: 'null'
           title: Invalidation Rule
+        logic_dimension:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Logic Dimension
         mappings:
           items:
             $ref: '#/components/schemas/MetricMappingOut'
@@ -1622,6 +1830,11 @@ components:
           - type: string
           - type: 'null'
           title: Observation Window
+        quality_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Quality Warning
         statement:
           title: Statement
           type: string
@@ -1670,6 +1883,10 @@ components:
           type: string
         metric_id:
           title: Metric Id
+          type: string
+        metric_name:
+          default: ''
+          title: Metric Name
           type: string
         metric_version:
           title: Metric Version
@@ -1885,6 +2102,24 @@ components:
       - status
       title: JobStatusOut
       type: object
+    LoginIn:
+      properties:
+        password:
+          maxLength: 256
+          minLength: 1
+          title: Password
+          type: string
+        user_id:
+          maxLength: 64
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.-]+$
+          title: User Id
+          type: string
+      required:
+      - user_id
+      - password
+      title: LoginIn
+      type: object
     MetricMappingIn:
       properties:
         expectation_source:
@@ -1969,6 +2204,10 @@ components:
           type: string
         metric_id:
           title: Metric Id
+          type: string
+        metric_name:
+          default: ''
+          title: Metric Name
           type: string
         metric_version:
           title: Metric Version
@@ -2102,6 +2341,182 @@ components:
       - object_id
       - summary
       title: PendingItemOut
+      type: object
+    PortfolioBacktestIn:
+      properties:
+        config:
+          $ref: '#/components/schemas/PortfolioConfigIn'
+        end:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: End
+        market_dataset_id:
+          maxLength: 96
+          minLength: 1
+          title: Market Dataset Id
+          type: string
+        name:
+          default: 组合事件信号研究
+          maxLength: 255
+          minLength: 1
+          title: Name
+          type: string
+        security_ids:
+          items:
+            type: string
+          maxItems: 1000
+          minItems: 1
+          title: Security Ids
+          type: array
+        signal_set_id:
+          maxLength: 96
+          minLength: 1
+          title: Signal Set Id
+          type: string
+        start:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Start
+      required:
+      - market_dataset_id
+      - signal_set_id
+      - security_ids
+      title: PortfolioBacktestIn
+      type: object
+    PortfolioBacktestOut:
+      properties:
+        evaluation_track:
+          title: Evaluation Track
+          type: string
+        generated_at:
+          format: date-time
+          title: Generated At
+          type: string
+        market_dataset_id:
+          title: Market Dataset Id
+          type: string
+        methodology_version:
+          title: Methodology Version
+          type: string
+        name:
+          title: Name
+          type: string
+        parameters:
+          title: Parameters
+          type: object
+        requested_by:
+          title: Requested By
+          type: string
+        result:
+          title: Result
+          type: object
+        run_id:
+          title: Run Id
+          type: string
+        signal_set_id:
+          title: Signal Set Id
+          type: string
+      required:
+      - run_id
+      - name
+      - market_dataset_id
+      - signal_set_id
+      - methodology_version
+      - parameters
+      - result
+      - evaluation_track
+      - requested_by
+      - generated_at
+      title: PortfolioBacktestOut
+      type: object
+    PortfolioConfigIn:
+      properties:
+        allow_short:
+          default: true
+          title: Allow Short
+          type: boolean
+        capacity_participation_rate:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            maximum: 1.0
+            type: number
+          - type: string
+          default: '0.10'
+          title: Capacity Participation Rate
+        enforce_capacity:
+          default: true
+          title: Enforce Capacity
+          type: boolean
+        initial_capital:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            type: number
+          - type: string
+          default: '1000000'
+          title: Initial Capital
+        max_industry_weight:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            maximum: 1.0
+            type: number
+          - type: string
+          default: '0.40'
+          title: Max Industry Weight
+        max_security_weight:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            maximum: 1.0
+            type: number
+          - type: string
+          default: '0.20'
+          title: Max Security Weight
+        neutralize_industry:
+          default: true
+          title: Neutralize Industry
+          type: boolean
+        neutralize_market_cap:
+          default: false
+          title: Neutralize Market Cap
+          type: boolean
+        rebalance_days:
+          default: 5
+          maximum: 252.0
+          minimum: 1.0
+          title: Rebalance Days
+          type: integer
+        rolling_window_days:
+          default: 60
+          maximum: 756.0
+          minimum: 2.0
+          title: Rolling Window Days
+          type: integer
+        slippage_bps:
+          anyOf:
+          - maximum: 1000.0
+            minimum: 0.0
+            type: number
+          - type: string
+          default: '5'
+          title: Slippage Bps
+        transaction_cost_bps:
+          anyOf:
+          - maximum: 1000.0
+            minimum: 0.0
+            type: number
+          - type: string
+          default: '10'
+          title: Transaction Cost Bps
+        walk_forward_days:
+          default: 20
+          maximum: 252.0
+          minimum: 1.0
+          title: Walk Forward Days
+          type: integer
+      title: PortfolioConfigIn
       type: object
     ProcessingJobOut:
       properties:
@@ -2285,6 +2700,30 @@ components:
       - benchmark_close
       title: QuantBarIn
       type: object
+    QuantCatalogOut:
+      properties:
+        default_market_dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Default Market Dataset Id
+        evaluation_separation:
+          $ref: '#/components/schemas/EvaluationSeparationOut'
+        market_datasets:
+          items:
+            $ref: '#/components/schemas/QuantMarketDatasetOut'
+          title: Market Datasets
+          type: array
+        signal_sets:
+          items:
+            $ref: '#/components/schemas/QuantSignalSetOut'
+          title: Signal Sets
+          type: array
+      required:
+      - market_datasets
+      - signal_sets
+      title: QuantCatalogOut
+      type: object
     QuantConfigIn:
       properties:
         allow_short:
@@ -2377,6 +2816,76 @@ components:
       - drawdown
       - position
       title: QuantEquityPointOut
+      type: object
+    QuantMarketDatasetOut:
+      properties:
+        adjustment:
+          title: Adjustment
+          type: string
+        authorization_status:
+          title: Authorization Status
+          type: string
+        capabilities:
+          additionalProperties:
+            type: boolean
+          title: Capabilities
+          type: object
+        coverage_end:
+          format: date
+          title: Coverage End
+          type: string
+        coverage_start:
+          format: date
+          title: Coverage Start
+          type: string
+        data_version:
+          title: Data Version
+          type: string
+        dataset_id:
+          title: Dataset Id
+          type: string
+        frozen_at:
+          format: date-time
+          title: Frozen At
+          type: string
+        frozen_by:
+          title: Frozen By
+          type: string
+        limitations:
+          items:
+            type: string
+          title: Limitations
+          type: array
+        manifest_sha256:
+          title: Manifest Sha256
+          type: string
+        securities:
+          items:
+            type: string
+          title: Securities
+          type: array
+        source_policy_id:
+          title: Source Policy Id
+          type: string
+        status:
+          title: Status
+          type: string
+      required:
+      - dataset_id
+      - data_version
+      - manifest_sha256
+      - source_policy_id
+      - authorization_status
+      - adjustment
+      - coverage_start
+      - coverage_end
+      - securities
+      - capabilities
+      - limitations
+      - status
+      - frozen_by
+      - frozen_at
+      title: QuantMarketDatasetOut
       type: object
     QuantMetricsOut:
       properties:
@@ -2511,6 +3020,52 @@ components:
       - direction
       title: QuantSignalIn
       type: object
+    QuantSignalSetOut:
+      properties:
+        content_sha256:
+          title: Content Sha256
+          type: string
+        evaluation_track:
+          title: Evaluation Track
+          type: string
+        frozen_at:
+          format: date-time
+          title: Frozen At
+          type: string
+        frozen_by:
+          title: Frozen By
+          type: string
+        human_confirmed_only:
+          title: Human Confirmed Only
+          type: boolean
+        name:
+          title: Name
+          type: string
+        signal_count:
+          title: Signal Count
+          type: integer
+        signal_set_id:
+          title: Signal Set Id
+          type: string
+        status:
+          title: Status
+          type: string
+        version:
+          title: Version
+          type: string
+      required:
+      - signal_set_id
+      - name
+      - version
+      - content_sha256
+      - signal_count
+      - human_confirmed_only
+      - evaluation_track
+      - status
+      - frozen_by
+      - frozen_at
+      title: QuantSignalSetOut
+      type: object
     QuantTradeOut:
       properties:
         direction:
@@ -2561,6 +3116,235 @@ components:
       - holding_days
       - exit_reason
       title: QuantTradeOut
+      type: object
+    RankedItemOut:
+      properties:
+        content:
+          title: Content
+          type: string
+        document_id:
+          title: Document Id
+          type: string
+        feature_scores:
+          additionalProperties:
+            type: number
+          title: Feature Scores
+          type: object
+        final_score:
+          title: Final Score
+          type: number
+        graph_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Graph Score
+        keyword_score:
+          title: Keyword Score
+          type: number
+        locator:
+          title: Locator
+          type: string
+        metadata:
+          title: Metadata
+          type: object
+        object_id:
+          title: Object Id
+          type: string
+        object_type:
+          title: Object Type
+          type: string
+        prior_score:
+          title: Prior Score
+          type: number
+        rank:
+          title: Rank
+          type: integer
+        reason_codes:
+          items:
+            type: string
+          title: Reason Codes
+          type: array
+        retrieval_score:
+          title: Retrieval Score
+          type: number
+        vector_score:
+          title: Vector Score
+          type: number
+        visibility_label:
+          title: Visibility Label
+          type: string
+      required:
+      - object_id
+      - object_type
+      - document_id
+      - locator
+      - content
+      - visibility_label
+      - rank
+      - keyword_score
+      - vector_score
+      - graph_score
+      - retrieval_score
+      - prior_score
+      - final_score
+      - feature_scores
+      - reason_codes
+      - metadata
+      title: RankedItemOut
+      type: object
+    RankedSearchIn:
+      properties:
+        as_of:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: As Of
+        direction:
+          default: 看多
+          title: Direction
+          type: string
+        horizon:
+          default: 12M
+          title: Horizon
+          type: string
+        industries:
+          items:
+            type: string
+          maxItems: 20
+          title: Industries
+          type: array
+        object_types:
+          items:
+            type: string
+          title: Object Types
+          type: array
+        query:
+          maxLength: 500
+          minLength: 1
+          title: Query
+          type: string
+        ranking_profile:
+          default: document_search
+          title: Ranking Profile
+          type: string
+        security_ids:
+          items:
+            type: string
+          maxItems: 20
+          minItems: 1
+          title: Security Ids
+          type: array
+        top_k:
+          default: 10
+          maximum: 100.0
+          minimum: 1.0
+          title: Top K
+          type: integer
+      required:
+      - query
+      - security_ids
+      title: RankedSearchIn
+      type: object
+    RankedSearchOut:
+      properties:
+        embedding_version:
+          title: Embedding Version
+          type: string
+        items:
+          items:
+            $ref: '#/components/schemas/RankedItemOut'
+          title: Items
+          type: array
+        prior_snapshot_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prior Snapshot Id
+        ranking_profile:
+          title: Ranking Profile
+          type: string
+        retrieval_version:
+          default: prior-rag-v1
+          title: Retrieval Version
+          type: string
+      required:
+      - embedding_version
+      - prior_snapshot_id
+      - ranking_profile
+      - items
+      title: RankedSearchOut
+      type: object
+    RankedTopicOut:
+      properties:
+        base_score:
+          title: Base Score
+          type: number
+        citation_locators:
+          items:
+            type: string
+          title: Citation Locators
+          type: array
+        direction:
+          title: Direction
+          type: string
+        feature_scores:
+          additionalProperties:
+            type: number
+          title: Feature Scores
+          type: object
+        horizon:
+          title: Horizon
+          type: string
+        metadata:
+          title: Metadata
+          type: object
+        name:
+          title: Name
+          type: string
+        normalized_statement:
+          title: Normalized Statement
+          type: string
+        primary_eligible:
+          title: Primary Eligible
+          type: boolean
+        rank:
+          title: Rank
+          type: integer
+        reason_codes:
+          items:
+            type: string
+          title: Reason Codes
+          type: array
+        relations:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/TopicRelationOut'
+            type: array
+          title: Relations
+          type: object
+        score:
+          title: Score
+          type: number
+        topic_id:
+          title: Topic Id
+          type: string
+      required:
+      - topic_id
+      - name
+      - normalized_statement
+      - direction
+      - horizon
+      - rank
+      - score
+      - base_score
+      - feature_scores
+      - reason_codes
+      - primary_eligible
+      - citation_locators
+      - relations
+      - metadata
+      title: RankedTopicOut
       type: object
     ReprocessIn:
       properties:
@@ -2890,17 +3674,16 @@ components:
           title: Security Id
           type: string
         use_rag:
-          default: false
+          default: true
           title: Use Rag
           type: boolean
         view:
+          default: ''
           maxLength: 2000
-          minLength: 1
           title: View
           type: string
       required:
       - security_id
-      - view
       title: ThesisDraftIn
       type: object
     ThesisOut:
@@ -3215,6 +3998,90 @@ components:
       - limit
       - offset
       title: TimelinePageOut
+      type: object
+    TopicContextIn:
+      properties:
+        as_of:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: As Of
+        direction:
+          default: 看多
+          title: Direction
+          type: string
+        horizon:
+          default: 12M
+          title: Horizon
+          type: string
+        security_id:
+          maxLength: 64
+          minLength: 1
+          title: Security Id
+          type: string
+        top_k:
+          default: 3
+          maximum: 10.0
+          minimum: 1.0
+          title: Top K
+          type: integer
+      required:
+      - security_id
+      title: TopicContextIn
+      type: object
+    TopicContextOut:
+      properties:
+        alternative_topics:
+          items:
+            $ref: '#/components/schemas/RankedTopicOut'
+          title: Alternative Topics
+          type: array
+        primary_topic:
+          anyOf:
+          - $ref: '#/components/schemas/RankedTopicOut'
+          - type: 'null'
+        prior_snapshot_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prior Snapshot Id
+        retrieval_version:
+          default: logic-topic-prior-v1
+          title: Retrieval Version
+          type: string
+      required:
+      - prior_snapshot_id
+      - primary_topic
+      - alternative_topics
+      title: TopicContextOut
+      type: object
+    TopicRelationOut:
+      properties:
+        citation_locators:
+          items:
+            type: string
+          title: Citation Locators
+          type: array
+        confidence:
+          title: Confidence
+          type: number
+        object_id:
+          title: Object Id
+          type: string
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        relation:
+          title: Relation
+          type: string
+      required:
+      - object_id
+      - relation
+      - confidence
+      title: TopicRelationOut
       type: object
     TrendPointOut:
       description: 趋势上的一个点。值用字符串传，理由见模块文档第 1 条。
@@ -4167,6 +5034,138 @@ paths:
       summary: Publish Thesis Revision
       tags:
       - assets
+  /api/auth/change-password:
+    post:
+      operationId: change_password_api_auth_change_password_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Change Password
+      tags:
+      - authentication
+  /api/auth/config:
+    get:
+      operationId: auth_config_api_auth_config_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthConfigOut'
+          description: Successful Response
+      summary: Auth Config
+      tags:
+      - authentication
+  /api/auth/login:
+    post:
+      operationId: login_api_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Login
+      tags:
+      - authentication
+  /api/auth/me:
+    get:
+      operationId: current_user_api_auth_me_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Current User
+      tags:
+      - authentication
   /api/demo/theses/{thesis_id}/documents:
     post:
       operationId: upload_demo_material_api_demo_theses__thesis_id__documents_post
@@ -5054,6 +6053,57 @@ paths:
       summary: Get Job
       tags:
       - jobs
+  /api/jobs/{job_id}/reanalyze:
+    post:
+      description: 复用已入库段落重新执行 AI 阶段，不重新下载或解析原文件。
+      operationId: reanalyze_job_api_jobs__job_id__reanalyze_post
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Reanalyze Job
+      tags:
+      - jobs
   /api/jobs/{job_id}/replay:
     post:
       operationId: replay_job_api_jobs__job_id__replay_post
@@ -5219,6 +6269,290 @@ paths:
       summary: Create Backtest
       tags:
       - quant
+  /api/quant/catalog:
+    get:
+      operationId: get_catalog_api_quant_catalog_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuantCatalogOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Catalog
+      tags:
+      - quant
+  /api/quant/market-datasets/register-default:
+    post:
+      operationId: register_market_dataset_api_quant_market_datasets_register_default_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuantMarketDatasetOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Register Market Dataset
+      tags:
+      - quant
+  /api/quant/portfolio-backtests:
+    get:
+      operationId: list_portfolio_backtests_api_quant_portfolio_backtests_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PortfolioBacktestOut'
+                title: Response List Portfolio Backtests Api Quant Portfolio Backtests Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Portfolio Backtests
+      tags:
+      - quant
+    post:
+      operationId: create_portfolio_backtest_api_quant_portfolio_backtests_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortfolioBacktestIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioBacktestOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Portfolio Backtest
+      tags:
+      - quant
+  /api/quant/portfolio-backtests/{run_id}:
+    get:
+      operationId: get_portfolio_backtest_api_quant_portfolio_backtests__run_id__get
+      parameters:
+      - in: path
+        name: run_id
+        required: true
+        schema:
+          title: Run Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioBacktestOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Portfolio Backtest
+      tags:
+      - quant
+  /api/quant/signal-sets:
+    post:
+      operationId: create_signal_set_api_quant_signal_sets_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreezeSignalSetIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuantSignalSetOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create Signal Set
+      tags:
+      - quant
   /api/radar/evidence:
     get:
       operationId: list_radar_evidence_api_radar_evidence_get
@@ -5305,6 +6639,106 @@ paths:
       summary: List Radar Evidence
       tags:
       - radar
+  /api/retrieval/ranked-search:
+    post:
+      operationId: ranked_search_api_retrieval_ranked_search_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RankedSearchIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RankedSearchOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Ranked Search
+      tags:
+      - retrieval
+  /api/retrieval/topic-context:
+    post:
+      operationId: topic_context_api_retrieval_topic_context_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicContextIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicContextOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Topic Context
+      tags:
+      - retrieval
   /api/reviews:
     get:
       operationId: list_reviews_api_reviews_get
@@ -6686,6 +8120,57 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Publish Readiness
+      tags:
+      - thesis
+  /api/theses/{thesis_id}/quality-check:
+    post:
+      description: 用 AI 复核草稿逻辑，确定性规则负责兜底维度和重复检查。
+      operationId: recheck_thesis_quality_api_theses__thesis_id__quality_check_post
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThesisOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Recheck Thesis Quality
       tags:
       - thesis
   /api/theses/{thesis_id}/status:

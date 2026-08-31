@@ -97,6 +97,7 @@ def main() -> None:
                     parser_version="staged-facts-v1",
                     raw_path=source_url,
                     body=content,
+                    content_status="完整正文",
                     visibility_label="公开",
                     is_illustrative=False,
                 )

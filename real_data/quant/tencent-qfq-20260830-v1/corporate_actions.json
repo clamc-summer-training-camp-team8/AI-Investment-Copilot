@@ -1,0 +1,7 @@
+{
+  "adjustment_contract": "供应商前复权序列已反映除权除息；独立事件只做审计，不重复调整价格",
+  "coverage_status": "provider_adjustment_embedded; structured_event_feed_not_available",
+  "data_version": "tencent-qfq-20260830-v1-corporate-actions",
+  "events": [],
+  "schema_version": "corporate-action-ledger-v1"
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": "governed-asset-retention-v1",
+  "category_policies": {
+    "graph_snapshot": {
+      "minimum_retention_days": 730,
+      "minimum_versions": 2,
+      "deletion_gate": "不得删除任何被 evidence.retrieval_trace、盲测报告或启用决策引用的快照；到期后仍需数据负责人审批。"
+    },
+    "embedding": {
+      "minimum_retention_days": 730,
+      "minimum_versions": 2,
+      "deletion_gate": "至少保留当前和上一 embedding 版本；被 ingestion_run 或评测报告引用的版本永久保留其规格与哈希。"
+    },
+    "vocabulary": {
+      "minimum_retention_days": 3650,
+      "minimum_versions": 2,
+      "deletion_gate": "词表版本只追加；被 Graph Snapshot 引用的版本不得原地修改或删除。"
+    },
+    "gold_report": {
+      "minimum_retention_days": 3650,
+      "minimum_versions": 1,
+      "deletion_gate": "正式盲标、金标、唯一一次评测回执和启用决策永久保留，不得用揭盲回归覆盖。"
+    },
+    "market_data": {
+      "minimum_retention_days": 3650,
+      "minimum_versions": 2,
+      "deletion_gate": "被 quant_backtest_run 引用的行情、交易日历、公司行动登记簿和清单永久保留；新版本只能追加，禁止覆盖旧哈希。"
+    }
+  },
+  "asset_sets": [
+    {
+      "asset_set": "graph-snapshot-contract-v2",
+      "category": "graph_snapshot",
+      "version": "investment-knowledge-layers-v2",
+      "paths": ["app/services/graph_rag.py"]
+    },
+    {
+      "asset_set": "embedding-hash-char-2gram-v1",
+      "category": "embedding",
+      "version": "hash-char-2gram-v1",
+      "paths": [
+        "app/ai/embeddings.py",
+        "governance/embedding-specs/hash-char-2gram-v1.json"
+      ]
+    },
+    {
+      "asset_set": "metric-vocabulary-v1",
+      "category": "vocabulary",
+      "version": "metric-aliases-v1",
+      "paths": ["app/ai/data/metric_aliases.v1.json"]
+    },
+    {
+      "asset_set": "final-gold-v3",
+      "category": "gold_report",
+      "version": "final-gold-v3-20260826",
+      "globs": ["analytics/datasets/final-gold-v3-20260826/**/*"]
+    },
+    {
+      "asset_set": "graph-relevance-v6-final",
+      "category": "gold_report",
+      "version": "graph-relevance-v6-final",
+      "paths": [
+        "analytics/experiments/graph-relevance-v6-blind/benchmark.json",
+        "outputs/graph-rag-v6-activation-decision.json"
+      ],
+      "globs": ["outputs/graph-relevance-v6-final/**/*"]
+    },
+    {
+      "asset_set": "tencent-qfq-20260830-v1",
+      "category": "market_data",
+      "version": "tencent-qfq-20260830-v1",
+      "paths": [
+        "real_data/quant/tencent-qfq-20260830-v1/bars.json",
+        "real_data/quant/tencent-qfq-20260830-v1/calendar.json",
+        "real_data/quant/tencent-qfq-20260830-v1/corporate_actions.json",
+        "real_data/quant/tencent-qfq-20260830-v1/manifest.json"
+      ]
+    },
+    {
+      "asset_set": "akshare-qfq-20260830-v1",
+      "category": "market_data",
+      "version": "akshare-qfq-20260830-v1",
+      "paths": [
+        "real_data/quant/akshare-qfq-20260830-v1/bars.json",
+        "real_data/quant/akshare-qfq-20260830-v1/calendar.json",
+        "real_data/quant/akshare-qfq-20260830-v1/corporate_actions.json",
+        "real_data/quant/akshare-qfq-20260830-v1/source_snapshot.json",
+        "real_data/quant/akshare-qfq-20260830-v1/provenance.json",
+        "real_data/quant/akshare-qfq-20260830-v1/manifest.json"
+      ]
+    },
+    {
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "category": "market_data",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "paths": [
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/bars.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/calendar.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/corporate_actions.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/cross_source_quality.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/cross_source_snapshot.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/source_snapshot.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/provenance.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/tushare_permission_profile.json",
+        "real_data/quant/akshare-qfq-tushare120-20260830-v1/manifest.json"
+      ]
+    },
+    {
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "category": "market_data",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "paths": [
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/bars.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/calendar.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/corporate_actions.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/cross_source_quality.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/cross_source_snapshot.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/source_snapshot.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/tushare_reference_snapshot.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/provenance.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/tushare_permission_profile.json",
+        "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/manifest.json"
+      ]
+    }
+  ]
+}

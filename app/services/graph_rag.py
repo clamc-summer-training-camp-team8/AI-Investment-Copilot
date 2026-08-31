@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
+from pathlib import Path
 
 from app.ai.graph_rag import (
     EvidenceFusionGraphRetriever,
@@ -33,13 +34,11 @@ _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 GRAPH_SCHEMA_VERSION = "investment-knowledge-layers-v2"
 GRAPH_BUILDER_VERSION = "layered-corpus-builder-v1"
 
+_VOCABULARY_PATH = Path(__file__).resolve().parents[1] / "ai" / "data" / "metric_aliases.v1.json"
+_VOCABULARY_PAYLOAD = json.loads(_VOCABULARY_PATH.read_text(encoding="utf-8"))
 DEFAULT_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
-    "营业收入": ("营收", "收入", "revenue"),
-    "出货量": ("销量", "出货", "shipments"),
-    "平均销售价格": ("平均售价", "asp", "average selling price"),
-    "毛利率": ("gross margin",),
-    "订单量": ("订单", "orders"),
-    "产能利用率": ("稼动率", "capacity utilization"),
+    str(canonical): tuple(str(alias) for alias in aliases)
+    for canonical, aliases in _VOCABULARY_PAYLOAD["aliases"].items()
 }
 
 
@@ -72,7 +71,9 @@ class MetricVocabulary:
         )
 
 
-DEFAULT_METRIC_VOCABULARY = MetricVocabulary(DEFAULT_METRIC_ALIASES)
+DEFAULT_METRIC_VOCABULARY = MetricVocabulary(
+    DEFAULT_METRIC_ALIASES, version=str(_VOCABULARY_PAYLOAD["version"])
+)
 
 
 @dataclass(frozen=True)
@@ -726,6 +727,7 @@ def graph_snapshot_metadata(snapshot: GraphSnapshot) -> dict[str, object]:
         "vocabulary_version": snapshot.vocabulary_version,
         "built_at": snapshot.built_at.isoformat(),
         "as_of": snapshot.as_of.isoformat() if snapshot.as_of else None,
+        "include_pending": snapshot.include_pending,
         "thesis_ids": list(snapshot.thesis_ids),
         "security_ids": list(snapshot.security_ids),
         "layers": [
@@ -737,6 +739,50 @@ def graph_snapshot_metadata(snapshot: GraphSnapshot) -> dict[str, object]:
             for item in snapshot.layers
         ],
     }
+
+
+def verify_graph_snapshot_metadata(metadata: Mapping[str, object]) -> bool:
+    """Recompute the snapshot identity and reject tampered layer hashes or scope fields."""
+
+    layers = metadata.get("layers")
+    if not isinstance(layers, list) or not layers:
+        return False
+    normalized_layers: list[tuple[str, int, str]] = []
+    for raw in layers:
+        if not isinstance(raw, dict):
+            return False
+        content_hash = str(raw.get("content_hash", ""))
+        if len(content_hash) != 64 or any(char not in "0123456789abcdef" for char in content_hash):
+            return False
+        normalized_layers.append(
+            (str(raw.get("layer", "")), int(raw.get("node_count", -1)), content_hash)
+        )
+    as_of_value = metadata.get("as_of")
+    try:
+        as_of = datetime.fromisoformat(str(as_of_value)) if as_of_value else None
+    except ValueError:
+        return False
+    thesis_ids = metadata.get("thesis_ids")
+    security_ids = metadata.get("security_ids")
+    if not isinstance(thesis_ids, list | tuple) or not isinstance(security_ids, list | tuple):
+        return False
+    identity = json.dumps(
+        {
+            "schema_version": metadata.get("schema_version"),
+            "builder_version": metadata.get("builder_version"),
+            "vocabulary_version": metadata.get("vocabulary_version"),
+            "as_of": as_of,
+            "include_pending": bool(metadata.get("include_pending")),
+            "thesis_ids": tuple(str(item) for item in thesis_ids),
+            "security_ids": tuple(str(item) for item in security_ids),
+            "layers": normalized_layers,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        default=str,
+    )
+    expected = f"graph-snapshot:{sha256(identity.encode('utf-8')).hexdigest()[:24]}"
+    return metadata.get("snapshot_id") == expected
 
 
 def build_graph_rag_corpus(

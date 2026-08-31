@@ -66,6 +66,9 @@ def engine() -> Iterator[Engine]:
             "segment_search_index",
             "segment_embedding",
             "thesis_revision_draft",
+            "quant_market_dataset",
+            "quant_signal_set",
+            "quant_backtest_run",
         }.issubset(
             set(eng.dialect.get_table_names(conn))
         ), "数据库缺少 P0-3 迁移，请先执行 `.venv\\Scripts\\alembic.exe upgrade head`"
@@ -81,8 +84,13 @@ def engine() -> Iterator[Engine]:
                 "where table_schema='public' and table_name='document_revision'"
             )
         ).scalars()
-        assert "deleted_at" in set(document_columns)
-        assert "tombstoned_at" in set(revision_columns)
+        assert {"deleted_at", "content_status"}.issubset(set(document_columns))
+        assert {
+            "tombstoned_at",
+            "content_status",
+            "authorization_basis",
+            "authorization_verified_at",
+        }.issubset(set(revision_columns))
         assert conn.execute(
             text("select exists(select 1 from pg_extension where extname='vector')")
         ).scalar()

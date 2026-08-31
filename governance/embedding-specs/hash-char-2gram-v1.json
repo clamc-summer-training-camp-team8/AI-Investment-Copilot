@@ -1,0 +1,8 @@
+{
+  "schema_version": "embedding-spec-v1",
+  "embedding_version": "hash-char-2gram-v1",
+  "dimensions": 256,
+  "algorithm": "normalized character unigram + bigram + ASCII word feature hashing with blake2b",
+  "implementation_path": "app/ai/embeddings.py",
+  "implementation_sha256": "6fe667ab1359ad96fa2d6c747b1590bf7dcf56ec4019ee36d66ee6391625a8f8"
+}

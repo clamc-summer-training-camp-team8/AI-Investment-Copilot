@@ -112,4 +112,4 @@ export const demoProcessingJobs: ProcessingJob[] = [{ jobId: 'JOB-DEMO-DEAD', do
 
 export const demoReviewTasks: ReviewTask[] = [{ taskId: 'REV-DEMO-001', thesisId: 'THS-SMIC-001', trigger: '到期', priority: '高', assignee: 'analyst-mvp', state: '待处理', detail: { reason: '计划复核日临近', due_at: '2026-08-28' }, createdAt: '2026-08-25T10:00:00+08:00' }]
 
-export const demoAssetHits: AssetSearchHit[] = [{ documentId: 'DOC-SG-2025-AR', locator: 'DOC-SG-2025-AR#paragraph-184', content: demoEvidence.factExcerpt, visibilityLabel: '公开', rank: .912, retrievalMode: 'hybrid', keywordRank: .76, vectorRank: .94, ingestionRunId: 'RUN-SG-2025-AR-v2', embeddingVersion: 'hash-char-2gram-v1' }]
+export const demoAssetHits: AssetSearchHit[] = [{ documentId: 'DOC-SG-2025-AR', locator: 'DOC-SG-2025-AR#paragraph-184', content: demoEvidence.factExcerpt, visibilityLabel: '公开', rank: .912, retrievalMode: 'hybrid', keywordRank: .76, vectorRank: .94, ingestionRunId: 'RUN-SG-2025-AR-v2', embeddingVersion: 'hash-char-2gram-v1', contentStatus: '完整正文' }]

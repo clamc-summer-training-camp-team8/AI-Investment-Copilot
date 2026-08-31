@@ -1,0 +1,65 @@
+{
+  "data_version": "akshare-qfq-tushare120-20260830-v1",
+  "primary": {
+    "interfaces": [
+      "stock_zh_a_hist_tx",
+      "stock_hk_daily",
+      "stock_zh_index_daily_tx"
+    ],
+    "library": "akshare",
+    "library_version": "1.18.94",
+    "source_id": "akshare-research-primary-v1",
+    "upstream_providers": [
+      "Tencent Finance",
+      "Sina Finance"
+    ]
+  },
+  "request": {
+    "adjustment": "qfq",
+    "end": "2026-08-29",
+    "start": "2023-12-01"
+  },
+  "row_source_counts": {
+    "akshare.stock_hk_daily": 1288,
+    "akshare.stock_zh_a_hist_tx": 3984,
+    "akshare.stock_zh_a_hist_tx.volume_x100": 665,
+    "akshare.stock_zh_index_daily_tx": 1995
+  },
+  "schema_version": "market-provenance-v1",
+  "supplement": {
+    "available_endpoints": [
+      "daily",
+      "daily_basic",
+      "pro_bar",
+      "trade_cal"
+    ],
+    "configured": true,
+    "errors": {
+      "000538": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/分钟)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ],
+      "002371": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/分钟)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ],
+      "002594": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/分钟)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ],
+      "600276": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/分钟)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ],
+      "603259": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/小时)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ],
+      "603986": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/分钟)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ],
+      "688981": [
+        "daily_basic 不可用: Exception: 抱歉，您访问接口(daily_basic)频率超限(1次/小时)，具体频次详情：https://tushare.pro/document/1?doc_id=108。"
+      ]
+    },
+    "fallback_reasons": {},
+    "fallback_security_count": 0,
+    "library_version": "1.4.29",
+    "source_id": "tushare-optional-supplement-v1"
+  }
+}

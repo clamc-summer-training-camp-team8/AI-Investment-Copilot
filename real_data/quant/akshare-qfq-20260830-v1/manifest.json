@@ -1,0 +1,76 @@
+{
+  "adjustment": "前复权",
+  "adjustment_anchor_date": "2026-08-29",
+  "assets": {
+    "bars": {
+      "path": "bars.json",
+      "sha256": "3c4b5bb45693a474c6e7fc8ad667beb07597ecc68b3d0ff399a3292859fbcaf7"
+    },
+    "calendar": {
+      "path": "calendar.json",
+      "sha256": "1249986c9096a7761d5c3908ad834d771e9c1f6dd65dc996a24ceba5888d8617"
+    },
+    "corporate_actions": {
+      "path": "corporate_actions.json",
+      "sha256": "beddbbd046c740658ff097335577f199cd82b32047b906d1255c6f1d51244530"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "42af20999bae4261022c24fbc1b8ff48ae5c58f0f449e55cef06d92956cb21a4"
+    },
+    "source_snapshot": {
+      "path": "source_snapshot.json",
+      "sha256": "dfdb1f12ce19d3382a7cbfe113e4893780ea40df0e13d309a30dee92f387fbb1"
+    }
+  },
+  "authorization": {
+    "policy_id": "akshare-public-research-v1",
+    "scope": "项目内部研究、复算与审计；禁止对外再分发或用于实盘交易",
+    "status": "公开行情研究使用已核验"
+  },
+  "capabilities": {
+    "adjusted_close": true,
+    "capacity_constraint": true,
+    "daily_traded_notional": true,
+    "point_in_time_market_cap": false,
+    "price_limit_status": false,
+    "structured_corporate_action_events": false,
+    "suspension_by_missing_session": true,
+    "trading_calendar": true,
+    "tushare_supplement_configured": false
+  },
+  "coverage": {
+    "end": "2026-08-28",
+    "start": "2023-12-01"
+  },
+  "data_version": "akshare-qfq-20260830-v1",
+  "dataset_id": "MDS-akshare-qfq-20260830-v1",
+  "frozen_at": "2026-08-30T22:00:08.616753+08:00",
+  "limitations": [
+    "AKShare 是研究型聚合接口；上游网页或字段变化时构建必须失败并人工复核，禁止静默切源",
+    "前复权值随锚点可能变化；本版本已固定抓取截止日和源快照，后续只能新增版本",
+    "结构化公司行动事件源未启用；前复权效果可使用，不能声称完成逐事件复权审计",
+    "港股为 HKD、行业基准为 CNY；未冻结 FX 时不得把混币种超额收益解释为 Alpha",
+    "点时市值未全量覆盖；市值中性开关保持硬门禁关闭",
+    "A 股涨跌停状态未全量覆盖；不得声称完成涨跌停可成交性模拟",
+    "未配置 Tushare Token；付费补充字段缺失不影响 AKShare 主链路冻结"
+  ],
+  "schema_version": "frozen-market-dataset-v1",
+  "securities": [
+    "688981",
+    "603986",
+    "002371",
+    "600276",
+    "603259",
+    "000538",
+    "002594",
+    "00175",
+    "09868"
+  ],
+  "source_priority": [
+    "akshare",
+    "tushare_optional"
+  ],
+  "status": "frozen",
+  "timezone": "Asia/Shanghai"
+}

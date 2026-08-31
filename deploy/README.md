@@ -1,5 +1,15 @@
 # deploy — 环境编排
 
+共享集成环境按目标云选择部署说明：
+
+- 阿里云中国香港 ECS：
+  [`docs/operations/阿里云香港共享集成环境部署.md`](../docs/operations/阿里云香港共享集成环境部署.md)；
+- 华为云 IaC 方案：
+  [`docs/operations/华为云共享集成环境建设与验收.md`](../docs/operations/华为云共享集成环境建设与验收.md)。
+
+集成环境使用 `docker-compose.integration.yml`，与仅绑定本机回环地址的开发依赖
+`docker-compose.local.yml` 相互隔离。不要把 integration 的密钥文件提交到 Git。
+
 主要维护：架构与工程方向（问谁，不是评审权限）
 
 ## 环境
@@ -7,6 +17,7 @@
 | 环境 | 用途 | 数据 |
 | --- | --- | --- |
 | local | 本地开发 | 样例包虚构数据 |
+| integration | 团队共享集成与动态演示 | 团队授权的共享数据 |
 | pilot | 试点环境 | 真实授权资料 |
 
 PRD 12.2 要求测试与生产隔离。试点环境与本地不共用数据库、不共用对象存储、不共用模型端点。
@@ -50,9 +61,11 @@ Worker 与 Web 启动，并以 `/health/ready` 作为最终验收条件。Docker
 | `EMBEDDING_VERSION` | 向量版本；切换模型时新增版本，不覆盖旧向量 |
 | `RAG_HYBRID_*_WEIGHT` | P1 混合召回的关键词/向量权重 |
 | `RAG_EVENT_PILOT_*` | 默认关闭的事件→假设试点开关、稳定采样率和召回上限 |
+| `QUANT_DEFAULT_MARKET_MANIFEST` | 在线服务只读的显式默认冻结行情清单；候选登记不会自动改动该值 |
 | `LLM_*_COST_PER_MILLION` | 可选输入/输出 token 单价，仅用于审计成本估算 |
-| `AUTH_MODE` | 本地可用 `trusted_headers`；非本地必须为 `jwt` |
+| `AUTH_MODE` | 本地可用 `trusted_headers`；共享集成和试点必须为 `jwt` |
 | `AUTH_JWT_*` | JWT 签名密钥、算法、issuer、audience 与时钟偏差 |
+| `AUTH_ACCESS_TOKEN_MINUTES` | 访问令牌有效期，默认 480 分钟；最长不超过 24 小时 |
 | `CORS_ORIGINS` | 前端允许来源的 JSON 数组，不使用 `*` |
 | `RULE_*` | 规则阈值覆盖，变更需记版本 |
 
@@ -66,6 +79,9 @@ HTTP Provider 可以接入公有云或私有兼容端点。无论端点类型，
 不进仓库。本地放 `.env`（已 gitignore），试点环境用机构的密钥管理方式。
 
 `.env.example` 里所有敏感项留空或用明显的占位值，不要放能用的默认凭据。
+
+`TUSHARE_TOKEN` 只允许在离线行情构建进程中临时注入，不属于 API/Worker 环境变量。集成镜像包含
+受治理的 `real_data/quant` 冻结副本，但不安装 AKShare/Tushare，也不会在请求期间访问行情网站。
 
 ## 备份与可用性
 
@@ -81,7 +97,7 @@ DA-AC-07 不成立，备份策略上按最高优先级处理。本地可用 `mak
 
 - [ ] 数据库与本地环境物理隔离
 - [ ] `LLM_ENDPOINT` 使用 HTTPS，API Key 仅由服务端环境注入
-- [ ] `AUTH_MODE=jwt` 且签名密钥至少 32 字节、令牌包含过期时间
+- [ ] 共享集成和试点使用 `AUTH_MODE=jwt`，签名密钥至少 32 字节、令牌包含过期时间，初始账号首次登录强制改密
 - [ ] `CORS_ORIGINS` 只包含实际前端域名
 - [ ] PostgreSQL 迁移往返和 Redis 入队/消费均在目标环境验证
 - [ ] `DEBUG=false`

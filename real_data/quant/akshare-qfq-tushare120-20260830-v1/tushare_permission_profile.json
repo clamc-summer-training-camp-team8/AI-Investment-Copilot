@@ -1,0 +1,44 @@
+{
+  "credential_persisted": false,
+  "credential_source": "local_secret_file",
+  "declared_account_points": 120,
+  "endpoints": [
+    {
+      "endpoint": "daily",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "pro_bar",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "daily_basic",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "stk_limit",
+      "reason": "Exception: 抱歉，您没有接口(stk_limit)访问权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。",
+      "row_count": 0,
+      "status": "permission_denied"
+    },
+    {
+      "endpoint": "trade_cal",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    }
+  ],
+  "probed_at": "2026-08-30T22:30:21.991690+08:00",
+  "sample": {
+    "security_id": "600276",
+    "trading_date": "2026-08-28"
+  },
+  "schema_version": "tushare-permission-probe-v1",
+  "sdk_version": "1.4.29"
+}

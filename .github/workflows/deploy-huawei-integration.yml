@@ -1,0 +1,121 @@
+name: Deploy Huawei Integration
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: huawei-integration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  APP_IMAGE: ${{ secrets.HWC_SWR_REGISTRY }}/${{ secrets.HWC_SWR_NAMESPACE }}/ai-investment-copilot-app:${{ github.sha }}
+  WEB_IMAGE: ${{ secrets.HWC_SWR_REGISTRY }}/${{ secrets.HWC_SWR_NAMESPACE }}/ai-investment-copilot-web:${{ github.sha }}
+  DEPLOY_PATH: /opt/ai-investment-copilot/deploy
+
+jobs:
+  deploy:
+    name: 构建、发布与就绪验收
+    runs-on: ubuntu-latest
+    environment: huawei-integration
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 登录华为云 SWR
+        env:
+          SWR_REGISTRY: ${{ secrets.HWC_SWR_REGISTRY }}
+          SWR_USERNAME: ${{ secrets.HWC_SWR_USERNAME }}
+          SWR_PASSWORD: ${{ secrets.HWC_SWR_PASSWORD }}
+        run: |
+          printf '%s' "$SWR_PASSWORD" \
+            | docker login "$SWR_REGISTRY" \
+                --username "$SWR_USERNAME" --password-stdin
+
+      - name: 构建并推送应用镜像
+        run: |
+          docker buildx build --push \
+            --file deploy/integration/Dockerfile.app \
+            --tag "$APP_IMAGE" .
+          docker buildx build --push \
+            --file deploy/integration/Dockerfile.web \
+            --tag "$WEB_IMAGE" .
+
+      - name: 配置 SSH
+        env:
+          ECS_SSH_PRIVATE_KEY: ${{ secrets.HWC_ECS_SSH_PRIVATE_KEY }}
+          ECS_KNOWN_HOSTS: ${{ secrets.HWC_ECS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$ECS_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$ECS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: 传输非密钥部署配置
+        env:
+          SSH_TARGET: ${{ secrets.HWC_ECS_USER }}@${{ secrets.HWC_ECS_HOST }}
+        run: |
+          ssh "$SSH_TARGET" "mkdir -p '$DEPLOY_PATH/integration'"
+          scp deploy/docker-compose.integration.yml \
+            "$SSH_TARGET:$DEPLOY_PATH/docker-compose.integration.yml"
+          scp deploy/integration/Caddyfile \
+            "$SSH_TARGET:$DEPLOY_PATH/integration/Caddyfile"
+          scp deploy/integration/.env.integration.example \
+            deploy/integration/users.caddy.example \
+            deploy/integration/backup.sh \
+            deploy/integration/restore-drill.sh \
+            "$SSH_TARGET:$DEPLOY_PATH/integration/"
+          printf 'APP_IMAGE=%s\nWEB_IMAGE=%s\n' "$APP_IMAGE" "$WEB_IMAGE" > release.env.next
+          scp release.env.next "$SSH_TARGET:$DEPLOY_PATH/release.env.next"
+
+      - name: 发布、就绪检查与失败回滚
+        env:
+          SSH_TARGET: ${{ secrets.HWC_ECS_USER }}@${{ secrets.HWC_ECS_HOST }}
+          SWR_REGISTRY: ${{ secrets.HWC_SWR_REGISTRY }}
+          SWR_USERNAME: ${{ secrets.HWC_SWR_USERNAME }}
+          SWR_PASSWORD: ${{ secrets.HWC_SWR_PASSWORD }}
+        run: |
+          printf '%s' "$SWR_PASSWORD" \
+            | ssh "$SSH_TARGET" "docker login '$SWR_REGISTRY' --username '$SWR_USERNAME' --password-stdin"
+          ssh "$SSH_TARGET" "DEPLOY_PATH='$DEPLOY_PATH' bash -s" <<'REMOTE'
+          set -Eeuo pipefail
+          cd "$DEPLOY_PATH"
+          test -s .env.integration
+          test -s integration/users.caddy
+          if test -s release.env; then cp release.env release.env.previous; fi
+          mv release.env.next release.env
+
+          compose() {
+            docker compose -f docker-compose.integration.yml \
+              --env-file .env.integration --env-file release.env "$@"
+          }
+
+          rollback() {
+            if test -s release.env.previous; then
+              mv release.env.previous release.env
+              compose up -d --no-build --remove-orphans || true
+            fi
+          }
+          trap rollback ERR
+
+          compose pull
+          compose up -d --no-build --remove-orphans
+          for attempt in $(seq 1 36); do
+            if compose exec -T api python -c \
+              "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"; then
+              trap - ERR
+              compose ps
+              docker image prune -f --filter 'until=168h'
+              exit 0
+            fi
+            sleep 5
+          done
+          compose ps
+          compose logs --tail=200 api worker migrate object-store-bootstrap
+          exit 1
+          REMOTE

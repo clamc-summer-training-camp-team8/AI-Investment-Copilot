@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import delete, func, select, text, update
+from sqlalchemy import delete, exists, func, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -48,6 +48,10 @@ def _revision(row: DocumentRevision) -> DocumentRevisionRecord:
         source_id=row.source_id,
         source_url=row.source_url,
         authorization_status=row.authorization_status,
+        authorization_basis=row.authorization_basis,
+        authorization_verified_by=row.authorization_verified_by,
+        authorization_verified_at=row.authorization_verified_at,
+        content_status=row.content_status,
         uploaded_by=row.uploaded_by,
         published_at=row.published_at,
         created_at=row.created_at,
@@ -110,6 +114,9 @@ class SqlAssetRepo:
                 base_url=row.base_url,
                 license_note=row.license_note,
                 active=row.active,
+                authorization_basis=row.authorization_basis,
+                authorization_verified_by=row.authorization_verified_by,
+                authorization_verified_at=row.authorization_verified_at,
             )
         )
 
@@ -147,7 +154,23 @@ class SqlAssetRepo:
 
     def find_revision_by_hash(self, content_hash: str) -> DocumentRevisionRecord | None:
         row = self._session.scalar(
-            select(DocumentRevision).where(DocumentRevision.content_hash == content_hash)
+            select(DocumentRevision)
+            .where(DocumentRevision.content_hash == content_hash)
+            .order_by(DocumentRevision.created_at, DocumentRevision.revision_id)
+            .limit(1)
+        )
+        return None if row is None else _revision(row)
+
+    def latest_archived_revision(self, document_id: str) -> DocumentRevisionRecord | None:
+        row = self._session.scalar(
+            select(DocumentRevision)
+            .where(
+                DocumentRevision.canonical_document_id == document_id,
+                DocumentRevision.object_key.is_not(None),
+                DocumentRevision.tombstoned_at.is_(None),
+            )
+            .order_by(DocumentRevision.created_at.desc(), DocumentRevision.revision_id.desc())
+            .limit(1)
         )
         return None if row is None else _revision(row)
 
@@ -262,6 +285,19 @@ class SqlAssetRepo:
                 .subquery()
             )
         )
+        archived_document = exists().where(
+            DocumentRevision.canonical_document_id == Document.document_id,
+            DocumentRevision.object_key.is_not(None),
+            DocumentRevision.tombstoned_at.is_(None),
+        )
+        verified_document = exists().where(
+            DocumentRevision.canonical_document_id == Document.document_id,
+            DocumentRevision.authorization_status.in_(
+                ("公开披露已核验", "用户授权上传", "项目自有")
+            ),
+            DocumentRevision.tombstoned_at.is_(None),
+        )
+        active_document = Document.deleted_at.is_(None)
         return {
             "documents": count(Document),
             "revisions": count(DocumentRevision),
@@ -304,20 +340,44 @@ class SqlAssetRepo:
             "pending_authorization": int(
                 self._session.scalar(
                     select(func.count())
-                    .select_from(DocumentRevision)
-                    .where(DocumentRevision.authorization_status == "待确认")
+                    .select_from(Document)
+                    .where(active_document, ~verified_document)
                 )
                 or 0
             ),
             "missing_object_archive": int(
                 self._session.scalar(
                     select(func.count())
-                    .select_from(DocumentRevision)
-                    .where(DocumentRevision.object_key.is_(None))
+                    .select_from(Document)
+                    .where(active_document, ~archived_document)
                 )
                 or 0
             ),
             "embeddings": count(SegmentEmbedding),
+            "title_index_documents": int(
+                self._session.scalar(
+                    select(func.count())
+                    .select_from(Document)
+                    .where(active_document, Document.content_status == "标题索引")
+                )
+                or 0
+            ),
+            "archived_source_documents": int(
+                self._session.scalar(
+                    select(func.count())
+                    .select_from(Document)
+                    .where(active_document, archived_document)
+                )
+                or 0
+            ),
+            "authorization_verified_documents": int(
+                self._session.scalar(
+                    select(func.count())
+                    .select_from(Document)
+                    .where(active_document, verified_document)
+                )
+                or 0
+            ),
         }
 
     def add_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None:
@@ -419,7 +479,7 @@ class SqlAssetRepo:
         rows = self._session.execute(
             text(
                 """SELECT i.document_id, i.locator, i.content, i.visibility_label,
-                          d.published_at,
+                          d.published_at,d.content_status,
                           COALESCE(NULLIF(BTRIM(d.title),''),
                                    NULLIF(BTRIM(d.source_id),''),d.document_id)
                             AS source,
@@ -448,6 +508,7 @@ class SqlAssetRepo:
                 rank=float(row["rank"] or 0),
                 published_at=row["published_at"],
                 source=str(row["source"]),
+                content_status=str(row["content_status"]),
             )
             for row in rows
         ]
@@ -533,6 +594,7 @@ class SqlAssetRepo:
                 """WITH filtered AS (
                      SELECT i.index_id,i.ingestion_run_id,i.document_id,i.locator,i.content,
                             i.visibility_label,i.search_vector,e.embedding,d.published_at,
+                            d.content_status,
                             COALESCE(NULLIF(BTRIM(d.title),''),
                                      NULLIF(BTRIM(d.source_id),''),d.document_id)
                               AS source
@@ -573,6 +635,7 @@ class SqlAssetRepo:
                      FROM raw_scored
                    )
                    SELECT document_id,locator,content,visibility_label,published_at,source,
+                          content_status,
                           ingestion_run_id,
                           keyword_rank,vector_rank,
                           (:keyword_weight*keyword_rank)+(:vector_weight*GREATEST(vector_rank,0)) AS rank
@@ -610,6 +673,7 @@ class SqlAssetRepo:
                     str(row["ingestion_run_id"]) if row["ingestion_run_id"] else None
                 ),
                 embedding_version=embedding_version,
+                content_status=str(row["content_status"]),
             )
             for row in rows
         ]

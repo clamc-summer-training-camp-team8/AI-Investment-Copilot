@@ -71,6 +71,9 @@ class Document(Base):
     parser_version: Mapped[str] = mapped_column(String(32), nullable=False, default="v1")
     raw_path: Mapped[str | None] = mapped_column(String(1024))
     body: Mapped[str | None] = mapped_column(Text)
+    content_status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="待核验", comment="标题索引不得冒充完整正文"
+    )
 
     visibility_label: Mapped[str] = mapped_column(
         String(32),

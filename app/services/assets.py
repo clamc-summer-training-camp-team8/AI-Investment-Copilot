@@ -45,6 +45,19 @@ def archive_upload(
     digest = _file_hash(path)
     existing = uow.assets.find_revision_by_hash(digest)
     if existing:
+        if existing.canonical_document_id != document_id and existing.document_id != document_id:
+            duplicate = replace(
+                existing,
+                revision_id=f"DREV-{uuid4().hex}",
+                document_id=document_id,
+                canonical_document_id=None,
+                uploaded_by=actor.user_id,
+                created_at=None,
+                tombstoned_at=None,
+            )
+            uow.assets.add_revision(duplicate)
+            path.unlink(missing_ok=True)
+            return duplicate, True
         path.unlink(missing_ok=True)
         return existing, True
     key = f"local/documents/{digest[:2]}/{digest}{path.suffix.lower()}"
@@ -63,6 +76,10 @@ def archive_upload(
         byte_size=byte_size,
         source_id="SRC-USER-UPLOAD",
         authorization_status="用户授权上传",
+        authorization_basis="上传用户在归档动作中确认拥有内部研究使用权限",
+        authorization_verified_by=actor.user_id,
+        authorization_verified_at=now(),
+        content_status="原件已归档",
         uploaded_by=actor.user_id,
         published_at=published_at,
     )
@@ -110,7 +127,7 @@ def create_reprocessing_job(
         or document.visibility_label not in actor.document_labels
     ):
         raise NotVisible("文档不存在或无访问权限")
-    revision = uow.assets.find_revision_by_hash(document.content_hash)
+    revision = uow.assets.latest_archived_revision(document_id)
     if revision is None:
         raise ValidationFailed("文档尚未建立 revision，无法重处理")
     if not revision.object_key:

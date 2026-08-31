@@ -63,6 +63,7 @@ def persist_processed(
         parser_version=parser_version,
         raw_path=raw_location or str(path),
         body="\n".join(segment.content for segment in segments),
+        content_status="完整正文",
         visibility_label=visibility_label,
     )
     uow.documents.add(

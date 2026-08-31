@@ -196,6 +196,25 @@ class AuditLog(Base):
     )
 
 
+class UserAccount(Base):
+    """共享环境本地账号；密码只保存带随机盐的 scrypt 摘要。"""
+
+    __tablename__ = "user_account"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    teams: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    document_labels: Mapped[list] = mapped_column(
+        JSONB, nullable=False, default=lambda: ["公开", "内部"]
+    )
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    password_changed_at: Mapped[datetime | None] = mapped_column()
+    created_at: Mapped[datetime] = created_at_column()
+    updated_at: Mapped[datetime] = updated_at_column()
+
+
 class DataQualityResult(Base):
     """质量规则执行结果。阻断级失败不得进入正式信号和评测集。"""
 

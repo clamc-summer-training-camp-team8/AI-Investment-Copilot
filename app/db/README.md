@@ -7,6 +7,10 @@ PRD 层级：数据资源层
 
 ORM 模型与仓储。全仓唯一允许写 SQL 的地方。
 
+P2 量化资产使用 `quant_market_dataset`、`quant_signal_set`、`quant_backtest_run` 三张不可变表。
+数据库只保存冻结清单、信号快照、参数和结果；供应商日线留在受控资产目录并按 SHA-256 读取，
+避免无边界复制行情。三张表的评测轨固定为 `alpha_validation`，不接收语义或检索评测结果。
+
 ```
 db/
 ├── base.py            声明基类、命名约定、公共列类型
@@ -25,6 +29,7 @@ db/
 | 说明书八类对象 | `document` `thesis` `hypothesis` `metric` `event` `signal` `outcome` `experiment` |
 | 产品侧扩展 | `security` `document_segment` `metric_alias` `hypothesis_metric_map` `metric_observation` `evidence` |
 | 治理 | `thesis_version` `status_suggestion_log` `review_task` `audit_log` `data_quality_result` |
+| 数据资产治理 | `source` `document_revision` `ingestion_run` `ingestion_artifact` `segment_embedding` |
 
 ## 边界
 
@@ -42,6 +47,7 @@ db/
 | 信号不得早于披露 | `signal` 表 `CheckConstraint("generated_at >= available_at")` | DQ-003 |
 | 标签不得早于窗口结束 | `outcome` 表 `no_label_before_window_end` | DQ-006 |
 | 文档去重 | `UniqueConstraint("content_hash", "parser_version")` | DQ-002 |
+| 原件修订去重 | `(canonical_document_id, content_hash)` 唯一；同一对象可被多个文档引用 | P1 数据资产治理 |
 | 事件去重 | `event.fingerprint` 唯一 | FR-R-005 |
 | 指标口径版本化 | `metric` 主键为 `(metric_id, version)` | 指标管道要求 |
 | 观测值不重复 | `(security_id, metric_id, metric_version, period, data_version)` 唯一 | DQ-004 |
@@ -56,6 +62,10 @@ db/
 **`is_illustrative` 标记**。样例包全是虚构数据。带此标记的行禁止用于真实投资结论，查询接口需要能按此过滤。新增业务表时考虑是否需要这个字段。
 
 **软删除**。核心对象不做物理删除。已关闭的逻辑走状态而不是删行（PRD 5.2 状态机含"已关闭"）。
+
+**标题索引不是正文**。`document.content_status` 显式区分“标题索引”“原件已归档”“完整正文”
+与“合成样例”。原件回填只新增 revision/run；只有新解析运行真正生成正文后，才允许把当前内容
+状态提升为“完整正文”。
 
 ## 迁移
 

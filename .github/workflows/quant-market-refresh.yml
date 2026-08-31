@@ -1,0 +1,107 @@
+name: Quant market candidate refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Asia/Shanghai 19:30，等待 A/H 股日线源完成收盘更新；不自动发布默认版本。
+    - cron: "30 11 * * 1-5"
+
+concurrency:
+  group: quant-market-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  candidate:
+    name: 探测并构建量化行情候选
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      TUSHARE_API_URL: ${{ vars.TUSHARE_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: 安装离线构建依赖
+        run: pip install -r requirements-dev.txt -r requirements-market-data.txt
+      - name: 检查密钥配置
+        shell: bash
+        run: |
+          if [ -z "$TUSHARE_TOKEN" ]; then
+            echo "缺少仓库 Secret: TUSHARE_TOKEN；拒绝生成无双源门禁的候选。"
+            exit 1
+          fi
+          if [ -z "$TUSHARE_API_URL" ]; then
+            echo "缺少仓库 Variable: TUSHARE_API_URL；10k Token 必须绑定已核验的 HTTPS API Origin。"
+            exit 1
+          fi
+      - name: 恢复低频参考缓存
+        uses: actions/cache@v4
+        with:
+          path: .runtime/quant-reference-cache-10000
+          key: tushare-reference-10000-${{ github.run_id }}
+          restore-keys: |
+            tushare-reference-10000-
+      - name: 刷新 Tushare 低频参考缓存
+        continue-on-error: true
+        run: >-
+          python -m scripts.refresh_tushare_reference_cache
+          --token-env TUSHARE_TOKEN
+          --tushare-api-url-env TUSHARE_API_URL
+          --tushare-permission-profile
+          real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/tushare_permission_profile.json
+          --cache-root .runtime/quant-reference-cache-10000
+      - name: 新交易日探测与候选构建
+        run: >-
+          python -m scripts.refresh_quant_market_data
+          --tushare-token-env TUSHARE_TOKEN
+          --tushare-api-url-env TUSHARE_API_URL
+          --tushare-permission-report
+          real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/tushare_permission_profile.json
+          --reference-cache-root .runtime/quant-reference-cache-10000
+          --candidate-prefix akshare-qfq-tuaremax10000
+          --report .runtime/quant-market-refresh/latest.json
+      - name: 解析候选目录
+        id: candidate_path
+        if: success()
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path(".runtime/quant-market-refresh/latest.json").read_text())
+          candidate = report.get("candidate")
+          if candidate:
+              print("exists=true")
+              print(f"path={Path(candidate['manifest']).parent.as_posix()}")
+          else:
+              print("exists=false")
+          PY
+      - name: 上传脱敏刷新报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quant-market-refresh-report-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            .runtime/quant-market-refresh/
+            .runtime/quant-reference-cache-10000/latest.json
+            .runtime/quant-reference-cache-10000/runs/
+      - name: 上传新候选数据集
+        if: steps.candidate_path.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quant-market-candidate-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 14
+          path: ${{ steps.candidate_path.outputs.path }}

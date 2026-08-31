@@ -28,6 +28,30 @@ class Visibility(StrEnum):
     AUTHORIZED = "授权"
 
 
+class DocumentContentStatus(StrEnum):
+    """文档当前可检索内容的真实性边界。
+
+    标题索引可以参与元数据检索，但不能被展示或引用为公告正文。原件已归档表示
+    不可变源文件已保存、尚未形成可检索全文；这与完整正文是两个不同状态。
+    """
+
+    PENDING = "待核验"
+    TITLE_INDEX = "标题索引"
+    SOURCE_ARCHIVED = "原件已归档"
+    FULL_TEXT = "完整正文"
+    SYNTHETIC = "合成样例"
+
+
+class SourceAuthorizationStatus(StrEnum):
+    """来源授权核验结果；待确认资产不得被治理报表算作已关闭。"""
+
+    PENDING = "待确认"
+    PUBLIC_DISCLOSURE_VERIFIED = "公开披露已核验"
+    USER_AUTHORIZED = "用户授权上传"
+    PROJECT_OWNED = "项目自有"
+    RESTRICTED = "受限"
+
+
 class HypothesisType(StrEnum):
     INDUSTRY = "行业"
     COMPETITIVENESS = "公司竞争力"

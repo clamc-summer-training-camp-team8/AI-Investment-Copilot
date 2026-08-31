@@ -38,7 +38,9 @@ from app.db.models.governance import (
     ReviewTask,
     StatusSuggestionLog,
     ThesisVersion,
+    UserAccount,
 )
+from app.db.models.quant import QuantBacktestRun, QuantMarketDataset, QuantSignalSet
 from app.db.models.ranking import (
     LogicTopic,
     LogicTopicRelation,
@@ -74,6 +76,9 @@ __all__ = [
     "MetricObservation",
     "ModelCallLog",
     "Outcome",
+    "QuantBacktestRun",
+    "QuantMarketDataset",
+    "QuantSignalSet",
     "RankingPriorItem",
     "RankingPriorSnapshot",
     "ReviewTask",
@@ -87,4 +92,5 @@ __all__ = [
     "Thesis",
     "ThesisRevisionDraft",
     "ThesisVersion",
+    "UserAccount",
 ]

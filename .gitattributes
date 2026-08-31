@@ -16,3 +16,6 @@
 # 不声明的话每次有人在不同平台重跑采集，整个文件都会显示为改动，
 # 真正的数据变化会被淹没在行尾差异里。
 *.csv  text eol=lf
+
+# 冻结行情的 Manifest SHA-256 绑定逐字节内容；禁止 Git 在跨平台 checkout 时改写行尾。
+/real_data/quant/** -text

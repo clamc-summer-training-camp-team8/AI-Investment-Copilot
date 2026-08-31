@@ -425,6 +425,7 @@ def persist_db(*, dry_run: bool = False, build_vectors: bool = True) -> dict[str
                     content_hash=content_hash(body),
                     parser_version="sample-v1",
                     body=body,
+                    content_status="完整正文",
                     visibility_label="团队",
                     is_illustrative=False,
                 ),

@@ -1,0 +1,93 @@
+{
+  "data_version": "akshare-qfq-tuaremax10000-20260831-v1",
+  "primary": {
+    "interfaces": [
+      "stock_zh_a_hist_tx",
+      "stock_hk_daily",
+      "stock_zh_index_daily_tx"
+    ],
+    "library": "akshare",
+    "library_version": "1.18.94",
+    "source_id": "akshare-research-primary-v1",
+    "upstream_providers": [
+      "Tencent Finance",
+      "Sina Finance"
+    ]
+  },
+  "reference_cache": {
+    "configured": true,
+    "market_cap_rows": 4649,
+    "price_limit_rows": 4646,
+    "source_files": [
+      {
+        "path": "daily_basic/2026-08-28.json",
+        "sha256": "7d770f0e856e785725a7ca67a03cb264b8e393ccf83e0814b366c8cf9aa79367"
+      },
+      {
+        "path": "reference_history/000538-2023-12-01-2026-08-28.json",
+        "sha256": "b13acb60c56987419cd4217ad7ccccee35094f57519bca1a68c4840e1af673d2"
+      },
+      {
+        "path": "reference_history/002371-2023-12-01-2026-08-28.json",
+        "sha256": "68bfcdf920e7255241607814102bd41b44b0adfdaff58963ba0324d9d82aebb5"
+      },
+      {
+        "path": "reference_history/002594-2023-12-01-2026-08-28.json",
+        "sha256": "4a010703f14884015c2590df79508904db3acab2a5acd42d07bc0592fa2a2c87"
+      },
+      {
+        "path": "reference_history/600276-2023-12-01-2026-08-28.json",
+        "sha256": "b57187008e188c9b02d217185a4a588e6d978d17d002d295cd0eccb47f11820c"
+      },
+      {
+        "path": "reference_history/603259-2023-12-01-2026-08-28.json",
+        "sha256": "97cc92f3796fa410a93cb53d460a92c2818cf15259b33a33ebde762dfdd9c5ea"
+      },
+      {
+        "path": "reference_history/603986-2023-12-01-2026-08-28.json",
+        "sha256": "bf72854978f2eecf7f7ebcd85241bfbcd7a4c83d8c91625a9168251acc1f56ad"
+      },
+      {
+        "path": "reference_history/688981-2023-12-01-2026-08-28.json",
+        "sha256": "e91baa8c7ff97ea34a630d4a3d6b423db4febd171cad505e2f39d795b5540497"
+      },
+      {
+        "path": "trade_cal/SSE-2026-asof-20260831T124752.json",
+        "sha256": "abbe3a41b338ca002e4fcb0a81abdc49feaf633e690ccff19e797cc3db548505"
+      }
+    ]
+  },
+  "request": {
+    "adjustment": "qfq",
+    "end": "2026-08-28",
+    "start": "2023-12-01"
+  },
+  "retry_policy": {
+    "delay_seconds": 1.0,
+    "events": [],
+    "max_attempts": 3
+  },
+  "row_source_counts": {
+    "akshare.stock_hk_daily": 1288,
+    "akshare.stock_zh_a_hist_tx": 3984,
+    "akshare.stock_zh_a_hist_tx.volume_x100": 665,
+    "akshare.stock_zh_index_daily_tx": 1995
+  },
+  "schema_version": "market-provenance-v1",
+  "supplement": {
+    "api_origin": "https://tuaremax.top",
+    "available_endpoints": [
+      "daily",
+      "daily_basic",
+      "pro_bar",
+      "stk_limit",
+      "trade_cal"
+    ],
+    "configured": true,
+    "errors": {},
+    "fallback_reasons": {},
+    "fallback_security_count": 0,
+    "library_version": "1.4.29",
+    "source_id": "tushare-optional-supplement-v1"
+  }
+}

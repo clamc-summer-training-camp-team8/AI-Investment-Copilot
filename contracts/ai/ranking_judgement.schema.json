@@ -2,8 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ranking_judgement.schema.json",
   "type": "object",
-  "required": ["verdict", "confidence", "ranking", "global_issues", "requires_review"],
+  "required": ["verdict", "confidence", "ranking", "global_issues", "requires_review", "model_version", "prompt_version", "generated_at", "ai_status"],
   "properties": {
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"enum": ["候选", "低置信", "解析失败"]},
     "verdict": {"enum": ["accept", "adjust", "reject"]},
     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
     "ranking": {

@@ -1,0 +1,7 @@
+{
+  "adjustment_contract": "AKShare 前复权序列已反映除权除息；独立事件只审计，不重复调整",
+  "coverage_status": "adjustment_embedded; structured_event_feed_not_enabled",
+  "data_version": "akshare-qfq-tushare120-20260830-v1-corporate-actions",
+  "events": [],
+  "schema_version": "corporate-action-ledger-v1"
+}

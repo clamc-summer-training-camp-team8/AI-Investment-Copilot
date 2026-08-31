@@ -87,6 +87,7 @@ def main() -> None:
                     content_hash=hashlib.sha256(excerpt.encode("utf-8")).hexdigest(),
                     raw_path=item["source_url"],
                     body=excerpt,
+                    content_status="完整正文",
                     visibility_label="公开",
                     is_illustrative=False,
                 )

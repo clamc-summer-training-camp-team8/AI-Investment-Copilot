@@ -123,13 +123,29 @@ class Settings(BaseSettings):
         PROJECT_ROOT / "analytics" / "datasets" / "final-gold-v3-20260826" / "quality_report.json"
     )
 
+    # 在线回测只读取冻结清单。上游 AKShare/Tushare 连接器属于离线构建工具，
+    # 不在 API 请求期间联网；切换默认数据集必须指向一个新版本清单。
+    quant_default_market_manifest: Path = (
+        PROJECT_ROOT
+        / "real_data"
+        / "quant"
+        / "akshare-qfq-tushare120-20260830-v1"
+        / "manifest.json"
+    )
+
     # 本地开发可由受信任网关注入请求头；试点/生产必须使用带签名和过期时间的 JWT。
-    auth_mode: str = Field(default="trusted_headers", pattern="^(trusted_headers|jwt)$")
+    auth_mode: str = Field(
+        default="trusted_headers", pattern="^(trusted_headers|trusted_proxy|jwt)$"
+    )
+    # 集成环境可由不对公网暴露 API 的认证网关注入身份；额外共享密钥用于证明请求
+    # 确实来自该网关，而不是同一容器网络中的其他进程伪造用户头。
+    auth_trusted_proxy_secret: SecretStr | None = None
     auth_jwt_secret: SecretStr | None = None
     auth_jwt_algorithm: str = Field(default="HS256", pattern="^HS(256|384|512)$")
     auth_jwt_issuer: str = "ai-investment-copilot"
     auth_jwt_audience: str = "ai-investment-copilot-api"
     auth_jwt_leeway_seconds: int = Field(default=30, ge=0, le=300)
+    auth_access_token_minutes: int = Field(default=480, ge=5, le=1440)
     cors_origins: list[str] = ["http://localhost:5173"]
 
     rules: RuleThresholds = Field(default_factory=RuleThresholds)

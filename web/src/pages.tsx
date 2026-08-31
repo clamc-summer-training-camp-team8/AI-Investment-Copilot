@@ -11,14 +11,14 @@ import {
   recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
   getAssetInventory, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
-  getGoldQuality, runQuantBacktest,
+  getGoldQuality, getQuantCatalog, listPortfolioBacktests, registerDefaultMarketDataset, runPortfolioBacktest,
 } from './api'
 import type { Trend } from './types'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
-import type { Adjudication, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, QuantBacktestRequest, QuantBacktestRun, QuantEquityPoint, Relation, ReviewTask, ThesisDetail, ThesisRevision } from './types'
+import type { Adjudication, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, PortfolioBacktestRun, Relation, ReviewTask, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function OperationalWorkbenchPage() {
@@ -572,15 +572,15 @@ export function AssetPage() {
   const data = inventory.data
   const metrics = [
     ['文档资产', data.documents, '当前数据库中的文档事实'],
-    ['不可变修订', data.revisions, '原件哈希与对象版本谱系'],
-    ['处理运行', data.ingestionRuns, `${data.semanticRuns} 次 semantic-v1 运行`],
-    ['待归档原件', data.missingObjectArchive, '历史原件待对象存储回填'],
+    ['已归档原件', data.archivedSourceDocuments, `${data.missingObjectArchive} 份仍待回填`],
+    ['授权已核验', data.authorizationVerifiedDocuments, `${data.pendingAuthorization} 份仍待确认`],
+    ['标题索引', data.titleIndexDocuments, '仅可按标题检索，不冒充公告正文'],
   ] as const
   return <>
-    <PageTitle eyebrow="P0-3 数据资产层" title="资产治理" description="盘点原件、修订、处理运行与权限感知索引；重处理只追加新运行，不覆盖历史产物。" actions={<button className="button secondary" disabled={rebuild.isPending} onClick={() => rebuild.mutate()}>{rebuild.isPending ? '重建中…' : '重建检索索引'}</button>} />
+    <PageTitle eyebrow="P1 数据资产治理" title="资产治理" description="盘点原件、授权、内容状态与权限感知索引；回填和重处理只追加新修订与运行，不覆盖历史产物。" actions={<button className="button secondary" disabled={rebuild.isPending} onClick={() => rebuild.mutate()}>{rebuild.isPending ? '重建中…' : '重建检索索引'}</button>} />
     <section className="metric-grid">{metrics.map(([label, value, note]) => <div className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><p>{note}</p></div>)}</section>
-    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">历史质量盘点</span><h2>治理状态与不可覆盖产物</h2></div></div><div className="asset-quality-grid"><p><strong>{data.singleSegmentDocuments}</strong><span>规范表中的历史单切片（保留不覆盖）</span></p><p><strong>{data.pendingAuthorization}</strong><span>来源授权待确认</span></p><p><strong>{data.artifactSegments}</strong><span>运行级切片产物</span></p><p><strong>{data.artifactFacts + data.artifactEvents}</strong><span>运行级事实与事件产物</span></p></div><InlineError error={rebuild.error} />{rebuild.data != null && <p className="success-note">索引已重建，共 {rebuild.data} 个切片。</p>}</section>
-    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">P1 权限感知混合召回</span><h2>验证可见切片</h2></div></div><form className="asset-search" onSubmit={(event) => { event.preventDefault(); if (query.trim()) setSubmittedQuery(query.trim()) }}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入信息需求或正文关键词" /><button className="button primary" type="submit" disabled={!query.trim()}>混合召回</button></form><InlineError error={search.error} />{search.isFetching ? <LoadingState /> : submittedQuery && (search.data?.length ? <div className="review-list">{search.data.map((item) => <article className="review-card" key={`${item.documentId}-${item.locator}`}><div className="review-header"><strong>{item.documentId}</strong><span className="badge neutral-badge">{item.visibilityLabel}</span></div><p>{item.content}</p><small className="muted">定位：{item.locator} · 综合 {item.rank.toFixed(3)} · 关键词 {(item.keywordRank ?? 0).toFixed(3)} · 向量 {(item.vectorRank ?? 0).toFixed(3)} · {item.embeddingVersion}</small></article>)}</div> : <EmptyState title="没有可见命中" description="权限、证券、行业和时间过滤在排序前执行。" />)}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">历史质量盘点</span><h2>治理状态与不可覆盖产物</h2></div></div><div className="asset-quality-grid"><p><strong>{data.revisions}</strong><span>不可变 revision 谱系</span></p><p><strong>{data.ingestionRuns}</strong><span>追加式处理与归档运行</span></p><p><strong>{data.artifactSegments}</strong><span>运行级切片产物</span></p><p><strong>{data.embeddings}</strong><span>版本化 embedding</span></p></div><InlineError error={rebuild.error} />{rebuild.data != null && <p className="success-note">索引已重建，共 {rebuild.data} 个切片。</p>}</section>
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">P1 权限感知混合召回</span><h2>验证可见切片</h2></div></div><form className="asset-search" onSubmit={(event) => { event.preventDefault(); if (query.trim()) setSubmittedQuery(query.trim()) }}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入信息需求、标题或正文关键词" /><button className="button primary" type="submit" disabled={!query.trim()}>混合召回</button></form><InlineError error={search.error} />{search.isFetching ? <LoadingState /> : submittedQuery && (search.data?.length ? <div className="review-list">{search.data.map((item) => <article className="review-card" key={`${item.documentId}-${item.locator}`}><div className="review-header"><strong>{item.documentId}</strong><div><span className="badge neutral-badge">{item.contentStatus}</span><span className="badge neutral-badge">{item.visibilityLabel}</span></div></div><p>{item.content}</p><small className="muted">定位：{item.locator} · 综合 {item.rank.toFixed(3)} · 关键词 {(item.keywordRank ?? 0).toFixed(3)} · 向量 {(item.vectorRank ?? 0).toFixed(3)} · {item.embeddingVersion}</small></article>)}</div> : <EmptyState title="没有可见命中" description="权限、证券、行业和时间过滤在排序前执行。" />)}</section>
   </>
 }
 
@@ -651,88 +651,75 @@ export function QualityPage() {
   </>
 }
 
-function quantDemoInput(config: QuantBacktestRequest['config']): QuantBacktestRequest {
-  const bars: QuantBacktestRequest['bars'] = []
-  const cursor = new Date(Date.UTC(2026, 0, 5))
-  while (bars.length < 80) {
-    const weekday = cursor.getUTCDay()
-    if (weekday !== 0 && weekday !== 6) {
-      const index = bars.length
-      bars.push({
-        tradingDate: cursor.toISOString().slice(0, 10),
-        close: Number((100 + index * .13 + Math.sin(index / 4) * 2.8 + Math.sin(index / 11) * 1.4).toFixed(2)),
-        benchmarkClose: Number((100 + index * .07 + Math.sin(index / 8) * 1.1).toFixed(2)),
-      })
-    }
-    cursor.setUTCDate(cursor.getUTCDate() + 1)
-  }
-  const signalSpecs = [
-    [6, '支持', '高', .88], [23, '冲突', '中', .78], [39, '支持', '高', .91], [58, '支持', '中', .72],
-  ] as const
-  return {
-    name: '事件方向信号 · 受控演示', bars, config,
-    signals: signalSpecs.map(([index, direction, strength, confidence], order) => ({
-      signalId: `DEMO-SIG-${order + 1}`,
-      disclosedAt: `${bars[index].tradingDate}T08:30:00+08:00`,
-      generatedAt: `${bars[index].tradingDate}T18:00:00+08:00`,
-      direction, strength, confidence,
-    })),
-  }
-}
-
-function percent(value: number | undefined) {
+function percent(value: number | undefined | null) {
   return value == null ? '—' : `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)}%`
 }
 
-function money(value: number) {
-  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0 }).format(value)
-}
-
-function QuantCurve({ points }: { points: QuantEquityPoint[] }) {
-  if (points.length < 2) return null
-  const width = 900
-  const height = 250
-  const padding = 22
-  const all = points.flatMap((point) => [point.equity, point.benchmarkEquity])
-  const minimum = Math.min(...all)
-  const maximum = Math.max(...all)
-  const range = maximum - minimum || 1
-  const line = (key: 'equity' | 'benchmarkEquity') => points.map((point, index) => {
-    const x = padding + index * (width - padding * 2) / (points.length - 1)
-    const y = height - padding - (point[key] - minimum) * (height - padding * 2) / range
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
-  return <div className="quant-chart"><div className="chart-legend"><span className="strategy-line">策略净值</span><span className="benchmark-line">基准净值</span></div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="策略与基准净值曲线"><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="chart-axis" /><polyline points={line('benchmarkEquity')} className="chart-benchmark" /><polyline points={line('equity')} className="chart-strategy" /></svg><div className="chart-dates"><span>{points[0].tradingDate}</span><span>{points.at(-1)?.tradingDate}</span></div></div>
-}
-
 export function QuantPage() {
-  const [holdingDays, setHoldingDays] = useState(20)
+  const qc = useQueryClient()
+  const catalog = useQuery({ queryKey: ['quant-catalog'], queryFn: getQuantCatalog })
+  const history = useQuery({ queryKey: ['quant-portfolio-history'], queryFn: listPortfolioBacktests })
+  const [datasetId, setDatasetId] = useState('')
+  const [signalSetId, setSignalSetId] = useState('')
+  const [securityText, setSecurityText] = useState('688981,603986,002371')
+  const [rollingDays, setRollingDays] = useState(60)
+  const [walkForwardDays, setWalkForwardDays] = useState(20)
+  const [rebalanceDays, setRebalanceDays] = useState(5)
   const [costBps, setCostBps] = useState(10)
   const [slippageBps, setSlippageBps] = useState(5)
-  const [allowShort, setAllowShort] = useState(false)
-  const [run, setRun] = useState<QuantBacktestRun | null>(null)
-  const mutation = useMutation({
-    mutationFn: () => runQuantBacktest(quantDemoInput({
-      initialCapital: 1_000_000, holdingDays, transactionCostBps: costBps, slippageBps, allowShort,
-    })),
-    onSuccess: setRun,
+  const [neutralizeIndustry, setNeutralizeIndustry] = useState(true)
+  const [neutralizeMarketCap, setNeutralizeMarketCap] = useState(false)
+  const [run, setRun] = useState<PortfolioBacktestRun | null>(null)
+  const configuredDefaultDataset = catalog.data?.marketDatasets.find((item) => item.datasetId === catalog.data?.defaultMarketDatasetId)
+  const dataset = catalog.data?.marketDatasets.find((item) => item.datasetId === datasetId) ?? configuredDefaultDataset ?? catalog.data?.marketDatasets[0]
+  const signalSet = catalog.data?.signalSets.find((item) => item.signalSetId === signalSetId) ?? catalog.data?.signalSets[0]
+  useEffect(() => {
+    if (!datasetId && dataset) setDatasetId(dataset.datasetId)
+    if (!signalSetId && catalog.data?.signalSets[0]) setSignalSetId(catalog.data.signalSets[0].signalSetId)
+  }, [catalog.data, dataset, datasetId, signalSetId])
+  useEffect(() => {
+    if (!run && history.data?.[0]) setRun(history.data[0])
+  }, [history.data, run])
+  const register = useMutation({
+    mutationFn: registerDefaultMarketDataset,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['quant-catalog'] }),
   })
-  const metrics = run?.metrics
+  const mutation = useMutation({
+    mutationFn: () => runPortfolioBacktest({
+      name: '版本化组合事件信号研究', marketDatasetId: dataset!.datasetId,
+      signalSetId: signalSet!.signalSetId,
+      securityIds: securityText.split(',').map((item) => item.trim()).filter(Boolean),
+      start: dataset?.coverageStart, end: dataset?.coverageEnd,
+      config: {
+        initialCapital: 1_000_000, rollingWindowDays: rollingDays, walkForwardDays,
+        rebalanceDays, transactionCostBps: costBps, slippageBps,
+        maxSecurityWeight: .2, maxIndustryWeight: .4, capacityParticipationRate: .1,
+        neutralizeIndustry, neutralizeMarketCap, enforceCapacity: true, allowShort: true,
+      },
+    }),
+    onSuccess: (item) => { setRun(item); qc.invalidateQueries({ queryKey: ['quant-portfolio-history'] }) },
+  })
+  if (catalog.isLoading || history.isLoading) return <LoadingState />
+  if (catalog.error || history.error || !catalog.data) return <ErrorState error={catalog.error ?? history.error} />
+  const metrics = run?.result.metrics
   const metricItems = metrics ? [
-    ['策略收益', percent(metrics.totalReturn), `基准 ${percent(metrics.benchmarkReturn)}`],
-    ['超额收益', percent(metrics.excessReturn), '已扣交易摩擦'],
-    ['最大回撤', percent(metrics.maxDrawdown), '峰值至谷值'],
-    ['夏普比率', metrics.sharpeRatio?.toFixed(2) ?? '—', `年化波动 ${percent(metrics.annualizedVolatility)}`],
+    ['组合收益', percent(Number(metrics.total_return)), `基准 ${percent(Number(metrics.benchmark_return))}`],
+    ['超额收益', percent(Number(metrics.excess_return)), '成本与滑点已计入'],
+    ['最大回撤', percent(Number(metrics.max_drawdown)), `跟踪误差 ${percent(Number(metrics.tracking_error))}`],
+    ['信息比率', metrics.information_ratio == null ? '—' : Number(metrics.information_ratio).toFixed(2), `Beta ${metrics.beta == null ? '—' : Number(metrics.beta).toFixed(2)}`],
   ] : []
   return <>
-    <PageTitle eyebrow="QUANT RESEARCH LAB" title="量化实验" description="把已确认的研究信号转成可复算的历史验证；结果只用于研究评估，不产生交易或调仓指令。" actions={<button className="button primary" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? '正在计算…' : run ? '重新运行' : '运行受控演示'}</button>} />
-    <section className="quant-config hero-section"><div className="section-heading"><div><span className="eyebrow">策略口径</span><h2>事件信号 · T+1 执行</h2></div><span className="quant-safety">NO LOOK-AHEAD · COST-AWARE</span></div><div className="quant-controls"><label>持有交易日<input type="number" min="1" max="252" value={holdingDays} onChange={(event) => setHoldingDays(Number(event.target.value))} /></label><label>交易成本（bps）<input type="number" min="0" max="1000" value={costBps} onChange={(event) => setCostBps(Number(event.target.value))} /></label><label>滑点（bps）<input type="number" min="0" max="1000" value={slippageBps} onChange={(event) => setSlippageBps(Number(event.target.value))} /></label><label className="quant-toggle"><input type="checkbox" checked={allowShort} onChange={(event) => setAllowShort(event.target.checked)} /><span>允许做空</span></label></div><p className="quant-dataset-note">当前使用 80 个交易日、4 条事件信号的受控演示数据。API 已支持接收真实复权行情和独立信号；生产接入前仍需完成交易日历与行情授权。</p><InlineError error={mutation.error} /></section>
-    {!run ? <EmptyState title="尚未运行回测" description="设置持有期和交易摩擦后运行演示，系统将输出净值、风险和逐笔交易。" /> : <>
+    <PageTitle eyebrow="QUANT RESEARCH LAB · P2" title="组合量化验证" description="使用冻结行情与人工确认信号做可复算的样本外验证；结果不生成订单、评级或调仓指令。" actions={!dataset ? <button className="button primary" disabled={register.isPending} onClick={() => register.mutate()}>{register.isPending ? '正在校验…' : '登记默认冻结行情'}</button> : <button className="button primary" disabled={!signalSet || mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? '正在计算…' : '运行组合回测'}</button>} />
+    <section className="quality-release release-ready"><div><span className="eyebrow">三轨评测强制隔离</span><h2>语义准确率 · 检索排序 · Alpha 验证</h2><p>{catalog.data.evaluationSeparation.hardRule}</p></div><div className="release-flags"><span className="flag-passed">SEMANTIC 独立</span><span className="flag-passed">RETRIEVAL 独立</span><span className="flag-passed">ALPHA 独立</span></div></section>
+    {dataset ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">冻结数据资产</span><h2>{dataset.dataVersion}</h2></div><span className="flag-passed">{dataset.authorizationStatus}</span></div><div className="quant-summary"><span>复权口径<strong>{dataset.adjustment}</strong></span><span>覆盖区间<strong>{dataset.coverageStart} ~ {dataset.coverageEnd}</strong></span><span>证券数<strong>{dataset.securities.length}</strong></span><span>清单哈希<strong className="mono">{dataset.manifestSha256.slice(0, 12)}</strong></span></div><ul>{dataset.limitations.map((item) => <li key={item}>{item}</li>)}</ul></section> : <EmptyState title="尚未登记冻结行情" description="登记动作会核验授权状态、清单与行情/日历/公司行动三类 SHA-256。" />}
+    <section className="quant-config hero-section"><div className="section-heading"><div><span className="eyebrow">组合口径</span><h2>滚动窗口 · 中性化 · 容量约束</h2></div><span className="quant-safety">POINT-IN-TIME · REPRODUCIBLE</span></div><div className="quant-controls"><label>行情版本<select value={datasetId} onChange={(event) => setDatasetId(event.target.value)}>{catalog.data.marketDatasets.map((item) => <option key={item.datasetId} value={item.datasetId}>{item.dataVersion}{item.datasetId === catalog.data.defaultMarketDatasetId ? ' · 默认' : ''}</option>)}</select></label><label>信号集<select value={signalSetId} onChange={(event) => setSignalSetId(event.target.value)}><option value="">请选择人工确认信号集</option>{catalog.data.signalSets.map((item) => <option key={item.signalSetId} value={item.signalSetId}>{item.name} · {item.version}</option>)}</select></label><label>证券代码<input value={securityText} onChange={(event) => setSecurityText(event.target.value)} /></label><label>滚动窗口<input type="number" min="2" max="756" value={rollingDays} onChange={(event) => setRollingDays(Number(event.target.value))} /></label><label>测试窗口<input type="number" min="1" max="252" value={walkForwardDays} onChange={(event) => setWalkForwardDays(Number(event.target.value))} /></label><label>再平衡日<input type="number" min="1" max="252" value={rebalanceDays} onChange={(event) => setRebalanceDays(Number(event.target.value))} /></label><label>成本 bps<input type="number" min="0" max="1000" value={costBps} onChange={(event) => setCostBps(Number(event.target.value))} /></label><label>滑点 bps<input type="number" min="0" max="1000" value={slippageBps} onChange={(event) => setSlippageBps(Number(event.target.value))} /></label><label className="quant-toggle"><input type="checkbox" checked={neutralizeIndustry} onChange={(event) => setNeutralizeIndustry(event.target.checked)} /><span>行业中性</span></label><label className="quant-toggle"><input type="checkbox" checked={neutralizeMarketCap} disabled={!(dataset?.capabilities.point_in_time_market_cap || dataset?.capabilities.a_share_point_in_time_market_cap)} onChange={(event) => setNeutralizeMarketCap(event.target.checked)} /><span>市值中性{dataset?.capabilities.a_share_point_in_time_market_cap && !dataset?.capabilities.point_in_time_market_cap ? '（仅 A 股）' : ''}</span></label></div>{!signalSet && <p className="quant-dataset-note">尚无人工确认且带真实生成时间的冻结信号集。候选信号、语义金标或检索标签不能直接进入 Alpha 验证。</p>}<InlineError error={mutation.error ?? register.error} /></section>
+    {!run ? <EmptyState title="尚无版本化组合回测" description="选择冻结行情与人工确认信号集后运行；刷新页面仍可从历史运行恢复。" /> : <>
       <section className="metric-grid quant-metrics">{metricItems.map(([label, value, note]) => <article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><p>{note}</p></article>)}</section>
-      <section className="content-section quant-result"><div className="section-heading"><div><span className="eyebrow">净值对照</span><h2>策略与基准</h2></div><span className="mono run-id">{run.runId}</span></div><QuantCurve points={run.equityCurve} /><div className="quant-summary"><span>期末净值<strong>¥ {money(metrics!.finalEquity)}</strong></span><span>交易次数<strong>{metrics!.tradeCount}</strong></span><span>胜率<strong>{percent(metrics!.winRate)}</strong></span><span>累计换手<strong>{metrics!.turnover.toFixed(2)}×</strong></span><span>平均暴露<strong>{percent(metrics!.averageExposure)}</strong></span></div></section>
-      <section className="content-section"><div className="section-heading"><div><span className="eyebrow">交易审计</span><h2>逐笔记录</h2></div><span className="filter-count">信号 {run.diagnostics.acceptedSignalCount}/{run.diagnostics.inputSignalCount} 进入回测</span></div><div className="quant-table-wrap"><table className="quant-table"><thead><tr><th>信号</th><th>方向 / 仓位</th><th>建仓</th><th>退出</th><th>持有</th><th>净收益</th><th>退出原因</th></tr></thead><tbody>{run.trades.map((trade) => <tr key={`${trade.signalId}-${trade.entryDate}`}><td className="mono">{trade.signalId}</td><td>{trade.direction} · {(Math.abs(trade.position) * 100).toFixed(0)}%</td><td>{trade.entryDate}<small>¥{trade.entryPrice.toFixed(2)}</small></td><td>{trade.exitDate}<small>¥{trade.exitPrice.toFixed(2)}</small></td><td>{trade.holdingDays} 日</td><td className={trade.netReturn >= 0 ? 'quant-positive' : 'quant-negative'}>{percent(trade.netReturn)}</td><td>{trade.exitReason}</td></tr>)}</tbody></table></div></section>
-      <section className="content-section quant-methodology"><div><span className="eyebrow">方法与限制</span><h2>{run.methodologyVersion}</h2><p>信号在生成后的下一可交易日执行；披露晚于生成的信号会被隔离；每次仓位变化扣除成本与滑点；回测结束强制平仓。</p></div><ul>{run.diagnostics.warnings.map((warning) => <li key={warning}>{warning}</li>)}{run.diagnostics.skippedSignals.map((warning) => <li key={warning}>{warning}</li>)}</ul></section>
+      <section className="content-section"><div className="section-heading"><div><span className="eyebrow">WALK-FORWARD</span><h2>滚动样本外窗口</h2></div><span className="mono run-id">{run.runId}</span></div><div className="quant-table-wrap"><table className="quant-table"><thead><tr><th>训练区间</th><th>测试区间</th><th>样本</th><th>组合收益</th><th>基准</th><th>超额</th></tr></thead><tbody>{run.result.walkForward.map((item) => <tr key={`${item.test_start}`}><td>{String(item.train_start)} ~ {String(item.train_end)}</td><td>{String(item.test_start)} ~ {String(item.test_end)}</td><td>{String(item.observation_count)}</td><td>{percent(Number(item.total_return))}</td><td>{percent(Number(item.benchmark_return))}</td><td>{percent(Number(item.excess_return))}</td></tr>)}</tbody></table></div></section>
+      <section className="content-section"><div className="section-heading"><div><span className="eyebrow">组合级风险归因</span><h2>行业与证券风险贡献</h2></div><span className="filter-count">IC {run.result.signalResearch.ic == null ? '—' : Number(run.result.signalResearch.ic).toFixed(3)} · Rank IC {run.result.signalResearch.rankIc == null ? '—' : Number(run.result.signalResearch.rankIc).toFixed(3)}</span></div><div className="quality-task-grid">{Object.entries(run.result.riskAttribution.industry).map(([name, value]) => <article className="quality-task-card" key={name}><div><span>{name}</span><strong>{percent(Number(value))}</strong></div><p>年化波动贡献</p></article>)}{Object.entries(run.result.riskAttribution.factorExposure).map(([name, value]) => <article className="quality-task-card" key={name}><div><span>{name}</span><strong>{Number(value).toFixed(3)}</strong></div><p>平均因子暴露</p></article>)}</div></section>
+      <section className="content-section quant-methodology"><div><span className="eyebrow">方法与限制</span><h2>{run.methodologyVersion}</h2><p>运行绑定行情清单哈希、信号内容哈希和全部参数；相同输入产生相同 QPF 编号。</p></div><ul>{run.result.diagnostics.warnings.map((warning) => <li key={warning}>{warning}</li>)}{run.result.diagnostics.skippedSignals.map((warning) => <li key={warning}>{warning}</li>)}</ul></section>
     </>}
+    <section className="content-section"><div className="section-heading"><div><span className="eyebrow">持久化历史</span><h2>我的组合回测</h2></div><span className="filter-count">{history.data?.length ?? 0} 次</span></div>{history.data?.length ? <div className="quant-table-wrap"><table className="quant-table"><thead><tr><th>运行编号</th><th>名称</th><th>方法</th><th>生成时间</th><th>评测轨</th></tr></thead><tbody>{history.data.map((item) => <tr key={item.runId} onClick={() => setRun(item)}><td className="mono">{item.runId}</td><td>{item.name}</td><td>{item.methodologyVersion}</td><td>{formatDate(item.generatedAt)}</td><td>{item.evaluationTrack}</td></tr>)}</tbody></table></div> : <EmptyState title="没有历史运行" description="成功运行后会保存参数、结果与版本哈希。" />}</section>
   </>
 }
 

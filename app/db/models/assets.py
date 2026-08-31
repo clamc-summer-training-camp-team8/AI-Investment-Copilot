@@ -33,6 +33,9 @@ class Source(Base):
     authorization_status: Mapped[str] = mapped_column(String(32), nullable=False, default="待确认")
     base_url: Mapped[str | None] = mapped_column(String(1024))
     license_note: Mapped[str | None] = mapped_column(Text)
+    authorization_basis: Mapped[str | None] = mapped_column(Text)
+    authorization_verified_by: Mapped[str | None] = mapped_column(String(64))
+    authorization_verified_at: Mapped[datetime | None] = mapped_column()
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = created_at_column()
 
@@ -83,19 +86,33 @@ class DocumentRevision(Base):
     revision_id: Mapped[str] = mapped_column(String(96), primary_key=True)
     document_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     canonical_document_id: Mapped[str | None] = mapped_column(ForeignKey("document.document_id"))
-    content_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     source_filename: Mapped[str] = mapped_column(String(512), nullable=False)
-    object_key: Mapped[str | None] = mapped_column(String(1024), unique=True)
+    object_key: Mapped[str | None] = mapped_column(String(1024))
     object_version_id: Mapped[str | None] = mapped_column(String(255))
     media_type: Mapped[str | None] = mapped_column(String(128))
     byte_size: Mapped[int | None] = mapped_column(Integer)
     source_id: Mapped[str | None] = mapped_column(ForeignKey("source.source_id"))
     source_url: Mapped[str | None] = mapped_column(String(2048))
     authorization_status: Mapped[str] = mapped_column(String(32), nullable=False, default="待确认")
+    authorization_basis: Mapped[str | None] = mapped_column(Text)
+    authorization_verified_by: Mapped[str | None] = mapped_column(String(64))
+    authorization_verified_at: Mapped[datetime | None] = mapped_column()
+    content_status: Mapped[str] = mapped_column(String(24), nullable=False, default="待核验")
     uploaded_by: Mapped[str] = mapped_column(String(64), nullable=False)
     published_at: Mapped[datetime | None] = mapped_column()
     created_at: Mapped[datetime] = created_at_column()
     tombstoned_at: Mapped[datetime | None] = mapped_column()
+
+    __table_args__ = (
+        UniqueConstraint(
+            "canonical_document_id",
+            "content_hash",
+            name="uq_document_revision_document_content",
+        ),
+        Index("ix_document_revision_content_hash", "content_hash"),
+        Index("ix_document_revision_object_key", "object_key"),
+    )
 
 
 class IngestionRun(Base):

@@ -1,0 +1,86 @@
+{
+  "schema_version": "source-authorization-policy-v1",
+  "policies": [
+    {
+      "policy_id": "cninfo-public-disclosure-v1",
+      "source_id": "SRC-CNINFO-PUBLIC",
+      "name": "巨潮资讯网公开披露原件",
+      "source_type": "official_public_disclosure",
+      "allowed_hosts": ["static.cninfo.com.cn"],
+      "authorization_status": "公开披露已核验",
+      "authorization_basis": "ADR-0006 已由项目负责人和数据分析负责人接受：交易所强制公开披露、可从官方公开渠道免费取得，限项目内部研究、复算与审计归档。",
+      "verified_by": "adr-0006-decision",
+      "verified_at": "2026-08-11T00:00:00+08:00",
+      "retention_days": 730
+    },
+    {
+      "policy_id": "project-synthetic-sample-v1",
+      "source_id": "SRC-PROJECT-SYNTHETIC",
+      "name": "项目自有合成演示材料",
+      "source_type": "project_owned_synthetic",
+      "document_id_prefixes": ["DOC-DEMO-"],
+      "authorization_status": "项目自有",
+      "authorization_basis": "由项目样例包确定性生成，明确标记 is_illustrative=true，仅用于产品演示与测试。",
+      "verified_by": "sample-pack-owner",
+      "verified_at": "2026-08-30T00:00:00+08:00",
+      "retention_days": 730
+    },
+    {
+      "policy_id": "tencent-public-market-research-v1",
+      "source_id": "SRC-TENCENT-MARKET-PUBLIC",
+      "name": "腾讯财经公开前复权日线",
+      "source_type": "public_market_data",
+      "allowed_hosts": ["web.ifzq.gtimg.cn"],
+      "authorization_status": "公开行情研究使用已核验",
+      "authorization_basis": "ADR-0006 已由项目负责人和数据分析负责人接受：公开行情可从原始渠道免费取得，冻结副本仅限项目内部研究、复算与审计，不对外再分发。",
+      "verified_by": "adr-0006-decision",
+      "verified_at": "2026-08-11T00:00:00+08:00",
+      "retention_days": 730
+    },
+    {
+      "policy_id": "akshare-public-research-v1",
+      "source_id": "SRC-AKSHARE-RESEARCH",
+      "name": "AKShare 公开财经数据聚合接口",
+      "source_type": "open_source_research_market_data",
+      "allowed_hosts": ["web.ifzq.gtimg.cn", "stock.finance.sina.com.cn"],
+      "authorization_status": "公开行情研究使用已核验",
+      "authorization_basis": "项目负责人于 2026-08-30 明确选择 AKShare 作为内部研究主源；依据 AKShare 官方研究用途声明，仅允许项目内部研究、复算与审计，不对外再分发，不用于实盘交易，商业化前必须重新完成数据授权评审。",
+      "verified_by": "product-owner-direction-20260830",
+      "verified_at": "2026-08-30T00:00:00+08:00",
+      "retention_days": 3650
+    },
+    {
+      "policy_id": "tushare-optional-authorized-api-v1",
+      "source_id": "SRC-TUSHARE-OPTIONAL",
+      "name": "Tushare Pro 可选补充接口",
+      "source_type": "token_authorized_market_data",
+      "allowed_hosts": ["api.tushare.pro"],
+      "authorization_status": "需Token及接口权限",
+      "authorization_basis": "只在管理员显式配置 Token 且对应接口经过最小查询实测可用时使用。2026-08-30 的 120 积分账号实测 daily、pro_bar、daily_basic、trade_cal 可访问，stk_limit 无权限；权限可用性与调用频控分别治理。Token 只能从环境变量或本地密钥文件读取，不写入日志、数据库或冻结资产。",
+      "verified_by": "product-owner-direction-20260830",
+      "verified_at": "2026-08-30T00:00:00+08:00",
+      "retention_days": 3650
+    },
+    {
+      "policy_id": "tuaremax-user-authorized-research-v1",
+      "source_id": "tushare-compatible-supplement-v1",
+      "name": "用户配置的 Tushare 兼容补充接口",
+      "source_type": "user_credential_authorized_market_data",
+      "allowed_hosts": ["tuaremax.top"],
+      "authorization_status": "用户提供有效凭证，仅限内部研究",
+      "authorization_basis": "项目负责人于 2026-08-31 提供 10k 积分 Token 及 HTTPS API Origin 使用代码；五个产品所需接口均经最小查询实测可用。该端点不标记为 Tushare 官方服务，仅用于项目内部研究、交叉核验和字段补充，禁止对外再分发；商业化前必须单独复核服务条款和数据授权。",
+      "verified_by": "product-owner-direction-20260831",
+      "verified_at": "2026-08-31T12:40:45+08:00",
+      "retention_days": 3650
+    }
+  ],
+  "local_source_overrides": [
+    {
+      "document_id": "DOC-8e224f2ab1e2442b86b988acef3bbdba",
+      "sha256": "84e0d61c0226b0759a49af21408217463861c8f76478e04d4c3d805eb388e721",
+      "source_url": "https://static.cninfo.com.cn/finalpage/2025-04-25/1223274888.PDF",
+      "policy_id": "cninfo-public-disclosure-v1",
+      "note": "本地遗留文件与恒瑞医药 2025 年第一季度报告公开原件逐字节哈希一致。"
+    }
+  ]
+}

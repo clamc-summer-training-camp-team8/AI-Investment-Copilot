@@ -25,6 +25,7 @@ def _document(row: Document) -> DocumentRecord:
         raw_path=row.raw_path,
         body=row.body,
         visibility_label=row.visibility_label,
+        content_status=row.content_status,
         is_illustrative=row.is_illustrative,
         deleted_at=row.deleted_at,
     )
@@ -66,6 +67,7 @@ class SqlDocumentRepo:
                 raw_path=record.raw_path,
                 body=record.body,
                 visibility_label=record.visibility_label,
+                content_status=record.content_status,
                 is_illustrative=record.is_illustrative,
             )
         )

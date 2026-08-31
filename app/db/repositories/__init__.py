@@ -24,6 +24,7 @@ from app.db.repositories.evidence import (
 )
 from app.db.repositories.ingestion import SqlDocumentProcessingJobRepo, SqlIngestionReviewRepo
 from app.db.repositories.master import SqlEventRepo, SqlSecurityRepo
+from app.db.repositories.quant import SqlQuantRepo
 from app.db.repositories.ranking import SqlRankingPriorRepo
 from app.db.repositories.review import SqlReviewTaskRepo
 from app.db.repositories.thesis import SqlMetricRepo, SqlThesisRepo
@@ -41,6 +42,7 @@ __all__ = [
     "SqlIngestionReviewRepo",
     "SqlMetricRepo",
     "SqlObservationRepo",
+    "SqlQuantRepo",
     "SqlRankingPriorRepo",
     "SqlReviewTaskRepo",
     "SqlSecurityRepo",
@@ -71,4 +73,5 @@ def build_uow(session: Session) -> UnitOfWork:
         adjudications=SqlAdjudicationDecisionRepo(session),
         assets=SqlAssetRepo(session),
         ranking=SqlRankingPriorRepo(session),
+        quant=SqlQuantRepo(session),
     )
