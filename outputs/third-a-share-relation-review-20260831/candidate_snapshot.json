@@ -1,0 +1,100 @@
+{
+  "schema_version": "third-a-share-relation-review-v1",
+  "frozen_on": "2026-08-31",
+  "database": "copilot_dev",
+  "read_only_snapshot": true,
+  "selection": {
+    "selected_security_id": "002594",
+    "selected_security_name": "比亚迪",
+    "reason": "在现有医药与半导体正式信号之外补充新能源汽车行业；存在可交叉核验的一手月度产销公告；事实披露早于 v3 行情截止日。",
+    "eligible_pending_relations_before_v3_cutoff": 81,
+    "high_strength_relations_before_v3_cutoff": 6,
+    "full_text_relations_before_v3_cutoff": 45,
+    "alternatives": [
+      {
+        "security_id": "002371",
+        "security_name": "北方华创",
+        "eligible_pending_relations_before_v3_cutoff": 114,
+        "high_strength_relations_before_v3_cutoff": 6,
+        "full_text_relations_before_v3_cutoff": 96,
+        "not_selected_reason": "与现有中芯国际同属半导体产业链，第三只证券的行业分散价值较低。"
+      }
+    ]
+  },
+  "candidate_relation": {
+    "relation_id": "REL-ea2dd5a4df3547af",
+    "evidence_id": "EVD-962d09caf6a7c55f52f10cc9",
+    "security_id": "002594",
+    "security_name": "比亚迪",
+    "status": "待确认",
+    "candidate_direction": "支持",
+    "candidate_strength": "高",
+    "candidate_reason": "上传资料自动召回候选关联，待逻辑负责人核验",
+    "created_by": "analyst-mvp",
+    "created_at": "2026-08-30T16:55:07.630344+08:00",
+    "thesis_id": "THS-002594-2026Q1",
+    "thesis_title": "比亚迪2026Q1观察：整车与动力电池",
+    "hypothesis_id": "THS-002594-2026Q1-H1-需求与出货",
+    "hypothesis_statement": "新能源汽车销量保持增长，出口占比提升对冲国内价格压力",
+    "hypothesis_importance": "核心",
+    "invalidation_rule": "营业收入同比连续 2 个季度转负则该假设失效",
+    "ai_confidence": 0.8,
+    "model_version": "local-rule-v1",
+    "prompt_version": "event-impact-v5-research-analysis"
+  },
+  "secondary_source": {
+    "document_id": "DOC-068a72d46f33497dac96e317d18d91ce",
+    "title": "比亚迪公司动态研究：7月海外销量续创新高 国内新车放量或开启",
+    "locator": "DOC-068a72d46f33497dac96e317d18d91ce#paragraph-5",
+    "url": "https://data-api.investoday.net/data/report/research?id=2987199",
+    "disclosed_at": "2026-08-07T18:23:04+08:00",
+    "content_status": "完整正文",
+    "content_sha256": "d58c2dfa7cfd7e10c5e533ed8a83c7d178d49a111d29947ac44c0e8cae9b4a6d",
+    "revision_id": "DREV-7a27d413e16840c19cc55678af7cc8e3",
+    "object_key": "local/documents/4d/4d10ed8d9afaa1d6864d610697b228e326250c8f928cccdedadd52f49489ff1f.txt",
+    "object_version_id": "761f61b3-0ecc-47e5-a1b7-88894984919e",
+    "authorization_status": "已配置供应商 API 授权",
+    "archive_available_in_current_minio": false
+  },
+  "primary_sources": [
+    {
+      "document_id": "DOC-EVT-002594-00390",
+      "title": "2026年7月产销快报",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-08-03/1225452785.PDF",
+      "disclosed_at": "2026-08-03T00:00:00+08:00",
+      "content_status_in_database": "标题索引",
+      "archive_available_in_current_minio": false
+    },
+    {
+      "document_id": "DOC-EVT-002594-00268",
+      "title": "2025年7月产销快报",
+      "url": "https://static.cninfo.com.cn/finalpage/2025-08-02/1224368797.PDF",
+      "disclosed_at": "2025-08-02T00:00:00+08:00",
+      "content_status_in_database": "标题索引"
+    }
+  ],
+  "official_data_recalculation": {
+    "current_month_sales": 419211,
+    "prior_year_month_sales": 344296,
+    "monthly_sales_yoy": 0.2175889351023539,
+    "current_ytd_sales": 2227722,
+    "prior_year_ytd_sales": 2490250,
+    "ytd_sales_yoy": -0.1054223471539002,
+    "current_month_export": 180538,
+    "prior_year_month_export": 80737,
+    "export_yoy": 1.2361247011902847,
+    "current_export_share": 0.43066140917103796,
+    "prior_export_share": 0.23449880335525244,
+    "export_share_change_percentage_points": 19.61626058157855,
+    "estimated_current_domestic_sales": 238673,
+    "source_warning": "公司公告注明产销量未经审核、未经审计，可能调整并有待最终确认。"
+  },
+  "release_boundary": {
+    "current_market_dataset_id": "MDS-akshare-qfq-tuaremax10000-20260831-v3",
+    "current_market_coverage_end": "2026-08-28",
+    "current_signal_set_id": "QSS-10a968eaa5c6d0fb8aca",
+    "current_signal_count": 2,
+    "no_backdating": true,
+    "requires_new_market_dataset_after_review": true
+  }
+}
