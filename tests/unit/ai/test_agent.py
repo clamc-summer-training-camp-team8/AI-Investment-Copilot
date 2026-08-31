@@ -1,0 +1,619 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from decimal import Decimal
+from inspect import signature
+
+from app.ai.agent import (
+    AgentEventInput,
+    EvidenceAgent,
+    HypothesisInput,
+    InvestmentLogicChangeAgent,
+    MetricRuleInput,
+    ThesisDraftAgent,
+)
+from app.ai.contracts.validator import ValidationOutcome
+from app.ai.gateway import Gateway
+from app.ai.retrieval import KeywordRetriever, RetrievalDocument
+from app.core.config import Settings
+from app.core.enums import AiStatus, ImpactDirection
+
+
+class _CitationRetryGateway:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def event_impact(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        citation = "history-001#paragraph-1" if len(self.calls) == 2 else "unknown#paragraph-9"
+        candidate = kwargs["candidates"][0]  # type: ignore[index]
+        return ValidationOutcome(
+            ai_status=AiStatus.CANDIDATE,
+            payload={
+                "document_id": "new-001",
+                "security_id": "000538.SZ",
+                "event": {
+                    "event_type": "其他",
+                    "disclosure_time": "2026-08-10T00:00:00+00:00",
+                    "fact": "公司收入增长",
+                    "evidence_locator": "new-001#paragraph-1",
+                },
+                "impacts": [
+                    {
+                        "thesis_id": candidate["thesis_id"],
+                        "hypothesis_id": candidate["hypothesis_id"],
+                        "relevance": "相关",
+                        "inference": "收入增长支持目标假设",
+                        "signal": {
+                            "direction": "正向",
+                            "impact_direction": "支持",
+                            "strength": 0.8,
+                            "confidence": 0.8,
+                            "rationale": "收入增长支持目标假设",
+                            "transmission_path": "收入增长 → 盈利改善 → 假设增强",
+                            "suggested_tracking": [],
+                            "requires_human_review": True,
+                        },
+                        "citations": [citation],
+                        "unsupported_claims": [],
+                    }
+                ],
+                "model_version": "test-model",
+                "prompt_version": "test-prompt",
+                "generated_at": "2026-08-10T00:00:00+00:00",
+                "ai_status": "候选",
+            },
+        )
+
+
+class _ThesisContextGateway:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+        self.delegate = Gateway.build(Settings(llm_provider="local"))
+
+    def thesis_draft(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        return self.delegate.thesis_draft(**kwargs)  # type: ignore[arg-type]
+
+
+class _BatchImpactGateway:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+        self.directions = {
+            "H1": ImpactDirection.CONFLICT,
+            "H2": ImpactDirection.CONFLICT,
+            "H3": ImpactDirection.IRRELEVANT,
+        }
+
+    def event_impact(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        locator = str(kwargs["segment_locator"])
+        candidates = kwargs["candidates"]
+        assert isinstance(candidates, list)
+        return ValidationOutcome(
+            ai_status=AiStatus.CANDIDATE,
+            payload={
+                "document_id": kwargs["document_id"],
+                "security_id": kwargs["security_id"],
+                "event": {
+                    "event_type": kwargs["event_type"],
+                    "disclosure_time": kwargs["disclosure_time"],
+                    "fact": kwargs["segment_text"],
+                    "evidence_locator": locator,
+                },
+                "impacts": [
+                    {
+                        "thesis_id": candidate["thesis_id"],
+                        "hypothesis_id": candidate["hypothesis_id"],
+                        "relevance": (
+                            "无关"
+                            if self.directions[str(candidate["hypothesis_id"])]
+                            is ImpactDirection.IRRELEVANT
+                            else "相关"
+                        ),
+                        "inference": "批量测试判断",
+                        "signal": {
+                            "direction": "中性",
+                            "impact_direction": self.directions[
+                                str(candidate["hypothesis_id"])
+                            ].value,
+                            "strength": 0.8,
+                            "confidence": 0.8,
+                            "rationale": "批量测试判断",
+                            "transmission_path": "事件 → 指标变化 → 假设重估",
+                            "suggested_tracking": [],
+                            "requires_human_review": True,
+                        },
+                        "citations": [locator],
+                        "unsupported_claims": [],
+                    }
+                    for candidate in candidates
+                ],
+                "model_version": "batch-test-v1",
+                "prompt_version": "batch-test-v1",
+                "generated_at": "2026-08-10T00:00:00+00:00",
+                "ai_status": AiStatus.CANDIDATE.value,
+            },
+        )
+
+
+class _MissingImpactGateway(_BatchImpactGateway):
+    def event_impact(self, **kwargs: object) -> ValidationOutcome:
+        outcome = super().event_impact(**kwargs)
+        outcome.payload["impacts"] = outcome.payload["impacts"][:1]
+        return outcome
+
+
+def test_logic_change_agent_contract_accepts_candidate_hypotheses() -> None:
+    parameters = signature(InvestmentLogicChangeAgent.analyze).parameters
+
+    assert "hypotheses" in parameters
+    assert "hypothesis" not in parameters
+
+
+def test_thesis_draft_passes_structured_investment_context() -> None:
+    gateway = _ThesisContextGateway()
+    agent = ThesisDraftAgent(gateway=gateway, retriever=KeywordRetriever())
+    agent.generate(
+        security_id="000538.SZ",
+        view="核心业务收入保持增长",
+        source_segments=[
+            RetrievalDocument(
+                document_id="doc-001",
+                security_id="000538.SZ",
+                locator="doc-001#paragraph-1",
+                content="核心业务收入保持增长，订单持续增加。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+            )
+        ],
+        investment_context={"company": "示例公司", "market": "A股"},
+        industry_metrics=[
+            {"metric_name": "收入同比", "unit": "%", "observation_frequency": "季度"}
+        ],
+    )
+
+    assert gateway.calls[0]["investment_context"] == {
+        "company": "示例公司",
+        "market": "A股",
+    }
+    assert gateway.calls[0]["industry_metrics"] == [
+        {"metric_name": "收入同比", "unit": "%", "observation_frequency": "季度"}
+    ]
+
+
+class _ThesisCitationRetryGateway(_ThesisContextGateway):
+    def thesis_draft(self, **kwargs: object) -> ValidationOutcome:
+        self.calls.append(kwargs)
+        outcome = self.delegate.thesis_draft(**kwargs)  # type: ignore[arg-type]
+        outcome.payload["citations"] = [
+            "unknown#paragraph-9" if len(self.calls) == 1 else "doc-001#paragraph-1"
+        ]
+        return outcome
+
+
+def test_thesis_draft_retries_citation_outside_input() -> None:
+    gateway = _ThesisCitationRetryGateway()
+    result = ThesisDraftAgent(gateway=gateway, retriever=KeywordRetriever()).generate(
+        security_id="000538.SZ",
+        view="核心业务收入保持增长",
+        source_segments=[
+            RetrievalDocument(
+                document_id="doc-001",
+                security_id="000538.SZ",
+                locator="doc-001#paragraph-1",
+                content="核心业务收入保持增长，订单持续增加。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+            )
+        ],
+    )
+
+    assert len(gateway.calls) == 2
+    assert gateway.calls[1]["repair_errors"]
+    assert result.outcome.payload["citations"] == ["doc-001#paragraph-1"]
+
+
+def test_agent_retries_invalid_citation_with_structured_context() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="公司收入增长",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+            )
+        ]
+    )
+    gateway = _CitationRetryGateway()
+    result = InvestmentLogicChangeAgent(gateway=gateway, retriever=retriever).analyze(
+        AgentEventInput(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            evidence_locator="new-001#paragraph-1",
+            fact="公司收入增长",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
+        ),
+        (
+            HypothesisInput(
+                thesis_id="THESIS-001",
+                hypothesis_id="H1",
+                statement="收入保持增长",
+                thesis_core_view="盈利增长依赖核心业务收入持续增长",
+                hypothesis_type="经营",
+                importance="核心",
+                expected_direction="越高越好",
+                invalidation_rule="收入同比低于0%",
+                metric_rules=(
+                    MetricRuleInput(
+                        metric_id="revenue_yoy",
+                        expected_direction="越高越好",
+                        expected_value=Decimal("10"),
+                        invalidation_threshold=Decimal("0"),
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    assert len(gateway.calls) == 2
+    assert gateway.calls[0]["candidates"] == [
+        {
+            "thesis_id": "THESIS-001",
+            "hypothesis_id": "H1",
+            "statement": "收入保持增长",
+            "thesis_core_view": "盈利增长依赖核心业务收入持续增长",
+            "hypothesis_type": "经营",
+            "importance": "核心",
+            "expected_direction": "越高越好",
+            "invalidation_rule": "收入同比低于0%",
+            "metric_rules": [
+                {
+                    "metric_id": "revenue_yoy",
+                    "expected_direction": "越高越好",
+                    "expected_value": "10",
+                    "invalidation_threshold": "0",
+                }
+            ],
+            "retrieved_locators": ["history-001#paragraph-1"],
+        }
+    ]
+    assert gateway.calls[1]["repair_errors"]
+    assert result.impacts[0].outcome.payload["citations"] == ["history-001#paragraph-1"]
+
+
+def test_logic_change_analyzes_every_candidate_and_keeps_metric_rules_isolated() -> None:
+    gateway = _BatchImpactGateway()
+    agent = InvestmentLogicChangeAgent(gateway=gateway, retriever=KeywordRetriever())
+    event = AgentEventInput(
+        event_id="event-batch",
+        document_id="doc-batch",
+        security_id="000538.SZ",
+        evidence_locator="doc-batch#paragraph-1",
+        fact="公司Q2产能利用率下降，毛利率同比下降",
+        disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+        event_type="业绩",
+    )
+    hypotheses = (
+        HypothesisInput(
+            "THESIS-001",
+            "H1",
+            "产能利用率持续改善",
+            metric_rules=(MetricRuleInput("capacity_utilization", "越高越好"),),
+        ),
+        HypothesisInput(
+            "THESIS-001",
+            "H2",
+            "毛利率持续改善",
+            metric_rules=(MetricRuleInput("gross_margin", "越高越好"),),
+        ),
+        HypothesisInput("THESIS-001", "H3", "资本开支持续增长"),
+    )
+
+    result = agent.analyze(event, hypotheses)
+
+    assert [impact.candidate.hypothesis_id for impact in result.impacts] == [
+        "H1",
+        "H2",
+        "H3",
+    ]
+    assert [impact.outcome.payload["signal"]["impact_direction"] for impact in result.impacts] == [
+        "冲突",
+        "冲突",
+        "无关",
+    ]
+    assert len(gateway.calls) == 1
+    candidates = gateway.calls[0]["candidates"]
+    assert candidates[0]["metric_rules"] == [
+        {
+            "metric_id": "capacity_utilization",
+            "expected_direction": "越高越好",
+            "expected_value": None,
+            "invalidation_threshold": None,
+        }
+    ]
+    assert candidates[1]["metric_rules"] == [
+        {
+            "metric_id": "gross_margin",
+            "expected_direction": "越高越好",
+            "expected_value": None,
+            "invalidation_threshold": None,
+        }
+    ]
+    assert candidates[2]["metric_rules"] == []
+
+
+def test_logic_change_empty_candidates_do_not_call_gateway() -> None:
+    gateway = _BatchImpactGateway()
+    event = AgentEventInput(
+        event_id="event-empty",
+        document_id="doc-empty",
+        security_id="000538.SZ",
+        evidence_locator="doc-empty#paragraph-1",
+        fact="没有候选假设",
+        disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+        event_type="其他",
+    )
+
+    result = InvestmentLogicChangeAgent(
+        gateway=gateway,
+        retriever=KeywordRetriever(),
+    ).analyze(event, ())
+
+    assert result.impacts == []
+    assert gateway.calls == []
+
+
+def test_logic_change_does_not_silently_accept_missing_batch_results() -> None:
+    gateway = _MissingImpactGateway()
+    event = AgentEventInput(
+        event_id="event-missing",
+        document_id="doc-missing",
+        security_id="000538.SZ",
+        evidence_locator="doc-missing#paragraph-1",
+        fact="公司经营指标发生变化",
+        disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+        event_type="业绩",
+    )
+    hypotheses = (
+        HypothesisInput("THESIS-001", "H1", "假设一"),
+        HypothesisInput("THESIS-001", "H2", "假设二"),
+        HypothesisInput("THESIS-001", "H3", "假设三"),
+    )
+
+    result = InvestmentLogicChangeAgent(
+        gateway=gateway,
+        retriever=KeywordRetriever(),
+    ).analyze(event, hypotheses)
+
+    assert len(gateway.calls) == 2
+    assert len(result.impacts) == 3
+    assert all(impact.outcome.ai_status is AiStatus.PARSE_FAILED for impact in result.impacts)
+    assert all("必须返回 3 条 Impact" in impact.outcome.errors[0] for impact in result.impacts)
+
+
+def test_agent_编排检索和事件影响分析() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="历史公告显示核心业务收入保持增长。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+                source="cninfo",
+            )
+        ]
+    )
+    agent = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    )
+
+    result = agent.analyze(
+        AgentEventInput(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            evidence_locator="new-001#paragraph-1",
+            fact="公司收入增长。",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
+        ),
+        (
+            HypothesisInput(
+                thesis_id="THESIS-001",
+                hypothesis_id="THESIS-001-H1",
+                statement="核心业务收入保持增长",
+            ),
+        ),
+    )
+
+    assert len(result.impacts) == 1
+    impact = result.impacts[0]
+    assert impact.outcome.ai_status is AiStatus.CANDIDATE
+    assert impact.retrieval.items[0].locator == "history-001#paragraph-1"
+    assert impact.outcome.payload["hypothesis_id"] == "THESIS-001-H1"
+
+
+def test_agent_不把未来文档放入上下文() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="future-001",
+                security_id="000538.SZ",
+                locator="future-001#paragraph-1",
+                content="未来收入增长。",
+                published_at=datetime(2026, 8, 20, tzinfo=UTC),
+            )
+        ]
+    )
+    agent = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    )
+
+    result = agent.analyze(
+        AgentEventInput(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            evidence_locator="new-001#paragraph-1",
+            fact="公司收入增长。",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
+        ),
+        (HypothesisInput("THESIS-001", "H1", "收入保持增长"),),
+    )
+
+    assert result.impacts[0].retrieval.items == []
+
+
+def test_thesis_draft_agent_从资料生成初始草稿() -> None:
+    retriever = KeywordRetriever()
+    agent = ThesisDraftAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    )
+    result = agent.generate(
+        security_id="000538.SZ",
+        source_document_id="doc-001",
+        source_segments=[
+            RetrievalDocument(
+                document_id="doc-001",
+                security_id="000538.SZ",
+                locator="doc-001#paragraph-1",
+                content="公司收入增长，订单持续提升。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+            )
+        ],
+    )
+
+    assert result.retrieval.items[0].locator == "doc-001#paragraph-1"
+    assert result.outcome.usable
+    assert result.outcome.payload["source_document_id"] == "doc-001"
+    assert len(result.outcome.payload["hypotheses"]) >= 2
+
+
+def test_evidence_agent_拒绝检索结果之外的引用() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="doc-001",
+                security_id="000538.SZ",
+                locator="doc-001#paragraph-1",
+                content="收入增长。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+            )
+        ]
+    )
+    result = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    ).analyze(
+        AgentEventInput(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            evidence_locator="new-001#paragraph-1",
+            fact="收入增长。",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
+        ),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
+    )
+    impact = result.impacts[0]
+    impact.outcome.payload["citations"] = [{"locator": "unknown#paragraph-9"}]
+
+    check = EvidenceAgent.validate_impact(impact)
+
+    assert not check.valid
+    assert check.missing_locators == ("unknown#paragraph-9",)
+    assert check.requires_human_review
+
+
+def test_evidence_agent_计算引用完整性评分() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="历史公告显示收入增长。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+                source="cninfo",
+            )
+        ]
+    )
+    result = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    ).analyze(
+        AgentEventInput(
+            event_id="event-001",
+            document_id="new-001",
+            security_id="000538.SZ",
+            evidence_locator="new-001#paragraph-1",
+            fact="收入增长。",
+            disclosure_time=datetime(2026, 8, 10, tzinfo=UTC),
+            event_type="其他",
+        ),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
+    )
+    impact = result.impacts[0]
+    impact.outcome.payload["citations"] = [{"locator": "history-001#paragraph-1"}]
+
+    grade = EvidenceAgent.grade_impact(impact)
+
+    assert grade.passed
+    assert grade.score == 0.917
+    assert grade.valid_cited_count == 2
+    assert grade.source_count == 1
+    assert grade.source_authority_score == 1.0
+    assert grade.claim_support_score == 1.0
+    assert grade.transmission_score == 0.667
+
+
+def test_evidence_agent_检查事实与引用一致性和实体匹配() -> None:
+    retriever = KeywordRetriever()
+    retriever.add(
+        [
+            RetrievalDocument(
+                document_id="history-001",
+                security_id="000538.SZ",
+                locator="history-001#paragraph-1",
+                content="历史公告显示收入增长。",
+                published_at=datetime(2026, 8, 1, tzinfo=UTC),
+                source="cninfo",
+            )
+        ]
+    )
+    result = InvestmentLogicChangeAgent(
+        gateway=Gateway.build(Settings(llm_provider="mock")),
+        retriever=retriever,
+    ).analyze(
+        AgentEventInput(
+            "event-001",
+            "new-001",
+            "000538.SZ",
+            "new-001#paragraph-1",
+            "收入增长。",
+            datetime(2026, 8, 10, tzinfo=UTC),
+            "其他",
+        ),
+        (HypothesisInput("THESIS-001", "H1", "收入增长"),),
+    )
+    impact = result.impacts[0]
+    impact.outcome.payload["event"]["fact"] = "另一家公司完全无关的事实"
+
+    consistency = EvidenceAgent.check_consistency(impact)
+
+    assert consistency.entity_matched
+    assert not consistency.fact_supported
+    assert "fact_not_supported" in consistency.reasons

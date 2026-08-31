@@ -1,0 +1,106 @@
+{
+  "adjustment": "前复权",
+  "adjustment_anchor_date": "2026-08-28",
+  "assets": {
+    "bars": {
+      "path": "bars.json",
+      "sha256": "878ae9f0e04c29e094b9125d4037bf735dd6ad0dec285f6d29695c212a2f2c86"
+    },
+    "calendar": {
+      "path": "calendar.json",
+      "sha256": "59f7ef3427508d389c94fb8f422011c12cd09506972d3ddf6f304583dd1794e9"
+    },
+    "corporate_actions": {
+      "path": "corporate_actions.json",
+      "sha256": "32a5e73a92badb055702ef8dbc8b29cfb4ad6a90a80e32d5b06b49f7a1e7fc46"
+    },
+    "cross_source_quality": {
+      "path": "cross_source_quality.json",
+      "sha256": "74f3c4162ef77cf77a953eeda31bf3ad1d38e05da6b286acaca23580dce56309"
+    },
+    "cross_source_snapshot": {
+      "path": "cross_source_snapshot.json",
+      "sha256": "36dc193d289d682b8f5d8ea8e65c84af3d7278662cefc21624f87a56a0eaa3de"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "860501fb09b3faac38cf10bbd668d21144d6f4f7f2d63611655e2fd636e4eaac"
+    },
+    "source_snapshot": {
+      "path": "source_snapshot.json",
+      "sha256": "583b9e3ef769c90d6c3a2137f083bb4c1d6b2f92bd8472933b10697ab45ce32f"
+    },
+    "tushare_permission_profile": {
+      "path": "tushare_permission_profile.json",
+      "sha256": "dfa1402aef830d41ed0ae0c43df3c672cd9901c8dbea17c699736e3704ac4e58"
+    },
+    "tushare_reference_snapshot": {
+      "path": "tushare_reference_snapshot.json",
+      "sha256": "31fd55f426c37143cfd39c622fb71f6e718377bfccb23ed28999b7f42a0d2586"
+    }
+  },
+  "authorization": {
+    "policy_id": "akshare-public-research-v1",
+    "scope": "项目内部研究、复算与审计；禁止对外再分发或用于实盘交易",
+    "status": "公开行情研究使用已核验",
+    "supplement": {
+      "api_origin": "https://tuaremax.top",
+      "credential_status": "用户提供有效访问凭证",
+      "scope": "仅限项目内部研究、交叉核验和字段补充；禁止对外再分发",
+      "source_id": "tushare-compatible-supplement-v1"
+    }
+  },
+  "capabilities": {
+    "a_share_point_in_time_market_cap": true,
+    "adjusted_close": true,
+    "capacity_constraint": true,
+    "daily_traded_notional": true,
+    "point_in_time_market_cap": false,
+    "price_limit_status": false,
+    "structured_corporate_action_events": false,
+    "suspension_by_missing_session": true,
+    "trading_calendar": true,
+    "tushare_daily_crosscheck": true,
+    "tushare_market_cap_cache_consumed": true,
+    "tushare_price_limit_cache_consumed": true,
+    "tushare_pro_bar_fallback_authorized": true,
+    "tushare_supplement_configured": true,
+    "tushare_trade_calendar_crosscheck": true,
+    "tushare_trade_calendar_permission_verified": true
+  },
+  "coverage": {
+    "end": "2026-08-28",
+    "start": "2023-12-01"
+  },
+  "data_version": "akshare-qfq-tuaremax10000-20260831-v3",
+  "dataset_id": "MDS-akshare-qfq-tuaremax10000-20260831-v3",
+  "frozen_at": "2026-08-31T13:02:56.757810+08:00",
+  "limitations": [
+    "AKShare 是研究型聚合接口；上游网页或字段变化时构建必须失败并人工复核，禁止静默切源",
+    "前复权值随锚点可能变化；本版本已固定抓取截止日和源快照，后续只能新增版本",
+    "结构化公司行动事件源未启用；前复权效果可使用，不能声称完成逐事件复权审计",
+    "港股为 HKD、行业基准为 CNY；未冻结 FX 时不得把混币种超额收益解释为 Alpha",
+    "全市场点时市值未覆盖港股；包含港股的组合继续关闭市值中性",
+    "A 股点时市值已与冻结行情全量对齐；市值中性仅可用于所选区间无缺口的纯 A 股组合，港股仍未覆盖",
+    "A 股涨跌停状态未全量覆盖；不得声称完成涨跌停可成交性模拟",
+    "Tushare 涨跌停历史缓存已提供 4646 条证券日；只有与冻结行情全量对齐时能力才会开启"
+  ],
+  "schema_version": "frozen-market-dataset-v1",
+  "securities": [
+    "688981",
+    "603986",
+    "002371",
+    "600276",
+    "603259",
+    "000538",
+    "002594",
+    "00175",
+    "09868"
+  ],
+  "source_priority": [
+    "akshare",
+    "tushare_optional"
+  ],
+  "status": "frozen",
+  "timezone": "Asia/Shanghai"
+}

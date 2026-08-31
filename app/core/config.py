@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +38,9 @@ class RuleThresholds(BaseSettings):
     trend_min_periods: int = 4
     trend_max_periods: int = 8
 
+    # 指标超过该可得时间窗口只标记为过期，不参与新的失效建议。过期数据不是反证。
+    metric_max_age_days: int = Field(default=180, ge=1, le=3650)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -53,10 +56,97 @@ class Settings(BaseSettings):
     sample_pack_dir: Path = PROJECT_ROOT / "docs" / "data" / "数据分析交付包" / "业务样例包"
 
     # 模型网关。local 使用规则实现，不外发任何数据。
-    llm_provider: str = Field(default="local", pattern="^(local|http)$")
+    llm_provider: str = Field(default="local", pattern="^(local|http|mock)$")
     llm_endpoint: str | None = None
+    llm_api_key: SecretStr | None = None
     llm_model_version: str = "local-rule-v1"
+    # 三层超时：连接、单次响应、整段 AI 分析。最外层 ARQ job_timeout
+    # 只作兜底，不能代替模型调用自己的明确截止时间。
+    llm_connect_timeout_seconds: float = Field(default=5.0, gt=0, le=60)
+    llm_timeout_seconds: float = Field(default=45.0, gt=0, le=300)
+    llm_analysis_timeout_seconds: float = Field(default=120.0, gt=0, le=600)
+    # HTTP 层最多补偿一次瞬时网络错误；任务层不再自动重跑整份文档。
+    llm_max_retries: int = Field(default=1, ge=0, le=2)
+    llm_max_output_tokens: int = Field(default=4096, ge=256, le=65536)
+    llm_thinking_mode: str = Field(default="disabled", pattern="^(enabled|disabled)$")
+    llm_reasoning_effort: str = Field(default="low", pattern="^(low|high|max)$")
+    llm_input_cost_per_million: float | None = Field(default=None, ge=0)
+    llm_output_cost_per_million: float | None = Field(default=None, ge=0)
+    # 排序检查员与生成链路分开开关；默认禁用，避免误将投研材料外发。
+    ranking_judge_enabled: bool = False
+    ranking_judge_endpoint: str = "https://api.openai.com/v1/responses"
+    ranking_judge_model_version: str = "gpt-5.6-terra"
+    ranking_judge_candidate_limit: int = Field(default=40, ge=5, le=100)
+    ranking_judge_weight: float = Field(default=0.3, ge=0, le=0.5)
+    runtime_max_attempts: int = Field(default=3, ge=1, le=10)
     prompt_version: str = "prompts-v1"
+
+    # Docker Desktop publishes Redis on the host IPv4 loopback.  Using
+    # ``localhost`` is unreliable on machines where it resolves to ``::1``
+    # first while the published port only listens on IPv4.
+    redis_url: str = "redis://127.0.0.1:6379/0"
+    upload_max_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
+    upload_retention_days: int = Field(default=30, ge=1, le=3650)
+    failed_upload_retention_days: int = Field(default=90, ge=1, le=3650)
+
+    # 原文件事实源。上传原件先按内容哈希写入 S3-compatible 存储，再进入处理队列。
+    object_store_endpoint: str = "http://127.0.0.1:9000"
+    object_store_access_key: str = "copilot"
+    object_store_secret_key: SecretStr = SecretStr("copilot-local-only")
+    object_store_bucket: str = "copilot-documents"
+    object_store_region: str = "us-east-1"
+    object_store_secure: bool = False
+    object_store_retention_days: int = Field(default=365, ge=1, le=3650)
+    chunker_version: str = "semantic-v1"
+    extractor_version: str = "event-v1"
+    # P1 默认模型为完全离线、可复现的字符哈希 embedding。它只用于建立检索
+    # 基线；换成正式模型时必须改版本号，旧向量不覆盖。
+    embedding_version: str | None = "hash-char-2gram-v1"
+    rag_hybrid_keyword_weight: float = Field(default=0.45, ge=0, le=1)
+    rag_hybrid_vector_weight: float = Field(default=0.55, ge=0, le=1)
+    # 事件→假设 RAG 试点默认关闭。开启后仍按事件稳定采样，召回内容只进入
+    # 模型候选上下文，不参与鉴权、确定性规则或最终状态变更。
+    rag_event_pilot_enabled: bool = False
+    rag_event_pilot_sample_rate: float = Field(default=0.05, ge=0, le=1)
+    rag_event_pilot_limit: int = Field(default=3, ge=1, le=10)
+    # v6 专业研究员一次性盲测 14/14 通过后默认开启 Graph RAG。图仍只扩展已确认的
+    # “逻辑—假设—变量—指标—事实—原文”关系，并受证券、权限与披露时间边界约束。
+    rag_graph_enabled: bool = True
+    # v6 已授权 Evidence Fusion 参与正式排序；需要兼容保序模式时可显式改为 true。
+    rag_graph_assist_only: bool = False
+    rag_graph_text_weight: float = Field(default=0.35, ge=0, le=1)
+    rag_graph_relation_weight: float = Field(default=0.65, ge=0, le=1)
+    rag_graph_max_hops: int = Field(default=5, ge=1, le=8)
+
+    # 独立金标质量报告是离线冻结资产。API 只读展示，不在运行时改写评测结果。
+    gold_quality_report_path: Path = (
+        PROJECT_ROOT / "analytics" / "datasets" / "final-gold-v3-20260826" / "quality_report.json"
+    )
+
+    # 在线回测只读取冻结清单。上游 AKShare/Tushare 连接器属于离线构建工具，
+    # 不在 API 请求期间联网；切换默认数据集必须指向一个新版本清单。
+    quant_default_market_manifest: Path = (
+        PROJECT_ROOT
+        / "real_data"
+        / "quant"
+        / "akshare-qfq-tushare120-20260830-v1"
+        / "manifest.json"
+    )
+
+    # 本地开发可由受信任网关注入请求头；试点/生产必须使用带签名和过期时间的 JWT。
+    auth_mode: str = Field(
+        default="trusted_headers", pattern="^(trusted_headers|trusted_proxy|jwt)$"
+    )
+    # 集成环境可由不对公网暴露 API 的认证网关注入身份；额外共享密钥用于证明请求
+    # 确实来自该网关，而不是同一容器网络中的其他进程伪造用户头。
+    auth_trusted_proxy_secret: SecretStr | None = None
+    auth_jwt_secret: SecretStr | None = None
+    auth_jwt_algorithm: str = Field(default="HS256", pattern="^HS(256|384|512)$")
+    auth_jwt_issuer: str = "ai-investment-copilot"
+    auth_jwt_audience: str = "ai-investment-copilot-api"
+    auth_jwt_leeway_seconds: int = Field(default=30, ge=0, le=300)
+    auth_access_token_minutes: int = Field(default=480, ge=5, le=1440)
+    cors_origins: list[str] = ["http://localhost:5173"]
 
     rules: RuleThresholds = Field(default_factory=RuleThresholds)
 

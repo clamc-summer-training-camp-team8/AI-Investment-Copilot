@@ -5,6 +5,8 @@
 - 分层依赖的机器化约束见 [`layering.md`](layering.md)，由 `make lint-arch` 强制执行。
 - 模块所有权与协作流程见 [`../collaboration/README.md`](../collaboration/README.md)。
 - 重大取舍记录在 [`../adr/`](../adr/)。
+- Graph RAG 的建图、检索路径、文本融合、评测效果和发布状态见
+  [`Graph-RAG技术全景-20260830.md`](Graph-RAG技术全景-20260830.md)。
 
 ## 1. 架构从业务对象出发
 
@@ -80,7 +82,7 @@ app/
 ├── ai/
 │   ├── contracts/ 契约校验器（Schema 本体在 contracts/ai/）
 │   ├── prompts/   提示词模板，带版本号
-│   └── providers/ 模型网关：local 规则实现 / http 私有部署
+│   └── providers/ 模型网关：local 规则实现 / http 外部或私有兼容端点
 ├── services/      业务编排：thesis / evidence / status / review / version / audit
 ├── schemas/       API 出入参 Pydantic 模型
 ├── api/
@@ -95,7 +97,7 @@ app/
 ```
 analytics/
 ├── pipelines/     A 资料 / B 指标 / C 标签 / D 评测四类管道
-├── datasets/      评测集与金标集版本目录（数据本体不进 git）
+├── datasets/      评测集与金标集版本目录（符合授权边界的数据可进 git）
 ├── evaluation/    基线对照、效果指标计算
 ├── experiments/   候选信号实验，一实验一目录，含经济假设与限制说明
 └── notebooks/     探索性分析，不作为交付物

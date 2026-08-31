@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
 -r requirements.txt
 pytest==8.3.4
 pytest-asyncio==0.25.0
 ruff==0.8.4
 mypy==1.14.0
+# jsonschema 的类型存根。契约校验器依赖它，缺了 mypy 会报 import-untyped
+types-jsonschema==4.23.0.20241208
 # 分层依赖契约的执行工具，配置见 .importlinter
 import-linter==2.3

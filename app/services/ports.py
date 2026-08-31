@@ -1,0 +1,93 @@
+"""仓储接口（端口）。
+
+服务层从这里引入仓储接口与值对象。真实定义在 `app.core.domain`——`app/db`
+要构造这些对象，而 app.db 位于 app.services 之下，不能反向 import，所以放在
+两层都能到的 core 里。
+
+依赖 Protocol 而不是具体的 SQLAlchemy 实现，好处是编排逻辑可以用假仓储做单元
+测试：状态流转、人工闸门、版本触发这些规则不该为了测试而必须起数据库。
+"""
+
+from __future__ import annotations
+
+from app.core.domain import (
+    AdjudicationDecisionRecord,
+    AdjudicationDecisionRepo,
+    AuditRecord,
+    AuditRepo,
+    DocumentFactRecord,
+    DocumentRecord,
+    DocumentRepo,
+    DocumentSegmentRecord,
+    EventRecord,
+    EventRepo,
+    EvidenceRecord,
+    EvidenceRelationRecord,
+    EvidenceRelationRepo,
+    EvidenceRepo,
+    HypothesisRecord,
+    MetricDefinitionRecord,
+    MetricMappingRecord,
+    MetricRepo,
+    ObservationRecord,
+    ObservationRepo,
+    QuantBacktestRecord,
+    QuantMarketDatasetRecord,
+    QuantRepo,
+    QuantSignalSetRecord,
+    RankingPriorItemRecord,
+    RankingPriorRepo,
+    RankingPriorSnapshotRecord,
+    ReviewTaskRecord,
+    ReviewTaskRepo,
+    SecurityRecord,
+    SecurityRepo,
+    SuggestionRecord,
+    SuggestionRepo,
+    ThesisRecord,
+    ThesisRepo,
+    UnitOfWork,
+    VersionRecord,
+    VersionRepo,
+)
+
+__all__ = [
+    "AdjudicationDecisionRecord",
+    "AdjudicationDecisionRepo",
+    "AuditRecord",
+    "AuditRepo",
+    "DocumentFactRecord",
+    "DocumentRecord",
+    "DocumentRepo",
+    "DocumentSegmentRecord",
+    "EventRecord",
+    "EventRepo",
+    "EvidenceRecord",
+    "EvidenceRelationRecord",
+    "EvidenceRelationRepo",
+    "EvidenceRepo",
+    "HypothesisRecord",
+    "MetricDefinitionRecord",
+    "MetricMappingRecord",
+    "MetricRepo",
+    "ObservationRecord",
+    "ObservationRepo",
+    "QuantBacktestRecord",
+    "QuantMarketDatasetRecord",
+    "QuantRepo",
+    "QuantSignalSetRecord",
+    "RankingPriorItemRecord",
+    "RankingPriorRepo",
+    "RankingPriorSnapshotRecord",
+    "ReviewTaskRecord",
+    "ReviewTaskRepo",
+    "SecurityRecord",
+    "SecurityRepo",
+    "SuggestionRecord",
+    "SuggestionRepo",
+    "ThesisRecord",
+    "ThesisRepo",
+    "UnitOfWork",
+    "VersionRecord",
+    "VersionRepo",
+]

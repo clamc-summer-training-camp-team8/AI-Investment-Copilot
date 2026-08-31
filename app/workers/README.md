@@ -15,6 +15,21 @@ PRD 8.3 列出的两类异步任务，加上定时扫描：
 
 任务队列用 `arq`（已在 `requirements.txt`）。
 
+启动 worker：
+
+```bash
+arq app.workers.settings.WorkerSettings
+```
+
+`POST /api/jobs/documents` 将文件短暂保存到受控 `storage/uploads/`，按 SHA-256 归档到
+S3-compatible 对象存储后删除本机副本并入队，接口立即返回
+`job_id`；同一 `document_id` 使用稳定任务 ID 防止重复入队。模型网络失败按指数间隔最多
+重试 3 次，解析失败或达到重试上限后创建高优先级人工复核任务。任务所有者映射保存在
+Redis 并带 TTL，查询接口不能跨用户读取结果。
+
+带入库时间的请求必须提交含时区的 `published_at`；触发 AI 草稿时，`thesis_id` 与
+`security_id` 必须同时提供。两项都不提供时只执行解析和切分。
+
 ## 编排位置
 
 workers 负责**调用顺序与重试**，不负责业务规则。业务规则在 `app/services`。
@@ -23,6 +38,7 @@ workers 负责**调用顺序与重试**，不负责业务规则。业务规则�
 
 ```
 ingest.parse → ingest.segment → ingest.fingerprint
+  → services.document.persist_processed（原文、段落、正文事实）
   → ai.extract_thesis_draft → contracts 校验
   → services.thesis.save_draft
 ```
@@ -31,7 +47,8 @@ ingest.parse → ingest.segment → ingest.fingerprint
 
 ```
 ingest.extract_events → ingest.dedupe
-  → services.recall_candidates（召回候选逻辑与假设）
+  → services.recall_candidates（按证券召回唯一投资逻辑与假设）
+  → text ranking + rank-stable Graph assist（附加路径，必要时补位）
   → ai.analyze_impact
   → calc（预期差、趋势、失效判定）
   → services.evidence.create_candidates
@@ -39,6 +56,10 @@ ingest.extract_events → ingest.dedupe
 ```
 
 两条链路都停在候选状态。**worker 不允许推进到正式记录**，那需要人工动作。
+
+产品口径为每家公司一条投资逻辑，因此变化链不在同一证券内创建或竞争多条逻辑。Graph assist
+和 Evidence Fusion 都不能越过证券、权限、时间或查询级候选白名单；v6 通过后默认启用
+Evidence Fusion，图不可用或运行异常时链路继续回退文本基线。
 
 ## 性能目标
 
@@ -54,7 +75,10 @@ PRD 12.2：50 页以内资料草稿生成目标 ≤ 3 分钟。
 
 - 任务幂等。同一文档重复处理不产生重复事件（靠 `content_hash` 与 `fingerprint`）。
 - 区分可重试失败（模型超时、网络）与不可重试失败（文件损坏、格式不支持）。后者不占重试次数，直接转人工。
-- 重试次数上限后进死信队列，写 `data_quality_result`，在管理页可见。
+- 重试次数上限后返回结构化失败结果并写入 `document_processing_job` 死信状态，同时创建
+  `ingestion_review`；复核页可重放。Worker 中断遗留的超时任务也会由定时恢复任务转为死信。
+- 重复上传命中既有 revision 时复用不可变对象；Worker 处理副本用完即删除。旧式本机失败/孤儿
+  文件仍按 `UPLOAD_RETENTION_DAYS` 与 `FAILED_UPLOAD_RETENTION_DAYS` 定时清理。
 - 失败不静默。任何丢任务的实现都会让研究员上传后无限等待。
 
 ## 时间语义

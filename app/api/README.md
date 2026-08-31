@@ -76,7 +76,25 @@ MVP 阶段身份可简化（PRD 8.1 对身份系统预留接口）。但即使�
 - 每个请求有明确 `actor`，不允许匿名访问业务接口。
 - `actor` 一路传到 services 与审计日志。
 
-不要为了本地调试方便留一个跳过鉴权的开关在默认配置里。
+`AUTH_MODE=trusted_headers` 只允许 `ENV=local`，通过 `X-User-Id` / `X-User-Teams`
+支持本地联调。受控集成环境可使用 `AUTH_MODE=trusted_proxy`，但 API 必须只在认证网关内网
+可达，且网关必须覆盖注入用户头和至少 32 字节的 `X-Proxy-Secret`。非本地环境会拒绝普通
+trusted headers。对外试点使用 `AUTH_MODE=jwt`，并校验 Bearer JWT 的签名、`exp`、`iat`、
+`sub`、`iss` 和 `aud`；HMAC 密钥至少 32 字节且不进入仓库。
+
+已注册的产品化接口：
+
+- `/api/theses/*`：逻辑卡片、证据与状态人工闸门。
+- `/api/reviews/*`：当前研究员的复核任务列表、创建、查看和完成。
+- `/api/jobs/documents`：上传 PDF/DOCX/TXT 并进入异步处理队列。
+- `/api/jobs/{job_id}`：只允许任务创建者查询进度与结果。
+- `POST /api/quant/backtests`：兼容旧版请求内单证券事件回测；不持久化，保留给已有客户端迁移。
+- `/api/quant/catalog`、`/market-datasets/register-default`、`/signal-sets`：登记并选择冻结行情和
+  人工确认信号；授权、内容与版本哈希不满足时拒绝。
+- `/api/quant/portfolio-backtests`：版本化多证券组合研究及本人历史运行；持久化但不产生交易指令。
+- `GET /api/evaluation/gold-quality`：读取冻结的独立金标质量报告与功能发布门禁；报告缺失或损坏时返回 503，不使用演示值兜底。
+- `POST /api/theses/drafts`：每家公司只允许一条逻辑；重复创建返回 409
+  `THESIS_ALREADY_EXISTS`。调用者可见既有逻辑时附 `thesis_id`，不可见时不泄露 ID。
 
 ## 测试
 

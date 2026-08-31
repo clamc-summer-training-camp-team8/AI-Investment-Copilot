@@ -1,0 +1,28 @@
+{
+  "schema_version": "graph-relevance-v4-candidate-pool-v1",
+  "created_at": "2026-08-26T20:50:41.090908+08:00",
+  "cutoff": "2026-08-26T18:00:00+08:00",
+  "queries": 30,
+  "rows": 240,
+  "candidates_per_query": [
+    8
+  ],
+  "companies": 9,
+  "source_documents": 195,
+  "source": "listed-company public disclosures",
+  "v3_query_reuse": 0,
+  "v3_candidate_url_reuse": 0,
+  "label_columns_written": false,
+  "download_or_parse_failures_skipped": [
+    {
+      "query_id": "V4-Q017",
+      "document_id": "DOC-EVT-688981-00237",
+      "reason": "PDF contains no extractable text"
+    },
+    {
+      "query_id": "V4-Q029",
+      "document_id": "DOC-EVT-000538-00139",
+      "reason": "PDF contains no extractable text"
+    }
+  ]
+}

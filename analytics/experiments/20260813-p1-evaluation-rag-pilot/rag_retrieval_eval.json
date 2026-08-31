@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-08-12T18:22:07.342484+00:00",
+  "gold_version": "mentor-blind-gold-v2-20260811",
+  "embedding_version": "hash-char-2gram-v1",
+  "evaluator_document_labels": [
+    "公开",
+    "内部"
+  ],
+  "evaluated_queries": 59,
+  "keyword": {
+    "recall_at_1": {
+      "hits": 0,
+      "n": 59,
+      "recall": 0.0
+    },
+    "recall_at_5": {
+      "hits": 0,
+      "n": 59,
+      "recall": 0.0
+    },
+    "recall_at_10": {
+      "hits": 0,
+      "n": 59,
+      "recall": 0.0
+    },
+    "mrr": 0.0
+  },
+  "hybrid": {
+    "recall_at_1": {
+      "hits": 18,
+      "n": 59,
+      "recall": 0.3051
+    },
+    "recall_at_5": {
+      "hits": 34,
+      "n": 59,
+      "recall": 0.5763
+    },
+    "recall_at_10": {
+      "hits": 36,
+      "n": 59,
+      "recall": 0.6102
+    },
+    "mrr": 0.4136
+  },
+  "top1_citation_correctness": {
+    "hits": 18,
+    "n": 59,
+    "value": 0.3051
+  },
+  "unauthorized_result_count": 0,
+  "pilot_gate": {
+    "no_permission_leakage": true,
+    "hybrid_not_worse_at_5": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "graph-relevance-blind-evaluation-receipt-v2",
+  "gold_version": "graph-relevance-v5-blind",
+  "state": "completed",
+  "consumed_at": "2026-08-29T12:22:55.988573+00:00",
+  "gold_sha256": "c3adbaf12abceeb54420e36d88cf36f0ddd17a32cd7039f7a5c1ea3326d58035",
+  "benchmark_sha256": "3e43c740a8ee18da7c777f93471bb1d2cd71d28044170e69da341ea61c6ac630",
+  "rollout_ready": false,
+  "passed_gates": 12,
+  "total_gates": 14
+}

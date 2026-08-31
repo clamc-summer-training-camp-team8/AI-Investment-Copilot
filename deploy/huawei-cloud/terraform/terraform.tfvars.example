@@ -1,0 +1,18 @@
+region            = "cn-south-1"
+availability_zone = "cn-south-1a"
+
+# 在华为云控制台按所选区域填写实际 ID。
+ecs_flavor_id = "REPLACE_WITH_4VCPU_16G_FLAVOR_ID"
+ecs_image_id  = "REPLACE_WITH_UBUNTU_24_04_IMAGE_ID"
+ecs_key_pair  = "REPLACE_WITH_EXISTING_KEY_PAIR_NAME"
+
+# 只允许团队办公网或 VPN 出口登录服务器。
+ssh_source_cidrs = ["203.0.113.10/32"]
+
+# 自动签发/续签公网 TLS 证书时保留公网访问；应用层仍要求独立账号。
+web_source_cidrs = ["0.0.0.0/0"]
+
+ecs_system_disk_type    = "SSD"
+ecs_system_disk_size_gb = 200
+eip_bandwidth_mbit      = 10
+

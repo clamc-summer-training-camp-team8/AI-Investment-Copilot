@@ -1,0 +1,82 @@
+{
+  "package_version": "independent-gold-v3-20260826",
+  "frozen_at": "2026-08-26T04:01:54.047956+00:00",
+  "sampling_seed": 20260826,
+  "deliverables": [
+    {
+      "path": "00_交付与回收说明.md",
+      "bytes": 2595,
+      "sha256": "bc8faf22c89b80027f97b55e6028b9958584b678b6f3da5a5ab4748093fbc271"
+    },
+    {
+      "path": "01_独立金标_v3_标注手册.docx",
+      "bytes": 49148,
+      "sha256": "f3cdb44365e738ab2c5757a1d5ed09f8ae55d83459d890a296bfbd8414346268"
+    },
+    {
+      "path": "02_标注员A_独立盲标工作簿_v3.xlsx",
+      "bytes": 63539,
+      "sha256": "16f2eeced0d354aec572b11dcba52b11c51a1bcbebbad1023f805738e7fdcbcc"
+    },
+    {
+      "path": "03_标注员B_独立盲标工作簿_v3.xlsx",
+      "bytes": 64141,
+      "sha256": "bf3b7b69756a59cd6f6709e40a5bcbcc7d0e8055987ee3538e174f0d6270d4d1"
+    },
+    {
+      "path": "04_裁决员_分歧裁决工作簿_v3.xlsx",
+      "bytes": 11883,
+      "sha256": "85d765e9f8e277b8b4d939c6ea6161e13d89662ae9113fb7e7ffe5e3576c8c97"
+    },
+    {
+      "path": "gold_contract_v3.json",
+      "bytes": 2953,
+      "sha256": "9872205ef0578217beee7765bf373eb3920724ec29fea96eadebf8eee883e77d"
+    },
+    {
+      "path": "workload_stats.json",
+      "bytes": 1017,
+      "sha256": "3d239f411394119e4752e430eab2659fe310924e8cefd4b13934f81cd8cc6319"
+    },
+    {
+      "path": "internal/frozen_sample_master.csv",
+      "bytes": 85657,
+      "sha256": "46b7205fc1266bf8ef73a434b9299df67162d9afdd775d9ecb79777c0adae3ca"
+    },
+    {
+      "path": "tasks/adjudication_queue_template.csv",
+      "bytes": 109,
+      "sha256": "97dee6a99565389d7e995e11ac7ed620be264d1dcdbc6c5c053ed71641b4ce58"
+    },
+    {
+      "path": "tasks/annotator_A_body_facts.csv",
+      "bytes": 14338,
+      "sha256": "1104a778a236350520fd43d6881f195f2a78b8398ebc016ba50444f4debdb641"
+    },
+    {
+      "path": "tasks/annotator_A_events.csv",
+      "bytes": 73229,
+      "sha256": "653d6bb804137ef9415232abd2605b319559ce8aaa1e58b6a8e5d3a36032229f"
+    },
+    {
+      "path": "tasks/annotator_A_graph_relevance.csv",
+      "bytes": 55246,
+      "sha256": "905fbc29f1abd399f8357244c9bca259ab49ccad784b5b8d1f901df2b8189202"
+    },
+    {
+      "path": "tasks/annotator_B_body_facts.csv",
+      "bytes": 14338,
+      "sha256": "aaa45f7d86169652b4da9e2c3471cf3475fc7d94a46e659524574e12aed5bfc2"
+    },
+    {
+      "path": "tasks/annotator_B_events.csv",
+      "bytes": 73229,
+      "sha256": "2224bdcd442e1726c4f60bd03d7325bb20639a464d5db803f8bf1ccf877a9625"
+    },
+    {
+      "path": "tasks/annotator_B_graph_relevance.csv",
+      "bytes": 55246,
+      "sha256": "d1c30350a2462dd0cf2063abf6c0e7d03c8c70686f52ffc1c973606c020615a2"
+    }
+  ]
+}

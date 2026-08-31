@@ -34,6 +34,8 @@ from app.core.config import settings
 from app.core.timeutil import BUSINESS_TZ, ensure_aware
 from app.db.models import (
     Document,
+    DocumentSecurityRelation,
+    DocumentSegment,
     Event,
     MetricAlias,
     MetricObservation,
@@ -126,7 +128,11 @@ def parse_documents(pack_dir: Path) -> list[Document]:
                 content_hash=_content_hash(line),
                 parser_version="sample-v1",
                 body=line,
-                visibility_label="内部受限",
+                content_status="合成样例",
+                # 虚构样例用于团队集成演示，默认 Actor 可以读取“公开/内部”，
+                # 但不能读取“内部受限”。标成内部才能让部署后的标准检索链路
+                # 在不提升用户内容权限的前提下直接工作。
+                visibility_label="内部",
                 is_illustrative=True,
             )
         )
@@ -219,6 +225,27 @@ def load(session: Session, pack: ParsedPack) -> None:
 
     for document in pack.documents:
         session.merge(document)
+    session.flush()
+    for document in pack.documents:
+        session.add(
+            DocumentSecurityRelation(
+                document_id=document.document_id,
+                security_id=DEMO_SECURITY_ID,
+                relation_type="主体",
+                status="已确认",
+                confidence=Decimal("1.0000"),
+                created_by="seed_sample_pack",
+            )
+        )
+    for document in pack.documents:
+        session.merge(
+            DocumentSegment(
+                document_id=document.document_id,
+                locator=f"{document.document_id}#paragraph-1",
+                ordinal=1,
+                content=document.body or "",
+            )
+        )
     session.flush()
 
     for observation in pack.observations:

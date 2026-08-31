@@ -1,0 +1,2 @@
+sample_id,document_id,locator,company,document_type,published_at,body_text,expected_fact_type,expected_direction,expected_rate_low,expected_rate_high,annotator,annotated_at,reason
+BF-001,DOC-TODO-001,DOC-TODO-001#paragraph-1,待独立标注,产销数据,2026-01-01T00:00:00+08:00,,,,,,,,第二名标注人待填写

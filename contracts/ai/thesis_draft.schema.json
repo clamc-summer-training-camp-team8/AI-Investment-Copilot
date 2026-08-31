@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-investment-copilot/contracts/ai/thesis_draft.schema.json",
+  "title": "ThesisDraft",
+  "description": "逻辑卡片生成输出（PRD 10.1）。全部字段为草稿，发布前必须人工确认。模型不得擅自填写研究员预期和正式阈值。",
+  "type": "object",
+  "required": [
+    "security_id",
+    "title",
+    "core_view",
+    "hypotheses",
+    "model_version",
+    "prompt_version",
+    "generated_at",
+    "ai_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "disclaimer": { "type": "string" },
+    "source_document_id": {
+      "type": ["string", "null"],
+      "description": "来源文档。手工录入观点时为 null，这是建卡的主路径之一（FR-T-001 允许手工观点）。"
+    },
+    "security_id": { "type": "string", "minLength": 1 },
+    "security_candidates": {
+      "type": "array",
+      "description": "实体识别的候选主体。歧义时由用户选择，系统不自动绑定（PRD 7.4）。",
+      "items": {
+        "type": "object",
+        "required": ["security_id", "name"],
+        "properties": {
+          "security_id": { "type": "string" },
+          "name": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "PRD 4.3：不超过 40 字。概括价值驱动。"
+    },
+    "direction": {
+      "type": ["string", "null"],
+      "enum": ["看多", "看空", "观察", null],
+      "description": "PRD 4.3 规定 direction 由人工填写。模型可留空，不得代替研究员定方向。"
+    },
+    "core_view": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "PRD 4.3：不超过 200 字，仅保留一个核心判断。"
+    },
+    "hypotheses": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "description": "PRD 5.1 / FR-T-002：2 至 5 条假设，至少 1 条核心。",
+      "items": {
+        "type": "object",
+        "required": ["statement", "hypothesis_type", "importance"],
+        "additionalProperties": false,
+        "properties": {
+          "hypothesis_id": { "type": "string" },
+          "name": { "type": "string" },
+          "statement": {
+            "type": "string",
+            "minLength": 1,
+            "description": "必须可被事实或数据支持/反驳（PRD 4.4）。"
+          },
+          "hypothesis_type": {
+            "type": "string",
+            "enum": ["行业", "公司竞争力", "经营", "盈利", "政策", "估值", "其他"]
+          },
+          "importance": { "type": "string", "enum": ["核心", "辅助"] },
+          "causal_level": { "type": "string", "enum": ["需求/行业维度", "竞争力/执行维度", "财务结果维度", "待确认"] },
+          "logic_dimension": { "type": "string", "enum": ["需求/行业维度", "竞争力/执行维度", "财务结果维度", "待确认"] },
+          "quality_warning": { "type": "string" },
+          "observation_window": { "type": "string" },
+          "expected_direction": {
+            "type": ["string", "null"],
+            "enum": ["越高越好", "越低越好", "不低于阈值", "不高于阈值", null]
+          },
+          "metric_suggestions": {
+            "type": "array",
+            "description": "指标建议。只给口径与观察目的，expected_value 一律留空由研究员填写（PRD 10.1 限制、GAP-002）。",
+            "items": {
+              "type": "object",
+              "required": ["metric_name"],
+              "additionalProperties": false,
+              "properties": {
+                "metric_id": { "type": ["string", "null"] },
+                "metric_name": { "type": "string", "minLength": 1 },
+                "unit": { "type": "string" },
+                "observation_frequency": { "type": "string" },
+                "rationale": { "type": "string" }
+              }
+            }
+          },
+          "evidence_locator": {
+            "type": ["string", "null"],
+            "pattern": "^[A-Za-z0-9_.-]+#paragraph-[0-9]+$",
+            "description": "事实类内容的引用。无法引用时须在 unsupported_claims 中标记为推断。"
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["statement"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1 },
+          "evidence_locator": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "invalidation_suggestions": {
+      "type": "array",
+      "description": "失效条件建议。FLD-005：不可由 AI 直接生效，必须人工确认后才写入 invalidation_rule。",
+      "items": {
+        "type": "object",
+        "required": ["statement"],
+        "additionalProperties": false,
+        "properties": {
+          "statement": { "type": "string", "minLength": 1 },
+          "hypothesis_ref": { "type": ["string", "null"] },
+          "require_all": {
+            "type": "boolean",
+            "description": "多条件时是「全部满足」还是「任一满足」。样例案例是 AND，误当 OR 会造成失效误报。"
+          },
+          "consecutive_periods": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "连续观察期数。样例中 H1/H2 为 2、H3 为 1。"
+          }
+        }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "description": "引用清单，每条须能定位到原文段落。",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.-]+#paragraph-[0-9]+$"
+      }
+    },
+    "unsupported_claims": {
+      "type": "array",
+      "description": "无引用支撑的内容。PRD 10.5：无法引用时必须标记为推断或不确定，不允许省略标记直接输出为事实。",
+      "items": { "type": "string" }
+    },
+    "model_version": { "type": "string", "minLength": 1 },
+    "prompt_version": { "type": "string", "minLength": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "ai_status": {
+      "type": "string",
+      "enum": ["候选", "低置信", "解析失败"]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "model_metadata": {
+      "type": "object",
+      "description": "提供者请求 ID、token 用量与结束原因；不得包含密钥或提示词正文。",
+      "additionalProperties": true
+    }
+  }
+}

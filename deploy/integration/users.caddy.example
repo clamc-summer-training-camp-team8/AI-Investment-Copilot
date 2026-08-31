@@ -1,0 +1,3 @@
+# 已弃用：共享环境从 2026-08-31 起使用产品内 JWT 登录。
+# 成员账号保存在 PostgreSQL 的 user_account 表中，使用 scripts.manage_user 管理。
+# 服务器上既有 users.caddy 可保留作历史回滚资产，但当前 Caddyfile 不再加载它。

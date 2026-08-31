@@ -1,0 +1,37 @@
+{
+  "schema_version": "graph-rag-activation-decision-v1",
+  "policy_version": "graph-rag-v6-activation-policy-v1",
+  "gold_version": "graph-relevance-v6-blind",
+  "evaluation_role": "one_time_blind",
+  "official_gates_passed": 14,
+  "official_gates_total": 14,
+  "official_rollout_ready": true,
+  "safety_hard_gates_passed": true,
+  "not_too_bad_quality_passed": true,
+  "metrics": {
+    "text_recall_at_5": 0.8303,
+    "graph_recall_at_5": 0.8247,
+    "text_mrr": 0.8222,
+    "graph_mrr": 0.8983,
+    "graph_ndcg_at_5": 0.8076,
+    "graph_top1_correctness": 0.8333,
+    "path_provenance_rate": 1.0,
+    "candidate_pool_compliance_rate": 1.0,
+    "unjudged_result_count": 0,
+    "permission_leakage_count": 0,
+    "security_leakage_count": 0,
+    "future_leakage_count": 0,
+    "canary_content_leakage_count": 0
+  },
+  "activation": {
+    "rag_graph_enabled": true,
+    "rag_graph_assist_only": false,
+    "retrieval_policy": "graph-evidence-fusion-v1",
+    "fallback": "text_retrieval"
+  },
+  "artifacts": {
+    "benchmark": "analytics/experiments/graph-relevance-v6-blind/benchmark.json",
+    "receipt": "outputs/graph-relevance-v6-final/blind_evaluation_receipt.json",
+    "quality_report": "analytics/datasets/final-gold-v3-20260826/quality_report.json"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "data_version": "akshare-qfq-20260830-v1",
+  "primary": {
+    "interfaces": [
+      "stock_zh_a_hist_tx",
+      "stock_hk_daily",
+      "stock_zh_index_daily_tx"
+    ],
+    "library": "akshare",
+    "library_version": "1.18.94",
+    "source_id": "akshare-research-primary-v1",
+    "upstream_providers": [
+      "Tencent Finance",
+      "Sina Finance"
+    ]
+  },
+  "request": {
+    "adjustment": "qfq",
+    "end": "2026-08-29",
+    "start": "2023-12-01"
+  },
+  "row_source_counts": {
+    "akshare.stock_hk_daily": 1288,
+    "akshare.stock_zh_a_hist_tx": 4649,
+    "akshare.stock_zh_index_daily_tx": 1995
+  },
+  "schema_version": "market-provenance-v1",
+  "supplement": {
+    "configured": false,
+    "errors": {},
+    "fallback_reasons": {},
+    "fallback_security_count": 0,
+    "library_version": null,
+    "source_id": "tushare-not-configured"
+  }
+}

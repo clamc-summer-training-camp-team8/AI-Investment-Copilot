@@ -1,0 +1,34 @@
+{
+  "gold_version": "final-gold-v3-20260826",
+  "created_at": "2026-08-26T16:37:32.450090+08:00",
+  "source_package": "independent-gold-v3-20260826",
+  "counts": {
+    "event": 120,
+    "body_fact": 60,
+    "graph_relevance": 180
+  },
+  "adjudicated_rows": 161,
+  "source_sha256": {
+    "A": "8c0bf8d31def3d7a0be867c29a69de8ac534090a66964bf4b2ec5079698c9e60",
+    "B": "394b89b24a536d7953678f0928d6bf4547ab03f8a81b2fd543b4777b64b9e6f1",
+    "adjudication": "f10cdf270bd25306500963c0d9ea959e11309ea5942b85289dacce865f0d84bb"
+  },
+  "files": [
+    {
+      "path": "final_event_gold_v3.csv",
+      "rows": 120,
+      "sha256": "b56c7ea97252a8b60aef11e24a1f30acf529ea8462c26ac293d287c227847b10"
+    },
+    {
+      "path": "final_body_fact_gold_v3.csv",
+      "rows": 60,
+      "sha256": "68ae2013d80eef982f3b102a6f5d7c8e7c9d1716f9fc04b92ef569ff0daa6efa"
+    },
+    {
+      "path": "final_graph_relevance_gold_v3.csv",
+      "rows": 180,
+      "sha256": "f19c70b9b95666cb66617f147ce9c27616b9792d61d037d9adc904b7edcfa036"
+    }
+  ],
+  "quality_report": "quality_report.json"
+}

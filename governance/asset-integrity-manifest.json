@@ -1,0 +1,431 @@
+{
+  "schema_version": "governed-asset-integrity-v1",
+  "generated_at": "2026-08-31T05:04:00.941170+00:00",
+  "policy_sha256": "7b4ae5756806a8b9259fcaa0ff5554a4ba46158da98bb1440e2365d36bb8a759",
+  "source_policy_sha256": "f16cee2de49968b22778041b1c7ee60c850ddc2d6b4f8f5be06abe4b3a694461",
+  "entries": [
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/README.md",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "18d3a26d3e1f30e4ec8fb223c5a3a24e75cf802a56f60813ed6c7f5f9e29947f",
+      "bytes": 1396,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/_comparison_check/adjudication_queue.csv",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "be92da34a85c602300eaf6faf451cb082347a9244bf8820b0e9e7d65a001c3c4",
+      "bytes": 88024,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/_comparison_check/agreement_report.json",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "a9a098bbaed98854f9f37c646b08aeac6719f36885ec72048b72c72a65d54a6d",
+      "bytes": 2026,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/final_body_fact_gold_v3.csv",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "68ae2013d80eef982f3b102a6f5d7c8e7c9d1716f9fc04b92ef569ff0daa6efa",
+      "bytes": 67987,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/final_event_gold_v3.csv",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "b56c7ea97252a8b60aef11e24a1f30acf529ea8462c26ac293d287c227847b10",
+      "bytes": 221914,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/final_gold_manifest.json",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "ae5358fbfbe230ab421d38a65be998477cb4e95e861606c6ec7f9247aa3d16b7",
+      "bytes": 1105,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/final_graph_relevance_gold_v3.csv",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "f19c70b9b95666cb66617f147ce9c27616b9792d61d037d9adc904b7edcfa036",
+      "bytes": 214318,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/datasets/final-gold-v3-20260826/quality_report.json",
+      "category": "gold_report",
+      "asset_set": "final-gold-v3",
+      "version": "final-gold-v3-20260826",
+      "sha256": "f176d61e8f15a71890bb3d38ff8d467081ee2f2a041767a1337ab39474404ed4",
+      "bytes": 10818,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "analytics/experiments/graph-relevance-v6-blind/benchmark.json",
+      "category": "gold_report",
+      "asset_set": "graph-relevance-v6-final",
+      "version": "graph-relevance-v6-final",
+      "sha256": "c97832e880f8b58a92163b3b95b29b0fdf9d7e89e7d004961498e2940aca1cc2",
+      "bytes": 78184,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "app/ai/data/metric_aliases.v1.json",
+      "category": "vocabulary",
+      "asset_set": "metric-vocabulary-v1",
+      "version": "metric-aliases-v1",
+      "sha256": "a30b9297db4d6fd642dbea07b285b88053c5317e39e5fd10f0818daacb103d2d",
+      "bytes": 373,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "app/ai/embeddings.py",
+      "category": "embedding",
+      "asset_set": "embedding-hash-char-2gram-v1",
+      "version": "hash-char-2gram-v1",
+      "sha256": "6fe667ab1359ad96fa2d6c747b1590bf7dcf56ec4019ee36d66ee6391625a8f8",
+      "bytes": 1503,
+      "minimum_retention_days": 730
+    },
+    {
+      "path": "app/services/graph_rag.py",
+      "category": "graph_snapshot",
+      "asset_set": "graph-snapshot-contract-v2",
+      "version": "investment-knowledge-layers-v2",
+      "sha256": "9a7511c227fa5d36f47b844578b05851502e2824c3d7012777c18005c9002032",
+      "bytes": 37064,
+      "minimum_retention_days": 730
+    },
+    {
+      "path": "governance/embedding-specs/hash-char-2gram-v1.json",
+      "category": "embedding",
+      "asset_set": "embedding-hash-char-2gram-v1",
+      "version": "hash-char-2gram-v1",
+      "sha256": "2cbe8d45a62bfa18234e3c6b07ac1bb6916ad562a9137e91fae09db93858b954",
+      "bytes": 352,
+      "minimum_retention_days": 730
+    },
+    {
+      "path": "outputs/graph-rag-v6-activation-decision.json",
+      "category": "gold_report",
+      "asset_set": "graph-relevance-v6-final",
+      "version": "graph-relevance-v6-final",
+      "sha256": "dc5b360913a80cbfe515da26ab2838d9b37a98493d48bf3daf0192a5d939e79e",
+      "bytes": 1264,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "outputs/graph-relevance-v6-final/annotated_graph_relevance_v6.csv",
+      "category": "gold_report",
+      "asset_set": "graph-relevance-v6-final",
+      "version": "graph-relevance-v6-final",
+      "sha256": "1ca167dbb9b07b3e7dd0b11de9d0627c607f6d87ff25576412fed331e1d75f76",
+      "bytes": 618210,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "outputs/graph-relevance-v6-final/blind_evaluation_receipt.json",
+      "category": "gold_report",
+      "asset_set": "graph-relevance-v6-final",
+      "version": "graph-relevance-v6-final",
+      "sha256": "73e5f5d95defb1cf91628b0b0e93df7677cd89ceeae7914007d5bb235b48b726",
+      "bytes": 447,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "outputs/graph-relevance-v6-final/final_graph_relevance_gold_v6.csv",
+      "category": "gold_report",
+      "asset_set": "graph-relevance-v6-final",
+      "version": "graph-relevance-v6-final",
+      "sha256": "1ca167dbb9b07b3e7dd0b11de9d0627c607f6d87ff25576412fed331e1d75f76",
+      "bytes": 618210,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "outputs/graph-relevance-v6-final/final_manifest.json",
+      "category": "gold_report",
+      "asset_set": "graph-relevance-v6-final",
+      "version": "graph-relevance-v6-final",
+      "sha256": "19f81d3aa17d82cb0d233b1b21ee678556f09176ae0a08093aa15a5b07933e61",
+      "bytes": 1079,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-20260830-v1/bars.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-20260830-v1",
+      "version": "akshare-qfq-20260830-v1",
+      "sha256": "3c4b5bb45693a474c6e7fc8ad667beb07597ecc68b3d0ff399a3292859fbcaf7",
+      "bytes": 3059274,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-20260830-v1/calendar.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-20260830-v1",
+      "version": "akshare-qfq-20260830-v1",
+      "sha256": "1249986c9096a7761d5c3908ad834d771e9c1f6dd65dc996a24ceba5888d8617",
+      "bytes": 265366,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-20260830-v1/corporate_actions.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-20260830-v1",
+      "version": "akshare-qfq-20260830-v1",
+      "sha256": "beddbbd046c740658ff097335577f199cd82b32047b906d1255c6f1d51244530",
+      "bytes": 333,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-20260830-v1/manifest.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-20260830-v1",
+      "version": "akshare-qfq-20260830-v1",
+      "sha256": "3b11c9d093c5be8e31f80f2471b6b964c1e437b2b47106860797b36fca49b3ab",
+      "bytes": 2746,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-20260830-v1/provenance.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-20260830-v1",
+      "version": "akshare-qfq-20260830-v1",
+      "sha256": "42af20999bae4261022c24fbc1b8ff48ae5c58f0f449e55cef06d92956cb21a4",
+      "bytes": 892,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-20260830-v1/source_snapshot.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-20260830-v1",
+      "version": "akshare-qfq-20260830-v1",
+      "sha256": "dfdb1f12ce19d3382a7cbfe113e4893780ea40df0e13d309a30dee92f387fbb1",
+      "bytes": 3580189,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/bars.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "878ae9f0e04c29e094b9125d4037bf735dd6ad0dec285f6d29695c212a2f2c86",
+      "bytes": 3136878,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/calendar.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "59f7ef3427508d389c94fb8f422011c12cd09506972d3ddf6f304583dd1794e9",
+      "bytes": 265380,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/corporate_actions.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "32a5e73a92badb055702ef8dbc8b29cfb4ad6a90a80e32d5b06b49f7a1e7fc46",
+      "bytes": 347,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/cross_source_quality.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "74f3c4162ef77cf77a953eeda31bf3ad1d38e05da6b286acaca23580dce56309",
+      "bytes": 6190,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/cross_source_snapshot.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "36dc193d289d682b8f5d8ea8e65c84af3d7278662cefc21624f87a56a0eaa3de",
+      "bytes": 1637646,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/manifest.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "2d53632169f9fc7156feaaf91c002acea468217c9827917c48b30d0e9b2676db",
+      "bytes": 4282,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/provenance.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "860501fb09b3faac38cf10bbd668d21144d6f4f7f2d63611655e2fd636e4eaac",
+      "bytes": 2950,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/source_snapshot.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "583b9e3ef769c90d6c3a2137f083bb4c1d6b2f92bd8472933b10697ab45ce32f",
+      "bytes": 3589513,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/tushare_permission_profile.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "dfa1402aef830d41ed0ae0c43df3c672cd9901c8dbea17c699736e3704ac4e58",
+      "bytes": 1008,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tuaremax10000-20260831-v3/tushare_reference_snapshot.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tuaremax10000-20260831-v3",
+      "version": "akshare-qfq-tuaremax10000-20260831-v3",
+      "sha256": "31fd55f426c37143cfd39c622fb71f6e718377bfccb23ed28999b7f42a0d2586",
+      "bytes": 1356160,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/bars.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "44897b9bdba50b0ccd785459aff4059b5a1485fe79d1a6ec84237d89c7e9f7e5",
+      "bytes": 3068595,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/calendar.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "7fc9233ef5cfc51a39ae02701e2c9095e12113f2e345c8cd911431c5aa23db5f",
+      "bytes": 265377,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/corporate_actions.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "787ff6b992337298e28f2a19be5a1b4cfb8c3502c4c6b9653618d11544e6f036",
+      "bytes": 344,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/cross_source_quality.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "765555b61f7f950957624197a647227b7b85a2ee6027cf3455fd6f98abad2b33",
+      "bytes": 20111,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/cross_source_snapshot.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "e84abc757f834bd9f06e3675cb46e01f42b2feead9c6df04d750ff7c04ed0dc4",
+      "bytes": 1637622,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/manifest.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "387d977df5b96e37b537ca652afad66f2f30cce0e1e97cba813b4bc2d339194c",
+      "bytes": 3633,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/provenance.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "f68ce9227841f7ac3043fcc427f56e32942e889d3b35081889f9d30feaa15da8",
+      "bytes": 2519,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/source_snapshot.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "c87d662347fa01829fe84efcd693f65b2fba9840f3e338cd9cf18ccecc7ba84b",
+      "bytes": 3589510,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/akshare-qfq-tushare120-20260830-v1/tushare_permission_profile.json",
+      "category": "market_data",
+      "asset_set": "akshare-qfq-tushare120-20260830-v1",
+      "version": "akshare-qfq-tushare120-20260830-v1",
+      "sha256": "c39b2340ed7082853a9bb77cab226ab95c3df748f57e90b4d106c188c25666b0",
+      "bytes": 1106,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/tencent-qfq-20260830-v1/bars.json",
+      "category": "market_data",
+      "asset_set": "tencent-qfq-20260830-v1",
+      "version": "tencent-qfq-20260830-v1",
+      "sha256": "45756b1332dd08bc7f4e00b816745507a7f9c97cef07be44eaafafad3d346b51",
+      "bytes": 2648222,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/tencent-qfq-20260830-v1/calendar.json",
+      "category": "market_data",
+      "asset_set": "tencent-qfq-20260830-v1",
+      "version": "tencent-qfq-20260830-v1",
+      "sha256": "ad87eadc84ded275565b2f57f27a4f714931b3219556a5a27d5117a1eb515c0a",
+      "bytes": 265696,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/tencent-qfq-20260830-v1/corporate_actions.json",
+      "category": "market_data",
+      "asset_set": "tencent-qfq-20260830-v1",
+      "version": "tencent-qfq-20260830-v1",
+      "sha256": "02788affcf430ffa83b3c66267c621348834569331584852ca5db974a3d0d6a2",
+      "bytes": 354,
+      "minimum_retention_days": 3650
+    },
+    {
+      "path": "real_data/quant/tencent-qfq-20260830-v1/manifest.json",
+      "category": "market_data",
+      "asset_set": "tencent-qfq-20260830-v1",
+      "version": "tencent-qfq-20260830-v1",
+      "sha256": "ca871f9f16b8aa07f05d9e558c8bb81c5cca973a84c97192844fa3b95d17cd6c",
+      "bytes": 1969,
+      "minimum_retention_days": 3650
+    }
+  ]
+}

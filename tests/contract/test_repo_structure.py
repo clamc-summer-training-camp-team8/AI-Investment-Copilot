@@ -93,6 +93,7 @@ PATHS_REQUIRING_REVIEW = [
     "/docs/data/",
     "/contracts/",
     "/alembic/versions/",
+    "/governance/",
     "/.importlinter",
 ]
 
@@ -137,6 +138,13 @@ def test_make_check_与_ci_门禁一致() -> None:
     """本地 make check 与 CI 跑的检查项必须一致，否则本地通过远端仍会红。"""
     makefile = (PROJECT_ROOT / "Makefile").read_text(encoding="utf-8")
     ci = (PROJECT_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-    for gate in ["ruff check", "ruff format", "mypy", "lint-imports", "check_contracts"]:
+    for gate in [
+        "ruff check",
+        "ruff format",
+        "mypy",
+        "lint-imports",
+        "check_contracts",
+        "check_governed_assets",
+    ]:
         assert gate in makefile, f"Makefile 缺少门禁 {gate}"
         assert gate in ci, f"CI 缺少门禁 {gate}"

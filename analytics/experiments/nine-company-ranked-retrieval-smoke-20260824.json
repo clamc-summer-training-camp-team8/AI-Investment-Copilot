@@ -1,0 +1,1286 @@
+{
+  "evaluation_type": "traceability_smoke_not_independent_relevance_gold",
+  "as_of": "2026-08-24T23:59:59+08:00",
+  "top_k": 5,
+  "cases": 27,
+  "hits": 25,
+  "hit_rate": 0.9259,
+  "gate": {
+    "minimum_hit_rate": 0.9,
+    "passed": true
+  },
+  "by_company": {
+    "中芯国际": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    },
+    "云南白药": {
+      "cases": 3,
+      "hits": 2,
+      "hit_rate": 0.6667
+    },
+    "兆易创新": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    },
+    "北方华创": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    },
+    "吉利汽车": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    },
+    "小鹏汽车": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    },
+    "恒瑞医药": {
+      "cases": 3,
+      "hits": 2,
+      "hit_rate": 0.6667
+    },
+    "比亚迪": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    },
+    "药明康德": {
+      "cases": 3,
+      "hits": 3,
+      "hit_rate": 1.0
+    }
+  },
+  "results": [
+    {
+      "case_id": "000538-01",
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "支持",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 2025年营业收入411.87亿元，同比增长2.88%；归母净利润51.53亿元，同比增长8.51%；扣非归母净利润48.65亿元，同比增长7.55%。；工业收入160.16亿元，同比增长10.7%，占营业收入比重38.89%，同比提升2.",
+      "expected_document_ids": [
+        "DOC-STG-97eb5210b24f05a76f263553"
+      ],
+      "evidence_id": "EVD-STG-93babda0fe9d2bb84508bb41",
+      "snapshot_id": "RPS-337c14e260130367fde59a7d",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-97eb5210b24f05a76f263553",
+          "locator": "DOC-STG-97eb5210b24f05a76f263553#paragraph-1",
+          "final_score": 0.9612
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-000538-00168",
+          "locator": "DOC-EVT-000538-00168#paragraph-1",
+          "final_score": 0.7874
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-000538-00149",
+          "locator": "DOC-EVT-000538-00149#paragraph-1",
+          "final_score": 0.7742
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-000538-00211",
+          "locator": "DOC-EVT-000538-00211#paragraph-1",
+          "final_score": 0.7735
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-000538-00196",
+          "locator": "DOC-EVT-000538-00196#paragraph-1",
+          "final_score": 0.7406
+        }
+      ]
+    },
+    {
+      "case_id": "000538-02",
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "冲突",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 2025年国外收入1.09亿元，同比下降69.58%，在总收入中占比0.26%。",
+      "expected_document_ids": [
+        "DOC-STG-97eb5210b24f05a76f263553"
+      ],
+      "evidence_id": "EVD-STG-b60d6c0eaaecb95a735c00f9",
+      "snapshot_id": "RPS-337c14e260130367fde59a7d",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-97eb5210b24f05a76f263553",
+          "locator": "DOC-STG-97eb5210b24f05a76f263553#paragraph-1",
+          "final_score": 0.954
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-000538-00211",
+          "locator": "DOC-EVT-000538-00211#paragraph-1",
+          "final_score": 0.7744
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-000538-00149",
+          "locator": "DOC-EVT-000538-00149#paragraph-1",
+          "final_score": 0.755
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-000538-00230",
+          "locator": "DOC-EVT-000538-00230#paragraph-1",
+          "final_score": 0.7238
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-000538-00095",
+          "locator": "DOC-EVT-000538-00095#paragraph-1",
+          "final_score": 0.7162
+        }
+      ]
+    },
+    {
+      "case_id": "000538-03",
+      "security_id": "000538",
+      "company": "云南白药",
+      "direction": "中性",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 公告标题：2026年一季度报告",
+      "expected_document_ids": [
+        "DOC-EVT-000538-00233"
+      ],
+      "evidence_id": "EVD-EVT-000538-00233",
+      "snapshot_id": "RPS-337c14e260130367fde59a7d",
+      "expected_source_hit": false,
+      "hit_rank": null,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-000538-00047",
+          "locator": "DOC-EVT-000538-00047#paragraph-1",
+          "final_score": 0.8858
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-000538-00080",
+          "locator": "DOC-EVT-000538-00080#paragraph-1",
+          "final_score": 0.8378
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-000538-00069",
+          "locator": "DOC-EVT-000538-00069#paragraph-1",
+          "final_score": 0.7898
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-000538-00124",
+          "locator": "DOC-EVT-000538-00124#paragraph-1",
+          "final_score": 0.715
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-000538-00073",
+          "locator": "DOC-EVT-000538-00073#paragraph-1",
+          "final_score": 0.7062
+        }
+      ]
+    },
+    {
+      "case_id": "00175-01",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "支持",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 截至2026年6月30日止六个月，集团收入约1,736亿元，同比增长约15%；毛利约311.5亿元，同比增长约25.7%，毛利率约17.9%。；同期核心归母净利润约96.8亿元，同比增长约46%，核心利润增速高于收入增速。",
+      "expected_document_ids": [
+        "DOC-STG-80d17e3173ffb179e04e906e"
+      ],
+      "evidence_id": "EVD-STG-bf2e15217031340b06a6f564",
+      "snapshot_id": "RPS-e450947c5cb52e69d3bde11a",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-latest-summary",
+          "final_score": 0.9692
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#paragraph-1",
+          "final_score": 0.9292
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-dea2e4f5358ea0030f3120f2",
+          "locator": "DOC-STG-dea2e4f5358ea0030f3120f2#paragraph-1",
+          "final_score": 0.8508
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#paragraph-1",
+          "final_score": 0.85
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-e4e2045de8310388be8d3710",
+          "locator": "DOC-STG-e4e2045de8310388be8d3710#paragraph-1",
+          "final_score": 0.7908
+        }
+      ]
+    },
+    {
+      "case_id": "00175-02",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 截至2026年6月30日止六个月，归母净利润约90.91亿元，同比约下降1.8%，与核心归母净利润改善并不完全一致。；同期经营现金流约199.24亿元，同比明显下降；应作为利润向现金转化的待复核反证，而非由收入增长自动覆盖。",
+      "expected_document_ids": [
+        "DOC-STG-80d17e3173ffb179e04e906e"
+      ],
+      "evidence_id": "EVD-STG-2e1df90930856b1e8411f67a",
+      "snapshot_id": "RPS-e450947c5cb52e69d3bde11a",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-cash-risk",
+          "final_score": 0.9708
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-latest-summary",
+          "final_score": 0.9524
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#paragraph-1",
+          "final_score": 0.8716
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-1b9447a02df600b7043bf833",
+          "locator": "DOC-STG-1b9447a02df600b7043bf833#body-h1-2025-financial-highlights",
+          "final_score": 0.8652
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#paragraph-1",
+          "final_score": 0.7996
+        }
+      ]
+    },
+    {
+      "case_id": "00175-03",
+      "security_id": "00175",
+      "company": "吉利汽车",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2026年第一季度归母净利润41.66亿元，低于2025年同期的56.73亿元，尽管收入和毛利同比提升。",
+      "expected_document_ids": [
+        "DOC-STG-b07023bf1def3341aeffb1b5"
+      ],
+      "evidence_id": "EVD-STG-ca7015bfb0df577829b6c857",
+      "snapshot_id": "RPS-e450947c5cb52e69d3bde11a",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#body-q1-2026-financial-highlights",
+          "final_score": 0.9578
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-b07023bf1def3341aeffb1b5",
+          "locator": "DOC-STG-b07023bf1def3341aeffb1b5#paragraph-1",
+          "final_score": 0.9028
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-33988aadaba3d45eace58a9a",
+          "locator": "DOC-STG-33988aadaba3d45eace58a9a#paragraph-1",
+          "final_score": 0.8884
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-80d17e3173ffb179e04e906e",
+          "locator": "DOC-STG-80d17e3173ffb179e04e906e#body-h1-2026-latest-summary",
+          "final_score": 0.8852
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-72911a9f22df9c15fc19390b",
+          "locator": "DOC-STG-72911a9f22df9c15fc19390b#paragraph-1",
+          "final_score": 0.8716
+        }
+      ]
+    },
+    {
+      "case_id": "002371-01",
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "支持",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 公告标题：关于放弃参股公司增资优先认购权暨关联交易的公告",
+      "expected_document_ids": [
+        "DOC-EVT-002371-00396"
+      ],
+      "evidence_id": "EVD-EVT-002371-00396",
+      "snapshot_id": "RPS-7f3ea71d32e8506041e4d769",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-002371-00396",
+          "locator": "DOC-EVT-002371-00396#paragraph-1",
+          "final_score": 0.9516
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-002371-00192",
+          "locator": "DOC-EVT-002371-00192#paragraph-1",
+          "final_score": 0.906
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-002371-00024",
+          "locator": "DOC-EVT-002371-00024#paragraph-1",
+          "final_score": 0.8412
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-002371-00351",
+          "locator": "DOC-EVT-002371-00351#paragraph-1",
+          "final_score": 0.818
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-002371-00156",
+          "locator": "DOC-EVT-002371-00156#paragraph-1",
+          "final_score": 0.7576
+        }
+      ]
+    },
+    {
+      "case_id": "002371-02",
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2025年归属于上市公司股东的净利润55.22亿元，同比下降1.77%；扣非后归母净利润同比下降4.22%。；公司披露研发费用54.35亿元，同比增长46.96%，高研发投入是年度利润承压的相关背景之一。",
+      "expected_document_ids": [
+        "DOC-STG-b9b66663bb71bc561264471a"
+      ],
+      "evidence_id": "EVD-STG-7b5284bc61296c9c99581238",
+      "snapshot_id": "RPS-7f3ea71d32e8506041e4d769",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-b9b66663bb71bc561264471a",
+          "locator": "DOC-STG-b9b66663bb71bc561264471a#paragraph-1",
+          "final_score": 0.9344
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-65632d0e2e4f726f8a737dcd",
+          "locator": "DOC-STG-65632d0e2e4f726f8a737dcd#paragraph-1",
+          "final_score": 0.906
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-002371-00324",
+          "locator": "DOC-EVT-002371-00324#paragraph-1",
+          "final_score": 0.7976
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-002371-00033",
+          "locator": "DOC-EVT-002371-00033#paragraph-1",
+          "final_score": 0.7376
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-002371-00098",
+          "locator": "DOC-EVT-002371-00098#paragraph-1",
+          "final_score": 0.6706
+        }
+      ]
+    },
+    {
+      "case_id": "002371-03",
+      "security_id": "002371",
+      "company": "北方华创",
+      "direction": "中性",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 公告标题：关于注册发行非金融企业债务融资工具及应收账款资产支持商业票据的公告",
+      "expected_document_ids": [
+        "DOC-EVT-002371-00411"
+      ],
+      "evidence_id": "EVD-EVT-002371-00411",
+      "snapshot_id": "RPS-7f3ea71d32e8506041e4d769",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-002371-00411",
+          "locator": "DOC-EVT-002371-00411#paragraph-1",
+          "final_score": 0.9536
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-002371-00074",
+          "locator": "DOC-EVT-002371-00074#paragraph-1",
+          "final_score": 0.8726
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-002371-00134",
+          "locator": "DOC-EVT-002371-00134#paragraph-1",
+          "final_score": 0.8042
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-002371-00337",
+          "locator": "DOC-EVT-002371-00337#paragraph-1",
+          "final_score": 0.771
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-002371-00156",
+          "locator": "DOC-EVT-002371-00156#paragraph-1",
+          "final_score": 0.7576
+        }
+      ]
+    },
+    {
+      "case_id": "002594-01",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "支持",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 2025年营业收入8039.65亿元，较2024年的7771.02亿元增长3.46%。；2025年第四季度营业收入2376.99亿元，同比下降13.52%。",
+      "expected_document_ids": [
+        "DOC-STG-815081a89a1024a5c85c2d8b"
+      ],
+      "evidence_id": "EVD-STG-8387647fd1953dc45294fba1",
+      "snapshot_id": "RPS-cdfcb395332ee6ae883582c3",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-815081a89a1024a5c85c2d8b",
+          "locator": "DOC-STG-815081a89a1024a5c85c2d8b#paragraph-1",
+          "final_score": 0.9654
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-002594-00169",
+          "locator": "DOC-EVT-002594-00169#paragraph-1",
+          "final_score": 0.7586
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-002594-00179",
+          "locator": "DOC-EVT-002594-00179#paragraph-1",
+          "final_score": 0.7438
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-002594-00076",
+          "locator": "DOC-EVT-002594-00076#paragraph-1",
+          "final_score": 0.6644
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-002594-00074",
+          "locator": "DOC-EVT-002594-00074#paragraph-1",
+          "final_score": 0.6462
+        }
+      ]
+    },
+    {
+      "case_id": "002594-02",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2025年归属于母公司所有者的净利润326.19亿元，较2024年的402.54亿元下降18.97%。；2025年第四季度毛利率17.44%，低于2024年第四季度的19.66%。",
+      "expected_document_ids": [
+        "DOC-STG-815081a89a1024a5c85c2d8b"
+      ],
+      "evidence_id": "EVD-STG-2c83e334b18c97465e2a8791",
+      "snapshot_id": "RPS-cdfcb395332ee6ae883582c3",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-815081a89a1024a5c85c2d8b",
+          "locator": "DOC-STG-815081a89a1024a5c85c2d8b#paragraph-1",
+          "final_score": 0.9414
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-002594-00023",
+          "locator": "DOC-EVT-002594-00023#paragraph-1",
+          "final_score": 0.7958
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-002594-00079",
+          "locator": "DOC-EVT-002594-00079#paragraph-1",
+          "final_score": 0.7808
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-002594-00095",
+          "locator": "DOC-EVT-002594-00095#paragraph-1",
+          "final_score": 0.7108
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-002594-00106",
+          "locator": "DOC-EVT-002594-00106#paragraph-1",
+          "final_score": 0.692
+        }
+      ]
+    },
+    {
+      "case_id": "002594-03",
+      "security_id": "002594",
+      "company": "比亚迪",
+      "direction": "中性",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 公告标题：2026年7月产销快报",
+      "expected_document_ids": [
+        "DOC-EVT-002594-00390"
+      ],
+      "evidence_id": "EVD-EVT-002594-00390",
+      "snapshot_id": "RPS-cdfcb395332ee6ae883582c3",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-002594-00390",
+          "locator": "DOC-EVT-002594-00390#paragraph-1",
+          "final_score": 0.8762
+        }
+      ]
+    },
+    {
+      "case_id": "09868-01",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "支持",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2025年第四季度总收入222.5亿元，同比增长38.2%。；第四季度毛利率21.3%，较2024年同期提升6.9个百分点。；2025年全年总收入767.2亿元，同比增长87.7%；全年毛利率18.9%。",
+      "expected_document_ids": [
+        "DOC-STG-baa9ea42ad51c3579f4798f1"
+      ],
+      "evidence_id": "EVD-STG-103e5c005bc63b7ff31bb088",
+      "snapshot_id": "RPS-a64bc9bae274213e9a63227a",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-baa9ea42ad51c3579f4798f1",
+          "locator": "DOC-STG-baa9ea42ad51c3579f4798f1#paragraph-1",
+          "final_score": 0.9444
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-2f4989a7983e7119b8793b8e",
+          "locator": "DOC-STG-2f4989a7983e7119b8793b8e#paragraph-1",
+          "final_score": 0.881
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-79d20b4c151a964968401125",
+          "locator": "DOC-STG-79d20b4c151a964968401125#paragraph-1",
+          "final_score": 0.8292
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-8d951b7bca180a0796e35829",
+          "locator": "DOC-STG-8d951b7bca180a0796e35829#paragraph-1",
+          "final_score": 0.7332
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-3b24ff543282d85f3d948c13",
+          "locator": "DOC-STG-3b24ff543282d85f3d948c13#paragraph-1",
+          "final_score": 0.7142
+        }
+      ]
+    },
+    {
+      "case_id": "09868-02",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2025年第三季度整车毛利率13.1%，低于第二季度的14.3%；公司披露环比下降主要受产品代际切换影响。",
+      "expected_document_ids": [
+        "DOC-STG-8d951b7bca180a0796e35829"
+      ],
+      "evidence_id": "EVD-STG-c5f3cdf5f4660827bb06cb48",
+      "snapshot_id": "RPS-a64bc9bae274213e9a63227a",
+      "expected_source_hit": true,
+      "hit_rank": 2,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-79d20b4c151a964968401125",
+          "locator": "DOC-STG-79d20b4c151a964968401125#paragraph-1",
+          "final_score": 0.8388
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-8d951b7bca180a0796e35829",
+          "locator": "DOC-STG-8d951b7bca180a0796e35829#paragraph-1",
+          "final_score": 0.8196
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-STG-172a402e958673054e3184c5",
+          "locator": "DOC-STG-172a402e958673054e3184c5#paragraph-1",
+          "final_score": 0.7898
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-STG-3b24ff543282d85f3d948c13",
+          "locator": "DOC-STG-3b24ff543282d85f3d948c13#paragraph-1",
+          "final_score": 0.7046
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-STG-12f04d1947711c4522114c9b",
+          "locator": "DOC-STG-12f04d1947711c4522114c9b#paragraph-1",
+          "final_score": 0.6972
+        }
+      ]
+    },
+    {
+      "case_id": "09868-03",
+      "security_id": "09868",
+      "company": "小鹏汽车",
+      "direction": "中性",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 公告标题：自愿公告 2026年7月智能车交付数据",
+      "expected_document_ids": [
+        "DOC-EVT-09868-00182"
+      ],
+      "evidence_id": "EVD-EVT-09868-00182",
+      "snapshot_id": "RPS-a64bc9bae274213e9a63227a",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-09868-00182",
+          "locator": "DOC-EVT-09868-00182#paragraph-1",
+          "final_score": 0.8778
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-09868-00178",
+          "locator": "DOC-EVT-09868-00178#paragraph-1",
+          "final_score": 0.6086
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-09868-00154",
+          "locator": "DOC-EVT-09868-00154#paragraph-1",
+          "final_score": 0.4684
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-09868-00042",
+          "locator": "DOC-EVT-09868-00042#paragraph-1",
+          "final_score": 0.4346
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-09868-00182",
+          "locator": "DOC-EVT-09868-00182#evidence-ce5a26fa4505a725",
+          "final_score": 0.2136
+        }
+      ]
+    },
+    {
+      "case_id": "600276-01",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "支持",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 公告标题：恒瑞医药关于获得药品注册批准的公告",
+      "expected_document_ids": [
+        "DOC-EVT-600276-00568",
+        "DOC-EVT-600276-00573",
+        "DOC-EVT-600276-00639",
+        "DOC-EVT-600276-00646",
+        "DOC-EVT-600276-00656",
+        "DOC-EVT-600276-00662",
+        "DOC-EVT-600276-00663",
+        "DOC-EVT-600276-00680",
+        "DOC-EVT-600276-00686",
+        "DOC-EVT-600276-00691",
+        "DOC-EVT-600276-00692"
+      ],
+      "evidence_id": "EVD-EVT-600276-00691",
+      "snapshot_id": "RPS-58aca52163f84a761d7082d8",
+      "expected_source_hit": false,
+      "hit_rank": null,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-600276-00332",
+          "locator": "DOC-EVT-600276-00332#paragraph-1",
+          "final_score": 0.9504
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-600276-00007",
+          "locator": "DOC-EVT-600276-00007#paragraph-1",
+          "final_score": 0.3664
+        }
+      ]
+    },
+    {
+      "case_id": "600276-02",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "冲突",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 公告标题：恒瑞医药关于撤回药品注册申请的公告",
+      "expected_document_ids": [
+        "DOC-EVT-600276-00661"
+      ],
+      "evidence_id": "EVD-EVT-600276-00661",
+      "snapshot_id": "RPS-58aca52163f84a761d7082d8",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-600276-00661",
+          "locator": "DOC-EVT-600276-00661#paragraph-1",
+          "final_score": 0.9504
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-600276-00332",
+          "locator": "DOC-EVT-600276-00332#paragraph-1",
+          "final_score": 0.9264
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-600276-00007",
+          "locator": "DOC-EVT-600276-00007#paragraph-1",
+          "final_score": 0.508
+        }
+      ]
+    },
+    {
+      "case_id": "600276-03",
+      "security_id": "600276",
+      "company": "恒瑞医药",
+      "direction": "支持",
+      "hypothesis": "需求与出货",
+      "query": "需求与出货 公告标题：恒瑞医药关于与百时美施贵宝公司签署战略合作及许可协议的公告",
+      "expected_document_ids": [
+        "DOC-EVT-600276-00635"
+      ],
+      "evidence_id": "EVD-EVT-600276-00635",
+      "snapshot_id": "RPS-58aca52163f84a761d7082d8",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-600276-00635",
+          "locator": "DOC-EVT-600276-00635#paragraph-1",
+          "final_score": 0.9528
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-600276-00361",
+          "locator": "DOC-EVT-600276-00361#paragraph-1",
+          "final_score": 0.9042
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-600276-00096",
+          "locator": "DOC-EVT-600276-00096#paragraph-1",
+          "final_score": 0.8464
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-600276-00122",
+          "locator": "DOC-EVT-600276-00122#paragraph-1",
+          "final_score": 0.8124
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-600276-00505",
+          "locator": "DOC-EVT-600276-00505#paragraph-1",
+          "final_score": 0.8072
+        }
+      ]
+    },
+    {
+      "case_id": "603259-01",
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "支持",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2025年营业收入454.56亿元，2024年为392.41亿元。；2025年归属于母公司股东的净利润191.51亿元，2024年为94.50亿元。；2025年持续经营净利润179.78亿元，终止经营净利润13.55亿元。",
+      "expected_document_ids": [
+        "DOC-STG-b0eff25b42af189e28cd80b6"
+      ],
+      "evidence_id": "EVD-STG-8f12219af600e40567271127",
+      "snapshot_id": "RPS-28ed4c2fd1248223af133f4c",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-b0eff25b42af189e28cd80b6",
+          "locator": "DOC-STG-b0eff25b42af189e28cd80b6#paragraph-1",
+          "final_score": 0.9566
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-603259-00466",
+          "locator": "DOC-EVT-603259-00466#paragraph-1",
+          "final_score": 0.7466
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-603259-00284",
+          "locator": "DOC-EVT-603259-00284#paragraph-1",
+          "final_score": 0.741
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-603259-00250",
+          "locator": "DOC-EVT-603259-00250#paragraph-1",
+          "final_score": 0.723
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-603259-00440",
+          "locator": "DOC-EVT-603259-00440#paragraph-1",
+          "final_score": 0.7114
+        }
+      ]
+    },
+    {
+      "case_id": "603259-02",
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 公告标题：关于2025年度计提资产减值准备的公告",
+      "expected_document_ids": [
+        "DOC-EVT-603259-00453"
+      ],
+      "evidence_id": "EVD-EVT-603259-00453",
+      "snapshot_id": "RPS-28ed4c2fd1248223af133f4c",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-603259-00453",
+          "locator": "DOC-EVT-603259-00453#paragraph-1",
+          "final_score": 0.9508
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-603259-00232",
+          "locator": "DOC-EVT-603259-00232#paragraph-1",
+          "final_score": 0.8378
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-603259-00441",
+          "locator": "DOC-EVT-603259-00441#paragraph-1",
+          "final_score": 0.7974
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-603259-00229",
+          "locator": "DOC-EVT-603259-00229#paragraph-1",
+          "final_score": 0.7666
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-603259-00349",
+          "locator": "DOC-EVT-603259-00349#paragraph-1",
+          "final_score": 0.7554
+        }
+      ]
+    },
+    {
+      "case_id": "603259-03",
+      "security_id": "603259",
+      "company": "药明康德",
+      "direction": "中性",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 公告标题：2026年半年度报告",
+      "expected_document_ids": [
+        "DOC-EVT-603259-00520"
+      ],
+      "evidence_id": "EVD-EVT-603259-00520",
+      "snapshot_id": "RPS-28ed4c2fd1248223af133f4c",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-603259-00520",
+          "locator": "DOC-EVT-603259-00520#paragraph-1",
+          "final_score": 0.876
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-603259-00523",
+          "locator": "DOC-EVT-603259-00523#paragraph-1",
+          "final_score": 0.8596
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-603259-00470",
+          "locator": "DOC-EVT-603259-00470#paragraph-1",
+          "final_score": 0.7178
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-603259-00073",
+          "locator": "DOC-EVT-603259-00073#paragraph-1",
+          "final_score": 0.7008
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-603259-00049",
+          "locator": "DOC-EVT-603259-00049#paragraph-1",
+          "final_score": 0.6508
+        }
+      ]
+    },
+    {
+      "case_id": "603986-01",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "支持",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 公告标题：兆易创新关于使用A股部分募集资金向全资子公司增资以实施DRAM募投项目的公告",
+      "expected_document_ids": [
+        "DOC-EVT-603986-00501"
+      ],
+      "evidence_id": "EVD-EVT-603986-00501",
+      "snapshot_id": "RPS-d910bef7315dfd4d420f06bb",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-603986-00501",
+          "locator": "DOC-EVT-603986-00501#paragraph-1",
+          "final_score": 0.9546
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-603986-00410",
+          "locator": "DOC-EVT-603986-00410#paragraph-1",
+          "final_score": 0.939
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-603986-00499",
+          "locator": "DOC-EVT-603986-00499#paragraph-1",
+          "final_score": 0.8146
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-603986-00146",
+          "locator": "DOC-EVT-603986-00146#paragraph-1",
+          "final_score": 0.8144
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-603986-00407",
+          "locator": "DOC-EVT-603986-00407#paragraph-1",
+          "final_score": 0.799
+        }
+      ]
+    },
+    {
+      "case_id": "603986-02",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "冲突",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 公告标题：兆易创新关于股票交易风险提示的公告",
+      "expected_document_ids": [
+        "DOC-EVT-603986-00491"
+      ],
+      "evidence_id": "EVD-EVT-603986-00491",
+      "snapshot_id": "RPS-d910bef7315dfd4d420f06bb",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-603986-00491",
+          "locator": "DOC-EVT-603986-00491#paragraph-1",
+          "final_score": 0.9504
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-603986-00370",
+          "locator": "DOC-EVT-603986-00370#paragraph-1",
+          "final_score": 0.8872
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-603986-00214",
+          "locator": "DOC-EVT-603986-00214#paragraph-1",
+          "final_score": 0.6712
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-603986-00404",
+          "locator": "DOC-EVT-603986-00404#paragraph-1",
+          "final_score": 0.6522
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-603986-00227",
+          "locator": "DOC-EVT-603986-00227#paragraph-1",
+          "final_score": 0.6348
+        }
+      ]
+    },
+    {
+      "case_id": "603986-03",
+      "security_id": "603986",
+      "company": "兆易创新",
+      "direction": "支持",
+      "hypothesis": "盈利质量",
+      "query": "盈利质量 2025年营业收入92.03亿元，同比增长25.12%；归母净利润16.48亿元，同比增长49.47%。；公司披露收入增长主要受存储行业供需结构优化、产品价量齐升，以及定制化存储和AI MCU等新产品需求增长带动。；经营活动现金流净额21.",
+      "expected_document_ids": [
+        "DOC-STG-cbc7908c85b568240b1e7508"
+      ],
+      "evidence_id": "EVD-STG-5baca93a3eeca3d0e2b6d9a5",
+      "snapshot_id": "RPS-d910bef7315dfd4d420f06bb",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-cbc7908c85b568240b1e7508",
+          "locator": "DOC-STG-cbc7908c85b568240b1e7508#paragraph-1",
+          "final_score": 0.961
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-603986-00396",
+          "locator": "DOC-EVT-603986-00396#paragraph-1",
+          "final_score": 0.7802
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-603986-00306",
+          "locator": "DOC-EVT-603986-00306#paragraph-1",
+          "final_score": 0.7158
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-603986-00142",
+          "locator": "DOC-EVT-603986-00142#paragraph-1",
+          "final_score": 0.692
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-603986-00348",
+          "locator": "DOC-EVT-603986-00348#paragraph-1",
+          "final_score": 0.6792
+        }
+      ]
+    },
+    {
+      "case_id": "688981-01",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "支持",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 2025年销售收入673.23亿元，同比增长16.5%；产能利用率93.5%，同比提升8个百分点。；2025年毛利率22%，同比提升3个百分点；折合8英寸标准逻辑的月产能规模超过100万片。；公司披露持续推进产能扩建，并推进中芯北方少数股权",
+      "expected_document_ids": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9"
+      ],
+      "evidence_id": "EVD-STG-48369e952646b6a54427be88",
+      "snapshot_id": "RPS-58f1ffb6acedf293d1cf06c1",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-STG-9809c47c16a6c5a5d3e896c9",
+          "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#paragraph-1",
+          "final_score": 0.9604
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-688981-2023FY",
+          "locator": "DOC-688981-2023FY#paragraph-2",
+          "final_score": 0.9022
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-688981-2023FY",
+          "locator": "DOC-688981-2023FY#paragraph-1",
+          "final_score": 0.8448
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-688981-00143",
+          "locator": "DOC-EVT-688981-00143#paragraph-1",
+          "final_score": 0.7366
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-688981-00209",
+          "locator": "DOC-EVT-688981-00209#paragraph-1",
+          "final_score": 0.7074
+        }
+      ]
+    },
+    {
+      "case_id": "688981-02",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "冲突",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 2025年投资活动所用现金净额为64.95亿元，高于2024年的45.18亿元。",
+      "expected_document_ids": [
+        "DOC-STG-9809c47c16a6c5a5d3e896c9"
+      ],
+      "evidence_id": "EVD-STG-b993af10eac846200430582a",
+      "snapshot_id": "RPS-58f1ffb6acedf293d1cf06c1",
+      "expected_source_hit": true,
+      "hit_rank": 2,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-688981-2023FY",
+          "locator": "DOC-688981-2023FY#paragraph-2",
+          "final_score": 0.9406
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-STG-9809c47c16a6c5a5d3e896c9",
+          "locator": "DOC-STG-9809c47c16a6c5a5d3e896c9#paragraph-1",
+          "final_score": 0.9124
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-688981-00052",
+          "locator": "DOC-EVT-688981-00052#paragraph-1",
+          "final_score": 0.7772
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-688981-00054",
+          "locator": "DOC-EVT-688981-00054#paragraph-1",
+          "final_score": 0.7442
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-688981-00059",
+          "locator": "DOC-EVT-688981-00059#paragraph-1",
+          "final_score": 0.71
+        }
+      ]
+    },
+    {
+      "case_id": "688981-03",
+      "security_id": "688981",
+      "company": "中芯国际",
+      "direction": "中性",
+      "hypothesis": "产能与扩张",
+      "query": "产能与扩张 公告标题：中芯国际集成电路制造有限公司发行股份购买资产暨关联交易实施情况暨新增股份上市公告书",
+      "expected_document_ids": [
+        "DOC-EVT-688981-00349"
+      ],
+      "evidence_id": "EVD-EVT-688981-00349",
+      "snapshot_id": "RPS-58f1ffb6acedf293d1cf06c1",
+      "expected_source_hit": true,
+      "hit_rank": 1,
+      "returned": [
+        {
+          "rank": 1,
+          "document_id": "DOC-EVT-688981-00349",
+          "locator": "DOC-EVT-688981-00349#paragraph-1",
+          "final_score": 0.9552
+        },
+        {
+          "rank": 2,
+          "document_id": "DOC-EVT-688981-00354",
+          "locator": "DOC-EVT-688981-00354#paragraph-1",
+          "final_score": 0.9392
+        },
+        {
+          "rank": 3,
+          "document_id": "DOC-EVT-688981-00338",
+          "locator": "DOC-EVT-688981-00338#paragraph-1",
+          "final_score": 0.8594
+        },
+        {
+          "rank": 4,
+          "document_id": "DOC-EVT-688981-00336",
+          "locator": "DOC-EVT-688981-00336#paragraph-1",
+          "final_score": 0.8266
+        },
+        {
+          "rank": 5,
+          "document_id": "DOC-EVT-688981-00242",
+          "locator": "DOC-EVT-688981-00242#paragraph-1",
+          "final_score": 0.8098
+        }
+      ]
+    }
+  ]
+}

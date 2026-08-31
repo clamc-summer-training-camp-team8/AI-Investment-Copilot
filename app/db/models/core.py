@@ -22,6 +22,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -70,6 +71,9 @@ class Document(Base):
     parser_version: Mapped[str] = mapped_column(String(32), nullable=False, default="v1")
     raw_path: Mapped[str | None] = mapped_column(String(1024))
     body: Mapped[str | None] = mapped_column(Text)
+    content_status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="待核验", comment="标题索引不得冒充完整正文"
+    )
 
     visibility_label: Mapped[str] = mapped_column(
         String(32),
@@ -78,6 +82,7 @@ class Document(Base):
         comment="权限标签；证据可见性不得高于来源文档",
     )
     is_illustrative: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    deleted_at: Mapped[datetime | None] = mapped_column()
 
     __table_args__ = (
         UniqueConstraint("content_hash", "parser_version"),
@@ -86,7 +91,7 @@ class Document(Base):
 
 
 class DocumentSegment(Base):
-    """文档切片。evidence_locator 的定位基础，格式 {document_id}#paragraph-{n}。"""
+    """文档切片。保留原生/OCR、段落/表格及单元格级定位元数据。"""
 
     __tablename__ = "document_segment"
 
@@ -98,8 +103,38 @@ class DocumentSegment(Base):
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     page: Mapped[int | None] = mapped_column(Integer)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="paragraph")
+    extraction_method: Mapped[str] = mapped_column(String(16), nullable=False, default="native")
+    table_index: Mapped[int | None] = mapped_column(Integer)
+    row_index: Mapped[int | None] = mapped_column(Integer)
+    cell_range: Mapped[str | None] = mapped_column(String(64))
+    confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
 
     __table_args__ = (UniqueConstraint("document_id", "locator"),)
+
+
+class DocumentFact(Base):
+    """正文中的确定性同比事实，供方向判断与后续检索评测使用。"""
+
+    __tablename__ = "document_fact"
+
+    fact_id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("document.document_id", ondelete="CASCADE"), nullable=False
+    )
+    locator: Mapped[str] = mapped_column(String(128), nullable=False)
+    fact_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    metric_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    change_rate_low: Mapped[Decimal | None] = mapped_column(Numeric(12, 6))
+    change_rate_high: Mapped[Decimal | None] = mapped_column(Numeric(12, 6))
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    extraction_version: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    __table_args__ = (
+        Index("ix_document_fact_document", "document_id", "fact_type"),
+        UniqueConstraint("document_id", "locator", "fact_type", "metric_name"),
+    )
 
 
 class Thesis(Base):
@@ -123,11 +158,41 @@ class Thesis(Base):
 
     owner: Mapped[str] = mapped_column(String(64), nullable=False)
     visibility: Mapped[str] = mapped_column(String(16), nullable=False, default="团队")
+    team: Mapped[str | None] = mapped_column(
+        String(64),
+        comment="归属团队；visibility=团队 时的可见范围判断依据，缺失则同组也看不到",
+    )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="草稿")
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment="同一公司仅一条当前维护逻辑；历史行只读保留",
+    )
+    superseded_by_thesis_id: Mapped[str | None] = mapped_column(
+        ForeignKey("thesis.thesis_id"),
+        comment="历史逻辑归并到的当前公司级逻辑",
+    )
+
+    invalidation_require_all: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment=(
+            "thesis 级失效条件是「全部满足」还是「任一满足」。"
+            "默认 AND：把 AND 当 OR 会让单指标不达标就判失效，误报比漏报更伤信任"
+        ),
+    )
+    draft_suggestions: Mapped[dict | None] = mapped_column(
+        JSONB,
+        comment="AI 草稿建议候选；未经研究员采用不得进入正式配置",
+    )
 
     source_document_id: Mapped[str | None] = mapped_column(ForeignKey("document.document_id"))
     is_illustrative: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    thesis_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="canonical")
+    thesis_series_id: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = created_at_column()
     updated_at: Mapped[datetime] = updated_at_column()
 
@@ -138,6 +203,12 @@ class Thesis(Base):
     __table_args__ = (
         CheckConstraint("char_length(title) <= 120", name="title_len"),
         CheckConstraint("version >= 0", name="version_nonneg"),
+        Index(
+            "uq_thesis_current_security_id",
+            "security_id",
+            unique=True,
+            postgresql_where=text("is_current"),
+        ),
         Index("ix_thesis_status", "status"),
         Index("ix_thesis_owner", "owner"),
     )
@@ -323,6 +394,7 @@ class Evidence(Base):
     __tablename__ = "evidence"
 
     evidence_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    security_id: Mapped[str | None] = mapped_column(String(64), index=True)
     event_id: Mapped[str | None] = mapped_column(ForeignKey("event.event_id"))
     thesis_id: Mapped[str] = mapped_column(
         ForeignKey("thesis.thesis_id", ondelete="CASCADE"), nullable=False
@@ -346,11 +418,18 @@ class Evidence(Base):
         comment="必须能打开原文，格式 {document_id}#paragraph-{n}",
     )
     transmission_path: Mapped[str | None] = mapped_column(Text)
+    fact_excerpt: Mapped[str | None] = mapped_column(Text)
+    source_document_id: Mapped[str | None] = mapped_column(String(64))
+    source_document_title: Mapped[str | None] = mapped_column(String(512))
+    disclosed_at: Mapped[datetime | None] = mapped_column()
+    occurred_at: Mapped[date | None] = mapped_column(Date)
+    source_url: Mapped[str | None] = mapped_column(String(2048))
 
     ai_status: Mapped[str | None] = mapped_column(String(16))
     ai_confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
     model_version: Mapped[str | None] = mapped_column(String(64))
     prompt_version: Mapped[str | None] = mapped_column(String(64))
+    retrieval_trace: Mapped[dict | None] = mapped_column(JSONB)
 
     confirmation_status: Mapped[str] = mapped_column(String(16), nullable=False, default="待确认")
     review_status: Mapped[str | None] = mapped_column(String(16))
@@ -362,6 +441,43 @@ class Evidence(Base):
     __table_args__ = (
         Index("ix_evidence_thesis", "thesis_id", "confirmation_status"),
         Index("ix_evidence_hypothesis", "hypothesis_id"),
+    )
+
+
+class EvidenceRelation(Base):
+    """证据与逻辑假设的独立关联。
+
+    Evidence 保存不可修改的来源事实；关联可在同一证券范围内扩展、审核和解除。
+    避免直接覆写 Evidence 上的旧单关联字段，保留历史兼容与审计可追溯性。
+    """
+
+    __tablename__ = "evidence_relation"
+
+    relation_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    evidence_id: Mapped[str] = mapped_column(
+        ForeignKey("evidence.evidence_id", ondelete="CASCADE"), nullable=False
+    )
+    thesis_id: Mapped[str] = mapped_column(
+        ForeignKey("thesis.thesis_id", ondelete="CASCADE"), nullable=False
+    )
+    hypothesis_id: Mapped[str] = mapped_column(
+        ForeignKey("hypothesis.hypothesis_id"), nullable=False
+    )
+    direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    strength: Mapped[str | None] = mapped_column(String(16))
+    reason: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="待确认")
+    created_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewed_by: Mapped[str | None] = mapped_column(String(64))
+    reviewed_at: Mapped[datetime | None] = mapped_column()
+    deactivated_by: Mapped[str | None] = mapped_column(String(64))
+    deactivated_at: Mapped[datetime | None] = mapped_column()
+    created_at: Mapped[datetime] = created_at_column()
+    updated_at: Mapped[datetime] = updated_at_column()
+
+    __table_args__ = (
+        Index("ix_evidence_relation_evidence", "evidence_id", "status"),
+        Index("ix_evidence_relation_thesis", "thesis_id", "status"),
     )
 
 

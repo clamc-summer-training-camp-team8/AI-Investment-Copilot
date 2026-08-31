@@ -1,0 +1,2464 @@
+{
+  "schema_version": "graph-rag-benchmark-v3",
+  "benchmark_version": "graph-rag-evidence-fusion-closed-pool-v4",
+  "generated_at": "2026-08-30T05:39:28.161224+00:00",
+  "gold_version": "graph-relevance-v6-blind",
+  "evaluation_role": "one_time_blind",
+  "gold_file": "final_graph_relevance_gold_v6.csv",
+  "retrieval_version": "graph-evidence-fusion-v1[rrf_k=1,text=0.25,bm25=0.5,graph=1,report=1][keyword-v1+bm25-zh-ngram-v1[k1=1.2,b=0.75]+investment-graph-rag-v2-layered[keyword-v1]]",
+  "vocabulary_version": "investment-concepts-v1",
+  "variant": {
+    "name": "p0_evidence_fusion_release_candidate",
+    "enhanced_concepts": false,
+    "announcement_prior": false,
+    "bm25": true,
+    "chinese_vector": false,
+    "diversity": false,
+    "rank_stable_assist": false,
+    "evidence_fusion": true,
+    "announcement_penalty": 0.35,
+    "graph_text_weight": 0.35,
+    "graph_relation_weight": 0.65,
+    "fusion_text_weight": 0.25,
+    "fusion_bm25_weight": 0.5,
+    "fusion_graph_weight": 1.0,
+    "fusion_report_prior_weight": 1.0,
+    "fusion_rrf_k": 1,
+    "thresholds_changed": false
+  },
+  "evaluation_protocol": {
+    "relevant_grades": [
+      "2-间接相关",
+      "3-直接相关"
+    ],
+    "recall_definition": "macro mean of relevant-set recall per positive query",
+    "mrr_definition": "macro reciprocal rank of first relevant candidate per positive query",
+    "zero_positive_queries_excluded_from_recall_and_mrr": true,
+    "top1_correctness_includes_zero_positive_queries": true,
+    "gold_labels_used_for_graph_construction": false,
+    "candidate_pool_scope": "per_query_closed",
+    "unjudged_policy": "hard_fail",
+    "rank_policy": "candidate_pool_constrained_graph_bm25_rrf_with_high_evidence_prior",
+    "thresholds_frozen_before_run": true,
+    "v3_may_authorize_rollout": false
+  },
+  "dataset": {
+    "rows": 300,
+    "queries": 30,
+    "positive_queries": 30,
+    "securities": 9
+  },
+  "text_baseline": {
+    "evaluated_queries": 30,
+    "positive_queries": 30,
+    "recall_at_k": {
+      "1": 0.2892,
+      "3": 0.6619,
+      "5": 0.8303,
+      "10": 1.0
+    },
+    "hit_rate_at_k": {
+      "1": 0.6667,
+      "3": 0.9667,
+      "5": 0.9667,
+      "10": 1.0
+    },
+    "ndcg_at_k": {
+      "1": 0.6603,
+      "3": 0.7122,
+      "5": 0.7385,
+      "10": 0.838
+    },
+    "mrr": 0.8222,
+    "top1_correctness": 0.6667,
+    "unjudged_result_count": 0
+  },
+  "graph_rag": {
+    "evaluated_queries": 30,
+    "positive_queries": 30,
+    "recall_at_k": {
+      "1": 0.3864,
+      "3": 0.6225,
+      "5": 0.8247,
+      "10": 1.0
+    },
+    "hit_rate_at_k": {
+      "1": 0.8333,
+      "3": 0.9333,
+      "5": 1.0,
+      "10": 1.0
+    },
+    "ndcg_at_k": {
+      "1": 0.8333,
+      "3": 0.754,
+      "5": 0.8076,
+      "10": 0.8888
+    },
+    "mrr": 0.8983,
+    "top1_correctness": 0.8333,
+    "unjudged_result_count": 0
+  },
+  "assist": {
+    "rank_stability_rate": 0.0,
+    "candidate_pool_compliance_rate": 1.0
+  },
+  "safety": {
+    "permission_leakage_count": 0,
+    "security_leakage_count": 0,
+    "future_leakage_count": 0,
+    "canary_content_leakage_count": 0,
+    "adversarial_canary_count": 90,
+    "path_provenance_valid": 69,
+    "path_provenance_relevant_hits": 69,
+    "path_provenance_rate": 1.0
+  },
+  "thresholds": {
+    "minimum_positive_queries": 20,
+    "recall_at_5": 0.8,
+    "mrr": 0.65,
+    "ndcg_at_5": 0.75,
+    "top1_correctness": 0.7,
+    "path_provenance_rate": 0.95,
+    "candidate_pool_compliance_rate": 1.0,
+    "maximum_recall_regression_vs_text": 0.01,
+    "maximum_unjudged_results": 0,
+    "maximum_permission_leaks": 0,
+    "maximum_security_leaks": 0,
+    "maximum_future_leaks": 0,
+    "maximum_canary_content_leaks": 0
+  },
+  "gates": [
+    {
+      "code": "minimum_positive_queries",
+      "current": 30,
+      "target": 20,
+      "passed": true
+    },
+    {
+      "code": "recall_at_5",
+      "current": 0.8247,
+      "target": 0.8,
+      "passed": true
+    },
+    {
+      "code": "mrr",
+      "current": 0.8983,
+      "target": 0.65,
+      "passed": true
+    },
+    {
+      "code": "ndcg_at_5",
+      "current": 0.8076,
+      "target": 0.75,
+      "passed": true
+    },
+    {
+      "code": "top1_correctness",
+      "current": 0.8333,
+      "target": 0.7,
+      "passed": true
+    },
+    {
+      "code": "path_provenance_rate",
+      "current": 1.0,
+      "target": 0.95,
+      "passed": true
+    },
+    {
+      "code": "candidate_pool_compliance_rate",
+      "current": 1.0,
+      "target": 1.0,
+      "passed": true
+    },
+    {
+      "code": "closed_pool_no_unjudged",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "graph_recall_regression_within_tolerance",
+      "current": 0.8247,
+      "target": 0.8203,
+      "passed": true
+    },
+    {
+      "code": "graph_mrr_not_worse_than_text",
+      "current": 0.8983,
+      "target": 0.8222,
+      "passed": true
+    },
+    {
+      "code": "permission_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "security_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "future_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "canary_content_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    }
+  ],
+  "rollout_ready": true,
+  "error_taxonomy": {
+    "failed_queries": 16,
+    "groups": {
+      "governance_hard_negative": {
+        "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+        "count": 0,
+        "query_ids": []
+      },
+      "duplicate_disclosures": {
+        "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+        "count": 14,
+        "query_ids": [
+          "V6-Q014",
+          "V6-Q015",
+          "V6-Q016",
+          "V6-Q017",
+          "V6-Q018",
+          "V6-Q019",
+          "V6-Q020",
+          "V6-Q021",
+          "V6-Q022",
+          "V6-Q023",
+          "V6-Q024",
+          "V6-Q025",
+          "V6-Q026",
+          "V6-Q027"
+        ]
+      },
+      "too_many_positive_candidates": {
+        "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+        "count": 1,
+        "query_ids": [
+          "V6-Q024"
+        ]
+      },
+      "graph_cannot_change_top1": {
+        "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+        "count": 1,
+        "query_ids": [
+          "V6-Q002"
+        ]
+      }
+    }
+  },
+  "per_query": [
+    {
+      "query_id": "V6-Q001",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "动力电池外供与储能业务能否形成第二增长曲线",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00317",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00274"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00274",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00317",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00390"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002594-00215",
+          "title": "2024年年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002594-00238",
+          "title": "2025年一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00223",
+          "title": "关于召开2024年年度报告网上说明会并征集问题的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002594-00274",
+          "title": "H股公告（二零二五年中期业绩公告）",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00017",
+          "title": "关于“质量回报双提升”行动方案的公告",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002594-00338": 1,
+        "DOC-EVT-002594-00269": 0,
+        "DOC-EVT-002594-00238": 1,
+        "DOC-EVT-002594-00165": 0,
+        "DOC-EVT-002594-00223": 0,
+        "DOC-EVT-002594-00390": 0,
+        "DOC-EVT-002594-00274": 1,
+        "DOC-EVT-002594-00017": 1,
+        "DOC-EVT-002594-00317": 0,
+        "DOC-EVT-002594-00215": 2
+      }
+    },
+    {
+      "query_id": "V6-Q002",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "高端车型占比提升能否抵消价格竞争对单车利润的压力",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 1,
+      "graph_top1_title": "2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00317"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00317"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002594-00215",
+          "title": "2024年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00238",
+          "title": "2025年一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00223",
+          "title": "关于召开2024年年度报告网上说明会并征集问题的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002594-00017",
+          "title": "关于“质量回报双提升”行动方案的公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002594-00338",
+          "title": "关于“质量回报双提升”行动方案的进展公告",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002594-00269": 0,
+        "DOC-EVT-002594-00390": 1,
+        "DOC-EVT-002594-00338": 1,
+        "DOC-EVT-002594-00238": 1,
+        "DOC-EVT-002594-00215": 1,
+        "DOC-EVT-002594-00317": 0,
+        "DOC-EVT-002594-00017": 2,
+        "DOC-EVT-002594-00274": 1,
+        "DOC-EVT-002594-00165": 0,
+        "DOC-EVT-002594-00223": 0
+      }
+    },
+    {
+      "query_id": "V6-Q003",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "经销商库存与应收变化是否会削弱销量增长的现金质量",
+      "positive_candidates": 2,
+      "text_recall_at_5": 0.5,
+      "graph_recall_at_5": 0.5,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2025年一季度报告",
+      "text_ranking": [
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00317"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00317"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002594-00238",
+          "title": "2025年一季度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-002594-00215",
+          "title": "2024年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00223",
+          "title": "关于召开2024年年度报告网上说明会并征集问题的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002594-00165",
+          "title": "关于开展外汇衍生品套期保值交易业务的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002594-00338",
+          "title": "关于“质量回报双提升”行动方案的进展公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002594-00317": 0,
+        "DOC-EVT-002594-00274": 1,
+        "DOC-EVT-002594-00215": 1,
+        "DOC-EVT-002594-00390": 2,
+        "DOC-EVT-002594-00269": 0,
+        "DOC-EVT-002594-00338": 0,
+        "DOC-EVT-002594-00238": 3,
+        "DOC-EVT-002594-00017": 0,
+        "DOC-EVT-002594-00223": 0,
+        "DOC-EVT-002594-00165": 0
+      }
+    },
+    {
+      "query_id": "V6-Q004",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "海外产能爬坡期的折旧与费用是否会拖累境外业务利润率",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 0.5,
+      "graph_top1_grade": 1,
+      "graph_top1_title": "2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00317",
+        "DOC-EVT-002594-00274"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002594-00215",
+        "DOC-EVT-002594-00269",
+        "DOC-EVT-002594-00238",
+        "DOC-EVT-002594-00223",
+        "DOC-EVT-002594-00274",
+        "DOC-EVT-002594-00165",
+        "DOC-EVT-002594-00338",
+        "DOC-EVT-002594-00017",
+        "DOC-EVT-002594-00390",
+        "DOC-EVT-002594-00317"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002594-00215",
+          "title": "2024年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00269",
+          "title": "关于增加外汇衍生品交易业务额度的可行性分析报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002594-00238",
+          "title": "2025年一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002594-00223",
+          "title": "关于召开2024年年度报告网上说明会并征集问题的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002594-00274",
+          "title": "H股公告（二零二五年中期业绩公告）",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002594-00269": 2,
+        "DOC-EVT-002594-00338": 1,
+        "DOC-EVT-002594-00223": 0,
+        "DOC-EVT-002594-00317": 0,
+        "DOC-EVT-002594-00017": 1,
+        "DOC-EVT-002594-00390": 0,
+        "DOC-EVT-002594-00274": 1,
+        "DOC-EVT-002594-00238": 1,
+        "DOC-EVT-002594-00165": 2,
+        "DOC-EVT-002594-00215": 1
+      }
+    },
+    {
+      "query_id": "V6-Q005",
+      "company": "吉利汽车",
+      "security_id": "00175",
+      "hypothesis": "出口区域与海外产能扩张能否改善规模效应和盈利结构",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.0,
+      "graph_recall_at_5": 0.3333,
+      "graph_top1_grade": 1,
+      "graph_top1_title": "海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+      "text_ranking": [
+        "DOC-EVT-00175-00184",
+        "DOC-EVT-00175-00317",
+        "DOC-EVT-00175-00286",
+        "DOC-EVT-00175-00044",
+        "DOC-EVT-00175-00004",
+        "DOC-EVT-00175-00384",
+        "DOC-EVT-00175-00393",
+        "DOC-EVT-00175-00285",
+        "DOC-EVT-00175-00284"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-00175-00286",
+        "DOC-EVT-00175-00184",
+        "DOC-EVT-00175-00317",
+        "DOC-EVT-00175-00044",
+        "DOC-EVT-00175-00384",
+        "DOC-EVT-00175-00004",
+        "DOC-EVT-00175-00393",
+        "DOC-EVT-00175-00285",
+        "DOC-EVT-00175-00284"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-00175-00286",
+          "title": "海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-00175-00184",
+          "title": "内幕消息有关本集团对极氪私有化建议之非约束性报价函",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-00175-00317",
+          "title": "海外监管公布终止向美国证券交易委员会履行美国申报义务",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-00175-00044",
+          "title": "海外监管公布",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-00175-00384",
+          "title": "未经审核之二零二六年三月销量",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-00175-00286": 1,
+        "DOC-EVT-00175-00184": 1,
+        "DOC-EVT-00175-00284": 2,
+        "DOC-EVT-00175-00044": 0,
+        "DOC-EVT-00175-00448": 0,
+        "DOC-EVT-00175-00285": 2,
+        "DOC-EVT-00175-00384": 3,
+        "DOC-EVT-00175-00317": 1,
+        "DOC-EVT-00175-00004": 0,
+        "DOC-EVT-00175-00393": 0
+      }
+    },
+    {
+      "query_id": "V6-Q006",
+      "company": "吉利汽车",
+      "security_id": "00175",
+      "hypothesis": "新能源平台研发投入能否通过车型复用降低单位开发成本",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 0.5,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "内幕消息有关本集团对极氪私有化建议之非约束性报价函",
+      "text_ranking": [
+        "DOC-EVT-00175-00184",
+        "DOC-EVT-00175-00004",
+        "DOC-EVT-00175-00044",
+        "DOC-EVT-00175-00393",
+        "DOC-EVT-00175-00317",
+        "DOC-EVT-00175-00384",
+        "DOC-EVT-00175-00286",
+        "DOC-EVT-00175-00285",
+        "DOC-EVT-00175-00284"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-00175-00184",
+        "DOC-EVT-00175-00286",
+        "DOC-EVT-00175-00004",
+        "DOC-EVT-00175-00044",
+        "DOC-EVT-00175-00393",
+        "DOC-EVT-00175-00384",
+        "DOC-EVT-00175-00317",
+        "DOC-EVT-00175-00284",
+        "DOC-EVT-00175-00285"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-00175-00184",
+          "title": "内幕消息有关本集团对极氪私有化建议之非约束性报价函",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-00175-00286",
+          "title": "海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-00175-00004",
+          "title": "致登记股东之函件及回条 - 以电子方式发布公司通讯之安排",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-00175-00044",
+          "title": "海外监管公布",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-00175-00393",
+          "title": "致登记股东之通知信函及回条 - 公司通讯之发布通知",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-00175-00317": 2,
+        "DOC-EVT-00175-00004": 0,
+        "DOC-EVT-00175-00384": 1,
+        "DOC-EVT-00175-00184": 3,
+        "DOC-EVT-00175-00393": 0,
+        "DOC-EVT-00175-00448": 0,
+        "DOC-EVT-00175-00286": 1,
+        "DOC-EVT-00175-00044": 0,
+        "DOC-EVT-00175-00284": 1,
+        "DOC-EVT-00175-00285": 1
+      }
+    },
+    {
+      "query_id": "V6-Q007",
+      "company": "吉利汽车",
+      "security_id": "00175",
+      "hypothesis": "批发销量与终端零售差异是否预示渠道库存压力",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.6667,
+      "graph_recall_at_5": 0.6667,
+      "graph_top1_grade": 1,
+      "graph_top1_title": "海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+      "text_ranking": [
+        "DOC-EVT-00175-00184",
+        "DOC-EVT-00175-00384",
+        "DOC-EVT-00175-00317",
+        "DOC-EVT-00175-00284",
+        "DOC-EVT-00175-00004",
+        "DOC-EVT-00175-00286",
+        "DOC-EVT-00175-00044",
+        "DOC-EVT-00175-00393",
+        "DOC-EVT-00175-00285"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-00175-00286",
+        "DOC-EVT-00175-00384",
+        "DOC-EVT-00175-00184",
+        "DOC-EVT-00175-00284",
+        "DOC-EVT-00175-00317",
+        "DOC-EVT-00175-00004",
+        "DOC-EVT-00175-00044",
+        "DOC-EVT-00175-00393",
+        "DOC-EVT-00175-00285"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-00175-00286",
+          "title": "海外监管公布上市附属公司－ZEEKR INTELLIGENT TECHNOLOGY HOLDING LIMITED二零二五年第三季度未经审核财务业绩公布",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-00175-00384",
+          "title": "未经审核之二零二六年三月销量",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-00175-00184",
+          "title": "内幕消息有关本集团对极氪私有化建议之非约束性报价函",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-00175-00284",
+          "title": "未经审核之二零二五年十月销量",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-00175-00317",
+          "title": "海外监管公布终止向美国证券交易委员会履行美国申报义务",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-00175-00393": 0,
+        "DOC-EVT-00175-00317": 0,
+        "DOC-EVT-00175-00044": 0,
+        "DOC-EVT-00175-00448": 0,
+        "DOC-EVT-00175-00384": 2,
+        "DOC-EVT-00175-00004": 0,
+        "DOC-EVT-00175-00184": 0,
+        "DOC-EVT-00175-00284": 2,
+        "DOC-EVT-00175-00286": 1,
+        "DOC-EVT-00175-00285": 2
+      }
+    },
+    {
+      "query_id": "V6-Q008",
+      "company": "小鹏汽车",
+      "security_id": "09868",
+      "hypothesis": "大众化车型放量能否在保持毛利率的同时扩大市场份额",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.5,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "小鹏汽车发布2025年第二季度的未经审计财务业绩",
+      "text_ranking": [
+        "DOC-EVT-09868-00106",
+        "DOC-EVT-09868-00014",
+        "DOC-EVT-09868-00055",
+        "DOC-EVT-09868-00183",
+        "DOC-EVT-09868-00118",
+        "DOC-EVT-09868-00083",
+        "DOC-EVT-09868-00018",
+        "DOC-EVT-09868-00172",
+        "DOC-EVT-09868-00162",
+        "DOC-EVT-09868-00100"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-09868-00118",
+        "DOC-EVT-09868-00083",
+        "DOC-EVT-09868-00172",
+        "DOC-EVT-09868-00106",
+        "DOC-EVT-09868-00014",
+        "DOC-EVT-09868-00055",
+        "DOC-EVT-09868-00183",
+        "DOC-EVT-09868-00018",
+        "DOC-EVT-09868-00162",
+        "DOC-EVT-09868-00100"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-09868-00118",
+          "title": "小鹏汽车发布2025年第二季度的未经审计财务业绩",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-09868-00083",
+          "title": "小鹏汽车发布2024 年第四季度及2024财政年度的未经审计财务业绩",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-09868-00172",
+          "title": "小鹏集团发布2026年第一季度的未经审计财务业绩",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-09868-00106",
+          "title": "自愿公告2025年5月智能车交付数据",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-09868-00014",
+          "title": "终止与淘宝中国的相关协议及非执行董事之辞任",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-09868-00106": 3,
+        "DOC-EVT-09868-00183": 0,
+        "DOC-EVT-09868-00172": 3,
+        "DOC-EVT-09868-00118": 3,
+        "DOC-EVT-09868-00018": 0,
+        "DOC-EVT-09868-00100": 0,
+        "DOC-EVT-09868-00014": 0,
+        "DOC-EVT-09868-00083": 3,
+        "DOC-EVT-09868-00055": 0,
+        "DOC-EVT-09868-00162": 0
+      }
+    },
+    {
+      "query_id": "V6-Q009",
+      "company": "小鹏汽车",
+      "security_id": "09868",
+      "hypothesis": "自动驾驶技术服务与授权收入能否降低整车业务周期性",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "自愿公告2025年5月智能车交付数据",
+      "text_ranking": [
+        "DOC-EVT-09868-00106",
+        "DOC-EVT-09868-00183",
+        "DOC-EVT-09868-00018",
+        "DOC-EVT-09868-00055",
+        "DOC-EVT-09868-00014",
+        "DOC-EVT-09868-00118",
+        "DOC-EVT-09868-00083",
+        "DOC-EVT-09868-00172",
+        "DOC-EVT-09868-00162",
+        "DOC-EVT-09868-00100"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-09868-00106",
+        "DOC-EVT-09868-00118",
+        "DOC-EVT-09868-00083",
+        "DOC-EVT-09868-00172",
+        "DOC-EVT-09868-00183",
+        "DOC-EVT-09868-00018",
+        "DOC-EVT-09868-00055",
+        "DOC-EVT-09868-00014",
+        "DOC-EVT-09868-00162",
+        "DOC-EVT-09868-00100"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-09868-00106",
+          "title": "自愿公告2025年5月智能车交付数据",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-09868-00118",
+          "title": "小鹏汽车发布2025年第二季度的未经审计财务业绩",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-09868-00083",
+          "title": "小鹏汽车发布2024 年第四季度及2024财政年度的未经审计财务业绩",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-09868-00172",
+          "title": "小鹏集团发布2026年第一季度的未经审计财务业绩",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-09868-00183",
+          "title": "董事会会议通告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-09868-00172": 1,
+        "DOC-EVT-09868-00083": 1,
+        "DOC-EVT-09868-00055": 0,
+        "DOC-EVT-09868-00018": 0,
+        "DOC-EVT-09868-00014": 0,
+        "DOC-EVT-09868-00183": 0,
+        "DOC-EVT-09868-00100": 0,
+        "DOC-EVT-09868-00162": 0,
+        "DOC-EVT-09868-00118": 1,
+        "DOC-EVT-09868-00106": 2
+      }
+    },
+    {
+      "query_id": "V6-Q010",
+      "company": "小鹏汽车",
+      "security_id": "09868",
+      "hypothesis": "研发费用与经营现金消耗是否会延后盈亏平衡时点",
+      "positive_candidates": 3,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "小鹏集团发布2026年第一季度的未经审计财务业绩",
+      "text_ranking": [
+        "DOC-EVT-09868-00014",
+        "DOC-EVT-09868-00172",
+        "DOC-EVT-09868-00118",
+        "DOC-EVT-09868-00106",
+        "DOC-EVT-09868-00083",
+        "DOC-EVT-09868-00018",
+        "DOC-EVT-09868-00183",
+        "DOC-EVT-09868-00162",
+        "DOC-EVT-09868-00100",
+        "DOC-EVT-09868-00055"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-09868-00172",
+        "DOC-EVT-09868-00118",
+        "DOC-EVT-09868-00083",
+        "DOC-EVT-09868-00014",
+        "DOC-EVT-09868-00106",
+        "DOC-EVT-09868-00018",
+        "DOC-EVT-09868-00183",
+        "DOC-EVT-09868-00162",
+        "DOC-EVT-09868-00100",
+        "DOC-EVT-09868-00055"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-09868-00172",
+          "title": "小鹏集团发布2026年第一季度的未经审计财务业绩",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-09868-00118",
+          "title": "小鹏汽车发布2025年第二季度的未经审计财务业绩",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-09868-00083",
+          "title": "小鹏汽车发布2024 年第四季度及2024财政年度的未经审计财务业绩",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-09868-00014",
+          "title": "终止与淘宝中国的相关协议及非执行董事之辞任",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-09868-00106",
+          "title": "自愿公告2025年5月智能车交付数据",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-09868-00100": 0,
+        "DOC-EVT-09868-00083": 2,
+        "DOC-EVT-09868-00014": 0,
+        "DOC-EVT-09868-00172": 2,
+        "DOC-EVT-09868-00162": 0,
+        "DOC-EVT-09868-00018": 0,
+        "DOC-EVT-09868-00055": 0,
+        "DOC-EVT-09868-00118": 2,
+        "DOC-EVT-09868-00106": 1,
+        "DOC-EVT-09868-00183": 0
+      }
+    },
+    {
+      "query_id": "V6-Q011",
+      "company": "北方华创",
+      "security_id": "002371",
+      "hypothesis": "关键零部件国产化能否提升设备毛利率和交付稳定性",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2025年年度报告摘要",
+      "text_ranking": [
+        "DOC-EVT-002371-00008",
+        "DOC-EVT-002371-00377",
+        "DOC-EVT-002371-00411",
+        "DOC-EVT-002371-00354",
+        "DOC-EVT-002371-00415",
+        "DOC-EVT-002371-00336",
+        "DOC-EVT-002371-00149",
+        "DOC-EVT-002371-00006",
+        "DOC-EVT-002371-00107",
+        "DOC-EVT-002371-00142"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002371-00377",
+        "DOC-EVT-002371-00008",
+        "DOC-EVT-002371-00411",
+        "DOC-EVT-002371-00336",
+        "DOC-EVT-002371-00354",
+        "DOC-EVT-002371-00415",
+        "DOC-EVT-002371-00142",
+        "DOC-EVT-002371-00149",
+        "DOC-EVT-002371-00006",
+        "DOC-EVT-002371-00107"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002371-00377",
+          "title": "2025年年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002371-00008",
+          "title": "关于“质量回报双提升“行动方案的公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002371-00411",
+          "title": "关于注册发行非金融企业债务融资工具及应收账款资产支持商业票据的公告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002371-00336",
+          "title": "关于实际控制人协议转让股份完成过户登记暨股份变动比例触及1%整数倍的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002371-00354",
+          "title": "关于会计政策变更的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002371-00149": 0,
+        "DOC-EVT-002371-00354": 0,
+        "DOC-EVT-002371-00377": 2,
+        "DOC-EVT-002371-00142": 1,
+        "DOC-EVT-002371-00415": 0,
+        "DOC-EVT-002371-00336": 0,
+        "DOC-EVT-002371-00411": 1,
+        "DOC-EVT-002371-00008": 2,
+        "DOC-EVT-002371-00006": 0,
+        "DOC-EVT-002371-00107": 0
+      }
+    },
+    {
+      "query_id": "V6-Q012",
+      "company": "北方华创",
+      "security_id": "002371",
+      "hypothesis": "外延并购后的整合与商誉变化是否影响盈利质量",
+      "positive_candidates": 2,
+      "text_recall_at_5": 0.5,
+      "graph_recall_at_5": 0.5,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2025年年度报告摘要",
+      "text_ranking": [
+        "DOC-EVT-002371-00411",
+        "DOC-EVT-002371-00377",
+        "DOC-EVT-002371-00008",
+        "DOC-EVT-002371-00336",
+        "DOC-EVT-002371-00149",
+        "DOC-EVT-002371-00354",
+        "DOC-EVT-002371-00142",
+        "DOC-EVT-002371-00107",
+        "DOC-EVT-002371-00415",
+        "DOC-EVT-002371-00006"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002371-00377",
+        "DOC-EVT-002371-00411",
+        "DOC-EVT-002371-00008",
+        "DOC-EVT-002371-00142",
+        "DOC-EVT-002371-00336",
+        "DOC-EVT-002371-00149",
+        "DOC-EVT-002371-00354",
+        "DOC-EVT-002371-00006",
+        "DOC-EVT-002371-00415",
+        "DOC-EVT-002371-00107"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002371-00377",
+          "title": "2025年年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002371-00411",
+          "title": "关于注册发行非金融企业债务融资工具及应收账款资产支持商业票据的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002371-00008",
+          "title": "关于“质量回报双提升“行动方案的公告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002371-00142",
+          "title": "2024年前三季度业绩预告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-002371-00336",
+          "title": "关于实际控制人协议转让股份完成过户登记暨股份变动比例触及1%整数倍的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002371-00006": 1,
+        "DOC-EVT-002371-00107": 1,
+        "DOC-EVT-002371-00411": 0,
+        "DOC-EVT-002371-00008": 1,
+        "DOC-EVT-002371-00354": 2,
+        "DOC-EVT-002371-00336": 0,
+        "DOC-EVT-002371-00377": 2,
+        "DOC-EVT-002371-00149": 1,
+        "DOC-EVT-002371-00142": 1,
+        "DOC-EVT-002371-00415": 0
+      }
+    },
+    {
+      "query_id": "V6-Q013",
+      "company": "北方华创",
+      "security_id": "002371",
+      "hypothesis": "研发投入增长能否转化为刻蚀薄膜等高端设备收入",
+      "positive_candidates": 3,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2025年年度报告摘要",
+      "text_ranking": [
+        "DOC-EVT-002371-00377",
+        "DOC-EVT-002371-00008",
+        "DOC-EVT-002371-00336",
+        "DOC-EVT-002371-00354",
+        "DOC-EVT-002371-00142",
+        "DOC-EVT-002371-00006",
+        "DOC-EVT-002371-00411",
+        "DOC-EVT-002371-00107",
+        "DOC-EVT-002371-00415",
+        "DOC-EVT-002371-00149"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-002371-00377",
+        "DOC-EVT-002371-00008",
+        "DOC-EVT-002371-00142",
+        "DOC-EVT-002371-00336",
+        "DOC-EVT-002371-00354",
+        "DOC-EVT-002371-00006",
+        "DOC-EVT-002371-00411",
+        "DOC-EVT-002371-00107",
+        "DOC-EVT-002371-00415",
+        "DOC-EVT-002371-00149"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-002371-00377",
+          "title": "2025年年度报告摘要",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-002371-00008",
+          "title": "关于“质量回报双提升“行动方案的公告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-002371-00142",
+          "title": "2024年前三季度业绩预告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-002371-00336",
+          "title": "关于实际控制人协议转让股份完成过户登记暨股份变动比例触及1%整数倍的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-002371-00354",
+          "title": "关于会计政策变更的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-002371-00149": 0,
+        "DOC-EVT-002371-00354": 0,
+        "DOC-EVT-002371-00336": 0,
+        "DOC-EVT-002371-00142": 2,
+        "DOC-EVT-002371-00377": 3,
+        "DOC-EVT-002371-00006": 0,
+        "DOC-EVT-002371-00008": 3,
+        "DOC-EVT-002371-00411": 1,
+        "DOC-EVT-002371-00107": 0,
+        "DOC-EVT-002371-00415": 0
+      }
+    },
+    {
+      "query_id": "V6-Q014",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "产能利用率变化能否覆盖新增折旧并改善毛利率",
+      "positive_candidates": 5,
+      "text_recall_at_5": 0.8,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "中芯国际2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00096",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00083"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00096",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00083"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-688981-00167",
+          "title": "中芯国际2025年半年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-688981-00142",
+          "title": "中芯国际2025年第一季度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-688981-00295",
+          "title": "中芯国际2026年度“提质增效重回报”行动方案",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00350",
+          "title": "中芯国际关于股东权益变动的提示性公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00096",
+          "title": "港股公告：中芯国际截至2024年9月30日止三个月未经审核业绩公布",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-688981-00083": 0,
+        "DOC-EVT-688981-00167": 3,
+        "DOC-EVT-688981-00142": 3,
+        "DOC-EVT-688981-00329": 0,
+        "DOC-EVT-688981-00287": 0,
+        "DOC-EVT-688981-00096": 2,
+        "DOC-EVT-688981-00367": 0,
+        "DOC-EVT-688981-00295": 2,
+        "DOC-EVT-688981-00109": 1,
+        "DOC-EVT-688981-00350": 2
+      }
+    },
+    {
+      "query_id": "V6-Q015",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "先进与成熟制程收入结构变化是否提升资本回报效率",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.75,
+      "graph_recall_at_5": 0.75,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "中芯国际2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00096",
+        "DOC-EVT-688981-00083"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00096",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00083"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-688981-00167",
+          "title": "中芯国际2025年半年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00142",
+          "title": "中芯国际2025年第一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-688981-00295",
+          "title": "中芯国际2026年度“提质增效重回报”行动方案",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00350",
+          "title": "中芯国际关于股东权益变动的提示性公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00287",
+          "title": "中芯国际2025年度非经营性资金占用及其他关联资金往来情况的专项说明",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-688981-00295": 2,
+        "DOC-EVT-688981-00083": 0,
+        "DOC-EVT-688981-00329": 0,
+        "DOC-EVT-688981-00367": 0,
+        "DOC-EVT-688981-00142": 1,
+        "DOC-EVT-688981-00096": 2,
+        "DOC-EVT-688981-00109": 1,
+        "DOC-EVT-688981-00167": 2,
+        "DOC-EVT-688981-00287": 0,
+        "DOC-EVT-688981-00350": 2
+      }
+    },
+    {
+      "query_id": "V6-Q016",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "客户与应用领域集中度是否放大晶圆需求波动风险",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.6667,
+      "graph_recall_at_5": 0.6667,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "中芯国际2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00083",
+        "DOC-EVT-688981-00096"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00083",
+        "DOC-EVT-688981-00096"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-688981-00167",
+          "title": "中芯国际2025年半年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00142",
+          "title": "中芯国际2025年第一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-688981-00295",
+          "title": "中芯国际2026年度“提质增效重回报”行动方案",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00287",
+          "title": "中芯国际2025年度非经营性资金占用及其他关联资金往来情况的专项说明",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-688981-00350",
+          "title": "中芯国际关于股东权益变动的提示性公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-688981-00350": 0,
+        "DOC-EVT-688981-00167": 2,
+        "DOC-EVT-688981-00142": 1,
+        "DOC-EVT-688981-00083": 0,
+        "DOC-EVT-688981-00367": 0,
+        "DOC-EVT-688981-00329": 0,
+        "DOC-EVT-688981-00295": 2,
+        "DOC-EVT-688981-00109": 2,
+        "DOC-EVT-688981-00096": 1,
+        "DOC-EVT-688981-00287": 0
+      }
+    },
+    {
+      "query_id": "V6-Q017",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "资本开支融资与汇率变化是否增加自由现金流压力",
+      "positive_candidates": 3,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "中芯国际2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00096",
+        "DOC-EVT-688981-00083"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-688981-00167",
+        "DOC-EVT-688981-00142",
+        "DOC-EVT-688981-00287",
+        "DOC-EVT-688981-00295",
+        "DOC-EVT-688981-00350",
+        "DOC-EVT-688981-00109",
+        "DOC-EVT-688981-00329",
+        "DOC-EVT-688981-00367",
+        "DOC-EVT-688981-00096",
+        "DOC-EVT-688981-00083"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-688981-00167",
+          "title": "中芯国际2025年半年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-688981-00142",
+          "title": "中芯国际2025年第一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-688981-00287",
+          "title": "中芯国际2025年度非经营性资金占用及其他关联资金往来情况的专项说明",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-688981-00295",
+          "title": "中芯国际2026年度“提质增效重回报”行动方案",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-688981-00350",
+          "title": "中芯国际关于股东权益变动的提示性公告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-688981-00167": 3,
+        "DOC-EVT-688981-00096": 1,
+        "DOC-EVT-688981-00367": 0,
+        "DOC-EVT-688981-00109": 0,
+        "DOC-EVT-688981-00350": 3,
+        "DOC-EVT-688981-00329": 0,
+        "DOC-EVT-688981-00287": 0,
+        "DOC-EVT-688981-00083": 0,
+        "DOC-EVT-688981-00142": 1,
+        "DOC-EVT-688981-00295": 2
+      }
+    },
+    {
+      "query_id": "V6-Q018",
+      "company": "兆易创新",
+      "security_id": "603986",
+      "hypothesis": "存储产品价格回升能否改善库存周转和综合毛利率",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "兆易创新2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-603986-00243",
+        "DOC-EVT-603986-00248",
+        "DOC-EVT-603986-00511",
+        "DOC-EVT-603986-00324",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00508",
+        "DOC-EVT-603986-00098",
+        "DOC-EVT-603986-00423",
+        "DOC-EVT-603986-00513",
+        "DOC-EVT-603986-00170"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-603986-00248",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00423",
+        "DOC-EVT-603986-00243",
+        "DOC-EVT-603986-00511",
+        "DOC-EVT-603986-00324",
+        "DOC-EVT-603986-00508",
+        "DOC-EVT-603986-00098",
+        "DOC-EVT-603986-00513",
+        "DOC-EVT-603986-00170"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-603986-00248",
+          "title": "兆易创新2024年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-603986-00256",
+          "title": "兆易创新2025年第一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-603986-00423",
+          "title": "兆易创新关于召开2025年度业绩说明会的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603986-00243",
+          "title": "兆易创新关于2025年度开展外汇衍生品交易业务的可行性分析报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-603986-00511",
+          "title": "兆易创新关于以集中竞价交易方式回购公司A股股份方案的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-603986-00511": 0,
+        "DOC-EVT-603986-00508": 0,
+        "DOC-EVT-603986-00513": 0,
+        "DOC-EVT-603986-00098": 0,
+        "DOC-EVT-603986-00248": 3,
+        "DOC-EVT-603986-00423": 0,
+        "DOC-EVT-603986-00243": 1,
+        "DOC-EVT-603986-00256": 1,
+        "DOC-EVT-603986-00324": 0,
+        "DOC-EVT-603986-00170": 0
+      }
+    },
+    {
+      "query_id": "V6-Q019",
+      "company": "兆易创新",
+      "security_id": "603986",
+      "hypothesis": "高强度研发投入能否扩大MCU与存储产品的收入协同",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "兆易创新2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-603986-00243",
+        "DOC-EVT-603986-00248",
+        "DOC-EVT-603986-00098",
+        "DOC-EVT-603986-00508",
+        "DOC-EVT-603986-00423",
+        "DOC-EVT-603986-00324",
+        "DOC-EVT-603986-00170",
+        "DOC-EVT-603986-00511",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00513"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-603986-00248",
+        "DOC-EVT-603986-00243",
+        "DOC-EVT-603986-00423",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00098",
+        "DOC-EVT-603986-00508",
+        "DOC-EVT-603986-00324",
+        "DOC-EVT-603986-00170",
+        "DOC-EVT-603986-00511",
+        "DOC-EVT-603986-00513"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-603986-00248",
+          "title": "兆易创新2024年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-603986-00243",
+          "title": "兆易创新关于2025年度开展外汇衍生品交易业务的可行性分析报告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603986-00423",
+          "title": "兆易创新关于召开2025年度业绩说明会的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603986-00256",
+          "title": "兆易创新2025年第一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-603986-00098",
+          "title": "兆易创新关于2023年年度股东大会增加临时提案的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-603986-00098": 0,
+        "DOC-EVT-603986-00170": 0,
+        "DOC-EVT-603986-00508": 0,
+        "DOC-EVT-603986-00423": 0,
+        "DOC-EVT-603986-00324": 0,
+        "DOC-EVT-603986-00243": 0,
+        "DOC-EVT-603986-00513": 0,
+        "DOC-EVT-603986-00511": 0,
+        "DOC-EVT-603986-00248": 3,
+        "DOC-EVT-603986-00256": 1
+      }
+    },
+    {
+      "query_id": "V6-Q020",
+      "company": "兆易创新",
+      "security_id": "603986",
+      "hypothesis": "外延投资与项目整合是否会增加商誉和现金流风险",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": "兆易创新关于召开2025年度业绩说明会的公告",
+      "text_ranking": [
+        "DOC-EVT-603986-00243",
+        "DOC-EVT-603986-00511",
+        "DOC-EVT-603986-00423",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00098",
+        "DOC-EVT-603986-00513",
+        "DOC-EVT-603986-00508",
+        "DOC-EVT-603986-00324",
+        "DOC-EVT-603986-00170",
+        "DOC-EVT-603986-00248"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-603986-00423",
+        "DOC-EVT-603986-00256",
+        "DOC-EVT-603986-00248",
+        "DOC-EVT-603986-00243",
+        "DOC-EVT-603986-00511",
+        "DOC-EVT-603986-00098",
+        "DOC-EVT-603986-00170",
+        "DOC-EVT-603986-00513",
+        "DOC-EVT-603986-00508",
+        "DOC-EVT-603986-00324"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-603986-00423",
+          "title": "兆易创新关于召开2025年度业绩说明会的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603986-00256",
+          "title": "兆易创新2025年第一季度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-603986-00248",
+          "title": "兆易创新2024年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-603986-00243",
+          "title": "兆易创新关于2025年度开展外汇衍生品交易业务的可行性分析报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-603986-00511",
+          "title": "兆易创新关于以集中竞价交易方式回购公司A股股份方案的公告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-603986-00508": 1,
+        "DOC-EVT-603986-00248": 1,
+        "DOC-EVT-603986-00513": 0,
+        "DOC-EVT-603986-00098": 1,
+        "DOC-EVT-603986-00170": 0,
+        "DOC-EVT-603986-00423": 0,
+        "DOC-EVT-603986-00511": 2,
+        "DOC-EVT-603986-00256": 2,
+        "DOC-EVT-603986-00243": 1,
+        "DOC-EVT-603986-00324": 0
+      }
+    },
+    {
+      "query_id": "V6-Q021",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "对外许可首付款确认是否会造成收入与利润阶段性波动",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.5,
+      "graph_recall_at_5": 0.75,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "恒瑞医药2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00047",
+        "DOC-EVT-600276-00648"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00047",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00648"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-600276-00376",
+          "title": "恒瑞医药2025年半年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-600276-00047",
+          "title": "恒瑞医药2023年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-600276-00595",
+          "title": "恒瑞医药2025年度利润分配方案及提请股东会授权董事会制定2026年中期分红方案的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-600276-00381",
+          "title": "恒瑞医药2025年半年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00404",
+          "title": "恒瑞医药关于与Braveheart Bio签署HRS-1893项目授权许可协议的公告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-600276-00595": 0,
+        "DOC-EVT-600276-00648": 0,
+        "DOC-EVT-600276-00227": 3,
+        "DOC-EVT-600276-00376": 3,
+        "DOC-EVT-600276-00381": 2,
+        "DOC-EVT-600276-00448": 0,
+        "DOC-EVT-600276-00692": 0,
+        "DOC-EVT-600276-00404": 3,
+        "DOC-EVT-600276-00047": 1,
+        "DOC-EVT-600276-00684": 0
+      }
+    },
+    {
+      "query_id": "V6-Q022",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "后期临床项目占比提升能否提高管线上市兑现率",
+      "positive_candidates": 5,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 0.6,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "恒瑞医药2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00047"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00047",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00648"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-600276-00376",
+          "title": "恒瑞医药2025年半年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00381",
+          "title": "恒瑞医药2025年半年度报告摘要",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-600276-00047",
+          "title": "恒瑞医药2023年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-600276-00684",
+          "title": "恒瑞医药关于药品上市许可申请获受理的提示性公告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-600276-00404",
+          "title": "恒瑞医药关于与Braveheart Bio签署HRS-1893项目授权许可协议的公告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-600276-00227": 1,
+        "DOC-EVT-600276-00648": 0,
+        "DOC-EVT-600276-00047": 1,
+        "DOC-EVT-600276-00595": 2,
+        "DOC-EVT-600276-00381": 1,
+        "DOC-EVT-600276-00448": 0,
+        "DOC-EVT-600276-00684": 3,
+        "DOC-EVT-600276-00404": 3,
+        "DOC-EVT-600276-00376": 2,
+        "DOC-EVT-600276-00692": 3
+      }
+    },
+    {
+      "query_id": "V6-Q023",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "海外临床与商业化投入能否被国际收入增长覆盖",
+      "positive_candidates": 5,
+      "text_recall_at_5": 0.6,
+      "graph_recall_at_5": 0.8,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "恒瑞医药2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00047",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00381"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00047",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00648"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-600276-00376",
+          "title": "恒瑞医药2025年半年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-600276-00047",
+          "title": "恒瑞医药2023年年度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-600276-00381",
+          "title": "恒瑞医药2025年半年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00595",
+          "title": "恒瑞医药2025年度利润分配方案及提请股东会授权董事会制定2026年中期分红方案的公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00404",
+          "title": "恒瑞医药关于与Braveheart Bio签署HRS-1893项目授权许可协议的公告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-600276-00692": 1,
+        "DOC-EVT-600276-00047": 1,
+        "DOC-EVT-600276-00376": 3,
+        "DOC-EVT-600276-00448": 0,
+        "DOC-EVT-600276-00684": 1,
+        "DOC-EVT-600276-00227": 2,
+        "DOC-EVT-600276-00381": 2,
+        "DOC-EVT-600276-00648": 0,
+        "DOC-EVT-600276-00404": 3,
+        "DOC-EVT-600276-00595": 2
+      }
+    },
+    {
+      "query_id": "V6-Q024",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "研发费用增长与新品放量是否支持长期经营杠杆改善",
+      "positive_candidates": 8,
+      "text_recall_at_5": 0.625,
+      "graph_recall_at_5": 0.625,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "恒瑞医药2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00047"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-600276-00376",
+        "DOC-EVT-600276-00381",
+        "DOC-EVT-600276-00047",
+        "DOC-EVT-600276-00595",
+        "DOC-EVT-600276-00404",
+        "DOC-EVT-600276-00227",
+        "DOC-EVT-600276-00684",
+        "DOC-EVT-600276-00448",
+        "DOC-EVT-600276-00692",
+        "DOC-EVT-600276-00648"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-600276-00376",
+          "title": "恒瑞医药2025年半年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-600276-00381",
+          "title": "恒瑞医药2025年半年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00047",
+          "title": "恒瑞医药2023年年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00595",
+          "title": "恒瑞医药2025年度利润分配方案及提请股东会授权董事会制定2026年中期分红方案的公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-600276-00404",
+          "title": "恒瑞医药关于与Braveheart Bio签署HRS-1893项目授权许可协议的公告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-600276-00047": 2,
+        "DOC-EVT-600276-00648": 0,
+        "DOC-EVT-600276-00404": 2,
+        "DOC-EVT-600276-00227": 2,
+        "DOC-EVT-600276-00684": 3,
+        "DOC-EVT-600276-00692": 3,
+        "DOC-EVT-600276-00381": 2,
+        "DOC-EVT-600276-00595": 2,
+        "DOC-EVT-600276-00376": 3,
+        "DOC-EVT-600276-00448": 0
+      }
+    },
+    {
+      "query_id": "V6-Q025",
+      "company": "药明康德",
+      "security_id": "603259",
+      "hypothesis": "海外政策限制是否影响客户订单与产能利用率",
+      "positive_candidates": 4,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 0.75,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2025年半年度报告",
+      "text_ranking": [
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00235",
+        "DOC-EVT-603259-00236",
+        "DOC-EVT-603259-00455",
+        "DOC-EVT-603259-00239",
+        "DOC-EVT-603259-00516",
+        "DOC-EVT-603259-00351",
+        "DOC-EVT-603259-00400",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00372"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00235",
+        "DOC-EVT-603259-00351",
+        "DOC-EVT-603259-00372",
+        "DOC-EVT-603259-00236",
+        "DOC-EVT-603259-00239",
+        "DOC-EVT-603259-00455",
+        "DOC-EVT-603259-00516",
+        "DOC-EVT-603259-00400",
+        "DOC-EVT-603259-00284"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-603259-00348",
+          "title": "2025年半年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-603259-00235",
+          "title": "2024年年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-603259-00351",
+          "title": "2025年半年度报告摘要",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603259-00372",
+          "title": "关于召开2025年半年度业绩说明会的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603259-00236",
+          "title": "关于开展外汇套期保值业务的公告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-603259-00239": 0,
+        "DOC-EVT-603259-00235": 2,
+        "DOC-EVT-603259-00516": 0,
+        "DOC-EVT-603259-00351": 0,
+        "DOC-EVT-603259-00372": 0,
+        "DOC-EVT-603259-00284": 0,
+        "DOC-EVT-603259-00236": 2,
+        "DOC-EVT-603259-00400": 0,
+        "DOC-EVT-603259-00455": 2,
+        "DOC-EVT-603259-00348": 3
+      }
+    },
+    {
+      "query_id": "V6-Q026",
+      "company": "药明康德",
+      "security_id": "603259",
+      "hypothesis": "在手订单向收入转化速度能否验证需求恢复",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-603259-00235",
+        "DOC-EVT-603259-00400",
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00455",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00236",
+        "DOC-EVT-603259-00351",
+        "DOC-EVT-603259-00516",
+        "DOC-EVT-603259-00372",
+        "DOC-EVT-603259-00239"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-603259-00235",
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00351",
+        "DOC-EVT-603259-00372",
+        "DOC-EVT-603259-00400",
+        "DOC-EVT-603259-00236",
+        "DOC-EVT-603259-00455",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00516",
+        "DOC-EVT-603259-00239"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-603259-00235",
+          "title": "2024年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-603259-00348",
+          "title": "2025年半年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-603259-00351",
+          "title": "2025年半年度报告摘要",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603259-00372",
+          "title": "关于召开2025年半年度业绩说明会的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603259-00400",
+          "title": "2025年半年度A股权益分派实施公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-603259-00372": 0,
+        "DOC-EVT-603259-00516": 0,
+        "DOC-EVT-603259-00348": 2,
+        "DOC-EVT-603259-00455": 1,
+        "DOC-EVT-603259-00351": 0,
+        "DOC-EVT-603259-00235": 3,
+        "DOC-EVT-603259-00284": 0,
+        "DOC-EVT-603259-00239": 0,
+        "DOC-EVT-603259-00236": 1,
+        "DOC-EVT-603259-00400": 0
+      }
+    },
+    {
+      "query_id": "V6-Q027",
+      "company": "药明康德",
+      "security_id": "603259",
+      "hypothesis": "产能利用率回升能否改善D&M业务毛利率和现金流",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2024年年度报告",
+      "text_ranking": [
+        "DOC-EVT-603259-00235",
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00236",
+        "DOC-EVT-603259-00455",
+        "DOC-EVT-603259-00400",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00239",
+        "DOC-EVT-603259-00516",
+        "DOC-EVT-603259-00372",
+        "DOC-EVT-603259-00351"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-603259-00235",
+        "DOC-EVT-603259-00348",
+        "DOC-EVT-603259-00372",
+        "DOC-EVT-603259-00351",
+        "DOC-EVT-603259-00236",
+        "DOC-EVT-603259-00284",
+        "DOC-EVT-603259-00455",
+        "DOC-EVT-603259-00400",
+        "DOC-EVT-603259-00239",
+        "DOC-EVT-603259-00516"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-603259-00235",
+          "title": "2024年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-603259-00348",
+          "title": "2025年半年度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-603259-00372",
+          "title": "关于召开2025年半年度业绩说明会的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603259-00351",
+          "title": "2025年半年度报告摘要",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-603259-00236",
+          "title": "关于开展外汇套期保值业务的公告",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-603259-00284": 0,
+        "DOC-EVT-603259-00351": 0,
+        "DOC-EVT-603259-00400": 0,
+        "DOC-EVT-603259-00372": 0,
+        "DOC-EVT-603259-00348": 2,
+        "DOC-EVT-603259-00235": 3,
+        "DOC-EVT-603259-00236": 1,
+        "DOC-EVT-603259-00516": 0,
+        "DOC-EVT-603259-00239": 0,
+        "DOC-EVT-603259-00455": 1
+      }
+    },
+    {
+      "query_id": "V6-Q028",
+      "company": "云南白药",
+      "security_id": "000538",
+      "hypothesis": "医药商业应收与存货变化是否影响经营现金流质量",
+      "positive_candidates": 3,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2025年三季度报告",
+      "text_ranking": [
+        "DOC-EVT-000538-00067",
+        "DOC-EVT-000538-00179",
+        "DOC-EVT-000538-00047",
+        "DOC-EVT-000538-00210",
+        "DOC-EVT-000538-00188",
+        "DOC-EVT-000538-00232",
+        "DOC-EVT-000538-00098",
+        "DOC-EVT-000538-00229",
+        "DOC-EVT-000538-00157"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-000538-00179",
+        "DOC-EVT-000538-00047",
+        "DOC-EVT-000538-00067",
+        "DOC-EVT-000538-00210",
+        "DOC-EVT-000538-00188",
+        "DOC-EVT-000538-00098",
+        "DOC-EVT-000538-00232",
+        "DOC-EVT-000538-00229",
+        "DOC-EVT-000538-00157"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-000538-00179",
+          "title": "2025年三季度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "DOC-EVT-000538-00047",
+          "title": "2024年一季度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00067",
+          "title": "云南白药集团股份有限公司投资理财管理制度（2024年8月）",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-000538-00210",
+          "title": "非经营性资金占用及其他关联资金往来情况汇总表",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00188",
+          "title": "关于2026年利用闲置自有资金开展投资理财的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-000538-00067": 0,
+        "DOC-EVT-000538-00131": 0,
+        "DOC-EVT-000538-00188": 0,
+        "DOC-EVT-000538-00229": 0,
+        "DOC-EVT-000538-00047": 2,
+        "DOC-EVT-000538-00098": 1,
+        "DOC-EVT-000538-00157": 0,
+        "DOC-EVT-000538-00210": 2,
+        "DOC-EVT-000538-00179": 3,
+        "DOC-EVT-000538-00232": 0
+      }
+    },
+    {
+      "query_id": "V6-Q029",
+      "company": "云南白药",
+      "security_id": "000538",
+      "hypothesis": "牙膏等健康品增长能否提升核心品牌利润贡献",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2025年三季度报告",
+      "text_ranking": [
+        "DOC-EVT-000538-00179",
+        "DOC-EVT-000538-00210",
+        "DOC-EVT-000538-00047",
+        "DOC-EVT-000538-00229",
+        "DOC-EVT-000538-00188",
+        "DOC-EVT-000538-00098",
+        "DOC-EVT-000538-00157",
+        "DOC-EVT-000538-00067",
+        "DOC-EVT-000538-00232"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-000538-00179",
+        "DOC-EVT-000538-00047",
+        "DOC-EVT-000538-00210",
+        "DOC-EVT-000538-00098",
+        "DOC-EVT-000538-00229",
+        "DOC-EVT-000538-00188",
+        "DOC-EVT-000538-00232",
+        "DOC-EVT-000538-00157",
+        "DOC-EVT-000538-00067"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-000538-00179",
+          "title": "2025年三季度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00047",
+          "title": "2024年一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-000538-00210",
+          "title": "非经营性资金占用及其他关联资金往来情况汇总表",
+          "grade": 0
+        },
+        {
+          "event_id": "DOC-EVT-000538-00098",
+          "title": "关于与专业投资机构共同投资设立基金的进展公告",
+          "grade": 1
+        },
+        {
+          "event_id": "DOC-EVT-000538-00229",
+          "title": "2025年度股东会决议公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-000538-00232": 0,
+        "DOC-EVT-000538-00098": 1,
+        "DOC-EVT-000538-00229": 0,
+        "DOC-EVT-000538-00188": 0,
+        "DOC-EVT-000538-00067": 0,
+        "DOC-EVT-000538-00157": 0,
+        "DOC-EVT-000538-00131": 1,
+        "DOC-EVT-000538-00179": 2,
+        "DOC-EVT-000538-00210": 0,
+        "DOC-EVT-000538-00047": 1
+      }
+    },
+    {
+      "query_id": "V6-Q030",
+      "company": "云南白药",
+      "security_id": "000538",
+      "hypothesis": "投资资产处置与公允价值波动是否影响扣非盈利稳定性",
+      "positive_candidates": 5,
+      "text_recall_at_5": 0.8,
+      "graph_recall_at_5": 0.8,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2025年三季度报告",
+      "text_ranking": [
+        "DOC-EVT-000538-00179",
+        "DOC-EVT-000538-00047",
+        "DOC-EVT-000538-00188",
+        "DOC-EVT-000538-00067",
+        "DOC-EVT-000538-00232",
+        "DOC-EVT-000538-00210",
+        "DOC-EVT-000538-00098",
+        "DOC-EVT-000538-00229",
+        "DOC-EVT-000538-00157"
+      ],
+      "graph_ranking": [
+        "DOC-EVT-000538-00179",
+        "DOC-EVT-000538-00047",
+        "DOC-EVT-000538-00067",
+        "DOC-EVT-000538-00188",
+        "DOC-EVT-000538-00232",
+        "DOC-EVT-000538-00098",
+        "DOC-EVT-000538-00210",
+        "DOC-EVT-000538-00229",
+        "DOC-EVT-000538-00157"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "DOC-EVT-000538-00179",
+          "title": "2025年三季度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00047",
+          "title": "2024年一季度报告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00067",
+          "title": "云南白药集团股份有限公司投资理财管理制度（2024年8月）",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00188",
+          "title": "关于2026年利用闲置自有资金开展投资理财的公告",
+          "grade": 2
+        },
+        {
+          "event_id": "DOC-EVT-000538-00232",
+          "title": "关于持股5％以上股东非公开发行可交换公司债券换股价格调整的提示性公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "DOC-EVT-000538-00157": 0,
+        "DOC-EVT-000538-00232": 0,
+        "DOC-EVT-000538-00210": 0,
+        "DOC-EVT-000538-00131": 1,
+        "DOC-EVT-000538-00188": 2,
+        "DOC-EVT-000538-00179": 2,
+        "DOC-EVT-000538-00047": 2,
+        "DOC-EVT-000538-00067": 2,
+        "DOC-EVT-000538-00098": 3,
+        "DOC-EVT-000538-00229": 0
+      }
+    }
+  ]
+}

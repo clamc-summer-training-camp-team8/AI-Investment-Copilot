@@ -11,3 +11,18 @@
 *.json text
 *.yaml text
 *.yml  text
+
+# 数据集 CSV 显式声明为 LF 文本。采集管道在 Windows 上写出的是 CRLF，
+# 不声明的话每次有人在不同平台重跑采集，整个文件都会显示为改动，
+# 真正的数据变化会被淹没在行尾差异里。
+*.csv  text eol=lf
+
+# 冻结行情的 Manifest SHA-256 绑定逐字节内容；禁止 Git 在跨平台 checkout 时改写行尾。
+/real_data/quant/** -text
+
+# 最终金标、一次性盲测回执与启用决策同样绑定原始文件 SHA-256。它们是不可变审计资产，
+# 不是普通协作文档；Git 必须在 Windows/Linux checkout 中保留冻结时的原始字节。
+/analytics/datasets/final-gold-v3-20260826/** -text
+/analytics/experiments/graph-relevance-v6-blind/benchmark.json -text
+/outputs/graph-relevance-v6-final/** -text
+/outputs/graph-rag-v6-activation-decision.json -text

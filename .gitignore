@@ -5,26 +5,55 @@ venv/
 .env
 .env.*
 !.env.example
+!deploy/integration/.env.integration.example
+deploy/.env.integration
+deploy/release.env
+deploy/integration/users.caddy
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .import_linter_cache/
 storage/
+.runtime/
 *.sqlite3
 .DS_Store
 
+# Codex/文档工具的本地中间文件。
+/.codex_tmp/
+/.tmp/
+/outputs/.tmp-*/
+/outputs/.*_tmp_path.txt
+
+# Node 依赖不入库，包括 outputs 内用于生成预览的临时依赖。
+node_modules/
+
 # 前端
-web/node_modules/
 web/dist/
 web/.vite/
 
-# 离线分析：只提交版本描述文件，数据本体走外部存储
-analytics/datasets/**/data/
+# 演示文档构建依赖仅用于本地生成，不纳入项目版本。
+docs/.midterm_ppt_build/node_modules/
+
+# 离线分析：公开、可再分发且带来源清单的数据可随数据集版本提交。
+# 受许可限制、付费或内部数据必须放到 external/，不得提交。
+analytics/datasets/**/external/
 analytics/**/*.parquet
 analytics/**/*.pkl
 .ipynb_checkpoints/
 
-# 真实投研资料不进仓库。样例数据仅限 docs/data/数据分析交付包/业务样例包/
+# 未经清洗和授权检查的上传资料不进仓库。
 /uploads/
-/real_data/
+
+# real_data/ 中经过来源核验、可公开再分发的数据纳入版本控制；这里只排除
+# 采集过程产生的大体积公告分片、行情分片和本地备份文件。
+/real_data/raw/announcements/
+/real_data/raw/quotes/
+/real_data/**/*.bak.json
+/real_data/**/*.v1.bak.json

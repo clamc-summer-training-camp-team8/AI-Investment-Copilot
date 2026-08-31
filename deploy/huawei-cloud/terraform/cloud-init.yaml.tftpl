@@ -1,0 +1,32 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - docker.io
+  - docker-compose-v2
+  - python3
+
+write_files:
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "20m",
+          "max-file": "5"
+        },
+        "live-restore": true
+      }
+
+runcmd:
+  - [systemctl, enable, --now, docker]
+  - [usermod, -aG, docker, "${deploy_user}"]
+  - [mkdir, -p, /opt/ai-investment-copilot/deploy/integration]
+  - [mkdir, -p, /opt/ai-investment-copilot/backups]
+  - [chown, -R, "${deploy_user}:${deploy_user}", /opt/ai-investment-copilot]
+  - [sh, -c, "docker compose version > /opt/ai-investment-copilot/docker-compose-version.txt"]
+
+final_message: "AI Investment Copilot integration host bootstrap complete"

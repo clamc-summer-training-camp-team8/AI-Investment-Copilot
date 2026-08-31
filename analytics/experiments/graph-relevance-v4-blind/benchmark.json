@@ -1,0 +1,1950 @@
+{
+  "schema_version": "graph-rag-benchmark-v2",
+  "benchmark_version": "graph-rag-ranking-convergence-v2",
+  "generated_at": "2026-08-26T14:35:29.355140+00:00",
+  "gold_version": "graph-relevance-v4-blind",
+  "evaluation_role": "one_time_blind",
+  "gold_file": "final_graph_relevance_gold_v4.csv",
+  "retrieval_version": "diversity-mmr-v1[lambda=0.82][announcement-prior-v1[investment-graph-rag-v2-layered[controlled-candidate-union-v1[keyword-v1+bm25-zh-ngram-v1[k1=1.2,b=0.75]+chinese-vector-v1[hash-char-2gram-v1]]]]]",
+  "vocabulary_version": "investment-concepts-v2-controlled",
+  "variant": {
+    "name": "p0_release_candidate",
+    "enhanced_concepts": true,
+    "announcement_prior": true,
+    "bm25": true,
+    "chinese_vector": true,
+    "diversity": true,
+    "announcement_penalty": 0.35,
+    "graph_text_weight": 0.35,
+    "graph_relation_weight": 0.65,
+    "thresholds_changed": false
+  },
+  "evaluation_protocol": {
+    "relevant_grades": [
+      "2-间接相关",
+      "3-直接相关"
+    ],
+    "recall_definition": "macro mean of relevant-set recall per positive query",
+    "mrr_definition": "macro reciprocal rank of first relevant candidate per positive query",
+    "zero_positive_queries_excluded_from_recall_and_mrr": true,
+    "top1_correctness_includes_zero_positive_queries": true,
+    "gold_labels_used_for_graph_construction": false,
+    "thresholds_frozen_before_run": true,
+    "v3_may_authorize_rollout": false
+  },
+  "dataset": {
+    "rows": 240,
+    "queries": 30,
+    "positive_queries": 28,
+    "securities": 9
+  },
+  "text_baseline": {
+    "evaluated_queries": 30,
+    "positive_queries": 28,
+    "recall_at_k": {
+      "1": 0.172,
+      "3": 0.3899,
+      "5": 0.5095,
+      "10": 0.7036
+    },
+    "hit_rate_at_k": {
+      "1": 0.4286,
+      "3": 0.6786,
+      "5": 0.8571,
+      "10": 0.8929
+    },
+    "ndcg_at_k": {
+      "1": 0.4133,
+      "3": 0.4551,
+      "5": 0.4807,
+      "10": 0.5624
+    },
+    "mrr": 0.5759,
+    "top1_correctness": 0.4,
+    "unjudged_result_count": 187
+  },
+  "graph_rag": {
+    "evaluated_queries": 30,
+    "positive_queries": 28,
+    "recall_at_k": {
+      "1": 0.1661,
+      "3": 0.3405,
+      "5": 0.5143,
+      "10": 0.7452
+    },
+    "hit_rate_at_k": {
+      "1": 0.3929,
+      "3": 0.6429,
+      "5": 0.8571,
+      "10": 0.9643
+    },
+    "ndcg_at_k": {
+      "1": 0.3724,
+      "3": 0.3987,
+      "5": 0.4383,
+      "10": 0.534
+    },
+    "mrr": 0.5658,
+    "top1_correctness": 0.3667,
+    "unjudged_result_count": 186
+  },
+  "safety": {
+    "permission_leakage_count": 0,
+    "security_leakage_count": 0,
+    "future_leakage_count": 0,
+    "canary_content_leakage_count": 0,
+    "adversarial_canary_count": 90,
+    "path_provenance_valid": 37,
+    "path_provenance_relevant_hits": 37,
+    "path_provenance_rate": 1.0
+  },
+  "thresholds": {
+    "minimum_positive_queries": 20,
+    "recall_at_5": 0.8,
+    "mrr": 0.65,
+    "ndcg_at_5": 0.75,
+    "top1_correctness": 0.7,
+    "path_provenance_rate": 0.95,
+    "maximum_permission_leaks": 0,
+    "maximum_security_leaks": 0,
+    "maximum_future_leaks": 0,
+    "maximum_canary_content_leaks": 0
+  },
+  "gates": [
+    {
+      "code": "minimum_positive_queries",
+      "current": 28,
+      "target": 20,
+      "passed": true
+    },
+    {
+      "code": "recall_at_5",
+      "current": 0.5143,
+      "target": 0.8,
+      "passed": false
+    },
+    {
+      "code": "mrr",
+      "current": 0.5658,
+      "target": 0.65,
+      "passed": false
+    },
+    {
+      "code": "ndcg_at_5",
+      "current": 0.4383,
+      "target": 0.75,
+      "passed": false
+    },
+    {
+      "code": "top1_correctness",
+      "current": 0.3667,
+      "target": 0.7,
+      "passed": false
+    },
+    {
+      "code": "path_provenance_rate",
+      "current": 1.0,
+      "target": 0.95,
+      "passed": true
+    },
+    {
+      "code": "graph_recall_not_worse_than_text",
+      "current": 0.5143,
+      "target": 0.5095,
+      "passed": true
+    },
+    {
+      "code": "graph_mrr_not_worse_than_text",
+      "current": 0.5658,
+      "target": 0.5759,
+      "passed": false
+    },
+    {
+      "code": "permission_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "security_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "future_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    },
+    {
+      "code": "canary_content_leakage",
+      "current": 0,
+      "target": 0,
+      "passed": true
+    }
+  ],
+  "rollout_ready": false,
+  "error_taxonomy": {
+    "failed_queries": 24,
+    "groups": {
+      "governance_hard_negative": {
+        "definition": "经营类查询的 Graph Top-1 是治理类公告且相关性低于 2",
+        "count": 0,
+        "query_ids": []
+      },
+      "duplicate_disclosures": {
+        "definition": "Graph Top-5 存在去日期后标题词元 Jaccard≥0.72 的同主题公告",
+        "count": 4,
+        "query_ids": [
+          "V4-Q008",
+          "V4-Q019",
+          "V4-Q020",
+          "V4-Q025"
+        ]
+      },
+      "too_many_positive_candidates": {
+        "definition": "单查询正例超过 5，Recall@5 的理论上限低于 1",
+        "count": 2,
+        "query_ids": [
+          "V4-Q012",
+          "V4-Q018"
+        ]
+      },
+      "graph_cannot_change_top1": {
+        "definition": "错误 Top-1 与文本基线相同，图路径未纠正首位",
+        "count": 17,
+        "query_ids": [
+          "V4-Q002",
+          "V4-Q003",
+          "V4-Q004",
+          "V4-Q006",
+          "V4-Q010",
+          "V4-Q012",
+          "V4-Q015",
+          "V4-Q016",
+          "V4-Q017",
+          "V4-Q019",
+          "V4-Q020",
+          "V4-Q022",
+          "V4-Q023",
+          "V4-Q024",
+          "V4-Q026",
+          "V4-Q027",
+          "V4-Q028"
+        ]
+      }
+    }
+  },
+  "per_query": [
+    {
+      "query_id": "V4-Q001",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "海外销量增长能否持续抵消国内价格竞争对收入的压力",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2025年度可持续发展报告",
+      "text_ranking": [
+        "V4-E-Q001-C01",
+        "V4-E-Q003-C06",
+        "V4-E-Q001-C07",
+        "V4-E-Q001-C03",
+        "V4-E-Q001-C04",
+        "V4-E-Q001-C05",
+        "V4-E-Q002-C03",
+        "V4-E-Q003-C01",
+        "V4-E-Q001-C02",
+        "V4-E-Q002-C02"
+      ],
+      "graph_ranking": [
+        "V4-E-Q001-C01",
+        "V4-E-Q003-C06",
+        "V4-E-Q001-C07",
+        "V4-E-Q001-C05",
+        "V4-E-Q002-C03",
+        "V4-E-Q001-C03",
+        "V4-E-Q003-C01",
+        "V4-E-Q004-C07",
+        "V4-E-Q003-C02",
+        "V4-E-Q002-C05"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q001-C01",
+          "title": "2025年度可持续发展报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q001-C07",
+          "title": "2024年三季度报告",
+          "grade": 0
+        },
+        {
+          "event_id": "V4-E-Q001-C05",
+          "title": "关于收到董事长提议增加回购公司股份金额的提示性公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q001-C04": 0,
+        "V4-E-Q001-C02": 0,
+        "V4-E-Q001-C03": 0,
+        "V4-E-Q001-C06": 0,
+        "V4-E-Q001-C01": 3,
+        "V4-E-Q001-C07": 0,
+        "V4-E-Q001-C05": 0,
+        "V4-E-Q001-C08": 0
+      }
+    },
+    {
+      "query_id": "V4-Q002",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "高端车型与产品结构升级能否改善汽车业务单车盈利",
+      "positive_candidates": 0,
+      "text_recall_at_5": null,
+      "graph_recall_at_5": null,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q003-C06",
+        "V4-E-Q002-C03",
+        "V4-E-Q002-C08",
+        "V4-E-Q001-C01",
+        "V4-E-Q001-C03",
+        "V4-E-Q001-C04",
+        "V4-E-Q002-C02",
+        "V4-E-Q003-C05",
+        "V4-E-Q001-C07",
+        "V4-E-Q002-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q003-C06",
+        "V4-E-Q002-C03",
+        "V4-E-Q001-C01",
+        "V4-E-Q001-C03",
+        "V4-E-Q001-C07",
+        "V4-E-Q003-C05",
+        "V4-E-Q004-C04",
+        "V4-E-Q004-C07",
+        "V4-E-Q002-C06",
+        "V4-E-Q002-C05"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q002-C03",
+          "title": "关于开展外汇衍生品交易业务的可行性分析报告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q002-C08": 0,
+        "V4-E-Q002-C04": 0,
+        "V4-E-Q002-C07": 0,
+        "V4-E-Q002-C01": 0,
+        "V4-E-Q002-C06": 1,
+        "V4-E-Q002-C02": 0,
+        "V4-E-Q002-C05": 0,
+        "V4-E-Q002-C03": 0
+      }
+    },
+    {
+      "query_id": "V4-Q003",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "动力电池与储能业务能否形成汽车业务之外的第二增长曲线",
+      "positive_candidates": 0,
+      "text_recall_at_5": null,
+      "graph_recall_at_5": null,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q001-C01",
+        "V4-E-Q003-C06",
+        "V4-E-Q002-C03",
+        "V4-E-Q002-C02",
+        "V4-E-Q002-C08",
+        "V4-E-Q003-C05",
+        "V4-E-Q001-C03",
+        "V4-E-Q001-C04",
+        "V4-E-Q002-C05",
+        "V4-E-Q004-C03"
+      ],
+      "graph_ranking": [
+        "V4-E-Q001-C01",
+        "V4-E-Q003-C06",
+        "V4-E-Q002-C03",
+        "V4-E-Q003-C05",
+        "V4-E-Q001-C03",
+        "V4-E-Q004-C04",
+        "V4-E-Q001-C07",
+        "V4-E-Q003-C04",
+        "V4-E-Q001-C05",
+        "V4-E-Q003-C03"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q003-C06",
+          "title": "2025年第一季度业绩预告",
+          "grade": 1
+        },
+        {
+          "event_id": "V4-E-Q003-C05",
+          "title": "关于开展外汇衍生品套期保值交易业务的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q003-C04": 0,
+        "V4-E-Q003-C08": 0,
+        "V4-E-Q003-C06": 1,
+        "V4-E-Q003-C02": 0,
+        "V4-E-Q003-C07": 0,
+        "V4-E-Q003-C05": 0,
+        "V4-E-Q003-C01": 0,
+        "V4-E-Q003-C03": 0
+      }
+    },
+    {
+      "query_id": "V4-Q004",
+      "company": "比亚迪",
+      "security_id": "002594",
+      "hypothesis": "销量扩张过程中库存与经营现金流能否保持健康",
+      "positive_candidates": 2,
+      "text_recall_at_5": 0.0,
+      "graph_recall_at_5": 0.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q001-C06",
+        "V4-E-Q002-C02",
+        "V4-E-Q003-C05",
+        "V4-E-Q002-C03",
+        "V4-E-Q003-C07",
+        "V4-E-Q001-C02",
+        "V4-E-Q002-C05",
+        "V4-E-Q003-C06",
+        "V4-E-Q004-C02",
+        "V4-E-Q001-C01"
+      ],
+      "graph_ranking": [
+        "V4-E-Q001-C06",
+        "V4-E-Q003-C05",
+        "V4-E-Q003-C06",
+        "V4-E-Q004-C02",
+        "V4-E-Q001-C02",
+        "V4-E-Q002-C03",
+        "V4-E-Q003-C02",
+        "V4-E-Q002-C02",
+        "V4-E-Q002-C05",
+        "V4-E-Q004-C06"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q004-C02",
+          "title": "2025年度非经营性资金占用及其他关联资金往来情况的专项说明",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q004-C02": 1,
+        "V4-E-Q004-C08": 0,
+        "V4-E-Q004-C07": 3,
+        "V4-E-Q004-C06": 3,
+        "V4-E-Q004-C04": 1,
+        "V4-E-Q004-C05": 0,
+        "V4-E-Q004-C01": 1,
+        "V4-E-Q004-C03": 1
+      }
+    },
+    {
+      "query_id": "V4-Q005",
+      "company": "吉利汽车",
+      "security_id": "00175",
+      "hypothesis": "新能源车型渗透率提升能否持续改善销量结构",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.3333,
+      "graph_recall_at_5": 0.3333,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q005-C08",
+        "V4-E-Q007-C03",
+        "V4-E-Q005-C02",
+        "V4-E-Q006-C01",
+        "V4-E-Q005-C01",
+        "V4-E-Q006-C05",
+        "V4-E-Q007-C02",
+        "V4-E-Q007-C04",
+        "V4-E-Q005-C03",
+        "V4-E-Q006-C02"
+      ],
+      "graph_ranking": [
+        "V4-E-Q007-C03",
+        "V4-E-Q006-C01",
+        "V4-E-Q005-C08",
+        "V4-E-Q005-C02",
+        "V4-E-Q006-C02",
+        "V4-E-Q006-C05",
+        "V4-E-Q007-C04",
+        "V4-E-Q005-C01",
+        "V4-E-Q005-C03",
+        "V4-E-Q006-C04"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q005-C08",
+          "title": "持续关连交易",
+          "grade": 1
+        },
+        {
+          "event_id": "V4-E-Q005-C02",
+          "title": "未经审核之二零二五年十二月销量及二零二六年销量目标",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q005-C02": 3,
+        "V4-E-Q005-C05": 3,
+        "V4-E-Q005-C07": 1,
+        "V4-E-Q005-C03": 1,
+        "V4-E-Q005-C01": 0,
+        "V4-E-Q005-C06": 1,
+        "V4-E-Q005-C04": 3,
+        "V4-E-Q005-C08": 1
+      }
+    },
+    {
+      "query_id": "V4-Q006",
+      "company": "吉利汽车",
+      "security_id": "00175",
+      "hypothesis": "出口销量增长能否成为吉利汽车的稳定增量来源",
+      "positive_candidates": 1,
+      "text_recall_at_5": 0.0,
+      "graph_recall_at_5": 0.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q005-C02",
+        "V4-E-Q006-C01",
+        "V4-E-Q005-C01",
+        "V4-E-Q005-C08",
+        "V4-E-Q007-C03",
+        "V4-E-Q006-C05",
+        "V4-E-Q006-C08",
+        "V4-E-Q007-C02",
+        "V4-E-Q007-C08",
+        "V4-E-Q005-C03"
+      ],
+      "graph_ranking": [
+        "V4-E-Q005-C02",
+        "V4-E-Q007-C03",
+        "V4-E-Q005-C01",
+        "V4-E-Q006-C01",
+        "V4-E-Q007-C05",
+        "V4-E-Q006-C02",
+        "V4-E-Q007-C06",
+        "V4-E-Q007-C04",
+        "V4-E-Q006-C05",
+        "V4-E-Q007-C07"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q006-C01",
+          "title": "未经审核之二零二五年十二月销量及二零二六年销量目标",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q006-C02": 1,
+        "V4-E-Q006-C01": 1,
+        "V4-E-Q006-C08": 0,
+        "V4-E-Q006-C03": 1,
+        "V4-E-Q006-C05": 1,
+        "V4-E-Q006-C07": 1,
+        "V4-E-Q006-C06": 1,
+        "V4-E-Q006-C04": 3
+      }
+    },
+    {
+      "query_id": "V4-Q007",
+      "company": "吉利汽车",
+      "security_id": "00175",
+      "hypothesis": "极氪与领克渠道协同能否转化为销售效率提升",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "自愿公布有关领克欧洲业务之非约束性谅解备忘录",
+      "text_ranking": [
+        "V4-E-Q007-C02",
+        "V4-E-Q007-C03",
+        "V4-E-Q007-C05",
+        "V4-E-Q005-C08",
+        "V4-E-Q005-C02",
+        "V4-E-Q006-C01",
+        "V4-E-Q006-C05",
+        "V4-E-Q007-C01",
+        "V4-E-Q007-C04",
+        "V4-E-Q007-C08"
+      ],
+      "graph_ranking": [
+        "V4-E-Q007-C03",
+        "V4-E-Q007-C05",
+        "V4-E-Q006-C01",
+        "V4-E-Q007-C02",
+        "V4-E-Q007-C01",
+        "V4-E-Q007-C04",
+        "V4-E-Q006-C05",
+        "V4-E-Q005-C02",
+        "V4-E-Q006-C03",
+        "V4-E-Q005-C01"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q007-C03",
+          "title": "自愿公布有关领克欧洲业务之非约束性谅解备忘录",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q007-C05",
+          "title": "有关建议分拆极氪并将其独立上市之最新进展",
+          "grade": 0
+        },
+        {
+          "event_id": "V4-E-Q007-C02",
+          "title": "须予披露及关连交易－战略整合交易(1) 极氪收购领克销售股份；及(2) 极氪认购领克新增资本",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q007-C01",
+          "title": "完成极氪私有化",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q007-C07": 1,
+        "V4-E-Q007-C04": 0,
+        "V4-E-Q007-C06": 1,
+        "V4-E-Q007-C03": 2,
+        "V4-E-Q007-C02": 2,
+        "V4-E-Q007-C08": 1,
+        "V4-E-Q007-C01": 1,
+        "V4-E-Q007-C05": 0
+      }
+    },
+    {
+      "query_id": "V4-Q008",
+      "company": "小鹏汽车",
+      "security_id": "09868",
+      "hypothesis": "新车型上市后的交付放量能否推动季度销量持续增长",
+      "positive_candidates": 5,
+      "text_recall_at_5": 0.8,
+      "graph_recall_at_5": 0.6,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "自愿公告 2025年9月及第三季度智能车交付数据",
+      "text_ranking": [
+        "V4-E-Q008-C02",
+        "V4-E-Q008-C03",
+        "V4-E-Q008-C04",
+        "V4-E-Q008-C05",
+        "V4-E-Q010-C01",
+        "V4-E-Q010-C03",
+        "V4-E-Q010-C04",
+        "V4-E-Q008-C01",
+        "V4-E-Q010-C02",
+        "V4-E-Q010-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q008-C02",
+        "V4-E-Q008-C04",
+        "V4-E-Q008-C03",
+        "V4-E-Q010-C04",
+        "V4-E-Q010-C03",
+        "V4-E-Q010-C01",
+        "V4-E-Q008-C01",
+        "V4-E-Q008-C05",
+        "V4-E-Q009-C03",
+        "V4-E-Q010-C02"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q008-C02",
+          "title": "自愿公告 2025年9月及第三季度智能车交付数据",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q008-C04",
+          "title": "自愿公告 2026年3月及第一季度智能车交付数据",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q008-C03",
+          "title": "自愿公告2024年12 月及第四季度智能车交付数据",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q008-C05": 3,
+        "V4-E-Q008-C01": 3,
+        "V4-E-Q008-C04": 3,
+        "V4-E-Q008-C06": 1,
+        "V4-E-Q008-C07": 1,
+        "V4-E-Q008-C02": 3,
+        "V4-E-Q008-C03": 3,
+        "V4-E-Q008-C08": 0
+      }
+    },
+    {
+      "query_id": "V4-Q009",
+      "company": "小鹏汽车",
+      "security_id": "09868",
+      "hypothesis": "与大众汽车的技术合作能否形成可持续的技术服务收入",
+      "positive_candidates": 3,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "自愿公告 与大众汽车集团签订战略技术合作联合开发协议及订立联合采购计划",
+      "text_ranking": [
+        "V4-E-Q009-C01",
+        "V4-E-Q009-C02",
+        "V4-E-Q009-C03",
+        "V4-E-Q010-C01",
+        "V4-E-Q010-C04",
+        "V4-E-Q008-C04",
+        "V4-E-Q008-C08",
+        "V4-E-Q009-C04",
+        "V4-E-Q010-C02",
+        "V4-E-Q008-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q009-C01",
+        "V4-E-Q009-C02",
+        "V4-E-Q010-C01",
+        "V4-E-Q009-C03",
+        "V4-E-Q008-C04",
+        "V4-E-Q010-C04",
+        "V4-E-Q010-C02",
+        "V4-E-Q008-C01",
+        "V4-E-Q008-C05",
+        "V4-E-Q010-C03"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q009-C01",
+          "title": "自愿公告 与大众汽车集团签订战略技术合作联合开发协议及订立联合采购计划",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q009-C02",
+          "title": "自愿公告 小鹏汽车与大众汽车集团签订扩大电子电气架构技术战略合作的协议",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q009-C03",
+          "title": "自愿公告 小鹏汽车与大众汽车集团签订电子电气架构技术战略合作联合开发协议",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q009-C05": 1,
+        "V4-E-Q009-C01": 2,
+        "V4-E-Q009-C02": 2,
+        "V4-E-Q009-C06": 1,
+        "V4-E-Q009-C03": 2,
+        "V4-E-Q009-C07": 1,
+        "V4-E-Q009-C08": 0,
+        "V4-E-Q009-C04": 0
+      }
+    },
+    {
+      "query_id": "V4-Q010",
+      "company": "小鹏汽车",
+      "security_id": "09868",
+      "hypothesis": "智能驾驶研发投入能否转化为产品差异化与毛利改善",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.25,
+      "graph_recall_at_5": 0.25,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q008-C04",
+        "V4-E-Q009-C01",
+        "V4-E-Q009-C03",
+        "V4-E-Q010-C01",
+        "V4-E-Q008-C05",
+        "V4-E-Q010-C04",
+        "V4-E-Q010-C05",
+        "V4-E-Q008-C01",
+        "V4-E-Q009-C02",
+        "V4-E-Q008-C02"
+      ],
+      "graph_ranking": [
+        "V4-E-Q008-C04",
+        "V4-E-Q009-C01",
+        "V4-E-Q009-C03",
+        "V4-E-Q010-C01",
+        "V4-E-Q009-C02",
+        "V4-E-Q008-C02",
+        "V4-E-Q010-C05",
+        "V4-E-Q010-C04",
+        "V4-E-Q008-C05",
+        "V4-E-Q008-C01"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q010-C01",
+          "title": "自愿公告 2026年7月智能车交付数据",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q010-C08": 0,
+        "V4-E-Q010-C03": 3,
+        "V4-E-Q010-C04": 1,
+        "V4-E-Q010-C02": 2,
+        "V4-E-Q010-C01": 2,
+        "V4-E-Q010-C06": 1,
+        "V4-E-Q010-C05": 3,
+        "V4-E-Q010-C07": 1
+      }
+    },
+    {
+      "query_id": "V4-Q011",
+      "company": "北方华创",
+      "security_id": "002371",
+      "hypothesis": "半导体设备订单增长能否持续转化为营业收入",
+      "positive_candidates": 2,
+      "text_recall_at_5": 0.5,
+      "graph_recall_at_5": 0.5,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2024年半年度业绩预告",
+      "text_ranking": [
+        "V4-E-Q011-C07",
+        "V4-E-Q012-C07",
+        "V4-E-Q013-C06",
+        "V4-E-Q011-C02",
+        "V4-E-Q012-C02",
+        "V4-E-Q012-C06",
+        "V4-E-Q011-C05",
+        "V4-E-Q011-C06",
+        "V4-E-Q012-C05",
+        "V4-E-Q013-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q011-C07",
+        "V4-E-Q013-C06",
+        "V4-E-Q012-C02",
+        "V4-E-Q012-C06",
+        "V4-E-Q013-C05",
+        "V4-E-Q012-C07",
+        "V4-E-Q011-C08",
+        "V4-E-Q012-C08",
+        "V4-E-Q011-C06",
+        "V4-E-Q012-C05"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q011-C07",
+          "title": "2024年半年度业绩预告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q011-C05": 1,
+        "V4-E-Q011-C03": 1,
+        "V4-E-Q011-C02": 1,
+        "V4-E-Q011-C01": 0,
+        "V4-E-Q011-C08": 0,
+        "V4-E-Q011-C07": 2,
+        "V4-E-Q011-C06": 2,
+        "V4-E-Q011-C04": 1
+      }
+    },
+    {
+      "query_id": "V4-Q012",
+      "company": "北方华创",
+      "security_id": "002371",
+      "hypothesis": "国产替代能否推动高端半导体设备品类持续扩张",
+      "positive_candidates": 6,
+      "text_recall_at_5": 0.1667,
+      "graph_recall_at_5": 0.1667,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q011-C02",
+        "V4-E-Q011-C06",
+        "V4-E-Q012-C02",
+        "V4-E-Q011-C03",
+        "V4-E-Q011-C07",
+        "V4-E-Q012-C03",
+        "V4-E-Q012-C07",
+        "V4-E-Q011-C04",
+        "V4-E-Q012-C04",
+        "V4-E-Q012-C06"
+      ],
+      "graph_ranking": [
+        "V4-E-Q011-C02",
+        "V4-E-Q011-C06",
+        "V4-E-Q013-C06",
+        "V4-E-Q013-C05",
+        "V4-E-Q012-C07",
+        "V4-E-Q012-C03",
+        "V4-E-Q012-C06",
+        "V4-E-Q012-C08",
+        "V4-E-Q012-C01",
+        "V4-E-Q012-C02"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q012-C07",
+          "title": "2024年半年度业绩预告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q012-C07": 3,
+        "V4-E-Q012-C04": 2,
+        "V4-E-Q012-C03": 2,
+        "V4-E-Q012-C06": 3,
+        "V4-E-Q012-C02": 2,
+        "V4-E-Q012-C01": 0,
+        "V4-E-Q012-C08": 0,
+        "V4-E-Q012-C05": 2
+      }
+    },
+    {
+      "query_id": "V4-Q013",
+      "company": "北方华创",
+      "security_id": "002371",
+      "hypothesis": "扩产与研发投入是否会显著挤压短期经营现金流",
+      "positive_candidates": 2,
+      "text_recall_at_5": 0.5,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2025年三季度报告",
+      "text_ranking": [
+        "V4-E-Q013-C06",
+        "V4-E-Q011-C06",
+        "V4-E-Q013-C07",
+        "V4-E-Q012-C08",
+        "V4-E-Q011-C07",
+        "V4-E-Q012-C07",
+        "V4-E-Q011-C08",
+        "V4-E-Q012-C06",
+        "V4-E-Q013-C01",
+        "V4-E-Q013-C02"
+      ],
+      "graph_ranking": [
+        "V4-E-Q013-C06",
+        "V4-E-Q011-C06",
+        "V4-E-Q013-C07",
+        "V4-E-Q012-C08",
+        "V4-E-Q013-C05",
+        "V4-E-Q013-C01",
+        "V4-E-Q011-C08",
+        "V4-E-Q012-C07",
+        "V4-E-Q012-C05",
+        "V4-E-Q012-C06"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q013-C06",
+          "title": "2025年三季度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q013-C07",
+          "title": "2023年年度报告摘要",
+          "grade": 1
+        },
+        {
+          "event_id": "V4-E-Q013-C05",
+          "title": "关于注册发行应收账款资产支持商业票据及永续中期票据的公告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q013-C07": 1,
+        "V4-E-Q013-C06": 3,
+        "V4-E-Q013-C01": 1,
+        "V4-E-Q013-C03": 1,
+        "V4-E-Q013-C05": 2,
+        "V4-E-Q013-C02": 1,
+        "V4-E-Q013-C04": 1,
+        "V4-E-Q013-C08": 0
+      }
+    },
+    {
+      "query_id": "V4-Q014",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "新增晶圆产能释放能否持续带动收入增长",
+      "positive_candidates": 5,
+      "text_recall_at_5": 0.2,
+      "graph_recall_at_5": 0.4,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "中芯国际2025年年度报告",
+      "text_ranking": [
+        "V4-E-Q014-C06",
+        "V4-E-Q015-C07",
+        "V4-E-Q017-C07",
+        "V4-E-Q015-C04",
+        "V4-E-Q014-C07",
+        "V4-E-Q015-C03",
+        "V4-E-Q016-C07",
+        "V4-E-Q014-C01",
+        "V4-E-Q015-C05",
+        "V4-E-Q016-C06"
+      ],
+      "graph_ranking": [
+        "V4-E-Q014-C06",
+        "V4-E-Q015-C04",
+        "V4-E-Q017-C07",
+        "V4-E-Q015-C07",
+        "V4-E-Q014-C01",
+        "V4-E-Q015-C03",
+        "V4-E-Q016-C07",
+        "V4-E-Q017-C06",
+        "V4-E-Q014-C07",
+        "V4-E-Q015-C05"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q014-C06",
+          "title": "中芯国际2025年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q014-C01",
+          "title": "海通证券股份有限公司、中国国际金融股份有限公司关于中芯国际2023年度持续督导年度跟踪报告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q014-C02": 0,
+        "V4-E-Q014-C04": 2,
+        "V4-E-Q014-C07": 1,
+        "V4-E-Q014-C06": 3,
+        "V4-E-Q014-C03": 2,
+        "V4-E-Q014-C01": 2,
+        "V4-E-Q014-C08": 2,
+        "V4-E-Q014-C05": 0
+      }
+    },
+    {
+      "query_id": "V4-Q015",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "产能利用率回升能否推动晶圆代工毛利率改善",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.6667,
+      "graph_recall_at_5": 0.6667,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q014-C06",
+        "V4-E-Q015-C07",
+        "V4-E-Q017-C07",
+        "V4-E-Q015-C04",
+        "V4-E-Q016-C06",
+        "V4-E-Q014-C01",
+        "V4-E-Q015-C03",
+        "V4-E-Q014-C07",
+        "V4-E-Q015-C05",
+        "V4-E-Q016-C07"
+      ],
+      "graph_ranking": [
+        "V4-E-Q014-C06",
+        "V4-E-Q015-C04",
+        "V4-E-Q017-C07",
+        "V4-E-Q015-C07",
+        "V4-E-Q014-C01",
+        "V4-E-Q015-C03",
+        "V4-E-Q016-C06",
+        "V4-E-Q016-C07",
+        "V4-E-Q015-C05",
+        "V4-E-Q014-C07"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q015-C04",
+          "title": "中芯国际关于2024年度“提质增效重回报”行动方案的半年度评估报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q015-C07",
+          "title": "中芯国际2025年年度报告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q015-C05": 1,
+        "V4-E-Q015-C04": 3,
+        "V4-E-Q015-C07": 3,
+        "V4-E-Q015-C08": 0,
+        "V4-E-Q015-C03": 2,
+        "V4-E-Q015-C02": 0,
+        "V4-E-Q015-C06": 1,
+        "V4-E-Q015-C01": 0
+      }
+    },
+    {
+      "query_id": "V4-Q016",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "资本开支与新增折旧压力能否被下游需求增长消化",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.25,
+      "graph_recall_at_5": 0.25,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q014-C06",
+        "V4-E-Q015-C07",
+        "V4-E-Q017-C07",
+        "V4-E-Q016-C06",
+        "V4-E-Q014-C07",
+        "V4-E-Q016-C07",
+        "V4-E-Q015-C04",
+        "V4-E-Q015-C03",
+        "V4-E-Q014-C01",
+        "V4-E-Q015-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q014-C06",
+        "V4-E-Q017-C07",
+        "V4-E-Q015-C07",
+        "V4-E-Q015-C04",
+        "V4-E-Q016-C07",
+        "V4-E-Q016-C06",
+        "V4-E-Q014-C07",
+        "V4-E-Q015-C03",
+        "V4-E-Q014-C01",
+        "V4-E-Q014-C05"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q016-C07",
+          "title": "中芯国际2025年年度报告摘要",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q016-C01": 2,
+        "V4-E-Q016-C04": 3,
+        "V4-E-Q016-C07": 2,
+        "V4-E-Q016-C02": 1,
+        "V4-E-Q016-C03": 0,
+        "V4-E-Q016-C06": 3,
+        "V4-E-Q016-C05": 0,
+        "V4-E-Q016-C08": 1
+      }
+    },
+    {
+      "query_id": "V4-Q017",
+      "company": "中芯国际",
+      "security_id": "688981",
+      "hypothesis": "外部贸易限制是否会影响先进产能建设与客户需求",
+      "positive_candidates": 1,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q016-C06",
+        "V4-E-Q014-C06",
+        "V4-E-Q015-C07",
+        "V4-E-Q017-C07",
+        "V4-E-Q014-C07",
+        "V4-E-Q016-C07",
+        "V4-E-Q015-C03",
+        "V4-E-Q014-C01",
+        "V4-E-Q015-C04",
+        "V4-E-Q015-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q016-C06",
+        "V4-E-Q015-C03",
+        "V4-E-Q014-C01",
+        "V4-E-Q016-C07",
+        "V4-E-Q017-C07",
+        "V4-E-Q015-C07",
+        "V4-E-Q014-C06",
+        "V4-E-Q014-C07",
+        "V4-E-Q015-C04",
+        "V4-E-Q015-C05"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q017-C07",
+          "title": "中芯国际2025年年度报告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q017-C04": 0,
+        "V4-E-Q017-C02": 0,
+        "V4-E-Q017-C05": 0,
+        "V4-E-Q017-C07": 2,
+        "V4-E-Q017-C08": 0,
+        "V4-E-Q017-C06": 1,
+        "V4-E-Q017-C03": 0,
+        "V4-E-Q017-C01": 0
+      }
+    },
+    {
+      "query_id": "V4-Q018",
+      "company": "兆易创新",
+      "security_id": "603986",
+      "hypothesis": "DRAM募投项目能否形成新的收入贡献",
+      "positive_candidates": 6,
+      "text_recall_at_5": 0.8333,
+      "graph_recall_at_5": 0.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q018-C01",
+        "V4-E-Q018-C04",
+        "V4-E-Q018-C02",
+        "V4-E-Q018-C03",
+        "V4-E-Q018-C05",
+        "V4-E-Q019-C06",
+        "V4-E-Q020-C06",
+        "V4-E-Q018-C06",
+        "V4-E-Q018-C07",
+        "V4-E-Q019-C07"
+      ],
+      "graph_ranking": [
+        "V4-E-Q020-C06",
+        "V4-E-Q020-C02",
+        "V4-E-Q020-C07",
+        "V4-E-Q019-C06",
+        "V4-E-Q020-C01",
+        "V4-E-Q019-C02",
+        "V4-E-Q019-C07",
+        "V4-E-Q018-C07",
+        "V4-E-Q018-C06",
+        "V4-E-Q018-C01"
+      ],
+      "graph_top5": [],
+      "gold_grades": {
+        "V4-E-Q018-C01": 2,
+        "V4-E-Q018-C05": 2,
+        "V4-E-Q018-C08": 0,
+        "V4-E-Q018-C04": 2,
+        "V4-E-Q018-C03": 2,
+        "V4-E-Q018-C07": 2,
+        "V4-E-Q018-C06": 1,
+        "V4-E-Q018-C02": 2
+      }
+    },
+    {
+      "query_id": "V4-Q019",
+      "company": "兆易创新",
+      "security_id": "603986",
+      "hypothesis": "存储芯片价格与库存周期改善能否提升盈利能力",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q018-C07",
+        "V4-E-Q019-C06",
+        "V4-E-Q019-C07",
+        "V4-E-Q020-C06",
+        "V4-E-Q020-C07",
+        "V4-E-Q020-C08",
+        "V4-E-Q018-C02",
+        "V4-E-Q018-C05",
+        "V4-E-Q020-C04",
+        "V4-E-Q018-C01"
+      ],
+      "graph_ranking": [
+        "V4-E-Q018-C07",
+        "V4-E-Q020-C06",
+        "V4-E-Q020-C07",
+        "V4-E-Q019-C07",
+        "V4-E-Q019-C06",
+        "V4-E-Q019-C01",
+        "V4-E-Q019-C02",
+        "V4-E-Q020-C08",
+        "V4-E-Q020-C05",
+        "V4-E-Q020-C04"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q019-C07",
+          "title": "兆易创新2025年年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q019-C06",
+          "title": "兆易创新2026年第一季度报告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q019-C05": 0,
+        "V4-E-Q019-C03": 0,
+        "V4-E-Q019-C07": 2,
+        "V4-E-Q019-C04": 0,
+        "V4-E-Q019-C02": 0,
+        "V4-E-Q019-C08": 0,
+        "V4-E-Q019-C06": 3,
+        "V4-E-Q019-C01": 0
+      }
+    },
+    {
+      "query_id": "V4-Q020",
+      "company": "兆易创新",
+      "security_id": "603986",
+      "hypothesis": "研发投入能否支持MCU与存储产品持续升级",
+      "positive_candidates": 1,
+      "text_recall_at_5": 0.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q019-C06",
+        "V4-E-Q020-C06",
+        "V4-E-Q020-C08",
+        "V4-E-Q018-C06",
+        "V4-E-Q018-C07",
+        "V4-E-Q019-C07",
+        "V4-E-Q020-C07",
+        "V4-E-Q018-C01",
+        "V4-E-Q018-C04",
+        "V4-E-Q018-C03"
+      ],
+      "graph_ranking": [
+        "V4-E-Q019-C06",
+        "V4-E-Q020-C06",
+        "V4-E-Q020-C07",
+        "V4-E-Q019-C07",
+        "V4-E-Q018-C07",
+        "V4-E-Q018-C06",
+        "V4-E-Q020-C08",
+        "V4-E-Q018-C01",
+        "V4-E-Q019-C05",
+        "V4-E-Q020-C02"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q020-C06",
+          "title": "兆易创新2026年第一季度报告",
+          "grade": 1
+        },
+        {
+          "event_id": "V4-E-Q020-C07",
+          "title": "兆易创新2025年年度报告摘要",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q020-C01": 0,
+        "V4-E-Q020-C07": 2,
+        "V4-E-Q020-C04": 0,
+        "V4-E-Q020-C03": 0,
+        "V4-E-Q020-C08": 0,
+        "V4-E-Q020-C05": 0,
+        "V4-E-Q020-C06": 1,
+        "V4-E-Q020-C02": 0
+      }
+    },
+    {
+      "query_id": "V4-Q021",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "创新药获批数量增长能否转化为销售放量",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.3333,
+      "graph_recall_at_5": 0.3333,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "恒瑞医药2026年第一季度报告",
+      "text_ranking": [
+        "V4-E-Q021-C06",
+        "V4-E-Q022-C06",
+        "V4-E-Q022-C07",
+        "V4-E-Q023-C06",
+        "V4-E-Q023-C07",
+        "V4-E-Q021-C07",
+        "V4-E-Q022-C01",
+        "V4-E-Q024-C07",
+        "V4-E-Q021-C02",
+        "V4-E-Q021-C03"
+      ],
+      "graph_ranking": [
+        "V4-E-Q021-C06",
+        "V4-E-Q022-C07",
+        "V4-E-Q023-C06",
+        "V4-E-Q022-C06",
+        "V4-E-Q022-C01",
+        "V4-E-Q023-C07",
+        "V4-E-Q021-C03",
+        "V4-E-Q024-C01",
+        "V4-E-Q022-C04",
+        "V4-E-Q023-C02"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q021-C06",
+          "title": "恒瑞医药2026年第一季度报告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q021-C06": 3,
+        "V4-E-Q021-C05": 2,
+        "V4-E-Q021-C02": 0,
+        "V4-E-Q021-C07": 1,
+        "V4-E-Q021-C01": 2,
+        "V4-E-Q021-C03": 1,
+        "V4-E-Q021-C08": 0,
+        "V4-E-Q021-C04": 0
+      }
+    },
+    {
+      "query_id": "V4-Q022",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "对外许可交易收入是否具备持续性",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.6667,
+      "graph_recall_at_5": 0.3333,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q021-C06",
+        "V4-E-Q022-C01",
+        "V4-E-Q022-C06",
+        "V4-E-Q022-C07",
+        "V4-E-Q023-C06",
+        "V4-E-Q022-C05",
+        "V4-E-Q021-C07",
+        "V4-E-Q022-C08",
+        "V4-E-Q024-C04",
+        "V4-E-Q021-C01"
+      ],
+      "graph_ranking": [
+        "V4-E-Q021-C06",
+        "V4-E-Q022-C01",
+        "V4-E-Q022-C07",
+        "V4-E-Q022-C05",
+        "V4-E-Q023-C06",
+        "V4-E-Q022-C06",
+        "V4-E-Q024-C04",
+        "V4-E-Q022-C02",
+        "V4-E-Q021-C05",
+        "V4-E-Q023-C08"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q022-C01",
+          "title": "恒瑞医药关于签署授权许可协议暨对外投资的公告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q022-C07",
+          "title": "恒瑞医药2025年年度报告摘要",
+          "grade": 1
+        },
+        {
+          "event_id": "V4-E-Q022-C05",
+          "title": "恒瑞医药关于以集中竞价交易方式回购股份的回购报告书",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q022-C04": 0,
+        "V4-E-Q022-C03": 0,
+        "V4-E-Q022-C01": 3,
+        "V4-E-Q022-C06": 3,
+        "V4-E-Q022-C08": 3,
+        "V4-E-Q022-C05": 0,
+        "V4-E-Q022-C02": 0,
+        "V4-E-Q022-C07": 1
+      }
+    },
+    {
+      "query_id": "V4-Q023",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "创新药纳入医保后的降价与放量能否改善收入结构",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.3333,
+      "graph_recall_at_5": 0.3333,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q022-C07",
+        "V4-E-Q021-C07",
+        "V4-E-Q021-C06",
+        "V4-E-Q022-C06",
+        "V4-E-Q023-C06",
+        "V4-E-Q023-C07",
+        "V4-E-Q023-C02",
+        "V4-E-Q022-C08",
+        "V4-E-Q024-C07",
+        "V4-E-Q021-C03"
+      ],
+      "graph_ranking": [
+        "V4-E-Q022-C07",
+        "V4-E-Q023-C06",
+        "V4-E-Q023-C02",
+        "V4-E-Q021-C07",
+        "V4-E-Q022-C02",
+        "V4-E-Q023-C07",
+        "V4-E-Q022-C06",
+        "V4-E-Q021-C06",
+        "V4-E-Q021-C03",
+        "V4-E-Q022-C01"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q023-C06",
+          "title": "恒瑞医药2026年第一季度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q023-C02",
+          "title": "恒瑞医药关于药物拟纳入优先审评程序的公告",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q023-C08": 0,
+        "V4-E-Q023-C01": 2,
+        "V4-E-Q023-C05": 1,
+        "V4-E-Q023-C06": 3,
+        "V4-E-Q023-C04": 1,
+        "V4-E-Q023-C02": 1,
+        "V4-E-Q023-C03": 1,
+        "V4-E-Q023-C07": 2
+      }
+    },
+    {
+      "query_id": "V4-Q024",
+      "company": "恒瑞医药",
+      "security_id": "600276",
+      "hypothesis": "研发投入强度能否被经营现金流稳定覆盖",
+      "positive_candidates": 1,
+      "text_recall_at_5": 0.0,
+      "graph_recall_at_5": 0.0,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q022-C07",
+        "V4-E-Q024-C07",
+        "V4-E-Q021-C07",
+        "V4-E-Q023-C07",
+        "V4-E-Q023-C04",
+        "V4-E-Q024-C02",
+        "V4-E-Q024-C03",
+        "V4-E-Q021-C06",
+        "V4-E-Q022-C06",
+        "V4-E-Q023-C06"
+      ],
+      "graph_ranking": [
+        "V4-E-Q022-C07",
+        "V4-E-Q024-C07",
+        "V4-E-Q023-C04",
+        "V4-E-Q024-C02",
+        "V4-E-Q023-C06",
+        "V4-E-Q024-C04",
+        "V4-E-Q022-C01",
+        "V4-E-Q023-C07",
+        "V4-E-Q021-C07",
+        "V4-E-Q024-C06"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q024-C07",
+          "title": "恒瑞医药2024年年度报告摘要",
+          "grade": 1
+        },
+        {
+          "event_id": "V4-E-Q024-C02",
+          "title": "恒瑞医药关于召开2024年度业绩暨现金分红说明会的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q024-C07": 1,
+        "V4-E-Q024-C01": 0,
+        "V4-E-Q024-C03": 0,
+        "V4-E-Q024-C02": 0,
+        "V4-E-Q024-C05": 1,
+        "V4-E-Q024-C08": 0,
+        "V4-E-Q024-C04": 1,
+        "V4-E-Q024-C06": 2
+      }
+    },
+    {
+      "query_id": "V4-Q025",
+      "company": "药明康德",
+      "security_id": "603259",
+      "hypothesis": "海外客户需求与在手订单恢复能否支撑收入增长",
+      "positive_candidates": 3,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "2023年年度报告",
+      "text_ranking": [
+        "V4-E-Q025-C06",
+        "V4-E-Q025-C07",
+        "V4-E-Q025-C01",
+        "V4-E-Q025-C05",
+        "V4-E-Q025-C03",
+        "V4-E-Q027-C02",
+        "V4-E-Q027-C06",
+        "V4-E-Q026-C06",
+        "V4-E-Q026-C07",
+        "V4-E-Q026-C01"
+      ],
+      "graph_ranking": [
+        "V4-E-Q025-C06",
+        "V4-E-Q025-C01",
+        "V4-E-Q025-C07",
+        "V4-E-Q027-C02",
+        "V4-E-Q026-C01",
+        "V4-E-Q026-C06",
+        "V4-E-Q025-C05",
+        "V4-E-Q026-C03",
+        "V4-E-Q027-C06",
+        "V4-E-Q025-C03"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q025-C06",
+          "title": "2023年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q025-C01",
+          "title": "2026年度提质增效重回报行动方案",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q025-C07",
+          "title": "2026年半年度报告",
+          "grade": 3
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q025-C06": 3,
+        "V4-E-Q025-C05": 1,
+        "V4-E-Q025-C04": 0,
+        "V4-E-Q025-C07": 3,
+        "V4-E-Q025-C03": 0,
+        "V4-E-Q025-C02": 0,
+        "V4-E-Q025-C08": 0,
+        "V4-E-Q025-C01": 2
+      }
+    },
+    {
+      "query_id": "V4-Q026",
+      "company": "药明康德",
+      "security_id": "603259",
+      "hypothesis": "地缘政治与监管变化是否影响客户留存和产能利用",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.25,
+      "graph_recall_at_5": 0.25,
+      "graph_top1_grade": 0,
+      "graph_top1_title": "关于会计政策变更的公告",
+      "text_ranking": [
+        "V4-E-Q026-C01",
+        "V4-E-Q025-C01",
+        "V4-E-Q025-C05",
+        "V4-E-Q025-C03",
+        "V4-E-Q026-C06",
+        "V4-E-Q026-C07",
+        "V4-E-Q027-C02",
+        "V4-E-Q027-C06",
+        "V4-E-Q025-C06",
+        "V4-E-Q025-C07"
+      ],
+      "graph_ranking": [
+        "V4-E-Q026-C01",
+        "V4-E-Q025-C05",
+        "V4-E-Q026-C07",
+        "V4-E-Q027-C02",
+        "V4-E-Q025-C01",
+        "V4-E-Q027-C06",
+        "V4-E-Q026-C06",
+        "V4-E-Q025-C03",
+        "V4-E-Q025-C06",
+        "V4-E-Q027-C07"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q026-C01",
+          "title": "关于会计政策变更的公告",
+          "grade": 0
+        },
+        {
+          "event_id": "V4-E-Q026-C07",
+          "title": "2024年年度报告摘要",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q026-C05": 2,
+        "V4-E-Q026-C03": 0,
+        "V4-E-Q026-C08": 0,
+        "V4-E-Q026-C01": 0,
+        "V4-E-Q026-C04": 0,
+        "V4-E-Q026-C06": 2,
+        "V4-E-Q026-C07": 2,
+        "V4-E-Q026-C02": 2
+      }
+    },
+    {
+      "query_id": "V4-Q027",
+      "company": "药明康德",
+      "security_id": "603259",
+      "hypothesis": "资产减值与产能调整是否会持续影响盈利质量",
+      "positive_candidates": 3,
+      "text_recall_at_5": 0.3333,
+      "graph_recall_at_5": 0.3333,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q025-C01",
+        "V4-E-Q025-C05",
+        "V4-E-Q027-C06",
+        "V4-E-Q025-C02",
+        "V4-E-Q026-C01",
+        "V4-E-Q026-C06",
+        "V4-E-Q026-C08",
+        "V4-E-Q025-C06",
+        "V4-E-Q026-C02",
+        "V4-E-Q026-C07"
+      ],
+      "graph_ranking": [
+        "V4-E-Q025-C01",
+        "V4-E-Q027-C06",
+        "V4-E-Q026-C01",
+        "V4-E-Q025-C02",
+        "V4-E-Q025-C05",
+        "V4-E-Q026-C08",
+        "V4-E-Q027-C01",
+        "V4-E-Q026-C06",
+        "V4-E-Q027-C05",
+        "V4-E-Q027-C02"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q027-C06",
+          "title": "2026年半年度报告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q027-C08": 0,
+        "V4-E-Q027-C05": 1,
+        "V4-E-Q027-C02": 0,
+        "V4-E-Q027-C06": 2,
+        "V4-E-Q027-C01": 2,
+        "V4-E-Q027-C03": 2,
+        "V4-E-Q027-C07": 1,
+        "V4-E-Q027-C04": 0
+      }
+    },
+    {
+      "query_id": "V4-Q028",
+      "company": "云南白药",
+      "security_id": "000538",
+      "hypothesis": "医药工业新品与临床管线能否贡献新的收入增长",
+      "positive_candidates": 5,
+      "text_recall_at_5": 0.6,
+      "graph_recall_at_5": 0.4,
+      "graph_top1_grade": 0,
+      "graph_top1_title": null,
+      "text_ranking": [
+        "V4-E-Q029-C05",
+        "V4-E-Q029-C06",
+        "V4-E-Q028-C02",
+        "V4-E-Q028-C03",
+        "V4-E-Q028-C04",
+        "V4-E-Q028-C05",
+        "V4-E-Q028-C06",
+        "V4-E-Q029-C03",
+        "V4-E-Q029-C04",
+        "V4-E-Q030-C06"
+      ],
+      "graph_ranking": [
+        "V4-E-Q029-C05",
+        "V4-E-Q028-C05",
+        "V4-E-Q028-C04",
+        "V4-E-Q029-C04",
+        "V4-E-Q030-C06",
+        "V4-E-Q029-C06",
+        "V4-E-Q029-C07",
+        "V4-E-Q028-C03",
+        "V4-E-Q028-C02",
+        "V4-E-Q029-C03"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q028-C05",
+          "title": "关于INB301注射液获得美国食品药品监督管理局新药临床试验许可的公告",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q028-C04",
+          "title": "关于氟比洛芬凝胶贴膏获得药物临床试验批准的公告",
+          "grade": 2
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q028-C08": 0,
+        "V4-E-Q028-C04": 2,
+        "V4-E-Q028-C05": 2,
+        "V4-E-Q028-C01": 2,
+        "V4-E-Q028-C02": 2,
+        "V4-E-Q028-C06": 1,
+        "V4-E-Q028-C07": 1,
+        "V4-E-Q028-C03": 2
+      }
+    },
+    {
+      "query_id": "V4-Q029",
+      "company": "云南白药",
+      "security_id": "000538",
+      "hypothesis": "核心产品销售恢复能否改善收入与毛利表现",
+      "positive_candidates": 2,
+      "text_recall_at_5": 1.0,
+      "graph_recall_at_5": 1.0,
+      "graph_top1_grade": 2,
+      "graph_top1_title": "2023年年度报告摘要",
+      "text_ranking": [
+        "V4-E-Q029-C06",
+        "V4-E-Q029-C05",
+        "V4-E-Q028-C06",
+        "V4-E-Q029-C03",
+        "V4-E-Q030-C04",
+        "V4-E-Q030-C06",
+        "V4-E-Q029-C01",
+        "V4-E-Q028-C02",
+        "V4-E-Q028-C03",
+        "V4-E-Q028-C05"
+      ],
+      "graph_ranking": [
+        "V4-E-Q029-C06",
+        "V4-E-Q029-C03",
+        "V4-E-Q029-C05",
+        "V4-E-Q028-C06",
+        "V4-E-Q029-C01",
+        "V4-E-Q029-C07",
+        "V4-E-Q028-C05",
+        "V4-E-Q029-C02",
+        "V4-E-Q029-C04",
+        "V4-E-Q028-C03"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q029-C06",
+          "title": "2023年年度报告摘要",
+          "grade": 2
+        },
+        {
+          "event_id": "V4-E-Q029-C03",
+          "title": "2026年一季度报告",
+          "grade": 0
+        },
+        {
+          "event_id": "V4-E-Q029-C05",
+          "title": "2023年年度报告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q029-C01",
+          "title": "关于调整公司2025年度投资理财额度内产品结构的公告",
+          "grade": 0
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q029-C01": 0,
+        "V4-E-Q029-C07": 0,
+        "V4-E-Q029-C05": 3,
+        "V4-E-Q029-C08": 0,
+        "V4-E-Q029-C04": 0,
+        "V4-E-Q029-C06": 2,
+        "V4-E-Q029-C03": 0,
+        "V4-E-Q029-C02": 0
+      }
+    },
+    {
+      "query_id": "V4-Q030",
+      "company": "云南白药",
+      "security_id": "000538",
+      "hypothesis": "关联交易与渠道调整是否会影响经营独立性",
+      "positive_candidates": 4,
+      "text_recall_at_5": 0.25,
+      "graph_recall_at_5": 0.25,
+      "graph_top1_grade": 3,
+      "graph_top1_title": "关于2025年度预计日常关联交易的公告",
+      "text_ranking": [
+        "V4-E-Q030-C04",
+        "V4-E-Q029-C04",
+        "V4-E-Q030-C05",
+        "V4-E-Q030-C08",
+        "V4-E-Q029-C06",
+        "V4-E-Q030-C01",
+        "V4-E-Q030-C02",
+        "V4-E-Q030-C03",
+        "V4-E-Q030-C06",
+        "V4-E-Q029-C08"
+      ],
+      "graph_ranking": [
+        "V4-E-Q030-C04",
+        "V4-E-Q030-C05",
+        "V4-E-Q029-C04",
+        "V4-E-Q030-C08",
+        "V4-E-Q030-C06",
+        "V4-E-Q029-C06",
+        "V4-E-Q029-C08",
+        "V4-E-Q030-C03",
+        "V4-E-Q030-C01",
+        "V4-E-Q030-C02"
+      ],
+      "graph_top5": [
+        {
+          "event_id": "V4-E-Q030-C04",
+          "title": "关于2025年度预计日常关联交易的公告",
+          "grade": 3
+        },
+        {
+          "event_id": "V4-E-Q030-C05",
+          "title": "董事会对独立董事独立性评估的专项意见",
+          "grade": 0
+        },
+        {
+          "event_id": "V4-E-Q030-C08",
+          "title": "董事会关于2025年度独立董事独立性自查情况的专项意见",
+          "grade": 0
+        },
+        {
+          "event_id": "V4-E-Q030-C06",
+          "title": "2026年一季度报告",
+          "grade": 1
+        }
+      ],
+      "gold_grades": {
+        "V4-E-Q030-C07": 1,
+        "V4-E-Q030-C05": 0,
+        "V4-E-Q030-C06": 1,
+        "V4-E-Q030-C04": 3,
+        "V4-E-Q030-C03": 3,
+        "V4-E-Q030-C01": 3,
+        "V4-E-Q030-C08": 0,
+        "V4-E-Q030-C02": 3
+      }
+    }
+  ]
+}

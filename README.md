@@ -2,6 +2,9 @@
 
 主动权益投资逻辑智能协作平台。以**投资逻辑（Investment Thesis）**为核心业务对象，把研究员的投资观点转化为可验证的结构化卡片，并将后续事实、事件和指标变化持续关联到具体假设，形成可追踪、可复核、可复盘的研究过程。
 
+当前产品口径为**每家公司维护一条投资逻辑**：观点变化通过修订和不可变版本演进，不为同一公司
+重复新建平行卡片。服务层、HTTP 冲突响应和数据库唯一约束共同执行该规则。
+
 需求基线：`docs/product/AI Investment Copilot 产品需求文档（PRD）V1.2.docx`
 数据基线：`docs/data/数据分析交付包/`
 
@@ -30,7 +33,17 @@ tests/        unit / integration / contract
 docs/         需求与设计基线、架构说明、ADR、协作规范
 deploy/       本地与试点环境编排
 scripts/      开发与运维脚本
+real_data/    真实公开披露数据与验证报告（公告清单、定期报告、行情）
 ```
+
+`real_data/` 里是九家上市公司的公开披露数据，已纳入版本控制
+（[ADR-0006](docs/adr/0006-公开披露数据纳入版本控制.md)），目的是让团队复算同一批数字。
+**非公开信息、带授权限制的内容、个人信息、凭证仍然禁止提交。**
+
+最新验收结论见 [MVP 验收报告-三行业九公司](docs/data/MVP验收报告-三行业九公司.md)。
+
+完整的本地安装、PostgreSQL/Redis 启动、DeepSeek 配置、API 调用、前端联调和九公司
+实验复算步骤见 [使用手册](USAGE.md)。
 
 ## 模块
 
@@ -58,6 +71,9 @@ scripts/      开发与运维脚本
 架构全貌与分层依赖规则见 [`docs/architecture/README.md`](docs/architecture/README.md)。
 
 ## 快速开始
+
+下面是 macOS/Linux 的最短路径；Windows PowerShell 以及完整产品链路见
+[USAGE.md](USAGE.md)。
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate

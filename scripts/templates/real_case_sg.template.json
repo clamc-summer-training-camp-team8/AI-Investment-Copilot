@@ -1,0 +1,35 @@
+{
+  "security": { "security_id": "300274", "name": "阳光电源", "ticker": "300274.SZ", "industry": "电力设备" },
+  "thesis": {
+    "thesis_id": "THS-SG-001",
+    "title": "请填写经研究员确认的阳光电源逻辑标题",
+    "direction": "看多",
+    "core_view": "请填写经研究员确认的核心观点",
+    "established_on": "2025-01-10",
+    "visibility": "团队",
+    "team": "权益研究"
+  },
+  "hypotheses": [
+    { "hypothesis_id": "HYP-SG-001", "statement": "请填写可核验的核心假设", "hypothesis_type": "经营", "importance": "核心" }
+  ],
+  "evidences": [
+    {
+      "evidence_id": "EVD-SG-001",
+      "hypothesis_id": "HYP-SG-001",
+      "evidence_type": "事实",
+      "direction": "支持",
+      "evidence_locator": "DOC-SG-001#paragraph-1",
+      "fact_excerpt": "请粘贴不超过必要长度的公开原文摘录",
+      "source_document_id": "DOC-SG-001",
+      "source_document_title": "请填写公开披露文件标题",
+      "disclosed_at": "2026-08-01T09:00:00+08:00",
+      "occurred_at": null,
+      "source_url": "https://example.com/public-source",
+      "strength": "中",
+      "ai_status": "候选",
+      "ai_confidence": "0.80",
+      "model_version": "local-rule-v1",
+      "prompt_version": "prompts-v1"
+    }
+  ]
+}

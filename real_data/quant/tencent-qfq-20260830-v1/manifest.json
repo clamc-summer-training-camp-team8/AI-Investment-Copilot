@@ -1,0 +1,59 @@
+{
+  "adjustment": "前复权",
+  "assets": {
+    "bars": {
+      "path": "bars.json",
+      "sha256": "45756b1332dd08bc7f4e00b816745507a7f9c97cef07be44eaafafad3d346b51"
+    },
+    "calendar": {
+      "path": "calendar.json",
+      "sha256": "ad87eadc84ded275565b2f57f27a4f714931b3219556a5a27d5117a1eb515c0a"
+    },
+    "corporate_actions": {
+      "path": "corporate_actions.json",
+      "sha256": "02788affcf430ffa83b3c66267c621348834569331584852ca5db974a3d0d6a2"
+    }
+  },
+  "authorization": {
+    "policy_id": "tencent-public-market-research-v1",
+    "scope": "项目内部研究、复算与审计；禁止对外再分发",
+    "status": "公开行情研究使用已核验"
+  },
+  "capabilities": {
+    "adjusted_close": true,
+    "capacity_constraint": true,
+    "daily_traded_notional": true,
+    "point_in_time_market_cap": false,
+    "price_limit_status": false,
+    "structured_corporate_action_events": false,
+    "suspension_by_missing_session": true,
+    "trading_calendar": true
+  },
+  "coverage": {
+    "end": "2026-08-07",
+    "start": "2023-12-01"
+  },
+  "data_version": "tencent-qfq-20260830-v1",
+  "dataset_id": "MDS-tencent-qfq-20260830-v1",
+  "frozen_at": "2026-08-30T00:00:00+08:00",
+  "limitations": [
+    "点时市值未获授权数据覆盖；市值中性运行必须由调用方补充冻结截面，否则硬失败",
+    "涨跌停状态无独立字段；当前资产不得声称完成涨跌停可成交性模拟",
+    "前复权已隐含公司行动效果，但结构化公司行动事件源尚无覆盖，登记簿明确为空",
+    "港股为 HKD、基准为 CNY；未冻结 FX 时不得把混币种超额收益解释为 Alpha"
+  ],
+  "schema_version": "frozen-market-dataset-v1",
+  "securities": [
+    "688981",
+    "603986",
+    "002371",
+    "600276",
+    "603259",
+    "000538",
+    "002594",
+    "00175",
+    "09868"
+  ],
+  "status": "frozen",
+  "timezone": "Asia/Shanghai"
+}

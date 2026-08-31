@@ -1,0 +1,79 @@
+{
+  "package_version": "independent-gold-v3-20260826",
+  "A": "outputs\\gold-annotation-v3-20260826\\annotator_A_completed_A_20260826.xlsx",
+  "B": "outputs\\gold-annotation-v3-20260826\\annotator_B_completed_B-CODEX-FIN-01_20260826.xlsx",
+  "agreement": {
+    "event.事件类别": {
+      "n": 120,
+      "agreement": 0.9083,
+      "cohen_kappa": 0.8834
+    },
+    "event.主要关联假设": {
+      "n": 120,
+      "agreement": 0.7667,
+      "cohen_kappa": 0.6786
+    },
+    "event.影响方向": {
+      "n": 120,
+      "agreement": 0.8917,
+      "cohen_kappa": 0.8188
+    },
+    "event.影响强度": {
+      "n": 120,
+      "agreement": 0.7417,
+      "cohen_kappa": 0.6348
+    },
+    "event.直接性": {
+      "n": 120,
+      "agreement": 0.8583,
+      "cohen_kappa": 0.7536
+    },
+    "body_fact.是否存在可抽取事实": {
+      "n": 60,
+      "agreement": 0.8,
+      "cohen_kappa": 0.5041
+    },
+    "body_fact.事实类型": {
+      "n": 60,
+      "agreement": 0.7833,
+      "cohen_kappa": 0.7324
+    },
+    "body_fact.变化方向": {
+      "n": 60,
+      "agreement": 0.6333,
+      "cohen_kappa": 0.488
+    },
+    "body_fact.数值下限": {
+      "n": 60,
+      "agreement": 0.65,
+      "cohen_kappa": 0.6211
+    },
+    "body_fact.数值上限": {
+      "n": 60,
+      "agreement": 0.65,
+      "cohen_kappa": 0.6211
+    },
+    "body_fact.单位": {
+      "n": 60,
+      "agreement": 0.7667,
+      "cohen_kappa": 0.6645
+    },
+    "body_fact.事实发生期": {
+      "n": 60,
+      "agreement": 0.6167,
+      "cohen_kappa": 0.5809
+    },
+    "graph_relevance.相关性等级": {
+      "n": 180,
+      "agreement": 0.6389,
+      "cohen_kappa": 0.5154
+    },
+    "graph_relevance.关系路径可成立": {
+      "n": 180,
+      "agreement": 0.8278,
+      "cohen_kappa": 0.509
+    }
+  },
+  "adjudication_rows": 161,
+  "adjudication_queue": "analytics\\datasets\\independent-gold-v3-20260826\\review\\adjudication_queue.csv"
+}

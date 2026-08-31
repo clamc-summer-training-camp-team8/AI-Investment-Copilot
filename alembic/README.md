@@ -25,6 +25,20 @@ alembic heads                             # 检查 head 数量，应为 1
 
 **时间列一律 timestamptz。** `app/db/base.py` 的 `type_annotation_map` 已把 `datetime` 全局映射为 `DateTime(timezone=True)`，新增列自动继承，不要在模型里手写 `DateTime()`。曾经因为漏配这个映射，9 个列静默退化成 `timestamp without time zone`，其中包括 `published_at`、`disclosure_time`、`available_at`、`generated_at`——四类时间语义全中，DQ-003 的泄露判定会失效。`tests/unit/db/test_column_types.py` 现在守着这条。
 
+## 当前迁移
+
+`0001_initial_schema.py` 建立全部 19 张表，是首轮 MVP 闭环的基线。它由 metadata 自动生成后逐行审过，`downgrade` 完整实现。
+
+本地无 PostgreSQL 时可以只验证语法与内容，不需要起库：
+
+```bash
+alembic upgrade head --sql          # 看生成的 DDL
+alembic downgrade head:base --sql   # 看回退的 DDL
+alembic heads                       # 应只有一个 head
+```
+
+往返（`upgrade → downgrade base → upgrade`）由 CI 在真实 PostgreSQL 上跑，本地 `--sql` 只能证明语法对，证明不了约束能建起来。
+
 ## 命名
 
 自动生成的 revision id 保留，`message` 用中文描述业务意图：

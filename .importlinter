@@ -16,7 +16,7 @@ layers =
     app.api
     app.workers
     app.services
-    app.ai | app.ingest | app.calc
+    app.ai | app.ingest | app.calc | app.ranking
     app.db
     app.core
 
@@ -33,6 +33,7 @@ forbidden_modules =
     app.workers
     app.ingest
     app.schemas
+    app.ranking
 
 [importlinter:contract:core-purity]
 name = app.core 不得依赖任何兄弟模块
@@ -45,6 +46,7 @@ forbidden_modules =
     app.calc
     app.db
     app.ingest
+    app.ranking
     app.schemas
     app.services
     app.workers
@@ -52,6 +54,10 @@ forbidden_modules =
 [importlinter:contract:api-not-touch-db]
 name = app.api 不得直连数据层（会绕过权限过滤与审计留痕）
 type = forbidden
+; 只禁直接 import。api 必须经 app.services 才能触达数据，而 services 自然要
+; 依赖 db，所以间接路径是设计本身；连间接一起禁的话 api 什么也做不了。
+; 要防的是 api 里出现 select()/Session，那属于直接 import，仍会被拦下。
+allow_indirect_imports = True
 source_modules =
     app.api
     app.schemas

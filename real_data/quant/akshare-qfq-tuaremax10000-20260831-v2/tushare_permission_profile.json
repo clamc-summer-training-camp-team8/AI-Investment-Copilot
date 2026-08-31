@@ -1,0 +1,45 @@
+{
+  "api_origin": "https://tuaremax.top",
+  "credential_persisted": false,
+  "credential_source": "local_secret_file",
+  "declared_account_points": 10000,
+  "endpoints": [
+    {
+      "endpoint": "daily",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "pro_bar",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "daily_basic",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "stk_limit",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    },
+    {
+      "endpoint": "trade_cal",
+      "reason": null,
+      "row_count": 1,
+      "status": "available"
+    }
+  ],
+  "probed_at": "2026-08-31T12:40:45.302533+08:00",
+  "sample": {
+    "security_id": "600276",
+    "trading_date": "2026-08-28"
+  },
+  "schema_version": "tushare-permission-probe-v1",
+  "sdk_version": "1.4.29"
+}

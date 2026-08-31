@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-investment-copilot/contracts/ai/metric_explain.schema.json",
+  "title": "MetricExplain",
+  "type": "object",
+  "required": ["security_id", "hypothesis_id", "summary", "meaning", "suggested_tracking", "model_version", "prompt_version", "generated_at", "ai_status"],
+  "additionalProperties": false,
+  "properties": {
+    "security_id": {"type": "string", "minLength": 1},
+    "hypothesis_id": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "meaning": {"type": "string", "minLength": 1},
+    "suggested_tracking": {"type": "array", "items": {"type": "string"}},
+    "calculation_source": {"const": "app.calc"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"type": "string", "enum": ["候选", "低置信", "解析失败"]}
+  }
+}

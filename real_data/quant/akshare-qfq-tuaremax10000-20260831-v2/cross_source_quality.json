@@ -1,0 +1,222 @@
+{
+  "data_version": "akshare-qfq-tuaremax10000-20260831-v2",
+  "schema_version": "market-cross-source-quality-v1",
+  "securities": [
+    {
+      "akshare_rows": 659,
+      "metrics": {
+        "close": {
+          "comparable_rows": 659,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 659,
+          "max_relative_error": "9.943440849432188476454251426E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 659,
+          "max_relative_error": "0.0",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 659,
+      "passed": true,
+      "security_id": "688981",
+      "tushare_rows": 659
+    },
+    {
+      "akshare_rows": 665,
+      "metrics": {
+        "close": {
+          "comparable_rows": 665,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 665,
+          "max_relative_error": "1.164902258555053479248166091E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 665,
+          "max_relative_error": "0.000008228832870347195030882124026",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 665,
+      "passed": true,
+      "security_id": "603986",
+      "tushare_rows": 665
+    },
+    {
+      "akshare_rows": 665,
+      "metrics": {
+        "close": {
+          "comparable_rows": 665,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 665,
+          "max_relative_error": "7.071975957741561403123076826E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 665,
+          "max_relative_error": "0.00001984501984501984501984501985",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 665,
+      "passed": true,
+      "security_id": "002371",
+      "tushare_rows": 665
+    },
+    {
+      "akshare_rows": 665,
+      "metrics": {
+        "close": {
+          "comparable_rows": 665,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 665,
+          "max_relative_error": "6.394790743000911705316229640E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 665,
+          "max_relative_error": "0.000003742178846211418136095560279",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 665,
+      "passed": true,
+      "security_id": "600276",
+      "tushare_rows": 665
+    },
+    {
+      "akshare_rows": 665,
+      "metrics": {
+        "close": {
+          "comparable_rows": 665,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 665,
+          "max_relative_error": "5.427607866639151710120509856E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 665,
+          "max_relative_error": "0.000004386466796353511080596559484",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 665,
+      "passed": true,
+      "security_id": "603259",
+      "tushare_rows": 665
+    },
+    {
+      "akshare_rows": 665,
+      "metrics": {
+        "close": {
+          "comparable_rows": 665,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 665,
+          "max_relative_error": "2.737724602996269727310170101E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 665,
+          "max_relative_error": "0.00001257703433530373537919758521",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 665,
+      "passed": true,
+      "security_id": "000538",
+      "tushare_rows": 665
+    },
+    {
+      "akshare_rows": 665,
+      "metrics": {
+        "close": {
+          "comparable_rows": 665,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 665,
+          "max_relative_error": "3.186699054399108964956646075E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 665,
+          "max_relative_error": "0.000009032632545046327586877234349",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 665,
+      "passed": true,
+      "security_id": "002594",
+      "tushare_rows": 665
+    }
+  ],
+  "status": "passed",
+  "thresholds": {
+    "close_relative_error": "0.0001",
+    "notional_relative_error": "0.001",
+    "overlap_ratio": "0.995",
+    "volume_relative_error": "0.001"
+  },
+  "trading_calendar": {
+    "akshare_observed_open_days": 159,
+    "akshare_only_days": [],
+    "cached_crosscheck_enabled": true,
+    "comparison_end": "2026-08-28",
+    "comparison_start": "2026-01-01",
+    "overlap_open_days": 159,
+    "passed": true,
+    "permission_verified": true,
+    "status": "passed",
+    "tushare_only_days": [],
+    "tushare_open_days": 159
+  }
+}

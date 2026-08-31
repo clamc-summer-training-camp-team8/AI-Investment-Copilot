@@ -30,6 +30,9 @@
 # 迁移：线上数据改错无法靠回滚代码挽回
 /alembic/versions/              @your-org/maintainers
 
+# 数据资产授权、保留与哈希清单：改动会改变合规和可复算边界
+/governance/                    @your-org/maintainers
+
 # 分层依赖契约本身：放宽约束等于放宽全仓边界
 /.importlinter                  @your-org/maintainers
 

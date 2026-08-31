@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ranking_judgement.schema.json",
+  "type": "object",
+  "required": ["verdict", "confidence", "ranking", "global_issues", "requires_review", "model_version", "prompt_version", "generated_at", "ai_status"],
+  "properties": {
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"enum": ["候选", "低置信", "解析失败"]},
+    "verdict": {"enum": ["accept", "adjust", "reject"]},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "ranking": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["object_id", "rank", "score", "reason_codes", "citation_locators", "issues"],
+        "properties": {
+          "object_id": {"type": "string", "minLength": 1},
+          "rank": {"type": "integer", "minimum": 1},
+          "score": {"type": "number", "minimum": 0, "maximum": 1},
+          "reason_codes": {"type": "array", "items": {"type": "string"}},
+          "citation_locators": {"type": "array", "items": {"type": "string"}},
+          "issues": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "removed_candidates": {"type": "array", "items": {"type": "object"}, "default": []},
+    "global_issues": {"type": "array", "items": {"type": "string"}},
+    "requires_review": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

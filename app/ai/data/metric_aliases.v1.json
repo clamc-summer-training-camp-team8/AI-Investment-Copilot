@@ -1,0 +1,11 @@
+{
+  "version": "metric-aliases-v1",
+  "aliases": {
+    "营业收入": ["营收", "收入", "revenue"],
+    "出货量": ["销量", "出货", "shipments"],
+    "平均销售价格": ["平均售价", "asp", "average selling price"],
+    "毛利率": ["gross margin"],
+    "订单量": ["订单", "orders"],
+    "产能利用率": ["稼动率", "capacity utilization"]
+  }
+}
