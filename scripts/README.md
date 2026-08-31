@@ -29,6 +29,7 @@
 | `refresh_tushare_reference_cache.py` | 每目标交易日最多一次缓存 `daily_basic`，按周缓存年度 `trade_cal`，并维护 SHA-256 状态清单 |
 | `seed_quant_product.py` | 登记默认冻结行情，并把数据库中真实人工确认关系按确认时间冻结为研究信号；不回填历史时间 |
 | `publish_quant_market_dataset.py` | 按审批编号和 SHA-256 校验或登记候选行情；登记与默认版本切换分离 |
+| `resolve_database_target.py` | 从在线 `DATABASE_URL` 解析备份用户与数据库名，只输出非敏感目标字段 |
 | `verify_source_archives.py` | 全量核对对象版本存在性，并确定性抽样下载复算内容 SHA-256 |
 | `check_governed_assets.py` | 校验 Graph Snapshot、embedding、词表和金标报告 SHA-256 与保留策略 |
 | `rebuild_search_index.py` | 从事实表重建权限感知的切片索引 |
