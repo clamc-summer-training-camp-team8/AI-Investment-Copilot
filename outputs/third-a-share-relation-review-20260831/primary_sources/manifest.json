@@ -1,0 +1,49 @@
+{
+  "schema_version": "primary-source-archive-manifest-v1",
+  "subject": {
+    "security_id": "002594",
+    "security_name": "比亚迪",
+    "relation_id": "REL-ea2dd5a4df3547af"
+  },
+  "archive_scope": "local_review_package_only",
+  "object_store_uploaded": false,
+  "verified_on": "2026-09-01",
+  "files": [
+    {
+      "path": "BYD_2026-07_production-sales_1225452785.pdf",
+      "source_url": "https://static.cninfo.com.cn/finalpage/2026-08-03/1225452785.PDF",
+      "document_title": "比亚迪股份有限公司2026年7月产销快报",
+      "announcement_number": "2026-027",
+      "announcement_date": "2026-08-02",
+      "page_count": 2,
+      "size_bytes": 50767,
+      "sha256": "85b4caf3c6380f51a1c9a8acd7d051c9bb80455a715fc7af6175147023c1a934",
+      "verified_locator": "第1页：新能源汽车销量合计行、出口注释及未经审核/未经审计提示；第2页：董事会日期",
+      "content_checks": {
+        "security_code": "002594",
+        "current_month_sales": 419211,
+        "current_ytd_sales": 2227722,
+        "current_month_export": 180538,
+        "unaudited_warning_present": true
+      }
+    },
+    {
+      "path": "BYD_2025-07_production-sales_1224368797.pdf",
+      "source_url": "https://static.cninfo.com.cn/finalpage/2025-08-02/1224368797.PDF",
+      "document_title": "比亚迪股份有限公司2025年7月产销快报",
+      "announcement_number": "2025-051",
+      "announcement_date": "2025-08-01",
+      "page_count": 2,
+      "size_bytes": 93728,
+      "sha256": "27c7158b6b944ff1fe672be6358debbd1d5e0bba545312906b8f62a3d32aac98",
+      "verified_locator": "第1页：新能源汽车销量合计行、出口注释及未经审核/未经审计提示；第2页：董事会日期",
+      "content_checks": {
+        "security_code": "002594",
+        "current_month_sales": 344296,
+        "current_ytd_sales": 2490250,
+        "current_month_export": 80737,
+        "unaudited_warning_present": true
+      }
+    }
+  ]
+}

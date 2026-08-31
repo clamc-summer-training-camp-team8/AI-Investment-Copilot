@@ -1,0 +1,66 @@
+{
+  "schema_version": "relation-review-local-validation-v1",
+  "validated_at": "2026-09-01T02:01:02.824+08:00",
+  "scope": "local_isolated_clone_only",
+  "source_database": {
+    "name": "copilot_dev",
+    "read_only_export": true,
+    "dump_sha256": "26435f144d9526a470c190fcf0d02fd1e78abe7f027ec8818eae89bbee5f65c6",
+    "server_relation_status_after_validation": "待确认",
+    "server_write_performed": false
+  },
+  "local_database": {
+    "name": "copilot_dev",
+    "created_without_overwriting_existing_database": true,
+    "alembic_version": "0022_integrate_user_accounts",
+    "evidence_relation_count_before_apply": 1153,
+    "market_dataset_count": 2,
+    "signal_set_count": 1
+  },
+  "review_application": {
+    "receipt_sha256": "5b0dd4dd8f98255c29fa364f496922d89a7bd0fc8723da5503c06520ff72b07b",
+    "relation_id": "REL-ea2dd5a4df3547af",
+    "before": {
+      "status": "待确认",
+      "direction": "支持",
+      "strength": "高"
+    },
+    "after": {
+      "status": "已确认",
+      "direction": "支持",
+      "strength": "中",
+      "reviewed_by": "FIN-R01",
+      "reviewed_at": "2026-08-31T18:07:44.236+08:00"
+    },
+    "operator": "analyst-mvp",
+    "audit_record_count_after_idempotency_check": 1,
+    "idempotent_recheck_passed": true
+  },
+  "local_primary_source_revisions": [
+    {
+      "document_id": "DOC-EVT-002594-00268",
+      "revision_id": "DREV-HIST-afb5267b0addd1027bc0202c24f03f43e74628fe",
+      "content_sha256": "27c7158b6b944ff1fe672be6358debbd1d5e0bba545312906b8f62a3d32aac98",
+      "object_key": "historical/documents/27/27c7158b6b944ff1fe672be6358debbd1d5e0bba545312906b8f62a3d32aac98.pdf",
+      "object_version_id": "6d88bab0-5635-4c36-9025-1e19f2886d60",
+      "byte_size": 93728,
+      "downloaded_object_sha256_verified": true
+    },
+    {
+      "document_id": "DOC-EVT-002594-00390",
+      "revision_id": "DREV-HIST-aeaf3117299055dc29e7856765b3f9bf4ac334f5",
+      "content_sha256": "85b4caf3c6380f51a1c9a8acd7d051c9bb80455a715fc7af6175147023c1a934",
+      "object_key": "historical/documents/85/85b4caf3c6380f51a1c9a8acd7d051c9bb80455a715fc7af6175147023c1a934.pdf",
+      "object_version_id": "dafbb9be-3046-498e-a601-f6a93c1064af",
+      "byte_size": 50767,
+      "downloaded_object_sha256_verified": true
+    }
+  ],
+  "signal_set_v2_dry_run": {
+    "market_dataset_id": "MDS-akshare-qfq-tuaremax10000-20260831-v3",
+    "expected_signal_count": 3,
+    "required_relation_id": "REL-ea2dd5a4df3547af",
+    "result": "rejected_as_expected",
+    "reason": "行情覆盖不足：最新人工确认后的首个可观察日期为 2026-09-01，但数据集只到 2026-08-28"
+  }
+}

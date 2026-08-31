@@ -29,6 +29,8 @@
 | `refresh_tushare_reference_cache.py` | 每目标交易日最多一次缓存 `daily_basic`，按周缓存年度 `trade_cal`，并维护 SHA-256 状态清单 |
 | `seed_quant_product.py` | 登记默认冻结行情，并把数据库中真实人工确认关系按确认时间冻结为研究信号；不回填历史时间 |
 | `publish_quant_market_dataset.py` | 按审批编号和 SHA-256 校验或登记候选行情；登记与默认版本切换分离 |
+| `apply_relation_review_receipt.py` | 校验复核包全部附件哈希，并由逻辑负责人受控应用外部研究员回执 |
+| `freeze_confirmed_relation_signal_set.py` | 按显式行情版本、确认时间截面和预期数量冻结人工确认信号集 |
 | `resolve_database_target.py` | 从在线 `DATABASE_URL` 解析备份用户与数据库名，只输出非敏感目标字段 |
 | `verify_source_archives.py` | 全量核对对象版本存在性，并确定性抽样下载复算内容 SHA-256 |
 | `check_governed_assets.py` | 校验 Graph Snapshot、embedding、词表和金标报告 SHA-256 与保留策略 |
@@ -123,6 +125,38 @@ python -m scripts.publish_quant_market_dataset `
 
 只有在候选登记和灰度回测通过后，才允许修改 `QUANT_DEFAULT_MARKET_MANIFEST` 并重建
 API/Worker。Catalog 显式返回默认数据集编号；前端不会再把最新登记记录猜成默认版本。
+
+### 专业研究员关系回执与信号集 v2
+
+专业研究员回执不能通过普通 API 倒填研究员和复核时间。先验证回执、候选快照、工作簿与一手
+PDF 的逐文件哈希，再由目标逻辑负责人执行；操作人和研究员分别进入审计与关系字段：
+
+```powershell
+python -m scripts.apply_relation_review_receipt `
+  --receipt outputs/third-a-share-relation-review-20260831/relation_review_receipt.json `
+  --expected-receipt-sha256 5b0dd4dd8f98255c29fa364f496922d89a7bd0fc8723da5503c06520ff72b07b `
+  --operator analyst-mvp `
+  --dry-run
+
+# 仅在目标数据库、操作者与 dry-run 结果均已复核后，把 --dry-run 改为 --apply。
+```
+
+信号集冻结必须绑定一个已经登记的行情版本；脚本会要求最新人工确认之后的首个可观察日期落在
+行情覆盖内，并显式校验预期信号数和必要关系。v3 截止 2026-08-28，因此不能承接 2026-08-31
+形成的第三条人工确认：
+
+```powershell
+python -m scripts.freeze_confirmed_relation_signal_set `
+  --market-dataset-id '<覆盖 2026-09-01 及之后的候选行情 ID>' `
+  --version confirmed-relations-20260901-v2 `
+  --as-of '2026-09-01T23:59:59+08:00' `
+  --expected-signal-count 3 `
+  --required-relation-id REL-ea2dd5a4df3547af `
+  --frozen-by '<审计用户>' `
+  --dry-run
+```
+
+这两个脚本都不切换默认行情版本，也不启动回测。旧 v3、旧信号集和历史运行保持不可变。
 
 默认 AKShare-only 即可冻结。需要 Tushare 补充时，首次或账号权限、积分、SDK、API Origin 发生
 变化后执行

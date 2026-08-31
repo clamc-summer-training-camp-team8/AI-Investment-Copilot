@@ -1,0 +1,71 @@
+{
+  "schema_version": "relation-review-receipt-v1",
+  "receipt_id": "RRR-REL-ea2dd5a4df3547af-20260831T180744+0800",
+  "subject": {
+    "relation_id": "REL-ea2dd5a4df3547af",
+    "evidence_id": "EVD-962d09caf6a7c55f52f10cc9",
+    "security_id": "002594",
+    "security_name": "比亚迪",
+    "thesis_id": "THS-002594-2026Q1",
+    "hypothesis_id": "THS-002594-2026Q1-H1-需求与出货"
+  },
+  "expected_candidate": {
+    "status": "待确认",
+    "direction": "支持",
+    "strength": "高",
+    "reason": "上传资料自动召回候选关联，待逻辑负责人核验"
+  },
+  "review": {
+    "primary_sources_verified": true,
+    "decision": "修改",
+    "final_direction": "支持",
+    "final_strength": "中",
+    "primary_locator": "2026年7月产销快报第1页“新能源汽车—销量/合计”行及出口注释；2025年7月产销快报第1页同表“新能源汽车—销量/合计”行及出口注释；两份公告第1—2页未经审核、未经审计提示。",
+    "reason": "一手公告主体、代码及单位一致。2026年7月新能源汽车销量419,211辆，较344,296辆增21.76%；1—7月累计2,227,722辆，较2,490,250辆降10.54%。出口180,538辆，较80,737辆增123.61%；二手研报124.3%比公告复算高约0.69个百分点，非单纯一位小数舍入，采用123.6%。出口占比由23.45%升至43.07%，提升19.62个百分点；按总销量减出口估算，境内销量约23.87万辆，同比下降约9.4%，说明出口增长在数量上对冲境内走弱。相反地，累计销量仍下降，且公告未披露地区售价、收入或利润，销量只能作为收入领先代理，不能证明国内价格压力已被完全对冲，也不能验证营业收入连续两个季度未转负。两份公告均声明数据未经审核、未经审计且可能调整。故保留支持方向，但将强度由高降至中。",
+    "suggested_changes": "候选方向保留为“支持”，强度由“高”改为“中”；候选理由采用公告复算的出口同比123.6%，并补充累计销量-10.5%、境内销量仅为算术估算、未披露价格/收入及数据未经审核审计等限制。",
+    "reviewer_id": "FIN-R01",
+    "reviewed_at": "2026-08-31T18:07:44.236+08:00"
+  },
+  "artifacts": [
+    {
+      "role": "candidate_snapshot",
+      "path": "candidate_snapshot.json",
+      "sha256": "66906408fc9eff1b56bbeb4d6b2ba797837cf0cd2d6fe8301ad87219162e0ecf"
+    },
+    {
+      "role": "primary_source_manifest",
+      "path": "primary_sources/manifest.json",
+      "sha256": "45412ecd85b0a38a6efb567698e90b488275314170f226d6c550b0dad44b9cb8"
+    },
+    {
+      "role": "review_template",
+      "path": "第三只A股候选关系_专业研究员复核工作簿.xlsx",
+      "sha256": "da477409d582942913ef4f39c51b42ca30dcdc0edcfce49aaa90336746eb65a0"
+    },
+    {
+      "role": "completed_review_workbook",
+      "path": "第三只A股候选关系_专业研究员复核工作簿_已完成.xlsx",
+      "sha256": "b954e5becd373d82e097306b0f3e7b8083a22d8f3db34b62b273fad5464667ae"
+    },
+    {
+      "role": "primary_source_2026",
+      "path": "primary_sources/BYD_2026-07_production-sales_1225452785.pdf",
+      "sha256": "85b4caf3c6380f51a1c9a8acd7d051c9bb80455a715fc7af6175147023c1a934"
+    },
+    {
+      "role": "primary_source_2025",
+      "path": "primary_sources/BYD_2025-07_production-sales_1224368797.pdf",
+      "sha256": "27c7158b6b944ff1fe672be6358debbd1d5e0bba545312906b8f62a3d32aac98"
+    }
+  ],
+  "application": {
+    "target_relation_status": "已确认",
+    "no_backdating": true,
+    "earliest_signal_generated_at": "2026-08-31T18:07:44.236+08:00",
+    "first_eligible_market_date": "2026-09-01",
+    "proposed_signal_set_version": "confirmed-relations-20260901-v2",
+    "current_v3_market_coverage_end": "2026-08-28",
+    "requires_market_dataset_after_review": true,
+    "online_application_performed": false
+  }
+}
