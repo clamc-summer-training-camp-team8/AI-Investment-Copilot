@@ -12,15 +12,26 @@ test -f "$env_file"
 test -f "$release_file"
 mkdir -p "$backup_root"
 
+compose=(docker compose -f "$compose_file" --env-file "$env_file" --env-file "$release_file")
+mapfile -t database_target < <(
+  "${compose[@]}" run --rm --no-deps api python -m scripts.resolve_database_target
+)
+if [[ "${#database_target[@]}" -ne 2 ]]; then
+  echo "无法从在线 DATABASE_URL 解析唯一的数据库用户和数据库名。" >&2
+  exit 1
+fi
+database_user="${database_target[0]}"
+database_name="${database_target[1]}"
+
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_dir="$backup_root/$stamp"
 mkdir -m 0700 "$backup_dir"
 
-compose=(docker compose -f "$compose_file" --env-file "$env_file" --env-file "$release_file")
-
 "${compose[@]}" exec -T postgres \
-  pg_dump -U copilot -d copilot --format=custom --compress=9 \
+  pg_dump -U "$database_user" -d "$database_name" --format=custom --compress=9 \
   > "$backup_dir/database.dump"
+printf 'database_user=%s\ndatabase_name=%s\n' "$database_user" "$database_name" \
+  > "$backup_dir/database-target.txt"
 
 "${compose[@]}" run --rm --no-deps --user 0:0 \
   -v "$backup_dir:/backup" \
