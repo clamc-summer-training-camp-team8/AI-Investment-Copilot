@@ -26,7 +26,9 @@ test -s "$backup_dir/SHA256SUMS"
 suffix="$(date -u +%Y%m%d%H%M%S)-$$"
 container="copilot-integration-restore-$suffix"
 cleanup() {
-  docker rm -f "$container" >/dev/null 2>&1 || true
+  # PostgreSQL 镜像声明了数据目录 VOLUME；删除演练容器时必须同时删除其匿名卷，
+  # 否则服务器会不断残留看似独立数据库的 copilot_restore 数据目录。
+  docker rm -fv "$container" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 

@@ -39,3 +39,11 @@ def test_集成备份脚本使用在线目标而非硬编码数据库() -> None:
     assert 'pg_dump -U "$database_user" -d "$database_name"' in script
     assert "pg_dump -U copilot -d copilot" not in script
     assert "database-target.txt" in script
+
+
+def test_恢复演练删除容器时同步清理匿名数据库卷() -> None:
+    script = (PROJECT_ROOT / "deploy" / "integration" / "restore-drill.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'docker rm -fv "$container"' in script
