@@ -19,3 +19,10 @@
 
 # 冻结行情的 Manifest SHA-256 绑定逐字节内容；禁止 Git 在跨平台 checkout 时改写行尾。
 /real_data/quant/** -text
+
+# 最终金标、一次性盲测回执与启用决策同样绑定原始文件 SHA-256。它们是不可变审计资产，
+# 不是普通协作文档；Git 必须在 Windows/Linux checkout 中保留冻结时的原始字节。
+/analytics/datasets/final-gold-v3-20260826/** -text
+/analytics/experiments/graph-relevance-v6-blind/benchmark.json -text
+/outputs/graph-relevance-v6-final/** -text
+/outputs/graph-rag-v6-activation-decision.json -text
