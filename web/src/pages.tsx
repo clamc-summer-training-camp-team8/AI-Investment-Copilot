@@ -266,16 +266,16 @@ function normalizeResearchView(value: { hypotheses: readonly { id: string; title
   }
 }
 
-function metricRowFromTrend(item: Trend): ResearchMetricRow {
-  const latest = item.points.at(-1)?.value
-  const previous = item.points.at(-2)?.value
+function metricRowFromTrend(item: Trend, history: ResearchMetricPoint[] = item.points.map((point) => ({ period: point.period, value: point.value }))): ResearchMetricRow {
+  const latest = history.at(-1)?.value
+  const previous = history.at(-2)?.value
   const latestNumber = latest == null ? Number.NaN : Number(latest)
   const previousNumber = previous == null ? Number.NaN : Number(previous)
   const delta = Number.isFinite(latestNumber) && Number.isFinite(previousNumber) && previousNumber !== 0
     ? `${latestNumber - previousNumber >= 0 ? '+' : ''}${new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(((latestNumber - previousNumber) / Math.abs(previousNumber)) * 100)}%`
     : '—'
   const state = item.verdict?.includes('冲突') ? '冲突' : item.verdict?.includes('支持') ? '支持' : '待验证'
-  return [item.metricName || item.metricId, formatResearchMetricValue(latest), delta, state, item.points.map((point) => ({ period: point.period, value: point.value }))]
+  return [item.metricName || item.metricId, formatResearchMetricValue(latest), delta, state, history]
 }
 
 function formatResearchMetricValue(value?: string) {
@@ -353,7 +353,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   const staticResearch = normalizeResearchView(staticBaseResearch)
   const dynamicResearch: ResearchView | undefined = activeRecord ? {
     hypotheses: activeRecord.hypotheses.map((item) => ({ id: item.hypothesisId, title: item.statement, state: item.status, tone: item.status.includes('冲突') ? 'conflict' : item.status.includes('支持') ? 'support' : 'pending' })),
-    metrics: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (trends.data ?? []).filter((trend) => trend.hypothesisId === item.hypothesisId && trend.metricId).map(metricRowFromTrend)])),
+    metrics: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (trends.data ?? []).filter((trend) => trend.hypothesisId === item.hypothesisId && trend.metricId).map((trend) => metricRowFromTrend(trend, companyMetrics.data?.metrics.find((metric) => metric.metricId === trend.metricId)?.observations ?? undefined))])),
     evidence: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (evidenceFeed.data?.items ?? []).filter((feed) => feed.hypothesisId === item.hypothesisId).map((feed) => [feed.direction === 'support' ? '支持' : feed.direction === 'conflict' ? '冲突' : '待验证', feed.sourceDocumentTitle, `公开资料 · ${formatDate(feed.disclosedAt)}`] as ResearchEvidenceRow)])),
   } : undefined
   const availableTheses: CompanyThesisView[] = isDemoGeely ? companyTheses.map((item) => ({ ...item })) : (maintainedTheses.data ?? []).map(dynamicThesisView)
