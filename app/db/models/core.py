@@ -263,6 +263,11 @@ class Hypothesis(Base):
         Text, comment="失效条件文本，不可由 AI 直接生效（FLD-005）"
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="待验证")
+    health_state: Mapped[str | None] = mapped_column(String(32), comment="研究健康状态：强化/承压/分歧/临近失效等")
+    health_reason: Mapped[str | None] = mapped_column(Text, comment="最近一次假设健康状态计算原因")
+    health_support_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    health_conflict_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    health_updated_at: Mapped[datetime | None] = mapped_column()
     owner_note: Mapped[str | None] = mapped_column(Text)
     confirmed_by: Mapped[str | None] = mapped_column(String(64))
     confirmed_at: Mapped[datetime | None] = mapped_column()

@@ -144,6 +144,11 @@ class SqlThesisRepo:
                 ),
                 invalidation_rule=record.invalidation_rule,
                 status=record.status,
+                health_state=record.health_state,
+                health_reason=record.health_reason,
+                health_support_count=record.health_support_count,
+                health_conflict_count=record.health_conflict_count,
+                health_updated_at=record.health_updated_at,
             )
         )
         self._session.flush()
@@ -163,6 +168,11 @@ class SqlThesisRepo:
         )
         row.invalidation_rule = record.invalidation_rule
         row.status = record.status
+        row.health_state = record.health_state
+        row.health_reason = record.health_reason
+        row.health_support_count = record.health_support_count
+        row.health_conflict_count = record.health_conflict_count
+        row.health_updated_at = record.health_updated_at
         self._session.flush()
 
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]:
@@ -383,6 +393,11 @@ def _to_hypothesis(row: Hypothesis) -> HypothesisRecord:
         ),
         invalidation_rule=row.invalidation_rule,
         status=row.status,
+        health_state=row.health_state,
+        health_reason=row.health_reason,
+        health_support_count=row.health_support_count,
+        health_conflict_count=row.health_conflict_count,
+        health_updated_at=row.health_updated_at,
     )
 
 

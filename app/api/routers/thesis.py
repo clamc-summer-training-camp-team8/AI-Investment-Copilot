@@ -26,6 +26,7 @@ from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.api.feed_presenter import to_feed_item
 from app.core.domain import (
     EvidenceRecord,
+    HypothesisRecord,
     MetricMappingRecord,
     ThesisQuery,
     ThesisRecord,
@@ -166,6 +167,11 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
                 hypothesis_type=h.hypothesis_type,
                 importance=h.importance.value,
                 status=h.status,
+                health_state=h.health_state,
+                health_reason=h.health_reason,
+                health_support_count=h.health_support_count,
+                health_conflict_count=h.health_conflict_count,
+                health_updated_at=h.health_updated_at,
                 observation_window=h.observation_window,
                 invalidation_rule=h.invalidation_rule,
                 causal_level=(
@@ -210,6 +216,75 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
             else []
         ),
     )
+
+
+def _coarse_hypothesis_status(health_state: str) -> str:
+    """Map detailed health states back to the legacy compact hypothesis status."""
+    if health_state == "强化":
+        return "支持"
+    if health_state == "分歧":
+        return "分歧"
+    if health_state == "失效条件命中":
+        return "风险"
+    return "待验证"
+
+
+def _sync_hypothesis_health(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    hypotheses: dict[str, HypothesisRecord],
+    health_items: list[object],
+    actor: str,
+    batch_id: str,
+) -> list[dict[str, object]]:
+    changes: list[dict[str, object]] = []
+    updated_at = now()
+    for item in health_items:
+        hypothesis_id = getattr(item, "hypothesis_id")
+        hypothesis = hypotheses.get(hypothesis_id)
+        if hypothesis is None:
+            continue
+        health_state = str(getattr(item, "state"))
+        after_status = _coarse_hypothesis_status(health_state)
+        before = {
+            "status": hypothesis.status,
+            "health_state": hypothesis.health_state,
+            "health_reason": hypothesis.health_reason,
+            "support_count": hypothesis.health_support_count,
+            "conflict_count": hypothesis.health_conflict_count,
+        }
+        after = {
+            "status": after_status,
+            "health_state": health_state,
+            "health_reason": str(getattr(item, "reason")),
+            "support_count": int(getattr(item, "support_count")),
+            "conflict_count": int(getattr(item, "conflict_count")),
+        }
+        if before == after:
+            continue
+        updated = replace(
+            hypothesis,
+            status=after_status,
+            health_state=after["health_state"],
+            health_reason=after["health_reason"],
+            health_support_count=after["support_count"],
+            health_conflict_count=after["conflict_count"],
+            health_updated_at=updated_at,
+        )
+        uow.thesis.update_hypothesis(updated)
+        hypotheses[hypothesis_id] = updated
+        changes.append({"hypothesis_id": hypothesis_id, "before": before, "after": after})
+    if changes:
+        audit.record(
+            uow.audit,
+            actor=actor,
+            action="更新假设健康状态",
+            object_type="thesis",
+            object_id=thesis_id,
+            detail={"batch_id": batch_id, "changes": changes},
+        )
+    return changes
 
 
 def _mapping_out(record: MetricMappingRecord, *, metric_name: str = "") -> MetricMappingOut:
@@ -1078,7 +1153,22 @@ def review_relation(
             reason=payload.reason,
             actor=actor,
             thresholds=conf.rules,
+            record_status_suggestion=False,
         )
+        thesis = _require_visible(uow, actor, relation.thesis_id)
+        hypotheses = {item.hypothesis_id: item for item in uow.thesis.list_hypotheses(thesis.thesis_id)}
+        computed = status_service.compute_suggestion(
+            uow, thesis=thesis, hypotheses=list(hypotheses.values()), thresholds=conf.rules
+        )
+        _sync_hypothesis_health(
+            uow,
+            thesis_id=thesis.thesis_id,
+            hypotheses=hypotheses,
+            health_items=list(computed.hypothesis_health),
+            actor=actor.user_id,
+            batch_id=f"single-review:{relation_id}",
+        )
+        status_service.record_suggestion(uow, thesis=thesis, suggestion=computed, actor=actor.user_id)
     except HumanGateRequired as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:
@@ -1166,6 +1256,14 @@ def create_decision_batch(
     computed = status_service.compute_suggestion(
         uow, thesis=thesis, hypotheses=list(hypotheses.values()), thresholds=conf.rules
     )
+    hypothesis_health_changes = _sync_hypothesis_health(
+        uow,
+        thesis_id=thesis_id,
+        hypotheses=hypotheses,
+        health_items=list(computed.hypothesis_health),
+        actor=actor.user_id,
+        batch_id=batch_id,
+    )
     final_suggestion = status_service.record_suggestion(
         uow, thesis=thesis, suggestion=computed, actor=actor.user_id
     )
@@ -1185,6 +1283,7 @@ def create_decision_batch(
         "requires_human_confirmation": computed.requires_human_confirmation,
         "research_alerts": [asdict(item) for item in computed.research_alerts],
         "hypothesis_health": [asdict(item) for item in computed.hypothesis_health],
+        "hypothesis_health_changes": hypothesis_health_changes,
         "suggestion_reasons": list(computed.reasons),
         "requires_status_decision": computed.requires_human_confirmation,
         "items": details,

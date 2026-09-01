@@ -324,6 +324,11 @@ export interface Hypothesis {
   hypothesisType: string
   importance: string
   status: string
+  healthState?: string
+  healthReason?: string
+  healthSupportCount?: number
+  healthConflictCount?: number
+  healthUpdatedAt?: string
   observationWindow?: string
   invalidationRule?: string
   metricSuggestions: Array<Record<string, unknown>>

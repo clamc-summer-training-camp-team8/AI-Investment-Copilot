@@ -165,6 +165,11 @@ class HypothesisOut(Base):
     hypothesis_type: str
     importance: str
     status: str
+    health_state: str | None = None
+    health_reason: str | None = None
+    health_support_count: int = 0
+    health_conflict_count: int = 0
+    health_updated_at: datetime | None = None
     observation_window: str | None = None
     invalidation_rule: str | None = None
     causal_level: str | None = None

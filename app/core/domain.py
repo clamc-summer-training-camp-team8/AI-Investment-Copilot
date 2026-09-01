@@ -172,6 +172,11 @@ class HypothesisRecord:
     expected_direction: ExpectationDirection | None = None
     invalidation_rule: str | None = None
     status: str = "待验证"
+    health_state: str | None = None
+    health_reason: str | None = None
+    health_support_count: int = 0
+    health_conflict_count: int = 0
+    health_updated_at: datetime | None = None
 
 
 @dataclass

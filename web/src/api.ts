@@ -292,6 +292,11 @@ function toThesis(item: Record<string, unknown>): ThesisDetail {
     hypotheses: ((item.hypotheses ?? []) as Array<Record<string, unknown>>).map((h) => ({
       hypothesisId: String(h.hypothesis_id), statement: String(h.statement),
       hypothesisType: String(h.hypothesis_type), importance: String(h.importance), status: String(h.status),
+      healthState: h.health_state ? String(h.health_state) : undefined,
+      healthReason: h.health_reason ? String(h.health_reason) : undefined,
+      healthSupportCount: Number(h.health_support_count ?? 0),
+      healthConflictCount: Number(h.health_conflict_count ?? 0),
+      healthUpdatedAt: h.health_updated_at ? String(h.health_updated_at) : undefined,
       observationWindow: h.observation_window ? String(h.observation_window) : undefined,
       invalidationRule: h.invalidation_rule ? String(h.invalidation_rule) : undefined,
       metricSuggestions: (h.metric_suggestions ?? []) as Array<Record<string, unknown>>,
