@@ -1,0 +1,6 @@
+{
+  "data_version": "akshare-qfq-p2a30-20260901-v1",
+  "rows": [],
+  "schema_version": "market-cross-source-snapshot-v1",
+  "scope": "A股未复权日线；仅用于来源对账，不进入回测价格序列"
+}

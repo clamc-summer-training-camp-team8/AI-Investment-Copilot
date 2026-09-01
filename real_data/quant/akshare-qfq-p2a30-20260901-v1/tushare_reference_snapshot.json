@@ -1,0 +1,20 @@
+{
+  "data_version": "akshare-qfq-p2a30-20260901-v1",
+  "market_cap": {
+    "rows": [],
+    "source": "tushare.daily_basic",
+    "source_files": []
+  },
+  "price_limits": {
+    "rows": [],
+    "source": "tushare.daily+tushare.stk_limit",
+    "source_files": []
+  },
+  "schema_version": "tushare-reference-snapshot-v1",
+  "trade_calendar": {
+    "open_days": [],
+    "session_days": [],
+    "source": "tushare.trade_cal",
+    "source_files": []
+  }
+}

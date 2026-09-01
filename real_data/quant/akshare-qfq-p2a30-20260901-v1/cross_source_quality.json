@@ -1,0 +1,25 @@
+{
+  "data_version": "akshare-qfq-p2a30-20260901-v1",
+  "schema_version": "market-cross-source-quality-v1",
+  "securities": [],
+  "status": "not_enabled",
+  "thresholds": {
+    "close_relative_error": "0.0001",
+    "notional_relative_error": "0.001",
+    "overlap_ratio": "0.995",
+    "volume_relative_error": "0.001"
+  },
+  "trading_calendar": {
+    "akshare_observed_open_days": 0,
+    "akshare_only_days": [],
+    "cached_crosscheck_enabled": false,
+    "comparison_end": null,
+    "comparison_start": null,
+    "overlap_open_days": 0,
+    "passed": false,
+    "permission_verified": false,
+    "status": "not_available",
+    "tushare_only_days": [],
+    "tushare_open_days": 0
+  }
+}
