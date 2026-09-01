@@ -1,0 +1,146 @@
+{
+  "adjustment": "前复权",
+  "adjustment_anchor_date": "2026-08-31",
+  "assets": {
+    "bars": {
+      "path": "bars.json",
+      "sha256": "a0dcb93677ca2833042e0c452cac40eda7a09a99797d7aaff0587853c8e2cf1b"
+    },
+    "calendar": {
+      "path": "calendar.json",
+      "sha256": "94fec4e03a80d56278eb7bb0b029e0f42934c64e26712faa20257ca215cb20d8"
+    },
+    "corporate_actions": {
+      "path": "corporate_actions.json",
+      "sha256": "5bb41fd092a9efda429c85e3cf602b14b31bee034b0c051c4356db9c6b3027c4"
+    },
+    "cross_source_quality": {
+      "path": "cross_source_quality.json",
+      "sha256": "710bb52d824f7091955077fd53121d8c6f0c5219bb92d79de87cb46b0d7a0450"
+    },
+    "cross_source_snapshot": {
+      "path": "cross_source_snapshot.json",
+      "sha256": "c2d54279aadc0e9a9e16366fc7470e755e8bc8f29d13bb53dd29ed238ef6739c"
+    },
+    "historical_controls": {
+      "path": "historical_controls.json",
+      "sha256": "8d0fc7a7fc1a404e4f5a6bc5b15d4929e980a4c787efb0c750b86d4f916c9463"
+    },
+    "price_limit_derivations": {
+      "path": "price_limit_derivations.json",
+      "sha256": "23126d26fe2ef61f8e542c2b2851975aff64c69b5fb57c89e40901260bdc050d"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "9787c68d20cf12569aabe8e3fe47b47ccc84f0141016769c76935e668c6bb83b"
+    },
+    "research_universe": {
+      "path": "research_universe.json",
+      "sha256": "01aadbdd59441891f53af926ad3af7627af6e48d7e2e7238ca6545f7b69fecd1"
+    },
+    "sample_protocol": {
+      "path": "sample_protocol.json",
+      "sha256": "0b7fd3531a292e270eb2ffda78829179bb27efd3d368390eff181a83b3765da2"
+    },
+    "source_snapshot": {
+      "path": "source_snapshot.json",
+      "sha256": "7ca4ef5b80f19ea561511ddfc83ff1c2b6f0f82af2399df81d726d183bced9ab"
+    },
+    "tushare_permission_profile": {
+      "path": "tushare_permission_profile.json",
+      "sha256": "dfa1402aef830d41ed0ae0c43df3c672cd9901c8dbea17c699736e3704ac4e58"
+    },
+    "tushare_reference_snapshot": {
+      "path": "tushare_reference_snapshot.json",
+      "sha256": "0bdfbbb70f73dc2b7bc4457c47546a75469ceeecf84038619254b59aad0a3bd1"
+    }
+  },
+  "authorization": {
+    "policy_id": "akshare-public-research-v1",
+    "scope": "项目内部研究、复算与审计；禁止对外再分发或用于实盘交易",
+    "status": "公开行情研究使用已核验",
+    "supplement": {
+      "api_origin": "https://tuaremax.top",
+      "credential_status": "用户提供有效访问凭证",
+      "scope": "仅限项目内部研究、交叉核验和字段补充；禁止对外再分发",
+      "source_id": "tushare-compatible-supplement-v1"
+    }
+  },
+  "capabilities": {
+    "a_share_point_in_time_market_cap": true,
+    "adjusted_close": true,
+    "capacity_constraint": true,
+    "daily_traded_notional": true,
+    "historical_universe_and_delisted_samples": true,
+    "point_in_time_market_cap": true,
+    "price_limit_status": true,
+    "price_limit_status_fully_observed": false,
+    "price_limit_status_rule_derived": true,
+    "structured_corporate_action_events": true,
+    "suspension_by_missing_session": true,
+    "trading_calendar": true,
+    "tushare_daily_crosscheck": true,
+    "tushare_market_cap_cache_consumed": true,
+    "tushare_price_limit_cache_consumed": true,
+    "tushare_pro_bar_fallback_authorized": true,
+    "tushare_supplement_configured": true,
+    "tushare_trade_calendar_crosscheck": true,
+    "tushare_trade_calendar_permission_verified": true
+  },
+  "coverage": {
+    "end": "2026-08-31",
+    "start": "2023-12-01"
+  },
+  "data_version": "akshare-qfq-tuaremax10000-p2a30-20260901-v3",
+  "dataset_id": "MDS-akshare-qfq-tuaremax10000-p2a30-20260901-v3",
+  "frozen_at": "2026-09-01T23:16:31.109384+08:00",
+  "limitations": [
+    "AKShare 是研究型聚合接口；上游网页或字段变化时构建必须失败并人工复核，禁止静默切源",
+    "前复权值随锚点可能变化；本版本已固定抓取截止日和源快照，后续只能新增版本",
+    "结构化公司行动当前覆盖分红送转；仍需独立来源复核合并、拆股等其他事件",
+    "退市证券仅作为生存者偏差影子对照，不具备点时行业、基准或人工信号时不得进入收益评价",
+    "A 股点时市值已与冻结行情全量对齐；市值中性仅可用于所选区间无缺口的纯 A 股组合",
+    "涨跌停状态中 8 条为交易所规则确定性推导，已保留前收盘、规则、比例、价格和来源谱系；不得冒充 Tushare 直接观测",
+    "当前涨跌停状态只支持收盘是否封板的日频模拟；未引入分钟或逐笔行情前，不得声称完成盘中可成交性模拟"
+  ],
+  "schema_version": "frozen-market-dataset-v1",
+  "securities": [
+    "688981",
+    "603986",
+    "002371",
+    "603501",
+    "600584",
+    "688012",
+    "688008",
+    "002049",
+    "300782",
+    "688041",
+    "600276",
+    "603259",
+    "000538",
+    "300760",
+    "600436",
+    "000963",
+    "300122",
+    "600196",
+    "600085",
+    "002252",
+    "002594",
+    "300750",
+    "601633",
+    "601238",
+    "600104",
+    "000625",
+    "601127",
+    "002920",
+    "002050",
+    "603596"
+  ],
+  "source_priority": [
+    "akshare",
+    "tushare_optional",
+    "sse_exchange_rule_derived"
+  ],
+  "status": "frozen",
+  "timezone": "Asia/Shanghai"
+}
