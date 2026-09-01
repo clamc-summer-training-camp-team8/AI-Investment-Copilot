@@ -8,7 +8,7 @@ import type {
   Adjudication, DocumentSegment, IngestionReview, JobAccepted, JobStatus, PageResult, ProcessingJob, Relation,
   ReviewTask, ReviewDraftCandidate, Security, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
   MetricDefinition, MetricMapping, PublishReadiness, ThesisSummary,
-  AssetInventory, AssetSearchHit,
+  AssetInventory, AssetSearchHit, CompanyDocument,
   ThesisRevision, ThesisRevisionDiff,
   QuantBacktestRequest, QuantBacktestRun,
   CompanyMetricCenter,
@@ -732,15 +732,30 @@ export async function getAssetInventory(): Promise<AssetInventory> {
   }
 }
 
+export async function listCompanyDocuments(securityId: string): Promise<CompanyDocument[]> {
+  if (useMock) return []
+  const items = await request<Array<Record<string, unknown>>>(`/api/assets/documents?security_id=${encodeURIComponent(securityId)}&limit=30`)
+  return items.map((item) => ({
+    documentId: String(item.document_id),
+    title: item.title ? String(item.title) : undefined,
+    sourceId: item.source_id ? String(item.source_id) : undefined,
+    docType: item.doc_type ? String(item.doc_type) : undefined,
+    securityId: item.security_id ? String(item.security_id) : undefined,
+    publishedAt: String(item.published_at), ingestedAt: item.ingested_at ? String(item.ingested_at) : undefined,
+    visibilityLabel: String(item.visibility_label), segmentCount: Number(item.segment_count ?? 0), factCount: Number(item.fact_count ?? 0),
+  }))
+}
+
 export async function rebuildAssetSearchIndex(): Promise<number> {
   if (useMock) return 3789
   const item = await request<Record<string, unknown>>('/api/assets/search-index/rebuild', { method: 'POST' })
   return Number(item.indexed_segments)
 }
 
-export async function searchAssets(query: string): Promise<AssetSearchHit[]> {
+export async function searchAssets(query: string, securityId?: string): Promise<AssetSearchHit[]> {
   if (useMock) return demoAssetHits.filter((item) => item.content.includes(query) || '毛利率储能海外收入'.includes(query))
-  const items = await request<Array<Record<string, unknown>>>(`/api/assets/hybrid-search?q=${encodeURIComponent(query)}&limit=20`)
+  const scope = securityId ? `&security_id=${encodeURIComponent(securityId)}` : ''
+  const items = await request<Array<Record<string, unknown>>>(`/api/assets/hybrid-search?q=${encodeURIComponent(query)}&limit=20${scope}`)
   return items.map((item) => ({
     documentId: String(item.document_id), locator: String(item.locator),
     content: String(item.content), visibilityLabel: String(item.visibility_label),

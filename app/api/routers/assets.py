@@ -11,6 +11,7 @@ from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.schemas.assets import (
     AssetInventoryOut,
     AssetSearchHitOut,
+    CompanyDocumentOut,
     DocumentVisibilityIn,
     ReprocessIn,
     SearchRebuildOut,
@@ -20,10 +21,39 @@ from app.schemas.assets import (
     ThesisRevisionUpdateIn,
 )
 from app.services import assets as asset_service
+from app.services import permission
 from app.services.errors import HumanGateRequired, NotVisible, ValidationFailed
 from app.workers.queue import QueueUnavailable, enqueue_job_record, open_queue, worker_ready
 
 router = APIRouter(prefix="/assets", tags=["assets"])
+
+
+@router.get("/documents", response_model=list[CompanyDocumentOut])
+def list_company_documents(
+    actor: ActorDep,
+    uow: UowDep,
+    security_id: str = Query(min_length=1, max_length=64),
+    limit: int = Query(default=30, ge=1, le=100),
+) -> list[CompanyDocumentOut]:
+    """返回公司资料库元数据；正文仍通过证据定位接口按需读取。"""
+    records = uow.documents.list_for_security(security_id, limit=limit)
+    visible = [record for record in records if permission.can_read_document(actor, visibility_label=record.visibility_label)]
+    return [
+        CompanyDocumentOut(
+            document_id=record.document_id,
+            title=record.title,
+            source_id=record.source_id,
+            doc_type=record.doc_type,
+            security_id=record.security_id,
+            published_at=record.published_at,
+            ingested_at=record.ingested_at,
+            visibility_label=record.visibility_label,
+            # 资料库首屏只返回元数据，正文切片和事实在打开原文时按需读取。
+            segment_count=0,
+            fact_count=0,
+        )
+        for record in visible
+    ]
 
 
 @router.get("/inventory", response_model=AssetInventoryOut)

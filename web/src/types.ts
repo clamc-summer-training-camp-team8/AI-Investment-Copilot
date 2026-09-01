@@ -433,6 +433,19 @@ export interface AssetSearchHit {
   embeddingVersion?: string
 }
 
+export interface CompanyDocument {
+  documentId: string
+  title?: string
+  sourceId?: string
+  docType?: string
+  securityId?: string
+  publishedAt: string
+  ingestedAt?: string
+  visibilityLabel: string
+  segmentCount: number
+  factCount: number
+}
+
 export interface ThesisRevision {
   draftId: string
   thesisId: string
