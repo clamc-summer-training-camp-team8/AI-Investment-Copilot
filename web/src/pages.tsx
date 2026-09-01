@@ -251,7 +251,8 @@ const thesisResearch = {
   valuation: null,
 } as const
 
-type ResearchMetricRow = [string, string, string, string]
+type ResearchMetricPoint = { period: string; value: string }
+type ResearchMetricRow = [string, string, string, string, ResearchMetricPoint[]?]
 type ResearchEvidenceRow = [string, string, string]
 type ResearchHypothesisView = { id: string; title: string; state: string; tone: 'support' | 'conflict' | 'pending' }
 type ResearchView = { hypotheses: ResearchHypothesisView[]; metrics: Record<string, ResearchMetricRow[]>; evidence: Record<string, ResearchEvidenceRow[]> }
@@ -271,10 +272,26 @@ function metricRowFromTrend(item: Trend): ResearchMetricRow {
   const latestNumber = latest == null ? Number.NaN : Number(latest)
   const previousNumber = previous == null ? Number.NaN : Number(previous)
   const delta = Number.isFinite(latestNumber) && Number.isFinite(previousNumber) && previousNumber !== 0
-    ? `${latestNumber - previousNumber >= 0 ? '+' : ''}${(((latestNumber - previousNumber) / Math.abs(previousNumber)) * 100).toFixed(2)}%`
+    ? `${latestNumber - previousNumber >= 0 ? '+' : ''}${new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(((latestNumber - previousNumber) / Math.abs(previousNumber)) * 100)}%`
     : '—'
   const state = item.verdict?.includes('冲突') ? '冲突' : item.verdict?.includes('支持') ? '支持' : '待验证'
-  return [item.metricName || item.metricId, latest ?? '—', delta, state]
+  return [item.metricName || item.metricId, formatResearchMetricValue(latest), delta, state, item.points.map((point) => ({ period: point.period, value: point.value }))]
+}
+
+function formatResearchMetricValue(value?: string) {
+  if (value == null || value.trim() === '') return '—'
+  const numeric = Number(value.replaceAll(',', ''))
+  return Number.isFinite(numeric)
+    ? new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(numeric)
+    : value
+}
+
+function KeyMetricSparkline({ points, state }: { points?: ResearchMetricPoint[]; state: string }) {
+  const values = (points ?? []).map((point) => Number(point.value)).filter(Number.isFinite)
+  if (values.length < 2) return null
+  const min = Math.min(...values), max = Math.max(...values), range = max - min || 1
+  const polyline = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * 66},${18 - ((value - min) / range) * 15}`).join(' ')
+  return <svg className={`key-metric-sparkline ${state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}`} viewBox="0 0 66 21" preserveAspectRatio="none" aria-label="指标历史趋势"><polyline points={polyline} /></svg>
 }
 
 function formatCompanyNumber(value?: string) {
@@ -355,7 +372,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
     <header className="company-identity">
       <NavLink className="company-back" to="/workbench" aria-label="返回工作台">‹</NavLink><div className="company-emblem">{displaySecurity?.name.slice(0, 1) || '研'}</div><div className="company-name"><span>公司研究 / {displaySecurity?.industry || '待分类'}</span><h1>{displaySecurity?.name || securityId} <small>{displaySecurity?.ticker || securityId}</small></h1></div>
       <div className="company-quote"><span>最新收盘价</span><strong>{formatCompanyNumber(closeMetric?.latestValue)} <small>{closeMetric?.unit || '—'}</small></strong><em>{returnMetric ? `${formatCompanyNumber(returnMetric.latestValue)}%` : '—'}</em></div><div className="company-stat"><span>投资评级</span><strong>{thesis?.record?.investmentRating || thesis?.direction || '待研究员填写'}</strong></div><div className="company-stat"><span>目标价（12个月）</span><strong>{thesis?.record?.targetPrice ? formatCompanyNumber(thesis.record.targetPrice) : '—'}</strong></div><div className="company-stat"><span>分析师</span><strong>{thesis?.record?.owner || '张明'}</strong></div><div className="company-stat"><span>数据更新</span><strong>{companyMetrics.data?.updatedAt || '尚未同步'}</strong></div>
-      <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => onCreate?.(displaySecurity)}><span aria-hidden>＋</span>新建逻辑</button></div>
+      <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => { if (activeRecord) { setCompanyTab('投资逻辑'); setCompanyParams({}); return } onCreate?.(displaySecurity) }}><span aria-hidden>＋</span>新建逻辑</button></div>
     </header>
     <nav className="company-tabs" aria-label="公司研究导航">{['总览', '投资逻辑', '事件与证据', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '投资逻辑' ? {} : { tab: item }) }}>{item}</button>)}</nav>
     {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : <main className="company-canvas">
@@ -363,7 +380,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
       <section className="thesis-switcher" aria-label="投资逻辑选择">{availableTheses.map((item) => <button key={item.id} className={activeThesis === item.id ? 'active' : ''} onClick={() => chooseThesis(item.id)} aria-pressed={activeThesis === item.id}><strong>{item.title}</strong><span><i className={`dot ${item.health === '证据不足' ? 'warning' : ''}`} />{item.direction} · {item.health} · {item.confidence == null ? '待计算' : `${item.confidence}%`}</span></button>)}</section>
       <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><div className="confidence-block"><span>逻辑置信度 ⓘ</span><strong>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</strong><i><b style={{ width: `${thesis.confidence ?? 0}%` }} /></i></div><dl><div><dt>逻辑负责人</dt><dd>{thesis.record?.owner || '张明'}</dd></div><div><dt>最后更新</dt><dd>{thesis.record?.establishedOn || '2025-05-20'}</dd></div></dl><button className="edit-thesis" disabled={!activeRecord} onClick={() => setShowEditDialog(true)}>✎ 编辑逻辑</button></section>
        <div className="company-research-grid"><section className="hypothesis-panel"><header><h2>核心假设</h2><button>＋ 添加假设</button></header><div className="hypothesis-list">{research.hypotheses.map((item) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => setActiveHypothesis(item.id)}><div className="hypothesis-card-copy"><span className={isDemoGeely ? 'hypothesis-index' : 'hypothesis-id'}>{item.id}</span><strong>{item.title}</strong></div><em className={item.tone}>{item.state}</em></button>)}</div><button className="view-all-hypotheses">查看全部假设（{research.hypotheses.length}）⌄</button></section>
-         <section className="verification-panel"><header><div><span>当前验证对象</span><h2><span className="hypothesis-id">{selected.id}</span><span>{selected.title}</span></h2></div><button>收起⌃</button></header><h3>关键指标</h3><div className="metric-table"><div className="metric-table-head"><span>指标</span><span>最新值</span><span>趋势（vs 前值）</span><span>状态</span></div>{metrics.map(([name, value, delta, state]) => <div className="metric-table-row" key={name}><strong>{name}</strong><b>{value}</b><em className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{delta}</em><span className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</span></div>)}</div><h3>证据验证 <small>（{evidence.length}）</small></h3><div className="company-evidence-list">{evidence.map(([state, title, source]) => <article key={title}><i className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state === '支持' ? '↗' : state === '冲突' ? '!' : '?'}</i><div><strong>{title}</strong><span>来源：{source}</span></div><b className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</b></article>)}</div></section>
+          <section className="verification-panel"><header><div><span>当前验证对象</span><h2><span className="hypothesis-id">{selected.id}</span><span>{selected.title}</span></h2></div><button>收起⌃</button></header><h3>关键指标</h3><div className="metric-table"><div className="metric-table-head"><span>指标</span><span>最新值</span><span>趋势（vs 前值）</span><span>状态</span></div>{metrics.map(([name, value, delta, state, points]) => <div className="metric-table-row" key={name}><strong>{name}</strong><b>{value}</b><div className="key-metric-trend"><KeyMetricSparkline points={points} state={state} /><em className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{delta}</em></div><span className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</span></div>)}</div><h3>证据验证 <small>（{evidence.length}）</small></h3><div className="company-evidence-list">{evidence.map(([state, title, source]) => <article key={title}><i className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state === '支持' ? '↗' : state === '冲突' ? '!' : '?'}</i><div><strong>{title}</strong><span>来源：{source}</span></div><b className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</b></article>)}</div></section>
         <aside className="company-side-column"><section><header><h2>催化剂与风险</h2><button>⌃</button></header><h3 className="support-text">催化剂</h3><ul><li>新车型密集上市（银河星舰7/极氪007GT等）</li><li>海外市场放量超预期</li><li>电池成本下降超预期</li></ul><h3 className="conflict-text">风险</h3><ul><li>行业价格战加剧，折扣率继续上行</li><li>海外地缘政治及关税风险</li><li>原材料价格大幅上涨</li></ul></section><section><header><h2>待复核事项 <small>2</small></h2></header><label><input type="checkbox" />5月中旬渠道调研更新终端折扣率数据<time>05-28</time></label><label><input type="checkbox" />Q2订单跟踪与交付节奏复核<time>06-10</time></label></section><section><header><h2>近期关键节点</h2></header><ol><li><time>2025-05-22</time>2025年Q1业绩发布</li><li><time>2025-06-10</time>5月销量发布</li><li><time>2025-06-18</time>证券机构策略会</li></ol></section></aside>
       </div>
       <section className="company-version"><header><h2>逻辑版本记录</h2><button>查看全部版本⌃</button></header><div><strong>{isDemoGeely ? 'v1.2（当前）' : `v${thesis.record?.version ?? 0}（当前）`}</strong><span>{isDemoGeely ? '下调单车收入预期；更新4月销量与折扣率数据；补充渠道反馈证据' : `数据库记录 · ${thesis.record?.status || '草稿'}`}</span><span>{thesis.record?.owner || '张明'}</span><time>{thesis.record?.establishedOn || '2025-05-20'}</time><b>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</b><button>查看详情</button></div></section>
