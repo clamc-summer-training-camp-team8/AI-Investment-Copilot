@@ -238,14 +238,17 @@ class SqlThesisRepo:
             else _to_thesis(row, participating=self._participating(row.thesis_id))
         )
 
-    def get_by_securities(self, security_ids: tuple[str, ...]) -> dict[str, ThesisRecord]:
+    def get_by_securities(
+        self, security_ids: tuple[str, ...], *, include_snapshots: bool = False
+    ) -> dict[str, ThesisRecord]:
         if not security_ids:
             return {}
-        rows = self._session.scalars(
-            select(Thesis).where(
-                Thesis.security_id.in_(security_ids), Thesis.is_current.is_(True)
-            )
-        ).all()
+        statement = select(Thesis).where(
+            Thesis.security_id.in_(security_ids), Thesis.is_current.is_(True)
+        )
+        if not include_snapshots:
+            statement = statement.where(Thesis.thesis_kind == "canonical")
+        rows = self._session.scalars(statement).all()
         participating = self._participating_bulk([row.thesis_id for row in rows])
         return {
             row.security_id: _to_thesis(row, participating=participating.get(row.thesis_id, []))

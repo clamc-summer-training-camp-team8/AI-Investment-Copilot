@@ -63,10 +63,10 @@ def _company_id() -> str:
 
 
 def _is_maintained_thesis(thesis: ThesisRecord | None) -> bool:
-    """只有研究员已进入维护阶段的真实主逻辑才计入覆盖。"""
+    """正式逻辑和当前观察快照都计入覆盖，草稿和演示数据不计入。"""
     return bool(
         thesis
-        and thesis.thesis_kind == "canonical"
+        and thesis.thesis_kind in {"canonical", "observation", "snapshot"}
         and not thesis.is_illustrative
         and thesis.status
         in {ThesisStatus.VALIDATING, ThesisStatus.DIVERGENT, ThesisStatus.MAJOR_RISK}
@@ -76,7 +76,9 @@ def _is_maintained_thesis(thesis: ThesisRecord | None) -> bool:
 def _maintained_theses_by_security(uow: UnitOfWork, security_ids: tuple[str, ...]):
     return {
         security_id: thesis
-        for security_id, thesis in uow.thesis.get_by_securities(security_ids).items()
+        for security_id, thesis in uow.thesis.get_by_securities(
+            security_ids, include_snapshots=True
+        ).items()
         if _is_maintained_thesis(thesis)
     }
 

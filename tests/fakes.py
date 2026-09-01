@@ -389,11 +389,14 @@ class FakeThesisRepo:
             raise ValueError(f"security {security_id} has multiple theses")
         return replace(matching[0]) if matching else None
 
-    def get_by_securities(self, security_ids: tuple[str, ...]) -> dict[str, ThesisRecord]:
+    def get_by_securities(
+        self, security_ids: tuple[str, ...], *, include_snapshots: bool = False
+    ) -> dict[str, ThesisRecord]:
         return {
             security_id: replace(thesis)
             for security_id in security_ids
             if (thesis := self.get_by_security(security_id)) is not None
+            and (include_snapshots or thesis.thesis_kind == "canonical")
         }
 
     def counts_for_theses(self, thesis_ids: tuple[str, ...]) -> dict[str, tuple[int, int]]:

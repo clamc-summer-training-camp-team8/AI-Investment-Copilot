@@ -163,3 +163,35 @@ def test_coverage_only_counts_real_thesis_in_maintenance() -> None:
         assert company["thesis_id"] == "THS-000538"
 
     application.dependency_overrides.clear()
+
+
+def test_coverage_counts_current_observation_snapshot_as_maintained_logic() -> None:
+    application = create_app()
+    uow = build_fake_uow()
+    uow.coverage = MemoryCoverageRepo()
+    uow.securities.add(
+        SecurityRecord(security_id="000538", name="云南白药", ticker="000538.SZ", industry="医药")
+    )
+    uow.thesis.add(
+        ThesisRecord(
+            thesis_id="THS-000538-OBS",
+            security_id="000538",
+            title="云南白药季度观察",
+            direction="观察",
+            core_view="观察逻辑",
+            established_on=date(2026, 1, 1),
+            owner="analyst-mvp",
+            status=ThesisStatus.VALIDATING,
+            thesis_kind="observation",
+            is_illustrative=False,
+        )
+    )
+    application.dependency_overrides[get_uow] = lambda: uow
+
+    with TestClient(application) as client:
+        company = client.get("/api/coverage", headers={"X-User-Id": "analyst-mvp"}).json()[0]["companies"][0]
+        assert company["thesis_count"] == 1
+        assert company["status"] == "正常覆盖"
+        assert company["thesis_id"] == "THS-000538-OBS"
+
+    application.dependency_overrides.clear()
