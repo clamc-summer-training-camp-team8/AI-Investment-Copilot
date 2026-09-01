@@ -54,3 +54,15 @@ class DocumentSegmentOut(BaseModel):
     confidence: float | None = None
     previous_locator: str | None = None
     next_locator: str | None = None
+
+
+class DocumentFullOut(BaseModel):
+    """完整入库文档阅读视图；正文由已解析段落构成，便于精确回查。"""
+
+    document_id: str
+    title: str | None
+    doc_type: str | None = None
+    published_at: datetime
+    parser_version: str
+    segment_count: int
+    segments: list[DocumentSegmentOut]

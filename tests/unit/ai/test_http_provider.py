@@ -142,6 +142,60 @@ def test_http_event_impact_sends_all_candidates_in_one_model_call() -> None:
     assert outcome.payload["impacts"][1]["signal"]["impact_direction"] == "无关"
 
 
+def test_http_batch_impact_prompt_requires_nested_event_impact_shape() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.update(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "results": [
+                                        {"event_id": "EVT-001", "analysis": _batch_impact_response()}
+                                    ]
+                                }
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    settings = _settings()
+    gateway = Gateway(
+        settings=settings,
+        provider=HttpProvider(settings, client=httpx.Client(transport=httpx.MockTransport(handler))),
+    )
+    outcomes = gateway.event_impacts(
+        document_id="DOC-001",
+        security_id="600000.SH",
+        events=[
+            {
+                "event_id": "EVT-001",
+                "segment_locator": "DOC-001#paragraph-1",
+                "segment_text": "公司披露经营指标变化",
+                "disclosure_time": "2026-08-10T09:00:00+08:00",
+                "event_type": "业绩",
+                "candidates": [
+                    {"thesis_id": "THS-001", "hypothesis_id": "H1", "statement": "毛利率改善"},
+                    {"thesis_id": "THS-001", "hypothesis_id": "H2", "statement": "资本开支增长"},
+                ],
+                "evidence_contexts": [],
+            }
+        ],
+    )
+
+    prompt = captured["messages"][1]["content"]  # type: ignore[index]
+    assert "analysis.impacts[i].signal" in prompt
+    assert outcomes[0].usable
+    assert len(outcomes[0].payload["impacts"]) == 2
+
+
 def test_http_provider_calls_compatible_endpoint_and_validates_contract() -> None:
     captured: dict[str, object] = {}
 

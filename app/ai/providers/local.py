@@ -475,6 +475,99 @@ class LocalProvider:
             "ai_status": AiStatus.CANDIDATE.value,
         }
 
+    def consolidate_logic_change(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        business_date: str,
+        thesis_core_view: str,
+        hypotheses: list[dict[str, Any]],
+        candidate_evidence: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """离线降级只按已给候选方向归并，永不把结果当成正式结论。"""
+        del thesis_core_view, repair_errors
+        metrics_by_hypothesis = {
+            str(item.get("hypothesis_id") or ""): item.get("metrics", [])
+            for item in hypotheses
+            if isinstance(item, dict)
+        }
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for item in candidate_evidence:
+            grouped.setdefault(str(item.get("hypothesis_id") or ""), []).append(item)
+        impacts: list[dict[str, Any]] = []
+        directions: set[str] = set()
+        citations: list[str] = []
+        for hypothesis_id, items in grouped.items():
+            item_directions = {str(item.get("direction") or "中性") for item in items}
+            if "支持" in item_directions and "冲突" in item_directions:
+                direction = "分歧"
+            elif "冲突" in item_directions:
+                direction = "冲突"
+            elif "支持" in item_directions:
+                direction = "支持"
+            else:
+                direction = "中性"
+            directions.add(direction)
+            evidence_ids = [str(item["evidence_id"]) for item in items if item.get("evidence_id")]
+            citations.extend(evidence_ids)
+            impacts.append(
+                {
+                    "hypothesis_id": hypothesis_id,
+                    "direction": direction,
+                    "strength": "中" if len(items) > 1 else "弱",
+                    "strength_reason": "离线降级根据候选证据数量生成，未经过语义强度复核。",
+                    "rationale": "基于当日候选证据的规则归并，需研究员核验。",
+                    "business_impact": "离线降级无法可靠归纳经营含义，需查看关联原文。",
+                    "indicator_outlook": "需由研究员结合后续已维护指标验证。",
+                    "impact_layer": "市场预期",
+                    "directness": "证据不足",
+                    "transmission_status": "尚待验证",
+                    "hypothesis_effect": "增加不确定性",
+                    "presentation": "证据不足",
+                    "paths": [
+                        {
+                            "direction": "中性",
+                            "label": "离线候选信号",
+                            "mechanism": "离线降级不生成语义传导，需由真实模型或研究员补充。",
+                            "evidence_ids": evidence_ids[:6],
+                        }
+                    ],
+                    "related_metric_ids": [
+                        str(metric.get("metric_id"))
+                        for metric in metrics_by_hypothesis.get(hypothesis_id, [])
+                        if isinstance(metric, dict) and metric.get("metric_id")
+                    ][:6],
+                    "evidence_ids": evidence_ids[:12],
+                }
+            )
+        overall = (
+            "混合"
+            if len(directions & {"支持", "冲突", "分歧"}) > 1 or "分歧" in directions
+            else "冲突"
+            if "冲突" in directions
+            else "支持"
+            if "支持" in directions
+            else "待观察"
+        )
+        return {
+            "security_id": security_id,
+            "thesis_id": thesis_id,
+            "business_date": business_date,
+            "overall_direction": overall,
+            "summary": "当日候选证据已按主投资逻辑归并，尚待研究员确认。",
+            "hypothesis_impacts": impacts[:12],
+            "open_questions": ["离线归并仅用于降级展示，需结合原始资料复核。"],
+            "citations": list(dict.fromkeys(citations))[:12],
+            "requires_human_review": True,
+            "confidence": 0.5,
+            "model_version": self.model_version,
+            "prompt_version": "logic-change-consolidation-local-v1",
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
 
 def _tracking_hints(text: str) -> list[str]:
     hints: list[str] = []

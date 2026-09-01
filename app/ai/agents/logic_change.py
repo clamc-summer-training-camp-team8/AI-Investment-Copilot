@@ -220,6 +220,23 @@ class InvestmentLogicChangeAgent:
             return []
         if not hypotheses:
             return [AgentRunResult(event_id=event.event_id, impacts=[]) for event in events]
+        # 每个事件仍一次判断全部候选假设；但不再把同一份长资料的多个
+        # 事件塞进一个响应。完整的嵌套 JSON 会随「事件数 × 假设数」急剧膨胀，
+        # 真实模型容易在输出上限处截断，从而把本可用的资料全部转人工。
+        # 单事件批次既保留假设间的相对判断，也将失败严格隔离到该事件。
+        if len(events) > 1:
+            results: list[AgentRunResult] = []
+            for event in events:
+                results.extend(
+                    await self.analyze_many_async(
+                        (event,),
+                        hypotheses,
+                        allowed_visibility=allowed_visibility,
+                        top_k=top_k,
+                    )
+                )
+            return results
+
         retrieval_sets, request_events = self._prepare_many(
             events,
             hypotheses,

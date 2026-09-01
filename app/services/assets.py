@@ -41,6 +41,9 @@ def archive_upload(
     published_at,
     actor: Actor,
     object_store: ObjectStore,
+    source_id: str = "SRC-USER-UPLOAD",
+    source_url: str | None = None,
+    authorization_status: str = "用户授权上传",
 ) -> tuple[DocumentRevisionRecord, bool]:
     digest = _file_hash(path)
     existing = uow.assets.find_revision_by_hash(digest)
@@ -61,8 +64,9 @@ def archive_upload(
         object_version_id=stored.version_id,
         media_type=media_type,
         byte_size=byte_size,
-        source_id="SRC-USER-UPLOAD",
-        authorization_status="用户授权上传",
+        source_id=source_id,
+        source_url=source_url,
+        authorization_status=authorization_status,
         uploaded_by=actor.user_id,
         published_at=published_at,
     )
@@ -371,7 +375,9 @@ def create_thesis_revision(
     if active:
         return active
     latest = uow.versions.latest(thesis_id)
-    payload = latest.snapshot if latest else {"thesis": asdict(thesis)}
+    # Snapshots contain dates and Decimals; PostgreSQL JSONB accepts only JSON values.
+    payload = _json_value(latest.snapshot if latest else {"thesis": asdict(thesis)})
+    assert isinstance(payload, dict)
     draft = ThesisRevisionDraftRecord(
         draft_id=f"TRD-{uuid4().hex}",
         thesis_id=thesis_id,
@@ -522,7 +528,13 @@ def _file_hash(path: Path) -> str:
 def _json_value(value: object) -> object:
     if isinstance(value, datetime | date):
         return value.isoformat()
-    return str(value) if isinstance(value, Decimal) else value
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(key): _json_value(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_json_value(item) for item in value]
+    return value
 
 
 def _integer(value: object) -> int:

@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime
+from datetime import date, datetime
 
 from app.core.domain import (
     AdjudicationDecisionRecord,
@@ -30,6 +30,7 @@ from app.core.domain import (
     IngestionArtifactRecord,
     IngestionReviewRecord,
     IngestionRunRecord,
+    LogicChangeDigestRecord,
     MetricDefinitionRecord,
     MetricMappingRecord,
     ObservationRecord,
@@ -495,6 +496,32 @@ class FakeEvidenceFeedRepo:
         return [replace(item) for item in rows[offset : offset + limit]], len(rows)
 
 
+class FakeLogicChangeDigestRepo:
+    def __init__(self) -> None:
+        self.items: dict[tuple[str, str, date], LogicChangeDigestRecord] = {}
+
+    def get_for_scope(self, *, security_id: str, thesis_id: str, business_date: date):
+        item = self.items.get((security_id, thesis_id, business_date))
+        return replace(item) if item else None
+
+    def upsert(self, record: LogicChangeDigestRecord) -> LogicChangeDigestRecord:
+        key = (record.security_id, record.thesis_id, record.business_date)
+        current = self.items.get(key)
+        stored = replace(
+            record,
+            confirmation_status=(
+                current.confirmation_status if current else record.confirmation_status
+            ),
+        )
+        self.items[key] = stored
+        return replace(stored)
+
+    def list_for_security(self, *, security_id: str, limit: int = 30):
+        rows = [item for item in self.items.values() if item.security_id == security_id]
+        rows.sort(key=lambda item: item.business_date, reverse=True)
+        return [replace(item) for item in rows[:limit]]
+
+
 class FakeObservationRepo:
     def __init__(self) -> None:
         self.items: list[ObservationRecord] = []
@@ -724,6 +751,18 @@ class FakeDocumentRepo:
             raise LookupError(document_id)
         self.items[document_id] = replace(record, visibility_label="已删除", deleted_at=deleted_at)
 
+    def list_recent(self, *, ingested_from: datetime, limit: int = 200) -> list[DocumentRecord]:
+        return [
+            replace(record)
+            for record in sorted(
+                self.items.values(),
+                key=lambda item: item.ingested_at or item.published_at,
+                reverse=True,
+            )
+            if record.deleted_at is None
+            and (record.ingested_at or record.published_at) >= ingested_from
+        ][:limit]
+
 
 class FakeAdjudicationDecisionRepo:
     def __init__(self) -> None:
@@ -747,6 +786,7 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         evidence=FakeEvidenceRepo(),
         relations=FakeEvidenceRelationRepo(),
         feed=FakeEvidenceFeedRepo(),
+        logic_change_digests=FakeLogicChangeDigestRepo(),
         observations=FakeObservationRepo(),
         suggestions=FakeSuggestionRepo(),
         versions=FakeVersionRepo(),

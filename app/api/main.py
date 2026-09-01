@@ -86,6 +86,7 @@ def create_app() -> FastAPI:
     from app.api.routers import (
         agent,
         assets,
+        collection,
         demo,
         documents,
         evaluation,
@@ -98,16 +99,19 @@ def create_app() -> FastAPI:
         reviews,
         securities,
         thesis,
+        updates,
         workbench,
     )
 
     application.include_router(securities.router, prefix="/api")
     application.include_router(agent.router, prefix="/api")
     application.include_router(assets.router, prefix="/api")
+    application.include_router(collection.router, prefix="/api")
     application.include_router(metrics.router, prefix="/api")
     application.include_router(evaluation.router, prefix="/api")
     application.include_router(quant.router, prefix="/api")
     application.include_router(thesis.router, prefix="/api")
+    application.include_router(updates.router, prefix="/api")
     application.include_router(workbench.router, prefix="/api")
     application.include_router(radar.router, prefix="/api")
     application.include_router(documents.router, prefix="/api")

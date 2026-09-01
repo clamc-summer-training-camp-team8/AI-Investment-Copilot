@@ -1,4 +1,5 @@
 export type Direction = 'support' | 'conflict' | 'neutral'
+export type ThemeDirection = Direction | 'mixed' | 'divergent'
 export type Strength = 'high' | 'medium' | 'low'
 export type ConfirmationState = 'pending' | 'confirmed' | 'rejected' | 'deactivated'
 export type Priority = 'high' | 'medium' | 'low'
@@ -17,11 +18,13 @@ export interface EvidenceFeedItem {
   securityName: string
   thesisId: string
   thesisTitle: string
+  thesisCoreView: string
   hypothesisId: string
   hypothesisStatement: string
   sourceDocumentTitle: string
   factExcerpt: string
   disclosedAt: string
+  ingestedAt: string
   occurredAt?: string
   sourceUrl: string
   direction: Direction
@@ -31,6 +34,21 @@ export interface EvidenceFeedItem {
   priority: Priority
   canManage: boolean
   validationItems: ValidationItem[]
+  aggregationSummary?: string
+  atomicEvidenceCount: number
+  sourceDocumentCount: number
+  supportEvidenceCount: number
+  conflictEvidenceCount: number
+  affectedHypothesisCount: number
+  secondaryHypotheses: string[]
+  themeImpacts: Array<{
+    hypothesisId: string
+    hypothesisStatement: string
+    direction: Direction
+    evidenceCount: number
+    hasConflictingEvidence: boolean
+  }>
+  themeDirection?: ThemeDirection
 }
 
 export interface PageResult<T> {
@@ -38,6 +56,26 @@ export interface PageResult<T> {
   total: number
   limit: number
   offset: number
+}
+
+export interface InvestodayCollectionRun {
+  kind: 'news' | 'report'
+  status: 'not_started' | 'running' | 'completed' | 'failed' | 'disabled' | 'unavailable'
+  businessDate: string
+  isCurrent: boolean
+  updatedAt?: string
+  fetched?: number
+  queued?: number
+  queuedToday?: number
+  skippedSeen?: number
+}
+
+export interface InvestodayCollectionStatus {
+  businessDate: string
+  workerReady: boolean
+  overallStatus: InvestodayCollectionRun['status']
+  news: InvestodayCollectionRun
+  reports: InvestodayCollectionRun
 }
 
 export interface EvidenceDetail {
@@ -58,6 +96,80 @@ export interface EvidenceDetail {
   confirmationStatus: ConfirmationState
   sourceDocumentId: string
   evidenceLocator: string
+}
+
+export interface LogicChangeDigestDetail {
+  digestId: string
+  securityId: string
+  securityName: string
+  thesisId: string
+  thesisTitle: string
+  thesisCoreView: string
+  businessDate: string
+  overallDirection: 'support' | 'conflict' | 'mixed' | 'neutral'
+  summary: string
+  confirmationStatus: ConfirmationState
+  candidateCount: number
+  sourceDocumentCount: number
+  confidence?: number
+  openQuestions: string[]
+  modelVersion?: string
+  promptVersion?: string
+  hypothesisImpacts: Array<{
+    hypothesisId: string
+    statement: string
+    direction: string
+    strength?: '弱' | '中' | '强'
+    strengthReason?: string
+    rationale: string
+    businessImpact?: string
+    indicatorOutlook?: string
+    impactLayer?: string
+    directness?: string
+    transmissionStatus?: string
+    hypothesisEffect?: string
+    presentation?: '单一路径' | '双向分歧' | '背景信号' | '证据不足'
+    paths: Array<{
+      direction: string
+      label: string
+      mechanism: string
+      evidenceIds: string[]
+    }>
+    relatedMetrics: string[]
+    evidenceIds: string[]
+  }>
+  sourceDocuments: Array<{
+    documentId: string
+    title: string
+    docType?: string
+    publishedAt?: string
+    sourceUrl?: string
+    facts: Array<{
+      evidenceId: string
+      factExcerpt: string
+      evidenceLocator: string
+      hypothesisIds: string[]
+      directions: string[]
+      isKeyCitation: boolean
+    }>
+  }>
+}
+
+export interface FullDocument {
+  documentId: string
+  title?: string
+  docType?: string
+  publishedAt: string
+  parserVersion: string
+  segmentCount: number
+  segments: Array<{
+    locator: string
+    ordinal: number
+    page?: number
+    content: string
+    contentKind: string
+    extractionMethod: string
+  }>
 }
 
 export interface RetrievalScoreComponents {
@@ -227,10 +339,14 @@ export interface Trend {
   metricName?: string
   unit: string
   direction: string
+  expectedValue?: string
+  invalidationThreshold?: string
+  invalidationConsecutivePeriods?: number
+  invalidationRule?: string
   slope?: string
   verdict?: string
   note?: string
-  points: Array<{ period: string; value: string; publishedOn: string; acquiredAt?: string; sourceDocumentId?: string; dataVersion?: string }>
+  points: Array<{ period: string; value: string; publishedOn: string; acquiredAt?: string; sourceDocumentId?: string; dataVersion?: string; isValidationWindow?: boolean }>
 }
 
 export interface AuditItem {

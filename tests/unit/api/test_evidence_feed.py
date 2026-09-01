@@ -43,6 +43,7 @@ def _client() -> Iterator[TestClient]:
             security_name="中芯国际",
             thesis_id="THS-001",
             thesis_title="中芯国际盈利观察",
+            thesis_core_view="观察产能利用率与毛利率",
             thesis_owner="analyst-a",
             thesis_status=ThesisStatus.VALIDATING,
             thesis_established_on=date(2026, 1, 1),
@@ -98,3 +99,12 @@ def test_雷达必须携带明确逻辑上下文() -> None:
         )
         assert response.status_code == 200
         assert response.json()["page"]["total"] == 1
+
+
+def test_全部动态按当前用户可见范围聚合() -> None:
+    with _client() as client:
+        response = client.get("/api/updates", headers=HEADERS)
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["page"]["total"] == 1
+        assert payload["items"][0]["evidence_id"] == "EVD-001"

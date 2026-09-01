@@ -132,3 +132,17 @@ def get_segment(
         next_locator = segments[index + 1].locator if index + 1 < len(segments) else None
         return document, segment, previous_locator, next_locator
     raise NotVisible("原文段落不存在或无访问权限")
+
+
+def get_full_document(
+    uow: UnitOfWork, *, document_id: str, actor: Actor
+) -> tuple[DocumentRecord, list[DocumentSegmentRecord]]:
+    """返回研究员有权限查看的完整解析文档，不暴露底层原文件存储路径。"""
+    document = uow.documents.get(document_id)
+    if (
+        document is None
+        or document.deleted_at is not None
+        or document.visibility_label not in actor.document_labels
+    ):
+        raise NotVisible("文档不存在或无访问权限")
+    return document, uow.documents.list_segments(document_id)

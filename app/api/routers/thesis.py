@@ -1038,7 +1038,6 @@ def list_trends(
     out: list[HypothesisTrendOut] = []
     for item in trends:
         result = item.result
-        source_by_period = {row.period: row for row in item.source_rows}
         out.append(
             HypothesisTrendOut(
                 hypothesis_id=item.hypothesis_id,
@@ -1048,6 +1047,7 @@ def list_trends(
                 expected_value=item.expected_value,
                 invalidation_threshold=item.invalidation_threshold,
                 invalidation_consecutive_periods=item.invalidation_consecutive_periods,
+                invalidation_rule=item.invalidation_rule,
                 unit=item.unit,
                 period_type=item.period_type,
                 metric_version=item.metric_version,
@@ -1059,45 +1059,27 @@ def list_trends(
                     result.consecutive_below_expectation if result else 0
                 ),
                 verdict=result.verdict.value if result else None,
-                points=(
-                    [
-                        TrendPointOut(
-                            period=period,
-                            value=value,
-                            published_on=_source_published_on(
-                                uow,
-                                source_by_period[period].source_document_id,
-                                source_by_period[period].observation_date,
-                            ),
-                            acquired_at=source_by_period[period].ingested_at,
-                            source_document_id=source_by_period[period].source_document_id,
-                            data_version=source_by_period[period].data_version,
-                        )
-                        for period, value in zip(result.periods, result.values, strict=True)
-                    ]
-                    if result
-                    else [
-                        TrendPointOut(
-                            period=row.period,
-                            value=row.actual_value,
-                            published_on=_source_published_on(
-                                uow,
-                                row.source_document_id,
-                                row.observation_date,
-                            ),
-                            acquired_at=row.ingested_at,
-                            source_document_id=row.source_document_id,
-                            data_version=row.data_version,
-                        )
-                        for row in item.source_rows
-                        if row.actual_value is not None
-                    ]
-                ),
-                note=(
-                    item.note + "；页面值为历史参考，不参与正式判定"
-                    if not result and item.source_rows
-                    else item.note
-                ),
+                # 页面始终展示最近 8 期可用历史，让研究员看清上下文；
+                # `direction` / `verdict` 仍只由建立日后的窗口计算，二者不能混用。
+                points=[
+                    TrendPointOut(
+                        period=row.period,
+                        value=row.actual_value,
+                        published_on=_source_published_on(
+                            uow, row.source_document_id, row.observation_date
+                        ),
+                        acquired_at=row.ingested_at,
+                        source_document_id=row.source_document_id,
+                        data_version=row.data_version,
+                        is_validation_window=(
+                            thesis_record.status is ThesisStatus.DRAFT
+                            or row.observation_date >= thesis_record.established_on
+                        ),
+                    )
+                    for row in item.source_rows
+                    if row.actual_value is not None
+                ],
+                note=item.note,
             )
         )
     return out

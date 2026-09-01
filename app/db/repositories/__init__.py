@@ -23,6 +23,7 @@ from app.db.repositories.evidence import (
     SqlVersionRepo,
 )
 from app.db.repositories.ingestion import SqlDocumentProcessingJobRepo, SqlIngestionReviewRepo
+from app.db.repositories.logic_change_digest import SqlLogicChangeDigestRepo
 from app.db.repositories.master import SqlEventRepo, SqlSecurityRepo
 from app.db.repositories.ranking import SqlRankingPriorRepo
 from app.db.repositories.review import SqlReviewTaskRepo
@@ -39,6 +40,7 @@ __all__ = [
     "SqlEvidenceRelationRepo",
     "SqlEvidenceRepo",
     "SqlIngestionReviewRepo",
+    "SqlLogicChangeDigestRepo",
     "SqlMetricRepo",
     "SqlObservationRepo",
     "SqlRankingPriorRepo",
@@ -60,6 +62,7 @@ def build_uow(session: Session) -> UnitOfWork:
         evidence=SqlEvidenceRepo(session),
         relations=SqlEvidenceRelationRepo(session),
         feed=SqlEvidenceFeedRepo(session),
+        logic_change_digests=SqlLogicChangeDigestRepo(session),
         observations=SqlObservationRepo(session),
         suggestions=SqlSuggestionRepo(session),
         versions=SqlVersionRepo(session),

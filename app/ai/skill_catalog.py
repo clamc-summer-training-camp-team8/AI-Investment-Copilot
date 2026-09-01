@@ -20,6 +20,7 @@ _SKILL_KEYS = frozenset(
         "metric-recommend",
         "review-draft",
         "hypothesis-quality",
+        "logic-change-consolidation",
     }
 )
 

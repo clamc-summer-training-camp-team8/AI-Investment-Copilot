@@ -325,6 +325,7 @@ class SqlEvidenceFeedRepo:
                 security_name=security.name,
                 thesis_id=thesis.thesis_id,
                 thesis_title=thesis.title,
+                thesis_core_view=thesis.core_view,
                 thesis_owner=thesis.owner,
                 thesis_status=ThesisStatus(thesis.status),
                 thesis_established_on=thesis.established_on,
@@ -343,6 +344,7 @@ class SqlEvidenceFeedRepo:
                 ai_confidence=evidence.ai_confidence,
                 confirmation_status=ConfirmationStatus(relation.status),
                 priority=priority_labels[int(rank)],
+                ingested_at=evidence.created_at,
             )
             for evidence, relation, thesis, hypothesis, security, rank in rows
         ], int(total)

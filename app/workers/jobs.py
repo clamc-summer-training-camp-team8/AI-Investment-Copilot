@@ -19,6 +19,7 @@ from app.ai.runtime import InvestmentResearchAgent
 from app.core.config import Settings
 from app.core.domain import DocumentSecurityRelationRecord, EventRecord
 from app.core.enums import AiStatus
+from app.core.timeutil import now
 from app.ingest.events import ExtractedEvent
 from app.ingest.facts import extract_key_facts
 from app.ingest.segmentation import Segment, event_fingerprint
@@ -26,6 +27,7 @@ from app.services import assets as asset_service
 from app.services import document as document_service
 from app.services import ingestion as ingestion_service
 from app.services.ai_runtime import SqlRuntimeRecorder
+from app.services.logic_change_consolidation import consolidate_daily_logic_change
 from app.services.object_store import S3ObjectStore
 from app.services.permission import Actor
 from app.services.review import create_task
@@ -433,6 +435,7 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
     graph_snapshot_id: str | None = None
     recall_rankings: list[dict[str, object]] = []
     security_candidates: list[dict[str, object]] = []
+    consolidation_results: list[dict[str, object]] = []
     if not security_id and not duplicate_document:
         with uow_scope() as uow:
             security_candidates = ingestion_service.suggest_securities(
@@ -576,6 +579,11 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                     stage="matching_hypotheses",
                     detail={"event_count": event_count},
                 )
+            source_url = None
+            if revision_id := payload.get("revision_id"):
+                with uow_scope() as uow:
+                    revision = uow.assets.get_revision(str(revision_id))
+                    source_url = revision.source_url if revision else None
             async with asyncio.timeout(settings.llm_analysis_timeout_seconds):
                 chain = await _run_change_chain(
                     gateway=gateway,
@@ -586,7 +594,7 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
                     document_id=persisted.document_id,
                     document_title=persisted.title or path.name,
                     source_visibility_label=persisted.visibility_label,
-                    source_url=None,
+                    source_url=source_url,
                 )
             event_count = len(new_events)
             candidate_count = len(chain.candidates)
@@ -595,6 +603,17 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
             retrieval_mode = chain.retrieval_mode
             graph_snapshot_id = chain.graph_snapshot_id
             recall_rankings = [trace.to_dict() for trace in chain.recall_traces]
+            # 事件→假设候选已在 _run_change_chain 的事务中提交。随后开启新事务，
+            # 读取该业务日同一主逻辑的全部资料候选，再交给真实 LLM 做一次归并。
+            # 归并失败不得回滚已经保留的原始候选关系。
+            consolidation_results = await _run_daily_consolidations(
+                gateway=gateway,
+                security_id=security_id,
+                thesis_ids=matched_theses,
+                actor_id=actor.user_id,
+                as_of=now().date(),
+                timeout_seconds=settings.llm_analysis_timeout_seconds,
+            )
             with uow_scope() as uow:
                 if new_events and not chain.matched_theses:
                     for event in new_events:
@@ -678,9 +697,55 @@ async def _process_document(ctx: dict[str, Any], payload: dict[str, Any]) -> dic
         "graph_snapshot_id": graph_snapshot_id,
         "recall_rankings": recall_rankings,
         "security_candidates": security_candidates,
+        "logic_change_consolidations": consolidation_results,
         # 兼容旧客户端字段：上传资料现在不再错误地新建逻辑草稿。
         "draft_created": False,
     }
+
+
+async def _run_daily_consolidations(
+    *,
+    gateway: Gateway,
+    security_id: str,
+    thesis_ids: list[str],
+    actor_id: str,
+    as_of,
+    timeout_seconds: float,
+) -> list[dict[str, object]]:
+    """每条主逻辑单独归并；失败只标记本轮归并，不影响原始候选入库。"""
+    results: list[dict[str, object]] = []
+    for thesis_id in dict.fromkeys(thesis_ids):
+        try:
+            with uow_scope() as uow:
+                async with asyncio.timeout(timeout_seconds):
+                    result = await consolidate_daily_logic_change(
+                        uow,
+                        gateway=gateway,
+                        security_id=security_id,
+                        thesis_id=thesis_id,
+                        as_of=as_of,
+                        actor_id=actor_id,
+                    )
+            results.append(
+                {
+                    "thesis_id": thesis_id,
+                    "digest_id": result.digest_id,
+                    "candidate_count": result.candidate_count,
+                    "ai_status": result.ai_status,
+                    "skipped_reason": result.skipped_reason,
+                }
+            )
+        except (ModelUnavailable, TimeoutError) as exc:
+            results.append(
+                {
+                    "thesis_id": thesis_id,
+                    "digest_id": None,
+                    "candidate_count": 0,
+                    "ai_status": AiStatus.PARSE_FAILED.value,
+                    "skipped_reason": f"归并未完成：{exc}",
+                }
+            )
+    return results
 
 
 def _segment_batches(

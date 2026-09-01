@@ -122,6 +122,18 @@ class Provider(Protocol):
         repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
+    def consolidate_logic_change(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        business_date: str,
+        thesis_core_view: str,
+        hypotheses: list[dict[str, Any]],
+        candidate_evidence: list[dict[str, Any]],
+        repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
 
 @dataclass
 class Gateway:
@@ -371,6 +383,66 @@ class Gateway:
                 repair_errors=_merge_repair_errors(repair_errors, errors),
             ),
         )
+
+    def logic_change_consolidation(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        business_date: str,
+        thesis_core_view: str,
+        hypotheses: list[dict[str, Any]],
+        candidate_evidence: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        """将同一公司同一主逻辑当日的候选证据收口为一条待确认变化。"""
+        return self._validate_with_repair(
+            "logic_change_consolidation",
+            lambda errors: self.provider.consolidate_logic_change(
+                security_id=security_id,
+                thesis_id=thesis_id,
+                business_date=business_date,
+                thesis_core_view=thesis_core_view,
+                hypotheses=hypotheses,
+                candidate_evidence=candidate_evidence,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
+    async def logic_change_consolidation_async(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        business_date: str,
+        thesis_core_view: str,
+        hypotheses: list[dict[str, Any]],
+        candidate_evidence: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        async def invoke(errors: list[str] | None) -> dict[str, Any]:
+            merged = _merge_repair_errors(repair_errors, errors)
+            if isinstance(self.provider, HttpProvider):
+                return await self.provider.consolidate_logic_change_async(
+                    security_id=security_id,
+                    thesis_id=thesis_id,
+                    business_date=business_date,
+                    thesis_core_view=thesis_core_view,
+                    hypotheses=hypotheses,
+                    candidate_evidence=candidate_evidence,
+                    repair_errors=merged,
+                )
+            return self.provider.consolidate_logic_change(
+                security_id=security_id,
+                thesis_id=thesis_id,
+                business_date=business_date,
+                thesis_core_view=thesis_core_view,
+                hypotheses=hypotheses,
+                candidate_evidence=candidate_evidence,
+                repair_errors=merged,
+            )
+
+        return await self._validate_with_repair_async("logic_change_consolidation", invoke)
 
     def _validate_with_repair(
         self,
