@@ -40,6 +40,28 @@ def test_候选可按审批编号和哈希完成只读发布校验() -> None:
     assert record.capabilities["a_share_point_in_time_market_cap"] is True
 
 
+def test_数据中心详情逐项核验冻结子资产并展示研究边界() -> None:
+    uow = build_fake_uow()
+    registered = register_market_dataset(
+        uow,
+        manifest_path=V3_MANIFEST,
+        expected_sha256=V3_MANIFEST_SHA256,
+        expected_dataset_id=V3_DATASET_ID,
+        frozen_by="release-test",
+    )
+
+    detail = quant_service.market_dataset_detail(
+        uow, dataset_id=registered.dataset_id, requested_by="researcher-1"
+    )
+
+    assert detail["manifest_verified"] is True
+    assert detail["assets"]
+    assert all(item["verified"] for item in detail["assets"])
+    assert detail["source_priority"]
+    assert detail["available_signal_sets"] == []
+    assert detail["backtest_count"] == 0
+
+
 def test_候选登记不会把最新记录猜成默认版本(monkeypatch: pytest.MonkeyPatch) -> None:
     uow = build_fake_uow()
     register_market_dataset(

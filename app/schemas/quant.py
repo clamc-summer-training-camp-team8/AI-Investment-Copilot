@@ -157,6 +157,26 @@ class QuantSignalSetOut(_FromAttributes):
     frozen_at: datetime
 
 
+class QuantManifestAssetOut(BaseModel):
+    name: str
+    path: str
+    sha256: str
+    byte_size: int | None = None
+    verified: bool
+
+
+class QuantMarketDatasetDetailOut(QuantMarketDatasetOut):
+    is_default: bool
+    manifest_verified: bool
+    assets: list[QuantManifestAssetOut]
+    source_priority: list[str]
+    authorization_scope: str | None = None
+    timezone: str
+    adjustment_anchor_date: date | None = None
+    available_signal_sets: list[QuantSignalSetOut]
+    backtest_count: int
+
+
 class EvaluationSeparationOut(BaseModel):
     semantic_evaluation: str = "gold_semantic_accuracy"
     retrieval_evaluation: str = "retrieval_ranking_quality"

@@ -1,4 +1,4 @@
-.PHONY: help install hooks fmt lint lint-arch lint-contracts lint-assets openapi type test test-integration check migrate revision seed asset-inventory backfill-assets backfill-source-archives rebuild-search build-embeddings evaluate-p1 backup restore-drill clean
+.PHONY: help install hooks fmt lint lint-arch lint-contracts lint-assets openapi type test test-integration check migrate revision seed asset-inventory backfill-assets backfill-source-archives backfill-title-fulltext rebuild-search build-embeddings evaluate-p1 backup restore-drill clean
 .DEFAULT_GOAL := help
 
 PY := python3
@@ -22,6 +22,7 @@ help:
 	@echo "asset-inventory   盘点历史文档、修订、运行与授权状态"
 	@echo "backfill-assets    追加历史正文的语义切片、事实与事件运行"
 	@echo "backfill-source-archives  只追加回填历史原件、授权核验与归档运行"
+	@echo "backfill-title-fulltext  将获授权标题索引原件解析为完整正文并关联当前投资逻辑"
 	@echo "rebuild-search    从事实表重建权限感知的切片索引"
 	@echo "build-embeddings  按模型版本增量生成 pgvector embedding"
 	@echo "evaluate-p1       运行独立金标基线与 RAG 离线评测"
@@ -89,6 +90,9 @@ backfill-assets:
 
 backfill-source-archives:
 	$(PY) -m scripts.backfill_source_archives
+
+backfill-title-fulltext:
+	$(PY) -m scripts.backfill_title_index_fulltext
 
 rebuild-search:
 	$(PY) -m scripts.rebuild_search_index

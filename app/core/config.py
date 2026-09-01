@@ -118,6 +118,23 @@ class Settings(BaseSettings):
     rag_graph_relation_weight: float = Field(default=0.65, ge=0, le=1)
     rag_graph_max_hops: int = Field(default=5, ge=1, le=8)
 
+    # 全局搜索与知识库问答。搜索保持确定性且默认可用；问答可独立关闭，避免
+    # 模型故障或资料外发策略变化影响主产品检索。
+    global_search_enabled: bool = True
+    knowledge_qa_enabled: bool = False
+    knowledge_qa_graph_enabled: bool = True
+    knowledge_qa_max_contexts: int = Field(default=8, ge=1, le=12)
+    knowledge_qa_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
+
+    # 复盘主链与 AI 候选独立开关。人工复盘默认在本地可用；共享环境按发布计划
+    # 显式灰度，AI 关闭时不得影响创建、编辑和发布。
+    retrospective_center_enabled: bool = True
+    retrospective_ai_draft_enabled: bool = False
+    retrospective_experience_enabled: bool = False
+    retrospective_ai_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
+    retrospective_max_sources: int = Field(default=500, ge=10, le=2000)
+    retrospective_max_export_bytes: int = Field(default=2 * 1024 * 1024, ge=1024)
+
     # 独立金标质量报告是离线冻结资产。API 只读展示，不在运行时改写评测结果。
     gold_quality_report_path: Path = (
         PROJECT_ROOT / "analytics" / "datasets" / "final-gold-v3-20260826" / "quality_report.json"

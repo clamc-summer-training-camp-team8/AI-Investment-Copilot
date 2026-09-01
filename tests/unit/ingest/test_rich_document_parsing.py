@@ -9,6 +9,12 @@ import docx
 from app.ingest.parsers import text
 
 
+def test_text_parser_removes_postgres_invalid_nul_bytes() -> None:
+    parsed = text.parse_txt("标题\x00\n\n正文\x00内容")
+
+    assert [item.content for item in parsed.segments] == ["标题", "正文内容"]
+
+
 def test_docx_table_keeps_table_and_cell_reference(tmp_path: Path) -> None:
     path = tmp_path / "report.docx"
     document = docx.Document()

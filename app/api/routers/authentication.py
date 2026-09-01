@@ -68,6 +68,10 @@ def auth_config(settings: SettingsDep) -> AuthConfigOut:
     return AuthConfigOut(
         login_required=settings.auth_mode == "jwt",
         password_change_supported=settings.auth_mode == "jwt",
+        global_search_enabled=settings.global_search_enabled,
+        knowledge_qa_enabled=settings.knowledge_qa_enabled,
+        retrospective_center_enabled=settings.retrospective_center_enabled,
+        retrospective_ai_draft_enabled=settings.retrospective_ai_draft_enabled,
     )
 
 

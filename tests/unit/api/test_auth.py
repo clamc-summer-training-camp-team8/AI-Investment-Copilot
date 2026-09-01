@@ -8,6 +8,7 @@ from fastapi import HTTPException
 
 from app.api.auth import AuthenticationFailed, verify_bearer_token
 from app.api.deps import get_actor
+from app.api.routers.authentication import auth_config
 from app.core.config import Settings
 
 SECRET = "a-secure-test-secret-with-at-least-32-bytes"
@@ -102,3 +103,16 @@ def test_non_local_plain_trusted_headers_remain_disabled() -> None:
         get_actor(conf, None, "forged-user", "team-a", None)
 
     assert caught.value.status_code == 503
+
+
+def test_auth_config_exposes_independent_research_feature_flags() -> None:
+    result = auth_config(
+        Settings(
+            _env_file=None,
+            global_search_enabled=True,
+            knowledge_qa_enabled=False,
+        )
+    )
+
+    assert result.global_search_enabled is True
+    assert result.knowledge_qa_enabled is False

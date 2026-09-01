@@ -89,6 +89,7 @@ def create_app() -> FastAPI:
     from app.api.routers import (
         agent,
         assets,
+        assistant,
         authentication,
         demo,
         documents,
@@ -98,14 +99,18 @@ def create_app() -> FastAPI:
         quant,
         radar,
         retrieval,
+        retrospectives,
         review,
         reviews,
+        search,
         securities,
         thesis,
         workbench,
     )
 
     application.include_router(authentication.router, prefix="/api")
+    application.include_router(assistant.router, prefix="/api")
+    application.include_router(search.router, prefix="/api")
     application.include_router(securities.router, prefix="/api")
     application.include_router(agent.router, prefix="/api")
     application.include_router(assets.router, prefix="/api")
@@ -120,6 +125,7 @@ def create_app() -> FastAPI:
     # 注册，否则 FastAPI 会把 "adjudications" 当作 task_id。
     application.include_router(reviews.router, prefix="/api")
     application.include_router(review.router, prefix="/api")
+    application.include_router(retrospectives.router, prefix="/api")
     application.include_router(jobs.router, prefix="/api")
     application.include_router(retrieval.router, prefix="/api")
     application.include_router(demo.router, prefix="/api")

@@ -187,3 +187,31 @@ class PeriodType(StrEnum):
     CUMULATIVE = "累计"
     ANNUAL = "年度"
     TRAILING = "滚动"
+
+
+class RetrospectiveType(StrEnum):
+    """复盘报告类型；与进行中的 ReviewTask 触发类型分开。"""
+
+    PERIODIC = "周期"
+    CLOSURE = "结项"
+    TOPIC = "专题"
+    MANUAL = "人工"
+
+
+class RetrospectiveState(StrEnum):
+    """复盘业务状态。AI 运行状态不得写入此枚举。"""
+
+    DRAFT = "草稿"
+    IN_REVIEW = "待评审"
+    PUBLISHED = "已发布"
+    ARCHIVED = "已归档"
+
+
+class HypothesisAssessment(StrEnum):
+    """复盘中的人工假设结论，不反向修改 Hypothesis.status。"""
+
+    SUPPORTED = "成立"
+    PARTIAL = "部分成立"
+    REFUTED = "不成立"
+    INSUFFICIENT = "证据不足"
+    NOT_DUE = "尚未到期"

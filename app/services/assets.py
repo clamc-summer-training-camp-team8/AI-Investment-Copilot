@@ -12,7 +12,10 @@ from uuid import uuid4
 from app.ai.embeddings import embed_text
 from app.core.config import Settings
 from app.core.domain import (
+    AssetDocumentRecord,
+    AssetRunCatalogRecord,
     AssetSearchHitRecord,
+    AssetSourceCatalogRecord,
     DocumentRevisionRecord,
     EventRecord,
     HypothesisRecord,
@@ -27,8 +30,14 @@ from app.core.enums import ExpectationDirection, Importance
 from app.core.timeutil import now
 from app.services import audit, version
 from app.services.errors import HumanGateRequired, NotVisible, ValidationFailed
+from app.services.market_data import MarketDataError
 from app.services.object_store import ObjectStore
 from app.services.permission import Actor
+
+_DOCUMENT_CONTENT_STATUSES = {"待核验", "标题索引", "原件已归档", "完整正文", "合成样例"}
+_DOCUMENT_VISIBILITIES = {"公开", "内部", "内部受限", "机密"}
+_RUN_STATUSES = {"queued", "running", "succeeded", "failed", "dead_letter"}
+_CATALOG_SORTS = {"published_at", "ingested_at", "title", "content_status", "latest_run_at"}
 
 
 def archive_upload(
@@ -325,6 +334,229 @@ def hybrid_retrieve(
     )
 
 
+def can_operate_assets(actor: Actor) -> bool:
+    return actor.user_id == "analyst-mvp" or "asset-admin" in actor.teams
+
+
+def data_center_overview(uow: UnitOfWork, *, actor: Actor) -> dict[str, object]:
+    counts = uow.assets.catalog_overview(visibility_labels=tuple(sorted(actor.document_labels)))
+    datasets = uow.quant.list_market_datasets()
+    signal_sets = uow.quant.list_signal_sets()
+    default_dataset_id: str | None = None
+    try:
+        from app.services.quant import configured_default_market_dataset_id
+
+        default_dataset_id = configured_default_market_dataset_id(uow)
+    except (OSError, ValueError, MarketDataError):
+        default_dataset_id = None
+    default_dataset = next(
+        (item for item in datasets if item.dataset_id == default_dataset_id), None
+    )
+    attention: list[dict[str, object]] = []
+    for code, label, key, severity, target in (
+        (
+            "missing_archive",
+            "缺少对象原件",
+            "missing_archive_documents",
+            "high",
+            "/assets/documents?archived=false",
+        ),
+        (
+            "pending_authorization",
+            "授权待确认",
+            "pending_authorization_documents",
+            "high",
+            "/assets/documents?authorization_status=待确认",
+        ),
+        (
+            "failed_runs",
+            "近 7 日失败运行",
+            "recent_failed_runs",
+            "high",
+            "/assets/runs?status=failed",
+        ),
+        (
+            "title_index",
+            "仅标题索引",
+            "title_index_documents",
+            "medium",
+            "/assets/documents?content_status=标题索引",
+        ),
+    ):
+        value = int(counts.get(key, 0))
+        if value:
+            attention.append(
+                {
+                    "code": code,
+                    "label": label,
+                    "count": value,
+                    "severity": severity,
+                    "target": target,
+                }
+            )
+    recent_runs, _ = uow.assets.list_ingestion_runs(
+        visibility_labels=tuple(sorted(actor.document_labels)),
+        status=None,
+        document_id=None,
+        limit=5,
+        offset=0,
+    )
+    return {
+        **counts,
+        "market_dataset_count": len(datasets),
+        "signal_set_count": len(signal_sets),
+        "default_market_dataset_id": default_dataset_id,
+        "default_market_data_version": default_dataset.data_version if default_dataset else None,
+        "default_market_coverage_end": default_dataset.coverage_end if default_dataset else None,
+        "attention": attention,
+        "recent_runs": recent_runs,
+        "as_of": now(),
+    }
+
+
+def list_document_catalog(
+    uow: UnitOfWork,
+    *,
+    actor: Actor,
+    query: str | None = None,
+    content_status: str | None = None,
+    source_id: str | None = None,
+    doc_type: str | None = None,
+    security_id: str | None = None,
+    industry: str | None = None,
+    authorization_status: str | None = None,
+    archived: bool | None = None,
+    run_status: str | None = None,
+    visibility_label: str | None = None,
+    published_from: datetime | None = None,
+    published_to: datetime | None = None,
+    include_deleted: bool = False,
+    sort: str = "published_at",
+    direction: str = "desc",
+    limit: int = 20,
+    offset: int = 0,
+) -> tuple[list[AssetDocumentRecord], int]:
+    if content_status is not None and content_status not in _DOCUMENT_CONTENT_STATUSES:
+        raise ValidationFailed("未知的文档内容状态")
+    if visibility_label is not None and visibility_label not in _DOCUMENT_VISIBILITIES:
+        raise ValidationFailed("未知的文档权限标签")
+    if run_status is not None and run_status not in _RUN_STATUSES:
+        raise ValidationFailed("未知的处理运行状态")
+    if sort not in _CATALOG_SORTS:
+        raise ValidationFailed("不支持的排序字段")
+    if direction not in {"asc", "desc"}:
+        raise ValidationFailed("排序方向必须为 asc 或 desc")
+    if published_from and published_to and published_from > published_to:
+        raise ValidationFailed("published_from 不能晚于 published_to")
+    if include_deleted and not can_operate_assets(actor):
+        raise HumanGateRequired("只有资产管理员可以查看已删除资料")
+    labels = set(actor.document_labels)
+    if include_deleted:
+        labels.add("已删除")
+    return uow.assets.list_documents(
+        visibility_labels=tuple(sorted(labels)),
+        query=query,
+        content_status=content_status,
+        source_id=source_id,
+        doc_type=doc_type,
+        security_id=security_id,
+        industry=industry,
+        authorization_status=authorization_status,
+        archived=archived,
+        run_status=run_status,
+        visibility_label=visibility_label,
+        published_from=published_from,
+        published_to=published_to,
+        include_deleted=include_deleted,
+        sort=sort,
+        direction=direction,
+        limit=max(1, min(limit, 100)),
+        offset=max(0, offset),
+    )
+
+
+def get_document_catalog(
+    uow: UnitOfWork,
+    *,
+    document_id: str,
+    actor: Actor,
+    include_deleted: bool = False,
+) -> tuple[
+    AssetDocumentRecord,
+    list[DocumentRevisionRecord],
+    list[AssetRunCatalogRecord],
+    list[str],
+]:
+    labels = set(actor.document_labels)
+    if include_deleted and can_operate_assets(actor):
+        labels.add("已删除")
+    record = uow.assets.get_document_catalog(
+        document_id,
+        visibility_labels=tuple(sorted(labels)),
+        include_deleted=include_deleted and can_operate_assets(actor),
+    )
+    if record is None:
+        raise NotVisible("资料不存在或无访问权限")
+    actions = ["view_content"] if record.archived and record.deleted_at is None else []
+    if can_operate_assets(actor):
+        if record.deleted_at is None:
+            actions.extend(["reprocess", "change_visibility", "delete"])
+        else:
+            actions.append("restore")
+        actions.append("rebuild_index")
+    return (
+        record,
+        uow.assets.list_document_revisions(document_id),
+        uow.assets.list_document_runs(document_id),
+        actions,
+    )
+
+
+def get_document_content_revision(
+    uow: UnitOfWork, *, document_id: str, actor: Actor
+) -> tuple[AssetDocumentRecord, DocumentRevisionRecord]:
+    record, revisions, _, _ = get_document_catalog(uow, document_id=document_id, actor=actor)
+    revision = next(
+        (item for item in revisions if item.object_key is not None and item.tombstoned_at is None),
+        None,
+    )
+    if revision is None:
+        raise ValidationFailed("资料尚无可访问的归档原件")
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="查看文档原件",
+        object_type="document",
+        object_id=document_id,
+        detail={"revision_id": revision.revision_id},
+    )
+    return record, revision
+
+
+def list_data_sources(uow: UnitOfWork, *, actor: Actor) -> list[AssetSourceCatalogRecord]:
+    return uow.assets.list_sources(visibility_labels=tuple(sorted(actor.document_labels)))
+
+
+def list_data_runs(
+    uow: UnitOfWork,
+    *,
+    actor: Actor,
+    status: str | None = None,
+    document_id: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> tuple[list[AssetRunCatalogRecord], int]:
+    if status is not None and status not in _RUN_STATUSES:
+        raise ValidationFailed("未知的处理运行状态")
+    return uow.assets.list_ingestion_runs(
+        visibility_labels=tuple(sorted(actor.document_labels)),
+        status=status,
+        document_id=document_id,
+        limit=max(1, min(limit, 100)),
+        offset=max(0, offset),
+    )
+
+
 def change_document_visibility(
     uow: UnitOfWork,
     *,
@@ -333,7 +565,7 @@ def change_document_visibility(
     actor: Actor,
 ) -> None:
     _require_asset_operator(actor)
-    if visibility_label not in {"公开", "内部", "内部受限", "机密"}:
+    if visibility_label not in _DOCUMENT_VISIBILITIES:
         raise ValidationFailed("未知的文档权限标签")
     document = uow.documents.get(document_id)
     if document is None or document.deleted_at is not None:
@@ -369,9 +601,37 @@ def tombstone_document(uow: UnitOfWork, *, document_id: str, actor: Actor) -> No
         detail={
             "mode": "tombstone",
             "object_retained": True,
+            "previous_visibility": document.visibility_label,
             "reason": "原件受保留策略与对象锁保护，仅同步移出活动索引",
         },
     )
+
+
+def restore_document(
+    uow: UnitOfWork,
+    *,
+    document_id: str,
+    visibility_label: str,
+    actor: Actor,
+) -> int:
+    _require_asset_operator(actor)
+    if visibility_label not in _DOCUMENT_VISIBILITIES:
+        raise ValidationFailed("未知的文档权限标签")
+    document = uow.documents.get(document_id)
+    if document is None or document.deleted_at is None:
+        raise NotVisible("已删除资料不存在")
+    uow.documents.restore(document_id, visibility_label)
+    uow.assets.restore_revisions(document_id)
+    indexed = uow.assets.rebuild_search_index()
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="恢复文档资产",
+        object_type="document",
+        object_id=document_id,
+        detail={"visibility_label": visibility_label, "indexed_segments": indexed},
+    )
+    return indexed
 
 
 def create_thesis_revision(

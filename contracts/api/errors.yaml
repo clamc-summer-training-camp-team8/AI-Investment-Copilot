@@ -35,3 +35,64 @@ responses:
     description: 证据详情字段不完整或请求数据无法校验。
   ServiceUnavailable:
     description: 模型或依赖服务暂不可用，可重试。
+x-error-codes:
+  GLOBAL_SEARCH_DISABLED:
+    status: 404
+    description: 全局搜索功能开关未启用。
+  SEARCH_QUERY_INVALID:
+    status: 422
+    description: 搜索类型或查询条件不合法。
+  KNOWLEDGE_QA_DISABLED:
+    status: 404
+    description: 知识库问答功能开关未启用。
+  ASSISTANT_CONTEXT_NOT_VISIBLE:
+    status: 404
+    description: 研究上下文不存在或当前用户无权查看。
+  ASSISTANT_ANSWER_NOT_VISIBLE:
+    status: 404
+    description: 回答不存在或当前用户无权查看。
+  ASSISTANT_CITATION_INVALID:
+    status: 422
+    description: 模型引用不属于本轮服务端核准的证据集合。
+  ASSISTANT_OUTPUT_INVALID:
+    status: 422
+    description: 模型结构化输出未通过服务端校验。
+  ASSISTANT_MODEL_UNAVAILABLE:
+    status: 503
+    description: 模型服务暂不可用，可以重试。
+  ASSISTANT_MODEL_TIMEOUT:
+    status: 504
+    description: 模型服务超过知识问答超时时间，可以重试。
+  RETROSPECTIVE_CENTER_DISABLED:
+    status: 404
+    description: 复盘中心功能开关未启用。
+  RETROSPECTIVE_NOT_VISIBLE:
+    status: 404
+    description: 复盘、来源或版本不存在，或当前用户无权查看。
+  RETROSPECTIVE_RANGE_INVALID:
+    status: 422
+    description: 复盘区间或带时区的数据截止时点无效。
+  RETROSPECTIVE_SOURCE_INVALID:
+    status: 422
+    description: 来源不在冻结白名单、时点越界、无权读取或当前不可打开。
+  RETROSPECTIVE_DUPLICATE:
+    status: 409
+    description: 相同逻辑、类型和区间的活动复盘已存在。
+  RETROSPECTIVE_CONCURRENT_UPDATE:
+    status: 409
+    description: lock_version 已过期，调用方需保留本地内容并刷新后解决冲突。
+  RETROSPECTIVE_STATE_INVALID:
+    status: 422
+    description: 当前状态不允许执行请求的生命周期动作。
+  RETROSPECTIVE_PUBLICATION_BLOCKED:
+    status: 422
+    description: 摘要、假设依据、冲突处理、局限、建议或引用未通过发布门禁。
+  RETROSPECTIVE_AI_DISABLED:
+    status: 503
+    description: AI 草稿开关关闭；人工创建、编辑和发布仍然可用。
+  RETROSPECTIVE_AI_OUTPUT_INVALID:
+    status: 422
+    description: AI 输出未通过 Schema、安全或来源白名单校验。
+  RETROSPECTIVE_EXPORT_UNSUPPORTED:
+    status: 422
+    description: P0 只允许导出已发布版本的 Markdown 或 JSON。

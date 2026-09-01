@@ -11,6 +11,7 @@ RUN apt-get update \
         libglib2.0-0 \
         libgl1 \
         libgomp1 \
+        poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

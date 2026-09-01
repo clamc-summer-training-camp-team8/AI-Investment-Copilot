@@ -20,8 +20,10 @@ from app.ai.prompts.templates import (
     EVENT_EXTRACTION,
     EVENT_IMPACT,
     HYPOTHESIS_QUALITY,
+    KNOWLEDGE_ANSWER,
     METRIC_EXPLAIN,
     METRIC_RECOMMEND,
+    RETROSPECTIVE_DRAFT,
     REVIEW_DRAFT,
     THESIS_DRAFT,
 )
@@ -440,6 +442,106 @@ class LocalProvider:
             "ai_status": AiStatus.CANDIDATE.value,
         }
 
+    def draft_retrospective(
+        self,
+        *,
+        retrospective_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        data_cutoff_at: str,
+        original_judgement: str,
+        hypotheses: list[dict[str, Any]],
+        sources: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Deterministic candidate built only from the frozen source whitelist."""
+        del period_start, period_end, data_cutoff_at, repair_errors
+        supporting = [
+            item
+            for item in sources
+            if str(item.get("direction") or "") == ImpactDirection.SUPPORT.value
+        ]
+        conflicting = [
+            item
+            for item in sources
+            if str(item.get("direction") or "") == ImpactDirection.CONFLICT.value
+        ]
+        evidence_by_hypothesis: dict[str, list[dict[str, Any]]] = {}
+        for item in sources:
+            hypothesis_id = str(item.get("hypothesis_id") or "")
+            if hypothesis_id:
+                evidence_by_hypothesis.setdefault(hypothesis_id, []).append(item)
+        hypothesis_candidates = []
+        for hypothesis in hypotheses:
+            hypothesis_id = str(hypothesis.get("hypothesis_id") or "")
+            evidence = evidence_by_hypothesis.get(hypothesis_id, [])
+            support_count = sum(
+                str(item.get("direction") or "") == ImpactDirection.SUPPORT.value
+                for item in evidence
+            )
+            conflict_count = sum(
+                str(item.get("direction") or "") == ImpactDirection.CONFLICT.value
+                for item in evidence
+            )
+            if support_count and conflict_count:
+                suggested = "部分成立"
+            elif support_count:
+                suggested = "成立"
+            elif conflict_count:
+                suggested = "不成立"
+            else:
+                suggested = "证据不足"
+            hypothesis_candidates.append(
+                {
+                    "hypothesis_id": hypothesis_id,
+                    "suggested_result": suggested,
+                    "rationale": (
+                        f"冻结来源中有 {support_count} 项支持、{conflict_count} 项冲突；"
+                        "该结果仅为候选，需研究员结合时点与口径确认。"
+                    ),
+                    "source_ids": [
+                        str(item["source_id"]) for item in evidence if item.get("source_id")
+                    ],
+                }
+            )
+        citations = [str(item["source_id"]) for item in sources if item.get("source_id")]
+        key_changes = [
+            str(item.get("summary") or "")[:1000]
+            for item in sources
+            if item.get("source_type") in {"thesis_version", "status_decision"}
+        ][:30]
+        return {
+            "retrospective_id": retrospective_id,
+            "thesis_id": thesis_id,
+            "summary": f"已整理 {len(sources)} 项冻结来源，所有判断仍需人工确认。",
+            "original_judgement": original_judgement or "原判断未提供",
+            "key_changes": key_changes,
+            "hypothesis_candidates": hypothesis_candidates,
+            "correct_judgements": [
+                str(item.get("summary") or "")[:1000] for item in supporting[:10]
+            ],
+            "errors_and_omissions": (
+                "存在冲突来源，需逐项解释。"
+                if conflicting
+                else "未发现已冻结的冲突来源；仍需检查资料缺口。"
+            ),
+            "balanced_evidence": {
+                "supporting_source_ids": [str(item["source_id"]) for item in supporting],
+                "conflicting_source_ids": [str(item["source_id"]) for item in conflicting],
+            },
+            "open_questions": ["请人工确认证据不足和尚未到期的假设。"],
+            "limitations": "候选仅基于创建时冻结且当前可见的结构化来源，不包含外部资料。",
+            "next_actions": "逐条复核假设结论、冲突来源、引用与资料完整度后再提交或发布。",
+            "citations": citations,
+            "requires_human_review": True,
+            "confidence": 0.75 if sources else 0.4,
+            "model_version": self.model_version,
+            "prompt_version": RETROSPECTIVE_DRAFT.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
     def hypothesis_quality(
         self,
         *,
@@ -471,6 +573,41 @@ class LocalProvider:
             "confidence": 0.75,
             "model_version": self.model_version,
             "prompt_version": HYPOTHESIS_QUALITY.version,
+            "generated_at": now().isoformat(),
+            "ai_status": AiStatus.CANDIDATE.value,
+        }
+
+    def answer_knowledge(
+        self,
+        *,
+        question: str,
+        context: dict[str, Any],
+        history: list[dict[str, str]],
+        contexts: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """离线可复现回答：只压缩输入片段，不补充模型常识。"""
+        del question, context, history, repair_errors
+        selected = [item for item in contexts if item.get("locator") and item.get("content")][:3]
+        citations = [str(item["locator"]) for item in selected]
+        statements = [
+            f"{str(item['content']).strip()[:240]} [S{index}]"
+            for index, item in enumerate(selected, start=1)
+        ]
+        if not statements:
+            status = "insufficient_evidence"
+            answer = "当前知识库没有可用于核验该问题的正文证据。"
+        else:
+            status = "supported"
+            answer = "根据当前可回查的知识片段：\n" + "\n".join(statements)
+        return {
+            "answer_status": status,
+            "answer": answer,
+            "inferences": [],
+            "citations": citations,
+            "requires_human_review": True,
+            "model_version": self.model_version,
+            "prompt_version": KNOWLEDGE_ANSWER.version,
             "generated_at": now().isoformat(),
             "ai_status": AiStatus.CANDIDATE.value,
         }

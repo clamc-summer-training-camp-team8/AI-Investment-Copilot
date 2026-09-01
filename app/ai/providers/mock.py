@@ -20,10 +20,12 @@ class MockProvider(LocalProvider):
         *,
         event_payload: dict[str, Any] | None = None,
         thesis_payload: dict[str, Any] | None = None,
+        answer_payload: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(settings)
         self._event_payload = event_payload
         self._thesis_payload = thesis_payload
+        self._answer_payload = answer_payload
 
     def analyze_event_impact(self, **kwargs: Any) -> dict[str, Any]:
         if self._event_payload is not None:
@@ -34,3 +36,8 @@ class MockProvider(LocalProvider):
         if self._thesis_payload is not None:
             return deepcopy(self._thesis_payload)
         return super().draft_thesis(**kwargs)
+
+    def answer_knowledge(self, **kwargs: Any) -> dict[str, Any]:
+        if self._answer_payload is not None:
+            return deepcopy(self._answer_payload)
+        return super().answer_knowledge(**kwargs)

@@ -9,10 +9,14 @@ import type {
   ReviewTask, ReviewDraftCandidate, Security, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
   MetricDefinition, MetricMapping, PublishReadiness,
   AssetInventory, AssetSearchHit,
+  DataCenterDocument, DataCenterDocumentDetail, DataCenterDocumentPage, DataCenterOverview,
+  DataCenterRevision, DataCenterRun, DataCenterSource,
   ThesisRevision, ThesisRevisionDiff,
   QuantBacktestRequest, QuantBacktestRun,
-  PortfolioBacktestRequest, PortfolioBacktestRun, QuantCatalog, QuantMarketDataset,
+  PortfolioBacktestRequest, PortfolioBacktestRun, QuantCatalog, QuantMarketDataset, QuantMarketDatasetDetail,
+  QuantSignalSet,
   GoldQualityReport,
+  GlobalSearchResult, KnowledgeAnswer, KnowledgeAnswerRequest,
 } from './types'
 
 export const useMock = import.meta.env.VITE_USE_MOCK === 'true'
@@ -32,6 +36,10 @@ export interface AuthSession {
 export interface AuthConfig {
   loginRequired: boolean
   passwordChangeSupported: boolean
+  globalSearchEnabled: boolean
+  knowledgeQaEnabled: boolean
+  retrospectiveCenterEnabled: boolean
+  retrospectiveAiDraftEnabled: boolean
 }
 
 const accessTokenKey = 'ai-investment-copilot.access-token'
@@ -67,7 +75,7 @@ function toStatus(value: unknown): ConfirmationState {
 }
 
 /** 浏览器只走 Vite 代理；身份头由开发代理或生产网关注入。 */
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const isForm = init?.body instanceof FormData
   const token = getAccessToken()
   const response = await fetch(path, {
@@ -93,7 +101,109 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const structured = detail?.detail && typeof detail.detail === 'object' ? detail.detail as { message?: unknown } : null
     throw new Error(typeof detail?.detail === 'string' ? detail.detail : typeof structured?.message === 'string' ? structured.message : `请求失败（${response.status}）`)
   }
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
+}
+
+export async function requestBlob(path: string): Promise<Blob> {
+  const token = getAccessToken()
+  const response = await fetch(path, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
+  if (response.status === 401) {
+    if (token) {
+      clearAccessToken()
+      window.dispatchEvent(new Event('copilot:unauthorized'))
+    }
+    throw new Error('登录已失效，请重新登录。')
+  }
+  if (response.status === 403) throw new Error('当前账户没有访问该原件的权限。')
+  if (response.status === 404) throw new Error('原件不存在或无访问权限。')
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null) as { detail?: unknown } | null
+    throw new Error(typeof detail?.detail === 'string' ? detail.detail : `原件请求失败（${response.status}）`)
+  }
+  return response.blob()
+}
+
+export async function globalSearch(query: string, signal?: AbortSignal): Promise<GlobalSearchResult> {
+  if (useMock) return {
+    query,
+    requestId: 'SEARCH-MOCK',
+    groups: [
+      { type: 'security', items: [{ id: demoThesis.securityId, title: '阳光电源', subtitle: `${demoThesis.securityId} · 电力设备`, matchKind: 'name', target: { kind: 'thesis', id: demoThesis.thesisId } }] },
+      { type: 'thesis', items: [{ id: demoThesis.thesisId, title: demoThesis.title, subtitle: `阳光电源 · ${demoThesis.status}`, excerpt: demoThesis.coreView, matchKind: 'title', target: { kind: 'thesis', id: demoThesis.thesisId } }] },
+      { type: 'document', items: demoAssetHits.slice(0, 3).map((item) => ({ id: item.locator, title: item.documentId, subtitle: item.contentStatus, excerpt: item.content, matchKind: 'hybrid', target: { kind: 'document_segment' as const, id: item.locator }, contentStatus: item.contentStatus, retrievalMode: item.retrievalMode })) },
+    ],
+  }
+  const item = await request<{
+    query: string
+    request_id: string
+    groups: Array<{ type: GlobalSearchResult['groups'][number]['type']; items: Array<Record<string, unknown>> }>
+  }>(`/api/search?q=${encodeURIComponent(query)}&limit_per_type=5`, { signal })
+  return {
+    query: item.query,
+    requestId: item.request_id,
+    groups: item.groups.map((group) => ({
+      type: group.type,
+      items: group.items.map((raw) => {
+        const target = raw.target as Record<string, unknown>
+        return {
+          id: String(raw.id), title: String(raw.title), subtitle: String(raw.subtitle ?? ''),
+          excerpt: raw.excerpt ? String(raw.excerpt) : undefined, matchKind: String(raw.match_kind),
+          target: { kind: String(target.kind) as GlobalSearchResult['groups'][number]['items'][number]['target']['kind'], id: String(target.id) },
+          contentStatus: raw.content_status ? String(raw.content_status) : undefined,
+          contentKind: raw.content_kind ? String(raw.content_kind) : undefined,
+          retrievalMode: raw.retrieval_mode ? String(raw.retrieval_mode) : undefined,
+          publishedAt: raw.published_at ? String(raw.published_at) : undefined,
+        }
+      }),
+    })),
+  }
+}
+
+export async function askKnowledge(requestValue: KnowledgeAnswerRequest, signal?: AbortSignal): Promise<KnowledgeAnswer> {
+  if (useMock) {
+    const citation = demoAssetHits[0]
+    return {
+      answerId: 'ANS-00000000000000000000000000000000', answerStatus: 'supported', aiStatus: '候选',
+      answer: `根据当前可回查资料，${citation.content} [S1]`, inferences: [],
+      citations: [{ ref: 'S1', locator: citation.locator, documentId: citation.documentId, title: citation.documentId, excerpt: citation.content, contentStatus: citation.contentStatus, contentKind: 'paragraph', retrievalMode: citation.retrievalMode ?? 'hybrid' }],
+      modelVersion: 'mock', promptVersion: 'knowledge-answer-v1-grounded-citations', retrievalVersion: 'mock-hybrid', generatedAt: new Date().toISOString(), requestId: 'QA-MOCK',
+    }
+  }
+  const item = await request<Record<string, unknown>>('/api/assistant/answers', {
+    method: 'POST', signal,
+    body: JSON.stringify({
+      question: requestValue.question,
+      context: {
+        thesis_id: requestValue.context?.thesisId,
+        security_id: requestValue.context?.securityId,
+        as_of: requestValue.context?.asOf,
+      },
+      history: requestValue.history ?? [],
+    }),
+  })
+  return {
+    answerId: String(item.answer_id), answerStatus: item.answer_status as KnowledgeAnswer['answerStatus'], aiStatus: String(item.ai_status),
+    answer: String(item.answer), inferences: (item.inferences ?? []) as string[],
+    citations: ((item.citations ?? []) as Array<Record<string, unknown>>).map((citation) => ({
+      ref: String(citation.ref), locator: String(citation.locator), documentId: String(citation.document_id),
+      title: String(citation.title), excerpt: String(citation.excerpt),
+      publishedAt: citation.published_at ? String(citation.published_at) : undefined,
+      contentStatus: String(citation.content_status), contentKind: String(citation.content_kind), retrievalMode: String(citation.retrieval_mode),
+    })),
+    modelVersion: String(item.model_version), promptVersion: String(item.prompt_version), retrievalVersion: String(item.retrieval_version),
+    graphSnapshotId: item.graph_snapshot_id ? String(item.graph_snapshot_id) : undefined,
+    generatedAt: String(item.generated_at), requestId: String(item.request_id),
+  }
+}
+
+export async function submitAnswerFeedback(answerId: string, value: 'helpful' | 'not_helpful') {
+  if (useMock) return
+  await request<void>(`/api/assistant/answers/${encodeURIComponent(answerId)}/feedback`, {
+    method: 'POST', body: JSON.stringify({ value }),
+  })
 }
 
 function toAuthUser(value: { user_id: string; teams: string[]; must_change_password: boolean }): AuthUser {
@@ -105,16 +215,30 @@ function toAuthUser(value: { user_id: string; teams: string[]; must_change_passw
 }
 
 export async function getAuthConfig(): Promise<AuthConfig> {
-  const value = await request<{ login_required: boolean; password_change_supported: boolean }>('/api/auth/config')
-  return { loginRequired: value.login_required, passwordChangeSupported: value.password_change_supported }
+  if (useMock) return { loginRequired: false, passwordChangeSupported: false, globalSearchEnabled: true, knowledgeQaEnabled: true, retrospectiveCenterEnabled: true, retrospectiveAiDraftEnabled: false }
+  const value = await request<{ login_required: boolean; password_change_supported: boolean; global_search_enabled: boolean; knowledge_qa_enabled: boolean; retrospective_center_enabled: boolean; retrospective_ai_draft_enabled: boolean }>('/api/auth/config')
+  return {
+    loginRequired: value.login_required,
+    passwordChangeSupported: value.password_change_supported,
+    globalSearchEnabled: value.global_search_enabled,
+    knowledgeQaEnabled: value.knowledge_qa_enabled,
+    retrospectiveCenterEnabled: value.retrospective_center_enabled,
+    retrospectiveAiDraftEnabled: value.retrospective_ai_draft_enabled,
+  }
 }
 
 export async function getCurrentUser(): Promise<AuthUser> {
+  if (useMock) return { userId: 'analyst-mvp', teams: ['equity-research'], mustChangePassword: false }
   const value = await request<{ user_id: string; teams: string[]; must_change_password: boolean }>('/api/auth/me')
   return toAuthUser(value)
 }
 
 export async function login(userId: string, password: string): Promise<AuthSession> {
+  if (useMock) return {
+    accessToken: 'mock-session',
+    expiresIn: 8 * 60 * 60,
+    user: { userId: userId || 'analyst-mvp', teams: ['equity-research'], mustChangePassword: false },
+  }
   const value = await request<{
     access_token: string
     expires_in: number
@@ -127,6 +251,11 @@ export async function login(userId: string, password: string): Promise<AuthSessi
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<AuthSession> {
+  if (useMock) return {
+    accessToken: 'mock-session',
+    expiresIn: 8 * 60 * 60,
+    user: { userId: 'analyst-mvp', teams: ['equity-research'], mustChangePassword: false },
+  }
   const value = await request<{
     access_token: string
     expires_in: number
@@ -594,6 +723,244 @@ export async function searchAssets(query: string): Promise<AssetSearchHit[]> {
   }))
 }
 
+function toDataCenterRun(item: Record<string, unknown>): DataCenterRun {
+  return {
+    runId: String(item.run_id), revisionId: String(item.revision_id),
+    documentId: String(item.document_id), documentTitle: String(item.document_title),
+    sourceFilename: String(item.source_filename), parserVersion: String(item.parser_version),
+    chunkerVersion: String(item.chunker_version), extractorVersion: String(item.extractor_version),
+    embeddingVersion: item.embedding_version ? String(item.embedding_version) : undefined,
+    status: String(item.status), segmentCount: Number(item.segment_count),
+    factCount: Number(item.fact_count), eventCount: Number(item.event_count),
+    qualitySummary: (item.quality_summary ?? {}) as Record<string, unknown>,
+    error: item.error ? String(item.error) : undefined,
+    startedAt: item.started_at ? String(item.started_at) : undefined,
+    finishedAt: item.finished_at ? String(item.finished_at) : undefined,
+    createdAt: item.created_at ? String(item.created_at) : undefined,
+  }
+}
+
+function toDataCenterDocument(item: Record<string, unknown>): DataCenterDocument {
+  return {
+    documentId: String(item.document_id), title: String(item.title),
+    sourceId: item.source_id ? String(item.source_id) : undefined,
+    sourceName: String(item.source_name), docType: item.doc_type ? String(item.doc_type) : undefined,
+    publishedAt: String(item.published_at), ingestedAt: item.ingested_at ? String(item.ingested_at) : undefined,
+    contentStatus: String(item.content_status), visibilityLabel: String(item.visibility_label),
+    isIllustrative: Boolean(item.is_illustrative), deletedAt: item.deleted_at ? String(item.deleted_at) : undefined,
+    archived: Boolean(item.archived), authorizationStatus: String(item.authorization_status),
+    revisionCount: Number(item.revision_count), segmentCount: Number(item.segment_count),
+    latestRunStatus: item.latest_run_status ? String(item.latest_run_status) : undefined,
+    latestRunAt: item.latest_run_at ? String(item.latest_run_at) : undefined,
+    securityIds: (item.security_ids ?? []) as string[], securityNames: (item.security_names ?? []) as string[],
+    industries: (item.industries ?? []) as string[],
+  }
+}
+
+function toDataCenterRevision(item: Record<string, unknown>): DataCenterRevision {
+  return {
+    revisionId: String(item.revision_id), contentHash: String(item.content_hash),
+    sourceFilename: String(item.source_filename), hasObject: Boolean(item.has_object),
+    objectVersionId: item.object_version_id ? String(item.object_version_id) : undefined,
+    mediaType: item.media_type ? String(item.media_type) : undefined,
+    byteSize: item.byte_size == null ? undefined : Number(item.byte_size),
+    sourceId: item.source_id ? String(item.source_id) : undefined,
+    sourceHost: item.source_host ? String(item.source_host) : undefined,
+    authorizationStatus: String(item.authorization_status),
+    authorizationBasis: item.authorization_basis ? String(item.authorization_basis) : undefined,
+    authorizationVerifiedBy: item.authorization_verified_by ? String(item.authorization_verified_by) : undefined,
+    authorizationVerifiedAt: item.authorization_verified_at ? String(item.authorization_verified_at) : undefined,
+    contentStatus: String(item.content_status), uploadedBy: String(item.uploaded_by),
+    publishedAt: item.published_at ? String(item.published_at) : undefined,
+    createdAt: item.created_at ? String(item.created_at) : undefined,
+    tombstonedAt: item.tombstoned_at ? String(item.tombstoned_at) : undefined,
+  }
+}
+
+function mockDataCenterDocuments(): DataCenterDocument[] {
+  const now = new Date().toISOString()
+  return demoAssetHits.map((item, index) => ({
+    documentId: item.documentId, title: index === 0 ? '储能业务经营更新公告' : '公司公开披露资料',
+    sourceId: 'SRC-DEMO', sourceName: '受控演示来源', docType: '公告', publishedAt: now,
+    ingestedAt: now, contentStatus: item.contentStatus, visibilityLabel: item.visibilityLabel,
+    isIllustrative: true, archived: true, authorizationStatus: '项目自有', revisionCount: 1,
+    segmentCount: 1, latestRunStatus: 'succeeded', latestRunAt: now,
+    securityIds: [demoThesis.securityId], securityNames: ['阳光电源'], industries: ['电力设备'],
+  }))
+}
+
+function mockDataCenterRuns(): DataCenterRun[] {
+  const now = new Date().toISOString()
+  const document = mockDataCenterDocuments()[0]
+  return [{
+    runId: 'RUN-DEMO-INGEST-1', revisionId: `DREV-${document.documentId}`,
+    documentId: document.documentId, documentTitle: document.title, sourceFilename: 'demo.txt',
+    parserVersion: 'text-v1', chunkerVersion: 'semantic-v1', extractorVersion: 'rules-v1',
+    embeddingVersion: 'hash-char-2gram-v1', status: 'succeeded', segmentCount: 1,
+    factCount: 1, eventCount: 1, qualitySummary: { locator_coverage: 1 },
+    startedAt: now, finishedAt: now, createdAt: now,
+  }]
+}
+
+const mockMarketDataset: QuantMarketDataset = {
+  datasetId: 'MDS-akshare-qfq-tuaremax10000-20260831-v3',
+  dataVersion: 'akshare-qfq-tuaremax10000-20260831-v3',
+  manifestSha256: '2d53632169f9fc7156feaaf91c002acea468217c9827917c48b30d0e9b2676db',
+  authorizationStatus: '公开行情研究使用已核验', adjustment: '前复权',
+  coverageStart: '2024-01-02', coverageEnd: '2026-08-28',
+  securities: ['688981', '603986', '002371'],
+  capabilities: {
+    adjusted_daily_bars: true, trading_calendar: true, point_in_time_tradability: true,
+    a_share_point_in_time_market_cap: true, survivorship_bias_free_universe: false,
+  },
+  limitations: ['仅用于研究回测，不构成交易或调仓指令。'], status: 'frozen',
+}
+
+const mockQuantSignalSet: QuantSignalSet = {
+  signalSetId: 'QSS-DEMO-CONFIRMED-V1', name: '人工确认事件方向', version: 'confirmed-v1',
+  contentSha256: 'b'.repeat(64), signalCount: 3, humanConfirmedOnly: true,
+  evaluationTrack: 'alpha_validation', status: 'frozen',
+}
+
+export async function getDataCenterOverview(): Promise<DataCenterOverview> {
+  if (useMock) {
+    const documents = mockDataCenterDocuments()
+    return {
+      documents: documents.length, archivedDocuments: documents.length, missingArchiveDocuments: 0,
+      authorizationVerifiedDocuments: documents.length, pendingAuthorizationDocuments: 0,
+      titleIndexDocuments: documents.filter((item) => item.contentStatus === '标题索引').length,
+      fullTextDocuments: documents.filter((item) => item.contentStatus === '完整正文').length,
+      recentSucceededRuns: documents.length, recentFailedRuns: 0, marketDatasetCount: 1, signalSetCount: 1,
+      defaultMarketDatasetId: mockMarketDataset.datasetId, defaultMarketDataVersion: mockMarketDataset.dataVersion,
+      defaultMarketCoverageEnd: mockMarketDataset.coverageEnd,
+      attention: [], recentRuns: mockDataCenterRuns(), asOf: new Date().toISOString(),
+    }
+  }
+  const item = await request<Record<string, unknown>>('/api/assets/overview')
+  return {
+    documents: Number(item.documents), archivedDocuments: Number(item.archived_documents),
+    missingArchiveDocuments: Number(item.missing_archive_documents),
+    authorizationVerifiedDocuments: Number(item.authorization_verified_documents),
+    pendingAuthorizationDocuments: Number(item.pending_authorization_documents),
+    titleIndexDocuments: Number(item.title_index_documents), fullTextDocuments: Number(item.full_text_documents),
+    recentSucceededRuns: Number(item.recent_succeeded_runs), recentFailedRuns: Number(item.recent_failed_runs),
+    marketDatasetCount: Number(item.market_dataset_count), signalSetCount: Number(item.signal_set_count),
+    defaultMarketDatasetId: item.default_market_dataset_id ? String(item.default_market_dataset_id) : undefined,
+    defaultMarketDataVersion: item.default_market_data_version ? String(item.default_market_data_version) : undefined,
+    defaultMarketCoverageEnd: item.default_market_coverage_end ? String(item.default_market_coverage_end) : undefined,
+    attention: ((item.attention ?? []) as Array<Record<string, unknown>>).map((value) => ({
+      code: String(value.code), label: String(value.label), count: Number(value.count),
+      severity: String(value.severity), target: String(value.target),
+    })),
+    recentRuns: ((item.recent_runs ?? []) as Array<Record<string, unknown>>).map(toDataCenterRun),
+    asOf: String(item.as_of),
+  }
+}
+
+export async function listDataCenterDocuments(params: URLSearchParams): Promise<DataCenterDocumentPage> {
+  if (useMock) {
+    const q = (params.get('q') ?? '').toLowerCase()
+    const contentStatus = params.get('content_status')
+    const rows = mockDataCenterDocuments().filter((item) =>
+      (!q || item.title.toLowerCase().includes(q) || item.documentId.toLowerCase().includes(q))
+      && (!contentStatus || item.contentStatus === contentStatus))
+    const limit = Number(params.get('limit') ?? 20)
+    const offset = Number(params.get('offset') ?? 0)
+    return { items: rows.slice(offset, offset + limit), total: rows.length, limit, offset }
+  }
+  const item = await request<Record<string, unknown>>(`/api/assets/documents?${params.toString()}`)
+  return {
+    items: ((item.items ?? []) as Array<Record<string, unknown>>).map(toDataCenterDocument),
+    total: Number(item.total), limit: Number(item.limit), offset: Number(item.offset),
+  }
+}
+
+export async function getDataCenterDocument(documentId: string, includeDeleted = false): Promise<DataCenterDocumentDetail> {
+  if (useMock) {
+    const document = mockDataCenterDocuments().find((item) => item.documentId === documentId)
+    if (!document) throw new Error('资料不存在')
+    const now = new Date().toISOString()
+    return {
+      ...document, allowedActions: ['view_content', 'reprocess', 'change_visibility', 'delete', 'rebuild_index'],
+      revisions: [{ revisionId: `DREV-${documentId}`, contentHash: 'a'.repeat(64), sourceFilename: 'demo.txt', hasObject: true, mediaType: 'text/plain', authorizationStatus: '项目自有', contentStatus: document.contentStatus, uploadedBy: 'demo', createdAt: now }],
+      runs: mockDataCenterRuns().filter((item) => item.documentId === documentId),
+    }
+  }
+  const suffix = includeDeleted ? '?include_deleted=true' : ''
+  const item = await request<Record<string, unknown>>(`/api/assets/documents/${encodeURIComponent(documentId)}${suffix}`)
+  return {
+    ...toDataCenterDocument(item), allowedActions: (item.allowed_actions ?? []) as string[],
+    revisions: ((item.revisions ?? []) as Array<Record<string, unknown>>).map(toDataCenterRevision),
+    runs: ((item.runs ?? []) as Array<Record<string, unknown>>).map(toDataCenterRun),
+  }
+}
+
+export async function listDataCenterSources(): Promise<DataCenterSource[]> {
+  if (useMock) return [{ sourceId: 'SRC-DEMO', name: '受控演示来源', sourceType: 'project', authorizationStatus: '项目自有', active: true, documentCount: mockDataCenterDocuments().length }]
+  const items = await request<Array<Record<string, unknown>>>('/api/assets/sources')
+  return items.map((item) => ({
+    sourceId: String(item.source_id), name: String(item.name), sourceType: String(item.source_type),
+    authorizationStatus: String(item.authorization_status), licenseNote: item.license_note ? String(item.license_note) : undefined,
+    authorizationBasis: item.authorization_basis ? String(item.authorization_basis) : undefined,
+    authorizationVerifiedBy: item.authorization_verified_by ? String(item.authorization_verified_by) : undefined,
+    authorizationVerifiedAt: item.authorization_verified_at ? String(item.authorization_verified_at) : undefined,
+    active: Boolean(item.active), documentCount: Number(item.document_count),
+    latestRunStatus: item.latest_run_status ? String(item.latest_run_status) : undefined,
+    latestRunAt: item.latest_run_at ? String(item.latest_run_at) : undefined,
+    baseHost: item.base_host ? String(item.base_host) : undefined,
+  }))
+}
+
+export async function listDataCenterRuns(params: URLSearchParams): Promise<{ items: DataCenterRun[]; total: number; limit: number; offset: number }> {
+  if (useMock) {
+    const status = params.get('status')
+    const documentId = params.get('document_id')
+    const rows = mockDataCenterRuns().filter((item) =>
+      (!status || item.status === status) && (!documentId || item.documentId === documentId))
+    const limit = Number(params.get('limit') ?? 20)
+    const offset = Number(params.get('offset') ?? 0)
+    return { items: rows.slice(offset, offset + limit), total: rows.length, limit, offset }
+  }
+  const item = await request<Record<string, unknown>>(`/api/assets/ingestion-runs?${params.toString()}`)
+  return {
+    items: ((item.items ?? []) as Array<Record<string, unknown>>).map(toDataCenterRun),
+    total: Number(item.total), limit: Number(item.limit), offset: Number(item.offset),
+  }
+}
+
+export async function updateDataCenterVisibility(documentId: string, visibilityLabel: string): Promise<void> {
+  if (useMock) return
+  await request<void>(`/api/assets/documents/${encodeURIComponent(documentId)}/visibility`, {
+    method: 'PATCH', body: JSON.stringify({ visibility_label: visibilityLabel }),
+  })
+}
+
+export async function reprocessDataCenterDocument(documentId: string): Promise<{ jobId: string }> {
+  if (useMock) return { jobId: `MOCK-${documentId}` }
+  const item = await request<Record<string, unknown>>('/api/assets/ingestion-runs/reprocess', {
+    method: 'POST', body: JSON.stringify({ document_id: documentId }),
+  })
+  return { jobId: String(item.job_id) }
+}
+
+export async function deleteDataCenterDocument(documentId: string): Promise<void> {
+  if (useMock) return
+  await request<void>(`/api/assets/documents/${encodeURIComponent(documentId)}`, { method: 'DELETE' })
+}
+
+export async function restoreDataCenterDocument(documentId: string, visibilityLabel = '内部受限'): Promise<number> {
+  if (useMock) return 0
+  const item = await request<Record<string, unknown>>(`/api/assets/documents/${encodeURIComponent(documentId)}/restore`, {
+    method: 'POST', body: JSON.stringify({ visibility_label: visibilityLabel }),
+  })
+  return Number(item.indexed_segments)
+}
+
+export async function fetchDataCenterContent(documentId: string, download = false): Promise<Blob> {
+  if (useMock) return new Blob(['受控演示原件'], { type: 'text/plain' })
+  return requestBlob(`/api/assets/documents/${encodeURIComponent(documentId)}/content?download=${download}`)
+}
+
 function toThesisRevision(item: Record<string, unknown>): ThesisRevision {
   return {
     draftId: String(item.draft_id), thesisId: String(item.thesis_id),
@@ -772,7 +1139,8 @@ function toPortfolioRun(item: Record<string, unknown>): PortfolioBacktestRun {
 
 export async function getQuantCatalog(): Promise<QuantCatalog> {
   if (useMock) return {
-    defaultMarketDatasetId: null, marketDatasets: [], signalSets: [],
+    defaultMarketDatasetId: mockMarketDataset.datasetId,
+    marketDatasets: [mockMarketDataset], signalSets: [mockQuantSignalSet],
     evaluationSeparation: {
       semanticEvaluation: 'gold_semantic_accuracy', retrievalEvaluation: 'retrieval_ranking_quality',
       alphaValidation: 'alpha_validation', hardRule: '回测收益不得替代金标准确率、检索门禁或人工确认',
@@ -794,6 +1162,43 @@ export async function getQuantCatalog(): Promise<QuantCatalog> {
       retrievalEvaluation: String(separation.retrieval_evaluation),
       alphaValidation: String(separation.alpha_validation), hardRule: String(separation.hard_rule),
     },
+  }
+}
+
+export async function getMarketDatasetDetail(datasetId: string): Promise<QuantMarketDatasetDetail> {
+  if (useMock) {
+    if (datasetId !== mockMarketDataset.datasetId) throw new Error('冻结行情数据集不存在')
+    return {
+      ...mockMarketDataset, isDefault: true, manifestVerified: true,
+      assets: [
+        { name: 'bars', path: 'bars.json', sha256: 'c'.repeat(64), byteSize: 2_580_000, verified: true },
+        { name: 'calendar', path: 'calendar.json', sha256: 'd'.repeat(64), byteSize: 18_400, verified: true },
+        { name: 'market_cap', path: 'market_cap.json', sha256: 'e'.repeat(64), byteSize: 940_000, verified: true },
+      ],
+      sourcePriority: ['Tushare（点时市值）', 'AkShare（前复权行情）'],
+      authorizationScope: '公开行情研究与内部量化验证', timezone: 'Asia/Shanghai',
+      adjustmentAnchorDate: '2026-08-28', availableSignalSets: [mockQuantSignalSet], backtestCount: 2,
+    }
+  }
+  const item = await request<Record<string, unknown>>(`/api/quant/market-datasets/${encodeURIComponent(datasetId)}`)
+  return {
+    ...toMarketDataset(item), isDefault: Boolean(item.is_default),
+    manifestVerified: Boolean(item.manifest_verified),
+    assets: ((item.assets ?? []) as Array<Record<string, unknown>>).map((asset) => ({
+      name: String(asset.name), path: String(asset.path), sha256: String(asset.sha256),
+      byteSize: asset.byte_size == null ? undefined : Number(asset.byte_size), verified: Boolean(asset.verified),
+    })),
+    sourcePriority: (item.source_priority ?? []) as string[],
+    authorizationScope: item.authorization_scope ? String(item.authorization_scope) : undefined,
+    timezone: String(item.timezone),
+    adjustmentAnchorDate: item.adjustment_anchor_date ? String(item.adjustment_anchor_date) : undefined,
+    availableSignalSets: ((item.available_signal_sets ?? []) as Array<Record<string, unknown>>).map((signal) => ({
+      signalSetId: String(signal.signal_set_id), name: String(signal.name), version: String(signal.version),
+      contentSha256: String(signal.content_sha256), signalCount: Number(signal.signal_count),
+      humanConfirmedOnly: Boolean(signal.human_confirmed_only), evaluationTrack: String(signal.evaluation_track),
+      status: String(signal.status),
+    })),
+    backtestCount: Number(item.backtest_count),
   }
 }
 

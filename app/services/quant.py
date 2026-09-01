@@ -274,6 +274,72 @@ def configured_default_market_dataset_id(uow: UnitOfWork) -> str | None:
     return existing.dataset_id
 
 
+def market_dataset_detail(
+    uow: UnitOfWork, *, dataset_id: str, requested_by: str
+) -> dict[str, object]:
+    """Return a governed, read-only view of one registered market dataset."""
+    record = uow.quant.get_market_dataset(dataset_id)
+    if record is None:
+        raise LookupError("冻结行情数据集不存在")
+    manifest_path = _resolve_market_manifest(Path(record.manifest_path))
+    actual_manifest_sha256 = sha256(manifest_path.read_bytes()).hexdigest()
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MarketDataError("冻结行情清单无法读取") from exc
+    raw_assets = manifest.get("assets")
+    if not isinstance(raw_assets, dict):
+        raise MarketDataError("冻结行情清单缺少 assets")
+    assets: list[dict[str, object]] = []
+    for name, raw in sorted(raw_assets.items()):
+        if not isinstance(raw, dict):
+            raise MarketDataError(f"冻结行情子资产格式无效: {name}")
+        relative = Path(str(raw.get("path", "")))
+        candidate = (manifest_path.parent / relative).resolve()
+        if manifest_path.parent.resolve() not in candidate.parents:
+            raise MarketDataError(f"冻结行情子资产越出数据集目录: {name}")
+        expected = str(raw.get("sha256", ""))
+        exists = candidate.is_file()
+        actual = sha256(candidate.read_bytes()).hexdigest() if exists else None
+        assets.append(
+            {
+                "name": str(name),
+                "path": relative.as_posix(),
+                "sha256": expected,
+                "byte_size": candidate.stat().st_size if exists else None,
+                "verified": exists and actual == expected,
+            }
+        )
+    try:
+        default_dataset_id = configured_default_market_dataset_id(uow)
+    except MarketDataError:
+        default_dataset_id = None
+    authorization = manifest.get("authorization")
+    authorization_scope = (
+        str(authorization.get("scope"))
+        if isinstance(authorization, dict) and authorization.get("scope")
+        else None
+    )
+    runs = [
+        item
+        for item in uow.quant.list_backtests(requested_by, limit=1000)
+        if item.market_dataset_id == dataset_id
+    ]
+    return {
+        "record": record,
+        "is_default": default_dataset_id == dataset_id,
+        "manifest_verified": actual_manifest_sha256 == record.manifest_sha256
+        and all(bool(item["verified"]) for item in assets),
+        "assets": assets,
+        "source_priority": [str(item) for item in manifest.get("source_priority", [])],
+        "authorization_scope": authorization_scope,
+        "timezone": str(manifest.get("timezone", "Asia/Shanghai")),
+        "adjustment_anchor_date": manifest.get("adjustment_anchor_date"),
+        "available_signal_sets": uow.quant.list_signal_sets(),
+        "backtest_count": len(runs),
+    }
+
+
 def freeze_signal_set(
     uow: UnitOfWork,
     *,

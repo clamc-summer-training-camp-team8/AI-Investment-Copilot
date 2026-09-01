@@ -3,15 +3,26 @@
 from __future__ import annotations
 
 import re
+import subprocess
+import threading
+from contextlib import suppress
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Any
 
 from app.core.timeutil import BUSINESS_TZ, ensure_aware
 from app.ingest.parsers.base import ParsedDocument, ParseError, RawSegment
 
 # 样例投研资料的标题行：[DOC-DEMO-001 | 内部研究摘要 | 2026-01-15 09:00]
 _HEADER = re.compile(r"^\[(?P<doc_id>[^|\]]+)\|(?P<doc_type>[^|\]]+)\|(?P<published>[^|\]]+)\]$")
+_OCR_LOCAL = threading.local()
+
+
+def _clean_extracted_text(value: str) -> str:
+    """Remove NUL bytes rejected by PostgreSQL while preserving readable source text."""
+    return value.replace("\x00", "").strip()
 
 
 def _parse_published(text: str) -> datetime | None:
@@ -26,7 +37,9 @@ def _parse_published(text: str) -> datetime | None:
 
 def parse_txt(text: str) -> ParsedDocument:
     """按空行分段。段落是引用定位的最小单位。"""
-    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    paragraphs = [
+        cleaned for part in re.split(r"\n\s*\n", text) if (cleaned := _clean_extracted_text(part))
+    ]
     if not paragraphs:
         raise ParseError("文件内容为空，无法解析")
 
@@ -105,14 +118,14 @@ def parse_pdf(path: Path) -> ParsedDocument:
         for page_no, page in enumerate(reader.pages, start=1):
             native_text = page.extract_text() or ""
             for para in re.split(r"\n\s*\n", native_text):
-                cleaned = para.strip()
+                cleaned = _clean_extracted_text(para)
                 if cleaned:
                     ordinal += 1
                     segments.append(RawSegment(ordinal=ordinal, content=cleaned, page=page_no))
 
             for table_no, table in enumerate(plumber.pages[page_no - 1].extract_tables(), start=1):
                 for row_no, row in enumerate(table or [], start=1):
-                    cells = [re.sub(r"\s+", " ", cell or "").strip() for cell in row]
+                    cells = [_clean_extracted_text(re.sub(r"\s+", " ", cell or "")) for cell in row]
                     if not any(cells):
                         continue
                     ordinal += 1
@@ -163,11 +176,11 @@ def parse_docx(path: Path) -> ParsedDocument:
 
     segments: list[RawSegment] = []
     for para in document.paragraphs:
-        if para.text.strip():
-            segments.append(RawSegment(ordinal=len(segments) + 1, content=para.text.strip()))
+        if cleaned := _clean_extracted_text(para.text):
+            segments.append(RawSegment(ordinal=len(segments) + 1, content=cleaned))
     for table_no, table in enumerate(document.tables, start=1):
         for row_no, row in enumerate(table.rows, start=1):
-            cells = [c.text.strip() for c in row.cells]
+            cells = [_clean_extracted_text(c.text) for c in row.cells]
             if any(cells):
                 segments.append(
                     RawSegment(
@@ -211,26 +224,105 @@ def _ocr_pdf_page(path: Path, page_index: int) -> list[tuple[str, Decimal | None
     """把单页渲染为图片并用 RapidOCR 提取按阅读顺序排列的文本行。"""
     try:
         import pypdfium2 as pdfium  # type: ignore[import-untyped]
-        from rapidocr import RapidOCR
     except ImportError as exc:  # pragma: no cover
         raise ParseError(f"OCR 依赖缺失: {exc}", recoverable=False) from exc
 
+    pdf = page = bitmap = image = None
+    pdfium_error: Exception | None = None
     try:
-        pdf = pdfium.PdfDocument(path)
-        page = pdf[page_index]
-        bitmap = page.render(scale=2.5)
-        image = bitmap.to_pil()
-        output: object = RapidOCR()(image)
+        try:
+            pdf = pdfium.PdfDocument(path)
+            page = pdf[page_index]
+            bitmap = page.render(scale=2.5)
+            image = bitmap.to_pil()
+        except Exception as exc:
+            pdfium_error = exc
+            _close_pdf_resources(image, bitmap, page, pdf)
+            pdf = page = bitmap = image = None
+            image = _render_pdf_page_with_poppler(path, page_index)
+        output: object = _rapidocr_engine()(image)
         texts = list(getattr(output, "txts", None) or [])
         scores = list(getattr(output, "scores", None) or [])
-        image.close()
-        bitmap.close()
-        page.close()
-        pdf.close()
     except Exception as exc:
-        raise ParseError(f"PDF 第 {page_index + 1} 页 OCR 失败: {exc}") from exc
+        fallback_note = f"；PDFium 原因: {pdfium_error}" if pdfium_error else ""
+        raise ParseError(f"PDF 第 {page_index + 1} 页 OCR 失败: {exc}{fallback_note}") from exc
+    finally:
+        _close_pdf_resources(image, bitmap, page, pdf)
     return [
-        (text.strip(), Decimal(str(scores[index])) if index < len(scores) else None)
+        (_clean_extracted_text(text), Decimal(str(scores[index])) if index < len(scores) else None)
         for index, text in enumerate(texts)
-        if text and text.strip()
+        if text and _clean_extracted_text(text)
     ]
+
+
+def _close_pdf_resources(*resources: object | None) -> None:
+    """Release native PDF/image handles even when rendering or OCR raises midway."""
+    for resource in resources:
+        close = getattr(resource, "close", None)
+        if callable(close):
+            with suppress(Exception):
+                close()
+
+
+def _render_pdf_page_with_poppler(path: Path, page_index: int) -> Any:
+    """Render one malformed scan page with Poppler when PDFium cannot open it."""
+    try:
+        from PIL import Image
+    except ImportError as exc:  # pragma: no cover - RapidOCR normally brings Pillow
+        raise ParseError(f"OCR 图像依赖缺失: {exc}", recoverable=False) from exc
+
+    with TemporaryDirectory(prefix="copilot-poppler-page-") as temp:
+        prefix = Path(temp) / "page"
+        attempts = [
+            ("pdftoppm", 180, 45),
+            ("pdftocairo", 150, 90),
+            ("pdftoppm", 120, 90),
+        ]
+        failures: list[str] = []
+        for executable, dpi, timeout_seconds in attempts:
+            output = prefix.with_suffix(".png")
+            output.unlink(missing_ok=True)
+            command = [
+                executable,
+                "-f",
+                str(page_index + 1),
+                "-l",
+                str(page_index + 1),
+                "-r",
+                str(dpi),
+                "-png",
+                "-singlefile",
+                str(path),
+                str(prefix),
+            ]
+            try:
+                subprocess.run(
+                    command,
+                    check=True,
+                    capture_output=True,
+                    timeout=timeout_seconds,
+                )
+                with Image.open(output) as rendered:
+                    return rendered.copy()
+            except (FileNotFoundError, subprocess.SubprocessError, OSError) as exc:
+                failures.append(f"{executable}@{dpi}dpi: {exc}")
+        raise ParseError("Poppler 备用渲染失败: " + "；".join(failures))
+
+
+def _rapidocr_engine() -> Any:
+    """Reuse one ONNX OCR runtime per worker thread instead of rebuilding it per PDF page."""
+    engine = getattr(_OCR_LOCAL, "engine", None)
+    if engine is None:
+        try:
+            from rapidocr import RapidOCR
+        except ImportError as exc:  # pragma: no cover
+            raise ParseError(f"OCR 依赖缺失: {exc}", recoverable=False) from exc
+        engine = RapidOCR(
+            params={
+                "EngineConfig.onnxruntime.intra_op_num_threads": 4,
+                "EngineConfig.onnxruntime.inter_op_num_threads": 1,
+                "Global.log_level": "warning",
+            }
+        )
+        _OCR_LOCAL.engine = engine
+    return engine

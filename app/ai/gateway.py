@@ -111,6 +111,20 @@ class Provider(Protocol):
         repair_errors: list[str] | None = ...,
     ) -> dict[str, Any]: ...
 
+    def draft_retrospective(
+        self,
+        *,
+        retrospective_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        data_cutoff_at: str,
+        original_judgement: str,
+        hypotheses: list[dict[str, Any]],
+        sources: list[dict[str, Any]],
+        repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
     def hypothesis_quality(
         self,
         *,
@@ -120,6 +134,16 @@ class Provider(Protocol):
         core_view: str,
         hypotheses: list[dict[str, Any]],
         repair_errors: list[str] | None = ...,
+    ) -> dict[str, Any]: ...
+
+    def answer_knowledge(
+        self,
+        *,
+        question: str,
+        context: dict[str, Any],
+        history: list[dict[str, str]],
+        contexts: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
     ) -> dict[str, Any]: ...
 
 
@@ -350,6 +374,34 @@ class Gateway:
             ),
         )
 
+    def retrospective_draft(
+        self,
+        *,
+        retrospective_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        data_cutoff_at: str,
+        original_judgement: str,
+        hypotheses: list[dict[str, Any]],
+        sources: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        return self._validate_with_repair(
+            "retrospective_draft",
+            lambda errors: self.provider.draft_retrospective(
+                retrospective_id=retrospective_id,
+                thesis_id=thesis_id,
+                period_start=period_start,
+                period_end=period_end,
+                data_cutoff_at=data_cutoff_at,
+                original_judgement=original_judgement,
+                hypotheses=hypotheses,
+                sources=sources,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
     def hypothesis_quality(
         self,
         *,
@@ -368,6 +420,27 @@ class Gateway:
                 title=title,
                 core_view=core_view,
                 hypotheses=hypotheses,
+                repair_errors=_merge_repair_errors(repair_errors, errors),
+            ),
+        )
+
+    def knowledge_answer(
+        self,
+        *,
+        question: str,
+        context: dict[str, Any],
+        history: list[dict[str, str]],
+        contexts: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> ValidationOutcome:
+        """基于调用方已经鉴权的片段生成带引用回答。"""
+        return self._validate_with_repair(
+            "knowledge_answer",
+            lambda errors: self.provider.answer_knowledge(
+                question=question,
+                context=context,
+                history=history,
+                contexts=contexts,
                 repair_errors=_merge_repair_errors(repair_errors, errors),
             ),
         )

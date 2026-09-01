@@ -520,6 +520,7 @@ def _to_version(row: ThesisVersion) -> VersionRecord:
         data_cutoff_at=row.data_cutoff_at,
         rule_version=row.rule_version,
         model_versions=list(row.model_versions or []),
+        created_at=row.created_at,
     )
 
 

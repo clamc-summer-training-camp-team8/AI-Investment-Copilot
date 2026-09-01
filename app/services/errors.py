@@ -55,3 +55,15 @@ class IllegalTransition(ServiceError):
 
 class CalibrationConflict(ServiceError):
     """指标口径冲突。→ 409，并列展示口径与来源，禁止直接比较（PRD 7.4）。"""
+
+
+class CitationInvalid(ServiceError):
+    """模型引用不属于本轮可见候选。→ 422，禁止返回未核验正文。"""
+
+
+class ResourceConflict(ServiceError):
+    """唯一性或当前业务状态冲突。→ 409"""
+
+
+class ConcurrentUpdate(ResourceConflict):
+    """乐观锁冲突。调用方必须重新读取，不得静默覆盖。→ 409"""

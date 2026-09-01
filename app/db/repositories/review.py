@@ -71,3 +71,12 @@ class SqlReviewTaskRepo:
             query.order_by(ReviewTask.created_at.desc()).limit(limit)
         ).all()
         return [_record(row) for row in rows]
+
+    def list_for_thesis(self, thesis_id: str, *, limit: int = 100) -> list[ReviewTaskRecord]:
+        rows = self._session.scalars(
+            select(ReviewTask)
+            .where(ReviewTask.thesis_id == thesis_id)
+            .order_by(ReviewTask.created_at.desc())
+            .limit(limit)
+        ).all()
+        return [_record(row) for row in rows]

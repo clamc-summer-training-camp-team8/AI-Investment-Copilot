@@ -9,11 +9,16 @@
 
 from __future__ import annotations
 
+import json
+from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime
 
 from app.core.domain import (
     AdjudicationDecisionRecord,
+    AssetDocumentRecord,
+    AssetRunCatalogRecord,
+    AssetSourceCatalogRecord,
     AuditRecord,
     DocumentFactRecord,
     DocumentProcessingJobRecord,
@@ -38,6 +43,10 @@ from app.core.domain import (
     QuantSignalSetRecord,
     RankingPriorItemRecord,
     RankingPriorSnapshotRecord,
+    RetrospectiveQuery,
+    RetrospectiveRecord,
+    RetrospectiveSourceRecord,
+    RetrospectiveVersionRecord,
     ReviewTaskRecord,
     SecurityIndustryMembershipRecord,
     SecurityRecord,
@@ -62,6 +71,7 @@ class FakeAssetRepo:
         self.runs: dict[str, IngestionRunRecord] = {}
         self.artifacts: list[IngestionArtifactRecord] = []
         self.thesis_revisions: dict[str, ThesisRevisionDraftRecord] = {}
+        self.catalog_documents: dict[str, AssetDocumentRecord] = {}
 
     def add_source(self, record: SourceRecord) -> None:
         self.sources[record.source_id] = record
@@ -166,6 +176,205 @@ class FakeAssetRepo:
             ),
         }
 
+    def catalog_overview(self, *, visibility_labels: tuple[str, ...]) -> dict[str, int]:
+        rows = [
+            item
+            for item in self.catalog_documents.values()
+            if item.deleted_at is None and item.visibility_label in visibility_labels
+        ]
+        verified = {"公开披露已核验", "用户授权上传", "项目自有"}
+        visible_document_ids = {item.document_id for item in rows}
+        visible_runs = [
+            item
+            for item in self.runs.values()
+            if (
+                self.revisions[item.revision_id].canonical_document_id
+                or self.revisions[item.revision_id].document_id
+            )
+            in visible_document_ids
+        ]
+        return {
+            "documents": len(rows),
+            "archived_documents": sum(item.archived for item in rows),
+            "missing_archive_documents": sum(not item.archived for item in rows),
+            "authorization_verified_documents": sum(
+                item.authorization_status in verified for item in rows
+            ),
+            "pending_authorization_documents": sum(
+                item.authorization_status not in verified for item in rows
+            ),
+            "title_index_documents": sum(item.content_status == "标题索引" for item in rows),
+            "full_text_documents": sum(item.content_status == "完整正文" for item in rows),
+            "recent_succeeded_runs": sum(item.status == "succeeded" for item in visible_runs),
+            "recent_failed_runs": sum(
+                item.status in {"failed", "dead_letter"} for item in visible_runs
+            ),
+        }
+
+    def list_documents(self, **kwargs):
+        labels = set(kwargs["visibility_labels"])
+        rows = [
+            item
+            for item in self.catalog_documents.values()
+            if item.visibility_label in labels
+            and (kwargs["include_deleted"] or item.deleted_at is None)
+        ]
+        query = (kwargs.get("query") or "").lower()
+        if query:
+            rows = [
+                item
+                for item in rows
+                if query in item.document_id.lower()
+                or query in item.title.lower()
+                or query in item.source_name.lower()
+            ]
+        scalar_filters = {
+            "content_status": "content_status",
+            "source_id": "source_id",
+            "doc_type": "doc_type",
+            "authorization_status": "authorization_status",
+            "run_status": "latest_run_status",
+            "visibility_label": "visibility_label",
+            "archived": "archived",
+        }
+        for key, attribute in scalar_filters.items():
+            value = kwargs.get(key)
+            if value is not None:
+                rows = [item for item in rows if getattr(item, attribute) == value]
+        if kwargs.get("security_id"):
+            rows = [item for item in rows if kwargs["security_id"] in item.security_ids]
+        if kwargs.get("industry"):
+            rows = [item for item in rows if kwargs["industry"] in item.industries]
+        if kwargs.get("published_from"):
+            rows = [item for item in rows if item.published_at >= kwargs["published_from"]]
+        if kwargs.get("published_to"):
+            rows = [item for item in rows if item.published_at <= kwargs["published_to"]]
+        reverse = kwargs.get("direction") != "asc"
+        rows.sort(
+            key=lambda item: (
+                getattr(item, kwargs.get("sort", "published_at")) or datetime.min,
+                item.document_id,
+            ),
+            reverse=reverse,
+        )
+        total = len(rows)
+        offset = kwargs["offset"]
+        return [replace(item) for item in rows[offset : offset + kwargs["limit"]]], total
+
+    def get_document_catalog(
+        self,
+        document_id: str,
+        *,
+        visibility_labels: tuple[str, ...],
+        include_deleted: bool = False,
+    ) -> AssetDocumentRecord | None:
+        item = self.catalog_documents.get(document_id)
+        if (
+            item is None
+            or item.visibility_label not in visibility_labels
+            or (item.deleted_at is not None and not include_deleted)
+        ):
+            return None
+        return replace(item)
+
+    def list_document_revisions(self, document_id: str) -> list[DocumentRevisionRecord]:
+        return [
+            replace(item)
+            for item in reversed(list(self.revisions.values()))
+            if (item.canonical_document_id or item.document_id) == document_id
+        ]
+
+    def _catalog_run(self, run: IngestionRunRecord) -> AssetRunCatalogRecord:
+        revision = self.revisions[run.revision_id]
+        document_id = revision.canonical_document_id or revision.document_id
+        document = self.catalog_documents.get(document_id)
+        return AssetRunCatalogRecord(
+            run_id=run.run_id,
+            revision_id=run.revision_id,
+            document_id=document_id,
+            document_title=document.title if document else document_id,
+            source_filename=revision.source_filename,
+            parser_version=run.parser_version,
+            chunker_version=run.chunker_version,
+            extractor_version=run.extractor_version,
+            embedding_version=run.embedding_version,
+            status=run.status,
+            segment_count=run.segment_count,
+            fact_count=run.fact_count,
+            event_count=run.event_count,
+            quality_summary=dict(run.quality_summary),
+            error=run.error,
+            started_at=run.started_at,
+            finished_at=run.finished_at,
+            created_at=run.created_at,
+        )
+
+    def list_document_runs(self, document_id: str) -> list[AssetRunCatalogRecord]:
+        return [
+            self._catalog_run(item)
+            for item in reversed(list(self.runs.values()))
+            if (
+                self.revisions[item.revision_id].canonical_document_id
+                or self.revisions[item.revision_id].document_id
+            )
+            == document_id
+        ]
+
+    def list_ingestion_runs(self, **kwargs):
+        labels = set(kwargs["visibility_labels"])
+        rows = [
+            self._catalog_run(item)
+            for item in reversed(list(self.runs.values()))
+            if (
+                (
+                    document := self.catalog_documents.get(
+                        self.revisions[item.revision_id].canonical_document_id
+                        or self.revisions[item.revision_id].document_id
+                    )
+                )
+                is not None
+                and document.visibility_label in labels
+                and document.deleted_at is None
+                and (kwargs.get("status") is None or item.status == kwargs["status"])
+                and (
+                    kwargs.get("document_id") is None
+                    or document.document_id == kwargs["document_id"]
+                )
+            )
+        ]
+        total = len(rows)
+        offset = kwargs["offset"]
+        return rows[offset : offset + kwargs["limit"]], total
+
+    def list_sources(self, *, visibility_labels: tuple[str, ...]) -> list[AssetSourceCatalogRecord]:
+        labels = set(visibility_labels)
+        rows: list[AssetSourceCatalogRecord] = []
+        for source in self.sources.values():
+            count = sum(
+                item.source_id == source.source_id
+                and item.visibility_label in labels
+                and item.deleted_at is None
+                for item in self.catalog_documents.values()
+            )
+            if count:
+                rows.append(
+                    AssetSourceCatalogRecord(
+                        source_id=source.source_id,
+                        name=source.name,
+                        source_type=source.source_type,
+                        authorization_status=source.authorization_status,
+                        license_note=source.license_note,
+                        authorization_basis=source.authorization_basis,
+                        authorization_verified_by=source.authorization_verified_by,
+                        authorization_verified_at=source.authorization_verified_at,
+                        active=source.active,
+                        document_count=count,
+                        latest_run_status=None,
+                        latest_run_at=None,
+                    )
+                )
+        return rows
+
     def add_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None:
         self.thesis_revisions[record.draft_id] = replace(record)
 
@@ -191,15 +400,22 @@ class FakeAssetRepo:
         return 0
 
     def sync_document_visibility(self, document_id: str, visibility_label: str) -> None:
-        return None
+        record = self.catalog_documents.get(document_id)
+        if record is not None:
+            self.catalog_documents[document_id] = replace(record, visibility_label=visibility_label)
 
     def remove_document_from_index(self, document_id: str) -> None:
         return None
 
     def tombstone_revisions(self, document_id: str, tombstoned_at) -> None:
         for revision_id, record in list(self.revisions.items()):
-            if record.canonical_document_id == document_id:
+            if (record.canonical_document_id or record.document_id) == document_id:
                 self.revisions[revision_id] = replace(record, tombstoned_at=tombstoned_at)
+
+    def restore_revisions(self, document_id: str) -> None:
+        for revision_id, record in list(self.revisions.items()):
+            if (record.canonical_document_id or record.document_id) == document_id:
+                self.revisions[revision_id] = replace(record, tombstoned_at=None)
 
     def search_segments(self, *, query: str, visibility_labels: tuple[str, ...], limit: int):
         return []
@@ -311,6 +527,8 @@ class FakeSecurityRepo:
             or needle in item.security_id.lower()
             or needle in item.name.lower()
             or needle in (item.ticker or "").lower()
+            or needle in (item.industry or "").lower()
+            or any(needle in alias.lower() for alias in item.aliases)
         ]
         return [replace(item) for item in sorted(rows, key=lambda item: item.security_id)[:limit]]
 
@@ -334,6 +552,30 @@ class FakeEventRepo:
         if record.event_id not in self.items:
             raise LookupError(record.event_id)
         self.items[record.event_id] = replace(record)
+
+    def search(
+        self,
+        keyword: str,
+        *,
+        visibility_labels: tuple[str, ...],
+        published_to=None,
+        limit: int = 20,
+    ) -> list[EventRecord]:
+        if not visibility_labels:
+            return []
+        needle = keyword.lower()
+        rows = [
+            item
+            for item in self.items.values()
+            if (
+                needle in item.summary.lower()
+                or needle in item.event_type.lower()
+                or needle in (item.security_id or "").lower()
+            )
+            and (published_to is None or item.disclosure_time <= published_to)
+        ]
+        rows.sort(key=lambda item: item.disclosure_time, reverse=True)
+        return [replace(item) for item in rows[:limit]]
 
 
 class FakeThesisRepo:
@@ -631,6 +873,183 @@ class FakeReviewTaskRepo:
         ]
         return matching[:limit]
 
+    def list_for_thesis(self, thesis_id: str, *, limit: int = 100) -> list[ReviewTaskRecord]:
+        return [
+            replace(record)
+            for record in reversed(list(self.items.values()))
+            if record.thesis_id == thesis_id
+        ][:limit]
+
+
+class FakeRetrospectiveRepo:
+    def __init__(self) -> None:
+        self.items: dict[str, RetrospectiveRecord] = {}
+        self.sources: dict[str, list[RetrospectiveSourceRecord]] = {}
+        self.versions: dict[str, list[RetrospectiveVersionRecord]] = {}
+
+    @staticmethod
+    def _copy(record: RetrospectiveRecord) -> RetrospectiveRecord:
+        return replace(
+            record,
+            draft_content=deepcopy(record.draft_content),
+            ai_candidate=deepcopy(record.ai_candidate),
+        )
+
+    def add(self, record: RetrospectiveRecord) -> RetrospectiveRecord:
+        self.items[record.retrospective_id] = self._copy(record)
+        return self._copy(record)
+
+    def get(self, retrospective_id: str) -> RetrospectiveRecord | None:
+        item = self.items.get(retrospective_id)
+        return None if item is None else self._copy(item)
+
+    def update(self, record: RetrospectiveRecord, *, expected_lock_version: int) -> None:
+        current = self.items.get(record.retrospective_id)
+        if current is None or current.lock_version != expected_lock_version:
+            raise RuntimeError("retrospective_lock_conflict")
+        self.items[record.retrospective_id] = self._copy(record)
+
+    def find_active(
+        self,
+        *,
+        thesis_id: str,
+        retrospective_type: str,
+        period_start,
+        period_end,
+    ) -> RetrospectiveRecord | None:
+        item = next(
+            (
+                row
+                for row in self.items.values()
+                if row.thesis_id == thesis_id
+                and row.retrospective_type == retrospective_type
+                and row.period_start == period_start
+                and row.period_end == period_end
+                and row.state != "已归档"
+            ),
+            None,
+        )
+        return None if item is None else self._copy(item)
+
+    def search_visible(
+        self,
+        *,
+        actor_id: str,
+        teams: tuple[str, ...],
+        query: RetrospectiveQuery,
+    ) -> tuple[list[RetrospectiveRecord], int]:
+        rows = [
+            item
+            for item in self.items.values()
+            if item.owner == actor_id
+            or item.reviewer == actor_id
+            or (
+                item.state in {"已发布", "已归档"}
+                and item.visibility == "团队"
+                and item.team in teams
+            )
+        ]
+        if query.query:
+            needle = query.query.lower()
+            rows = [item for item in rows if needle in item.title.lower()]
+        if query.state:
+            rows = [item for item in rows if item.state == query.state]
+        if query.retrospective_type:
+            rows = [item for item in rows if item.retrospective_type == query.retrospective_type]
+        if query.owner:
+            rows = [item for item in rows if item.owner == query.owner]
+        if query.reviewer:
+            rows = [item for item in rows if item.reviewer == query.reviewer]
+        if query.completeness_min is not None:
+            rows = [item for item in rows if item.completeness_score >= query.completeness_min]
+        if query.completeness_max is not None:
+            rows = [item for item in rows if item.completeness_score <= query.completeness_max]
+        if query.period_start:
+            rows = [item for item in rows if item.period_end >= query.period_start]
+        if query.period_end:
+            rows = [item for item in rows if item.period_start <= query.period_end]
+        if query.published_start:
+            rows = [
+                item
+                for item in rows
+                if item.published_at and item.published_at.date() >= query.published_start
+            ]
+        if query.published_end:
+            rows = [
+                item
+                for item in rows
+                if item.published_at and item.published_at.date() <= query.published_end
+            ]
+        if query.has_strong_conflict is not None:
+            rows = [
+                item
+                for item in rows
+                if any(
+                    source.source_type == "confirmed_evidence"
+                    and source.direction == "冲突"
+                    and source.strength == "高"
+                    for source in self.sources.get(item.retrospective_id, [])
+                )
+                is query.has_strong_conflict
+            ]
+        if query.hypothesis_result:
+            rows = [
+                item
+                for item in rows
+                if f'"result": "{query.hypothesis_result}"'
+                in json.dumps(
+                    (
+                        self.versions[item.retrospective_id][-1].content
+                        if self.versions.get(item.retrospective_id)
+                        else item.draft_content
+                    ),
+                    ensure_ascii=False,
+                )
+            ]
+        reverse = query.direction != "asc"
+        rows.sort(
+            key=lambda item: (
+                getattr(item, query.sort, None)
+                or item.updated_at
+                or item.created_at
+                or datetime.min,
+                item.retrospective_id,
+            ),
+            reverse=reverse,
+        )
+        total = len(rows)
+        return [self._copy(item) for item in rows[query.offset : query.offset + query.limit]], total
+
+    def add_sources(self, records: list[RetrospectiveSourceRecord]) -> None:
+        for item in records:
+            self.sources.setdefault(item.retrospective_id, []).append(
+                replace(item, metadata=deepcopy(item.metadata))
+            )
+
+    def list_sources(self, retrospective_id: str) -> list[RetrospectiveSourceRecord]:
+        return [
+            replace(item, metadata=deepcopy(item.metadata))
+            for item in self.sources.get(retrospective_id, [])
+        ]
+
+    def add_version(self, record: RetrospectiveVersionRecord) -> None:
+        self.versions.setdefault(record.retrospective_id, []).append(
+            replace(record, content=deepcopy(record.content))
+        )
+
+    def get_version(self, retrospective_id: str, version: int) -> RetrospectiveVersionRecord | None:
+        item = next(
+            (row for row in self.versions.get(retrospective_id, []) if row.version == version),
+            None,
+        )
+        return None if item is None else replace(item, content=deepcopy(item.content))
+
+    def list_versions(self, retrospective_id: str) -> list[RetrospectiveVersionRecord]:
+        return [
+            replace(item, content=deepcopy(item.content))
+            for item in reversed(self.versions.get(retrospective_id, []))
+        ]
+
 
 class FakeDocumentProcessingJobRepo:
     def __init__(self) -> None:
@@ -745,6 +1164,14 @@ class FakeDocumentRepo:
             raise LookupError(document_id)
         self.items[document_id] = replace(record, visibility_label="已删除", deleted_at=deleted_at)
 
+    def restore(self, document_id: str, visibility_label: str) -> None:
+        record = self.items.get(document_id)
+        if record is None:
+            raise LookupError(document_id)
+        self.items[document_id] = replace(
+            record, visibility_label=visibility_label, deleted_at=None
+        )
+
 
 class FakeAdjudicationDecisionRepo:
     def __init__(self) -> None:
@@ -815,4 +1242,5 @@ def build_fake_uow(*, audit: FakeAuditRepo | None = None) -> UnitOfWork:
         assets=FakeAssetRepo(),
         ranking=FakeRankingPriorRepo(),
         quant=FakeQuantRepo(),
+        retrospectives=FakeRetrospectiveRepo(),
     )

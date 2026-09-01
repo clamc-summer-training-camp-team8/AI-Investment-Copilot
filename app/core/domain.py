@@ -308,6 +308,7 @@ class VersionRecord:
     data_cutoff_at: datetime | None = None
     rule_version: str | None = None
     model_versions: list[str] = field(default_factory=list)
+    created_at: datetime | None = None
 
 
 @dataclass
@@ -355,6 +356,104 @@ class ReviewTaskRecord:
     resolution: str | None = None
     created_at: datetime | None = None
     resolved_at: datetime | None = None
+
+
+@dataclass
+class RetrospectiveRecord:
+    """可编辑的复盘主对象；已发布正文保存在不可变版本中。"""
+
+    retrospective_id: str
+    thesis_id: str
+    retrospective_type: str
+    title: str
+    period_start: date
+    period_end: date
+    data_cutoff_at: datetime
+    owner: str
+    visibility: str
+    team: str | None
+    source_fingerprint: str
+    source_count: int
+    completeness_completed: int
+    completeness_applicable: int
+    completeness_score: Decimal
+    draft_content: dict[str, object]
+    state: str = "草稿"
+    reviewer: str | None = None
+    ai_candidate: dict[str, object] | None = None
+    ai_run_id: str | None = None
+    ai_model_version: str | None = None
+    ai_prompt_version: str | None = None
+    ai_schema_version: str | None = None
+    current_version: int = 0
+    lock_version: int = 1
+    submitted_at: datetime | None = None
+    published_at: datetime | None = None
+    archived_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RetrospectiveSourceRecord:
+    """创建或修订时冻结的来源白名单；只追加，不更新。"""
+
+    source_id: str
+    retrospective_id: str
+    source_type: str
+    object_id: str
+    summary: str
+    object_version: str | None = None
+    locator: str | None = None
+    content_hash: str | None = None
+    direction: str | None = None
+    strength: str | None = None
+    hypothesis_id: str | None = None
+    disclosed_at: datetime | None = None
+    confirmed_at: datetime | None = None
+    visibility_label: str = "内部"
+    metadata: dict[str, object] = field(default_factory=dict)
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RetrospectiveVersionRecord:
+    """人工发布的不可变复盘版本。"""
+
+    retrospective_id: str
+    version: int
+    content: dict[str, object]
+    source_fingerprint: str
+    published_by: str
+    publish_reason: str
+    ai_run_id: str | None = None
+    model_version: str | None = None
+    prompt_version: str | None = None
+    schema_version: str | None = None
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RetrospectiveQuery:
+    query: str | None = None
+    state: str | None = None
+    retrospective_type: str | None = None
+    owner: str | None = None
+    reviewer: str | None = None
+    security_id: str | None = None
+    industry: str | None = None
+    hypothesis_result: str | None = None
+    has_strong_conflict: bool | None = None
+    completeness_min: Decimal | None = None
+    completeness_max: Decimal | None = None
+    period_start: date | None = None
+    period_end: date | None = None
+    published_start: date | None = None
+    published_end: date | None = None
+    sort: str = "updated_at"
+    direction: str = "desc"
+    limit: int = 20
+    offset: int = 0
 
 
 @dataclass
@@ -509,6 +608,70 @@ class AssetSearchHitRecord:
     published_at: datetime | None = None
     source: str = ""
     content_status: str = "待核验"
+    content_kind: str = "paragraph"
+
+
+@dataclass(frozen=True)
+class AssetDocumentRecord:
+    document_id: str
+    title: str
+    source_id: str | None
+    source_name: str
+    doc_type: str | None
+    published_at: datetime
+    ingested_at: datetime | None
+    content_status: str
+    visibility_label: str
+    is_illustrative: bool
+    deleted_at: datetime | None
+    archived: bool
+    authorization_status: str
+    revision_count: int
+    segment_count: int
+    latest_run_status: str | None
+    latest_run_at: datetime | None
+    security_ids: tuple[str, ...] = ()
+    security_names: tuple[str, ...] = ()
+    industries: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AssetRunCatalogRecord:
+    run_id: str
+    revision_id: str
+    document_id: str
+    document_title: str
+    source_filename: str
+    parser_version: str
+    chunker_version: str
+    extractor_version: str
+    embedding_version: str | None
+    status: str
+    segment_count: int
+    fact_count: int
+    event_count: int
+    quality_summary: dict[str, object]
+    error: str | None
+    started_at: datetime | None
+    finished_at: datetime | None
+    created_at: datetime | None
+
+
+@dataclass(frozen=True)
+class AssetSourceCatalogRecord:
+    source_id: str
+    name: str
+    source_type: str
+    authorization_status: str
+    license_note: str | None
+    authorization_basis: str | None
+    authorization_verified_by: str | None
+    authorization_verified_at: datetime | None
+    active: bool
+    document_count: int
+    latest_run_status: str | None
+    latest_run_at: datetime | None
+    base_host: str | None = None
 
 
 @dataclass(frozen=True)
@@ -700,6 +863,50 @@ class AssetRepo(Protocol):
         records: list[IngestionArtifactRecord],
     ) -> None: ...
     def inventory(self) -> dict[str, int]: ...
+    def catalog_overview(self, *, visibility_labels: tuple[str, ...]) -> dict[str, int]: ...
+    def list_documents(
+        self,
+        *,
+        visibility_labels: tuple[str, ...],
+        query: str | None,
+        content_status: str | None,
+        source_id: str | None,
+        doc_type: str | None,
+        security_id: str | None,
+        industry: str | None,
+        authorization_status: str | None,
+        archived: bool | None,
+        run_status: str | None,
+        visibility_label: str | None,
+        published_from: datetime | None,
+        published_to: datetime | None,
+        include_deleted: bool,
+        sort: str,
+        direction: str,
+        limit: int,
+        offset: int,
+    ) -> tuple[list[AssetDocumentRecord], int]: ...
+    def get_document_catalog(
+        self,
+        document_id: str,
+        *,
+        visibility_labels: tuple[str, ...],
+        include_deleted: bool = False,
+    ) -> AssetDocumentRecord | None: ...
+    def list_document_revisions(self, document_id: str) -> list[DocumentRevisionRecord]: ...
+    def list_document_runs(self, document_id: str) -> list[AssetRunCatalogRecord]: ...
+    def list_ingestion_runs(
+        self,
+        *,
+        visibility_labels: tuple[str, ...],
+        status: str | None,
+        document_id: str | None,
+        limit: int,
+        offset: int,
+    ) -> tuple[list[AssetRunCatalogRecord], int]: ...
+    def list_sources(
+        self, *, visibility_labels: tuple[str, ...]
+    ) -> list[AssetSourceCatalogRecord]: ...
     def add_thesis_revision(self, record: ThesisRevisionDraftRecord) -> None: ...
     def get_thesis_revision(self, draft_id: str) -> ThesisRevisionDraftRecord | None: ...
     def active_thesis_revision(self, thesis_id: str) -> ThesisRevisionDraftRecord | None: ...
@@ -708,6 +915,7 @@ class AssetRepo(Protocol):
     def sync_document_visibility(self, document_id: str, visibility_label: str) -> None: ...
     def remove_document_from_index(self, document_id: str) -> None: ...
     def tombstone_revisions(self, document_id: str, tombstoned_at: datetime) -> None: ...
+    def restore_revisions(self, document_id: str) -> None: ...
     def search_segments(
         self, *, query: str, visibility_labels: tuple[str, ...], limit: int
     ) -> list[AssetSearchHitRecord]: ...
@@ -737,6 +945,14 @@ class EventRepo(Protocol):
     def find_by_fingerprint(self, fingerprint: str) -> EventRecord | None: ...
     def add(self, record: EventRecord) -> None: ...
     def update(self, record: EventRecord) -> None: ...
+    def search(
+        self,
+        keyword: str,
+        *,
+        visibility_labels: tuple[str, ...],
+        published_to: datetime | None = None,
+        limit: int = 20,
+    ) -> list[EventRecord]: ...
 
 
 class ThesisRepo(Protocol):
@@ -828,6 +1044,35 @@ class ReviewTaskRepo(Protocol):
     def list_for_assignee(
         self, assignee: str, *, state: str | None = None, limit: int = 100
     ) -> list[ReviewTaskRecord]: ...
+    def list_for_thesis(self, thesis_id: str, *, limit: int = 100) -> list[ReviewTaskRecord]: ...
+
+
+class RetrospectiveRepo(Protocol):
+    def add(self, record: RetrospectiveRecord) -> RetrospectiveRecord: ...
+    def get(self, retrospective_id: str) -> RetrospectiveRecord | None: ...
+    def update(self, record: RetrospectiveRecord, *, expected_lock_version: int) -> None: ...
+    def find_active(
+        self,
+        *,
+        thesis_id: str,
+        retrospective_type: str,
+        period_start: date,
+        period_end: date,
+    ) -> RetrospectiveRecord | None: ...
+    def search_visible(
+        self,
+        *,
+        actor_id: str,
+        teams: tuple[str, ...],
+        query: RetrospectiveQuery,
+    ) -> tuple[list[RetrospectiveRecord], int]: ...
+    def add_sources(self, records: list[RetrospectiveSourceRecord]) -> None: ...
+    def list_sources(self, retrospective_id: str) -> list[RetrospectiveSourceRecord]: ...
+    def add_version(self, record: RetrospectiveVersionRecord) -> None: ...
+    def get_version(
+        self, retrospective_id: str, version: int
+    ) -> RetrospectiveVersionRecord | None: ...
+    def list_versions(self, retrospective_id: str) -> list[RetrospectiveVersionRecord]: ...
 
 
 class DocumentProcessingJobRepo(Protocol):
@@ -867,6 +1112,7 @@ class DocumentRepo(Protocol):
     def update_security(self, document_id: str, security_id: str) -> None: ...
     def update_visibility(self, document_id: str, visibility_label: str) -> None: ...
     def mark_deleted(self, document_id: str, deleted_at: datetime) -> None: ...
+    def restore(self, document_id: str, visibility_label: str) -> None: ...
     def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]: ...
     def list_facts(self, document_id: str) -> list[DocumentFactRecord]: ...
 
@@ -965,3 +1211,4 @@ class UnitOfWork:
     assets: AssetRepo
     ranking: RankingPriorRepo
     quant: QuantRepo
+    retrospectives: RetrospectiveRepo

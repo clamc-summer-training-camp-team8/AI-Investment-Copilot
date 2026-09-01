@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-investment-copilot/contracts/ai/retrospective_draft.schema.json",
+  "title": "RetrospectiveDraftCandidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "retrospective_id", "thesis_id", "summary", "original_judgement",
+    "key_changes", "hypothesis_candidates", "correct_judgements",
+    "errors_and_omissions", "balanced_evidence", "open_questions",
+    "limitations", "next_actions", "citations", "requires_human_review",
+    "confidence", "model_version", "prompt_version", "generated_at", "ai_status"
+  ],
+  "properties": {
+    "retrospective_id": {"type": "string", "minLength": 1},
+    "thesis_id": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "original_judgement": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "key_changes": {"type": "array", "maxItems": 30, "items": {"type": "string", "maxLength": 1000}},
+    "hypothesis_candidates": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["hypothesis_id", "suggested_result", "rationale", "source_ids"],
+        "properties": {
+          "hypothesis_id": {"type": "string", "minLength": 1},
+          "suggested_result": {"type": "string", "enum": ["成立", "部分成立", "不成立", "证据不足", "尚未到期"]},
+          "rationale": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^RCS-[a-f0-9]{24}$"}}
+        }
+      }
+    },
+    "correct_judgements": {"type": "array", "maxItems": 30, "items": {"type": "string", "maxLength": 1000}},
+    "errors_and_omissions": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "balanced_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supporting_source_ids", "conflicting_source_ids"],
+      "properties": {
+        "supporting_source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^RCS-[a-f0-9]{24}$"}},
+        "conflicting_source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^RCS-[a-f0-9]{24}$"}}
+      }
+    },
+    "open_questions": {"type": "array", "maxItems": 30, "items": {"type": "string", "maxLength": 1000}},
+    "limitations": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "next_actions": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "citations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^RCS-[a-f0-9]{24}$"}},
+    "requires_human_review": {"type": "boolean", "const": true},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"type": "string", "enum": ["候选", "低置信", "解析失败"]}
+  }
+}

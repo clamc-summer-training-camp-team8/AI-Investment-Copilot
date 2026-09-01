@@ -20,8 +20,10 @@ from app.ai.prompts.templates import (
     EVENT_EXTRACTION,
     EVENT_IMPACT,
     HYPOTHESIS_QUALITY,
+    KNOWLEDGE_ANSWER,
     METRIC_EXPLAIN,
     METRIC_RECOMMEND,
+    RETROSPECTIVE_DRAFT,
     REVIEW_DRAFT,
     THESIS_DRAFT,
 )
@@ -500,6 +502,40 @@ class HttpProvider:
         payload.setdefault("requires_human_review", True)
         return self._metadata(payload, prompt_version=REVIEW_DRAFT.version)
 
+    def draft_retrospective(
+        self,
+        *,
+        retrospective_id: str,
+        thesis_id: str,
+        period_start: str,
+        period_end: str,
+        data_cutoff_at: str,
+        original_judgement: str,
+        hypotheses: list[dict[str, Any]],
+        sources: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        prompt = RETROSPECTIVE_DRAFT.render(
+            retrospective_id=retrospective_id,
+            thesis_id=thesis_id,
+            original_judgement=original_judgement,
+            period_start=period_start,
+            period_end=period_end,
+            data_cutoff_at=data_cutoff_at,
+            hypotheses=json.dumps(hypotheses, ensure_ascii=False, sort_keys=True),
+            sources=json.dumps(sources, ensure_ascii=False, sort_keys=True),
+        )
+        payload = self._complete(
+            system=RETROSPECTIVE_DRAFT.system,
+            prompt=prompt,
+            schema_name="retrospective_draft",
+            repair_errors=repair_errors,
+        )
+        payload.setdefault("retrospective_id", retrospective_id)
+        payload.setdefault("thesis_id", thesis_id)
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=RETROSPECTIVE_DRAFT.version)
+
     def hypothesis_quality(
         self,
         *,
@@ -526,6 +562,31 @@ class HttpProvider:
         payload.setdefault("requires_human_review", True)
         return self._metadata(payload, prompt_version=HYPOTHESIS_QUALITY.version)
 
+    def answer_knowledge(
+        self,
+        *,
+        question: str,
+        context: dict[str, Any],
+        history: list[dict[str, str]],
+        contexts: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        prompt = KNOWLEDGE_ANSWER.render(
+            question=question,
+            context=json.dumps(context, ensure_ascii=False, sort_keys=True),
+            history=json.dumps(history, ensure_ascii=False),
+            contexts=json.dumps(contexts, ensure_ascii=False, sort_keys=True),
+        )
+        payload = self._complete(
+            system=KNOWLEDGE_ANSWER.system,
+            prompt=prompt,
+            schema_name="knowledge_answer",
+            repair_errors=repair_errors,
+            timeout_seconds=self._settings.knowledge_qa_timeout_seconds,
+        )
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=KNOWLEDGE_ANSWER.version)
+
     def _complete(
         self,
         *,
@@ -533,6 +594,7 @@ class HttpProvider:
         prompt: str,
         schema_name: str,
         repair_errors: list[str] | None = None,
+        timeout_seconds: float | None = None,
     ) -> dict[str, Any]:
         self._last_model_metadata = {}
         started_at = time.perf_counter()
@@ -552,11 +614,12 @@ class HttpProvider:
                     self._endpoint,
                     headers=headers,
                     json=request,
+                    timeout=timeout_seconds or self._settings.llm_timeout_seconds,
                 )
             except httpx.TimeoutException as exc:
                 if attempt >= self._settings.llm_max_retries:
                     raise ModelUnavailable(
-                        f"模型请求超过 {self._settings.llm_timeout_seconds:g} 秒",
+                        f"模型请求超过 {timeout_seconds or self._settings.llm_timeout_seconds:g} 秒",
                         retryable=False,
                     ) from exc
                 time.sleep(min(0.2 * (2**attempt), 1.0))

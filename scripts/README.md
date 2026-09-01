@@ -96,6 +96,29 @@ python -m scripts.asset_inventory
 允许来源、授权依据和遗留本地文件逐字节哈希映射在 `governance/source-policies.json`。下载失败、
 非 PDF、越过授权域名、超限或哈希不符均追加失败运行；修正外部状态后直接重跑，不得删除失败记录。
 
+已归档且授权核验通过的标题索引，可用独立的可恢复任务提升为完整正文：
+
+```powershell
+python -m scripts.backfill_title_index_fulltext --dry-run --limit 20
+python -m scripts.backfill_title_index_fulltext --workers 3 --batch-size 12 `
+  --report .runtime/governance/title-index-fulltext.json
+```
+
+任务按文档独立提交事务并自动跳过已提升文档。原有标题片段及其 locator 永久保留，新增正文从
+当前最大 ordinal 之后开始；每次成功运行同时写入正文片段、确定性事实、全文索引、审计记录和
+“证券主体→当前投资逻辑”运行级关联。该关联不等同于证据—假设判断，脚本不会自动创建或确认
+正式投资证据。扫描 PDF 默认使用 PDFium + RapidOCR，异常格式页自动降级到 Poppler 多级渲染。
+
+若回填报告确认正文与既有完整文档重复，先用只读模式核验归并条件，再执行受控归并：
+
+```powershell
+python -m scripts.merge_duplicate_title_documents <标题索引文档ID> <完整正文文档ID> --dry-run
+python -m scripts.merge_duplicate_title_documents <标题索引文档ID> <完整正文文档ID>
+```
+
+归并要求双方存在字节一致的活动归档原件，并且失败摄取运行已记录目标重复文档；旧文档只做
+软删除，事件、证据定位、证券关系和当前投资逻辑血缘会转移到完整正文。
+
 ### P2.1 AKShare 主行情与 Tushare 可选补充
 
 行情构建使用独立最小依赖，建议安装在单独虚拟环境；在线 API 不安装或调用数据供应商 SDK：

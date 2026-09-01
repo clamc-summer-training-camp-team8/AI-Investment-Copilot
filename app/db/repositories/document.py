@@ -130,6 +130,14 @@ class SqlDocumentRepo:
         row.visibility_label = "已删除"
         self._session.flush()
 
+    def restore(self, document_id: str, visibility_label: str) -> None:
+        row = self._session.get(Document, document_id)
+        if row is None:
+            raise LookupError(document_id)
+        row.deleted_at = None
+        row.visibility_label = visibility_label
+        self._session.flush()
+
     def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]:
         rows = self._session.scalars(
             select(DocumentSegment)

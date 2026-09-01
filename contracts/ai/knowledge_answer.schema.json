@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-investment-copilot/contracts/ai/knowledge_answer.schema.json",
+  "title": "KnowledgeAnswer",
+  "type": "object",
+  "required": ["answer_status", "answer", "inferences", "citations", "requires_human_review", "model_version", "prompt_version", "generated_at", "ai_status"],
+  "additionalProperties": false,
+  "properties": {
+    "answer_status": {"type": "string", "enum": ["supported", "partial", "insufficient_evidence"]},
+    "answer": {"type": "string", "minLength": 1, "maxLength": 6000},
+    "inferences": {"type": "array", "maxItems": 10, "items": {"type": "string", "minLength": 1, "maxLength": 500}},
+    "citations": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+#paragraph-[0-9]+$"}},
+    "requires_human_review": {"type": "boolean", "const": true},
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"type": "string", "enum": ["候选", "低置信", "解析失败"]}
+  }
+}

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from sqlalchemy import or_, select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.domain import EventRecord, SecurityRecord
-from app.db.models.core import Event, Security
+from app.db.models.core import Document, Event, Security
 
 
 def _security(row: Security) -> SecurityRecord:
@@ -66,6 +66,8 @@ class SqlSecurityRepo:
                     Security.security_id.ilike(pattern),
                     Security.name.ilike(pattern),
                     Security.ticker.ilike(pattern),
+                    func.coalesce(Security.industry, "").ilike(pattern),
+                    cast(Security.aliases, String).ilike(pattern),
                 )
             )
         rows = self._session.scalars(statement.order_by(Security.security_id).limit(limit)).all()
@@ -108,3 +110,34 @@ class SqlEventRepo:
             raise LookupError(f"event {record.event_id} 不存在")
         row.source_document_ids = record.source_document_ids
         self._session.flush()
+
+    def search(
+        self,
+        keyword: str,
+        *,
+        visibility_labels: tuple[str, ...],
+        published_to=None,
+        limit: int = 20,
+    ) -> list[EventRecord]:
+        if not keyword.strip() or not visibility_labels:
+            return []
+        pattern = f"%{keyword.strip()}%"
+        statement = (
+            select(Event)
+            .join(Document, Document.document_id == Event.document_id)
+            .where(
+                Document.deleted_at.is_(None),
+                Document.visibility_label.in_(visibility_labels),
+                or_(
+                    Event.summary.ilike(pattern),
+                    Event.event_type.ilike(pattern),
+                    Event.security_id.ilike(pattern),
+                ),
+            )
+        )
+        if published_to is not None:
+            statement = statement.where(Event.disclosure_time <= published_to)
+        rows = self._session.scalars(
+            statement.order_by(Event.disclosure_time.desc(), Event.event_id).limit(limit)
+        ).all()
+        return [_event(row) for row in rows]

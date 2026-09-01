@@ -374,6 +374,175 @@ export interface AssetSearchHit {
   contentStatus: string
 }
 
+export interface DataCenterRun {
+  runId: string
+  revisionId: string
+  documentId: string
+  documentTitle: string
+  sourceFilename: string
+  parserVersion: string
+  chunkerVersion: string
+  extractorVersion: string
+  embeddingVersion?: string
+  status: string
+  segmentCount: number
+  factCount: number
+  eventCount: number
+  qualitySummary: Record<string, unknown>
+  error?: string
+  startedAt?: string
+  finishedAt?: string
+  createdAt?: string
+}
+
+export interface DataCenterOverview {
+  documents: number
+  archivedDocuments: number
+  missingArchiveDocuments: number
+  authorizationVerifiedDocuments: number
+  pendingAuthorizationDocuments: number
+  titleIndexDocuments: number
+  fullTextDocuments: number
+  recentSucceededRuns: number
+  recentFailedRuns: number
+  marketDatasetCount: number
+  signalSetCount: number
+  defaultMarketDatasetId?: string
+  defaultMarketDataVersion?: string
+  defaultMarketCoverageEnd?: string
+  attention: Array<{ code: string; label: string; count: number; severity: string; target: string }>
+  recentRuns: DataCenterRun[]
+  asOf: string
+}
+
+export interface DataCenterDocument {
+  documentId: string
+  title: string
+  sourceId?: string
+  sourceName: string
+  docType?: string
+  publishedAt: string
+  ingestedAt?: string
+  contentStatus: string
+  visibilityLabel: string
+  isIllustrative: boolean
+  deletedAt?: string
+  archived: boolean
+  authorizationStatus: string
+  revisionCount: number
+  segmentCount: number
+  latestRunStatus?: string
+  latestRunAt?: string
+  securityIds: string[]
+  securityNames: string[]
+  industries: string[]
+}
+
+export interface DataCenterRevision {
+  revisionId: string
+  contentHash: string
+  sourceFilename: string
+  hasObject: boolean
+  objectVersionId?: string
+  mediaType?: string
+  byteSize?: number
+  sourceId?: string
+  sourceHost?: string
+  authorizationStatus: string
+  authorizationBasis?: string
+  authorizationVerifiedBy?: string
+  authorizationVerifiedAt?: string
+  contentStatus: string
+  uploadedBy: string
+  publishedAt?: string
+  createdAt?: string
+  tombstonedAt?: string
+}
+
+export interface DataCenterDocumentDetail extends DataCenterDocument {
+  allowedActions: string[]
+  revisions: DataCenterRevision[]
+  runs: DataCenterRun[]
+}
+
+export interface DataCenterDocumentPage {
+  items: DataCenterDocument[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface DataCenterSource {
+  sourceId: string
+  name: string
+  sourceType: string
+  authorizationStatus: string
+  licenseNote?: string
+  authorizationBasis?: string
+  authorizationVerifiedBy?: string
+  authorizationVerifiedAt?: string
+  active: boolean
+  documentCount: number
+  latestRunStatus?: string
+  latestRunAt?: string
+  baseHost?: string
+}
+
+export type GlobalSearchType = 'security' | 'industry' | 'thesis' | 'event' | 'document'
+export type GlobalSearchTargetKind = 'security' | 'industry' | 'thesis' | 'event' | 'document_segment'
+
+export interface GlobalSearchItem {
+  id: string
+  title: string
+  subtitle: string
+  excerpt?: string
+  matchKind: string
+  target: { kind: GlobalSearchTargetKind; id: string }
+  contentStatus?: string
+  contentKind?: string
+  retrievalMode?: string
+  publishedAt?: string
+}
+
+export interface GlobalSearchResult {
+  query: string
+  groups: Array<{ type: GlobalSearchType; items: GlobalSearchItem[] }>
+  requestId: string
+}
+
+export interface KnowledgeAnswerRequest {
+  question: string
+  context?: { thesisId?: string; securityId?: string; asOf?: string }
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
+}
+
+export interface AnswerCitation {
+  ref: string
+  locator: string
+  documentId: string
+  title: string
+  excerpt: string
+  publishedAt?: string
+  contentStatus: string
+  contentKind: string
+  retrievalMode: string
+}
+
+export interface KnowledgeAnswer {
+  answerId: string
+  answerStatus: 'supported' | 'partial' | 'insufficient_evidence'
+  aiStatus: string
+  answer: string
+  inferences: string[]
+  citations: AnswerCitation[]
+  modelVersion: string
+  promptVersion: string
+  retrievalVersion: string
+  graphSnapshotId?: string
+  generatedAt: string
+  requestId: string
+}
+
 export interface ThesisRevision {
   draftId: string
   thesisId: string
@@ -486,6 +655,18 @@ export interface QuantMarketDataset {
   capabilities: Record<string, boolean>
   limitations: string[]
   status: string
+}
+
+export interface QuantMarketDatasetDetail extends QuantMarketDataset {
+  isDefault: boolean
+  manifestVerified: boolean
+  assets: Array<{ name: string; path: string; sha256: string; byteSize?: number; verified: boolean }>
+  sourcePriority: string[]
+  authorizationScope?: string
+  timezone: string
+  adjustmentAnchorDate?: string
+  availableSignalSets: QuantSignalSet[]
+  backtestCount: number
 }
 
 export interface QuantSignalSet {

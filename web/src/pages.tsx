@@ -293,7 +293,7 @@ export function ThesisPage() {
     return <><PageTitle eyebrow={`${item.securityId} · 草稿`} title={item.title} description={item.coreView} /><DraftQualitySection thesis={item} onCheck={() => qualityCheck.mutate()} checking={qualityCheck.isPending} checked={qualityCheck.isSuccess} error={qualityCheck.error} /><DraftPublishWorkspace thesis={item} /></>
   }
   return <>
-    <PageTitle eyebrow={`${item.securityId} · V${item.version}`} title={item.title} description={item.coreView} actions={<NavLink className="button secondary" to={`/radar?thesisId=${encodeURIComponent(thesisId)}`}>查看变化雷达</NavLink>} />
+    <PageTitle eyebrow={`${item.securityId} · V${item.version}`} title={item.title} description={item.coreView} actions={<><NavLink className="button secondary" to={`/radar?thesisId=${encodeURIComponent(thesisId)}`}>查看变化雷达</NavLink><NavLink className="button primary" to={`/retrospective/new?thesisId=${encodeURIComponent(thesisId)}`}>发起复盘</NavLink></>} />
     <StageBar status={item.status} />
     <section className="logic-overview"><div><span>当前结论</span><strong>{item.direction}</strong><small>{item.status}</small></div><div><span>支持证据</span><strong className="positive">{counts.support}</strong><small>人工已确认</small></div><div><span>冲突证据</span><strong className="negative">{counts.conflict}</strong><small>人工已确认</small></div><div><span>待核验</span><strong>{counts.pending}</strong><small>需要研究员处理</small></div><div><span>下次复核</span><strong className="date-value">{formatDate(item.nextReviewAt)}</strong><small>负责人 {item.owner}</small></div></section>
     {risk && <section className="risk-callout"><div><span className="risk-icon">!</span><div><strong>当前最大风险</strong><p>{risk.sourceDocumentTitle} · 影响“{risk.hypothesisStatement}”</p></div></div><NavLink to={`/radar/${risk.evidenceId}?thesisId=${thesisId}&relationId=${risk.relationId}`}>立即核验 →</NavLink></section>}
@@ -602,7 +602,7 @@ function ReviewTaskCard({ task }: { task: ReviewTask }) {
   const qc = useQueryClient()
   const [resolution, setResolution] = useState('')
   const mutation = useMutation({ mutationFn: () => resolveReviewTask(task.taskId, resolution), onSuccess: () => qc.invalidateQueries({ queryKey: ['review-tasks'] }) })
-  return <article className="review-card"><div className="review-header"><div><span className={`badge ${task.state === '待处理' ? 'priority-medium' : 'status-confirmed'}`}>{task.state}</span><h2>{task.trigger} · {task.thesisId}</h2></div><span className="muted">{task.priority}优先级</span></div>{task.detail && <p className="review-detail">{Object.entries(task.detail).map(([key, value]) => `${key}: ${String(value)}`).join(' · ')}</p>}{task.state === '待处理' ? <div className="review-decision"><textarea value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="填写复核结论（必填）" /><button className="button primary" disabled={resolution.trim().length < 2 || mutation.isPending} onClick={() => mutation.mutate()}>提交复核</button><InlineError error={mutation.error} /></div> : <p className="review-result"><strong>复核结论：</strong>{task.resolution}</p>}</article>
+  return <article className="review-card"><div className="review-header"><div><span className={`badge ${task.state === '待处理' ? 'priority-medium' : 'status-confirmed'}`}>{task.state}</span><h2>{task.trigger} · {task.thesisId}</h2></div><div className="button-row"><span className="muted">{task.priority}优先级</span><NavLink className="button secondary" to={`/retrospective/new?thesisId=${encodeURIComponent(task.thesisId)}`}>发起复盘</NavLink></div></div>{task.detail && <p className="review-detail">{Object.entries(task.detail).map(([key, value]) => `${key}: ${String(value)}`).join(' · ')}</p>}{task.state === '待处理' ? <div className="review-decision"><textarea value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="填写复核结论（必填）" /><button className="button primary" disabled={resolution.trim().length < 2 || mutation.isPending} onClick={() => mutation.mutate()}>提交复核</button><InlineError error={mutation.error} /></div> : <p className="review-result"><strong>复核结论：</strong>{task.resolution}</p>}</article>
 }
 
 function AdjudicationCard({ item }: { item: Adjudication }) {
@@ -657,9 +657,11 @@ function percent(value: number | undefined | null) {
 
 export function QuantPage() {
   const qc = useQueryClient()
+  const [quantParams] = useSearchParams()
+  const requestedDatasetId = quantParams.get('marketDatasetId') ?? ''
   const catalog = useQuery({ queryKey: ['quant-catalog'], queryFn: getQuantCatalog })
   const history = useQuery({ queryKey: ['quant-portfolio-history'], queryFn: listPortfolioBacktests })
-  const [datasetId, setDatasetId] = useState('')
+  const [datasetId, setDatasetId] = useState(requestedDatasetId)
   const [signalSetId, setSignalSetId] = useState('')
   const [securityText, setSecurityText] = useState('688981,603986,002371')
   const [rollingDays, setRollingDays] = useState(60)
@@ -674,9 +676,11 @@ export function QuantPage() {
   const dataset = catalog.data?.marketDatasets.find((item) => item.datasetId === datasetId) ?? configuredDefaultDataset ?? catalog.data?.marketDatasets[0]
   const signalSet = catalog.data?.signalSets.find((item) => item.signalSetId === signalSetId) ?? catalog.data?.signalSets[0]
   useEffect(() => {
-    if (!datasetId && dataset) setDatasetId(dataset.datasetId)
+    const requestedDataset = catalog.data?.marketDatasets.find((item) => item.datasetId === requestedDatasetId)
+    if (requestedDataset && datasetId !== requestedDataset.datasetId) setDatasetId(requestedDataset.datasetId)
+    else if (!datasetId && dataset) setDatasetId(dataset.datasetId)
     if (!signalSetId && catalog.data?.signalSets[0]) setSignalSetId(catalog.data.signalSets[0].signalSetId)
-  }, [catalog.data, dataset, datasetId, signalSetId])
+  }, [catalog.data, dataset, datasetId, requestedDatasetId, signalSetId])
   useEffect(() => {
     if (!run && history.data?.[0]) setRun(history.data[0])
   }, [history.data, run])

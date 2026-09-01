@@ -12,6 +12,7 @@ from app.schemas.quant import (
     QuantBacktestIn,
     QuantBacktestOut,
     QuantCatalogOut,
+    QuantMarketDatasetDetailOut,
     QuantMarketDatasetOut,
     QuantSignalSetOut,
 )
@@ -22,6 +23,7 @@ from app.services.quant import (
     QuantSignalInput,
     configured_default_market_dataset_id,
     freeze_signal_set,
+    market_dataset_detail,
     register_default_market_dataset,
     run_quant_backtest,
     run_versioned_portfolio_backtest,
@@ -90,6 +92,20 @@ def get_catalog(uow: UowDep, actor: ActorDep) -> QuantCatalogOut:
             QuantSignalSetOut.model_validate(item) for item in uow.quant.list_signal_sets()
         ],
     )
+
+
+@router.get("/market-datasets/{dataset_id}", response_model=QuantMarketDatasetDetailOut)
+def get_market_dataset_detail(
+    dataset_id: str, uow: UowDep, actor: ActorDep
+) -> QuantMarketDatasetDetailOut:
+    try:
+        result = market_dataset_detail(uow, dataset_id=dataset_id, requested_by=actor.user_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except MarketDataError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    record = QuantMarketDatasetOut.model_validate(result.pop("record"))
+    return QuantMarketDatasetDetailOut(**record.model_dump(), **result)
 
 
 @router.post("/signal-sets", response_model=QuantSignalSetOut)

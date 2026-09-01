@@ -19,7 +19,9 @@ _SKILL_KEYS = frozenset(
         "metric-explain",
         "metric-recommend",
         "review-draft",
+        "retrospective-draft",
         "hypothesis-quality",
+        "knowledge-answer",
     }
 )
 

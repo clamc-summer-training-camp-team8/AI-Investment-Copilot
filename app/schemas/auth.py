@@ -6,6 +6,10 @@ from pydantic import BaseModel, Field
 class AuthConfigOut(BaseModel):
     login_required: bool
     password_change_supported: bool
+    global_search_enabled: bool
+    knowledge_qa_enabled: bool
+    retrospective_center_enabled: bool
+    retrospective_ai_draft_enabled: bool
 
 
 class LoginIn(BaseModel):
