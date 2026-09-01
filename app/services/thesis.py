@@ -217,6 +217,89 @@ def update_hypothesis(
     return updated
 
 
+def create_hypothesis(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    statement: str,
+    hypothesis_type: str,
+    importance: Importance,
+    observation_window: str | None,
+    invalidation_rule: str | None,
+    actor: Actor,
+) -> HypothesisRecord:
+    thesis = uow.thesis.get(thesis_id)
+    if thesis is None:
+        raise NotVisible("投资逻辑不存在")
+    _ensure_current(thesis)
+    permission.ensure_thesis_visible(
+        actor,
+        thesis_id=thesis_id,
+        owner=thesis.owner,
+        visibility=thesis.visibility,
+        team=thesis.team,
+    )
+    if thesis.owner != actor.user_id:
+        raise HumanGateRequired("只有负责人可以新增假设")
+
+    normalized_statement = statement.strip()
+    if not normalized_statement:
+        raise ValidationFailed("假设内容不能为空")
+    current_hypotheses = uow.thesis.list_hypotheses(thesis_id)
+    if len(current_hypotheses) >= 5:
+        raise ValidationFailed("一条投资逻辑最多维护 5 条关键假设")
+
+    existing_ids = {item.hypothesis_id for item in current_hypotheses}
+    index = 1
+    while f"{thesis_id}-H{index}" in existing_ids:
+        index += 1
+    record = HypothesisRecord(
+        hypothesis_id=f"{thesis_id}-H{index}",
+        thesis_id=thesis_id,
+        statement=normalized_statement,
+        hypothesis_type=hypothesis_type.strip() or "其他",
+        importance=importance,
+        observation_window=(observation_window or "").strip() or None,
+        invalidation_rule=(invalidation_rule or "").strip() or None,
+    )
+    uow.thesis.add_hypothesis(record)
+
+    hypotheses = [*current_hypotheses, record]
+    mappings = [
+        mapping
+        for hypothesis in hypotheses
+        for mapping in uow.thesis.list_mappings(hypothesis.hypothesis_id)
+    ]
+    latest = uow.versions.latest(thesis_id)
+    next_version = max(thesis.version, latest.version if latest else thesis.version) + 1
+    updated = replace(thesis, version=next_version)
+    uow.thesis.update(updated)
+    evidence, cutoff, model_versions = version.evidence_snapshot(uow, thesis_id)
+    version.create(
+        uow.versions,
+        thesis=updated,
+        hypotheses=hypotheses,
+        mappings=mappings,
+        evidence=evidence,
+        data_cutoff_at=cutoff,
+        rule_version="maintenance-v1",
+        model_versions=model_versions,
+        triggered_by=version.TRIGGER_FIELD_EDIT,
+        created_by=actor.user_id,
+        change_reason="新增核心假设",
+        changed_fields=["hypotheses"],
+    )
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="新增假设",
+        object_type="thesis",
+        object_id=thesis_id,
+        detail={"hypothesis_id": record.hypothesis_id, "version": next_version},
+    )
+    return record
+
+
 def update_draft(
     uow: UnitOfWork,
     *,

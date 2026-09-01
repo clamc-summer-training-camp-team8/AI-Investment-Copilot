@@ -53,6 +53,7 @@ from app.schemas.thesis import (
     EvidenceRelationReviewIn,
     EvidenceRetrievalTraceOut,
     HypothesisOut,
+    HypothesisCreateIn,
     HypothesisTrendOut,
     HypothesisUpdateIn,
     MetricMappingIn,
@@ -198,6 +199,11 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
             )
             for h in hypotheses
         ],
+        catalyst_suggestions=(
+            suggestions.get("catalysts", [])
+            if isinstance(suggestions.get("catalysts"), list)
+            else []
+        ),
         risk_suggestions=(
             suggestions.get("risks", []) if isinstance(suggestions.get("risks"), list) else []
         ),
@@ -581,6 +587,34 @@ def update_hypothesis(
             uow,
             thesis_id=thesis_id,
             hypothesis_id=hypothesis_id,
+            statement=payload.statement,
+            hypothesis_type=payload.hypothesis_type,
+            importance=Importance(payload.importance),
+            observation_window=payload.observation_window,
+            invalidation_rule=payload.invalidation_rule,
+            actor=actor,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_out(uow, thesis_id)
+
+
+@router.post("/theses/{thesis_id}/hypotheses", response_model=ThesisOut, status_code=201)
+def create_hypothesis(
+    thesis_id: str,
+    payload: HypothesisCreateIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> ThesisOut:
+    _require_visible(uow, actor, thesis_id)
+    try:
+        thesis_service.create_hypothesis(
+            uow,
+            thesis_id=thesis_id,
             statement=payload.statement,
             hypothesis_type=payload.hypothesis_type,
             importance=Importance(payload.importance),

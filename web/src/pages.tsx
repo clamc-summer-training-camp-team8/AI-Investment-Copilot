@@ -3,27 +3,30 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, NavLink, useParams, useSearchParams } from 'react-router-dom'
 import {
-  createRelation, createReviewDraft, deactivateRelation, decideAdjudication, decideStatus, getAudit,
+  createReviewDraft, decideAdjudication, decideStatus, getAudit,
   getDocumentSegment, getEvidence, getEvidenceRetrievalTrace, getFullDocument, getInvestodayCollectionStatus, getRadarEvidence, getRelations, getResearchUpdates, getSuggestions, syncTodayResearch,
   getLogicChangeDigest, getPublishReadiness, getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks, recheckThesisQuality,
   listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listSecurities, listTheses,
   publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
-  recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
+  createHypothesis, recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis,
   updateThesisMaintenance,
   getAssetInventory, getDataCenterOverview, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
   getGoldQuality, getQuantCatalog, listPortfolioBacktests, registerDefaultMarketDataset, runPortfolioBacktest,
   getCompanyMetricCenter, getSecurity, getMaintainedCoverage, getCoverageUniverse, refreshCompanyMetrics,
   createCoverageSector, createCoverageCompany, updateCoverageCompany, updateCoverageSector,
+  listDataCenterDocuments,
 } from './api'
 import type { CompanyMetric, Trend } from './types'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
+import { buildCompanyEvidenceCards, getConfirmedHypothesisEvidenceState } from './companyEvidence'
+import type { CompanyEvidenceCard } from './companyEvidence'
 import { MetricEditorCard } from './metric-editor'
 import { getRetrospectiveOverview } from './retrospective/api'
-import type { Adjudication, EvidenceFeedItem, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, InvestodayCollectionStatus, LogicChangeDigestDetail, MetricDefinition, ProcessingJob, PortfolioBacktestRun, Relation, ReviewTask, Security, Suggestion, ThesisDetail, ThesisRevision } from './types'
+import type { Adjudication, AuditItem, DataCenterDocument, EvidenceFeedItem, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, InvestodayCollectionStatus, LogicChangeDigestDetail, MetricDefinition, ProcessingJob, PortfolioBacktestRun, Relation, ReviewTask, Security, Suggestion, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function OperationalWorkbenchPage() {
@@ -95,10 +98,8 @@ function ThemeImpactLines({ item }: { item: EvidenceFeedItem }) {
 
 export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEnabled = false }: { onCreate?: () => void; retrospectiveEnabled?: boolean; quantEnabled?: boolean } = {}) {
   const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set())
-  // 当前覆盖的九家公司以季度观察逻辑入库（thesis_kind=observation）。
-  // 工作台需要把它们与 canonical 主逻辑一起读取，仍由后端保证每家公司只返回现行版本。
-  const theses = useQuery({ queryKey: ['theses', 'current-coverage'], queryFn: () => listTheses(undefined, false, true) })
-  const securities = useQuery({ queryKey: ['securities'], queryFn: listSecurities })
+  // 左侧覆盖导航沿用 Phase 2：以覆盖板块/公司为全集，不要求公司已经建立投资逻辑。
+  const coverage = useQuery({ queryKey: ['maintained-coverage'], queryFn: getMaintainedCoverage, staleTime: 30_000 })
   // 自动采集和模型归并在页面打开后仍可能完成；保持轻量轮询，让新主题无需
   // 研究员手动刷新页面才出现。
   const updates = useQuery({ queryKey: ['research-updates', 'today'], queryFn: () => getResearchUpdates({ todayOnly: true }), refetchInterval: 20_000 })
@@ -110,28 +111,16 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
     enabled: retrospectiveEnabled,
     staleTime: 30_000,
   })
-  if (theses.isLoading || securities.isLoading || updates.isLoading) return <LoadingState text="正在加载实际研究覆盖…" />
-  if (theses.error || securities.error || updates.error || !theses.data || !securities.data || !updates.data) return <ErrorState error={theses.error ?? securities.error ?? updates.error} />
-
-  const current = theses.data.filter((item) => item.securityId !== '300274')
-  const securityById = new Map(securities.data.map((item) => [item.securityId, item]))
-  const grouped = current.reduce<Record<string, ThesisDetail[]>>((result, item) => {
-    const industry = securityById.get(item.securityId)?.industry || '其他覆盖'
-    ;(result[industry] ||= []).push(item)
-    return result
-  }, {})
-  const evidenceByThesis = new Map<string, EvidenceFeedItem[]>()
-  for (const item of updates.data.items) {
-    const items = evidenceByThesis.get(item.thesisId) || []
-    items.push(item)
-    evidenceByThesis.set(item.thesisId, items)
-  }
+  // 覆盖目录接口已经合并了每家公司现行逻辑的摘要，工作台先使用这份轻量结果；
+  // 不再等待完整逻辑明细（含历史观察快照）返回后才绘制页面。
+  const maintainedCompanies = (coverage.data ?? []).flatMap((sector) => sector.companies)
+  const current = maintainedCompanies.filter((company) => company.securityId !== '300274' && company.thesisId)
   const toggle = (industry: string) => setExpandedIndustries((before) => {
-    const next = new Set(before)
+    const next = before.size ? new Set(before) : new Set((coverage.data ?? []).map((item) => item.name))
     if (next.has(industry)) next.delete(industry); else next.add(industry)
     return next
   })
-  const todayThemeItems = updates.data.items.filter((item) => item.securityId !== '300274')
+  const todayThemeItems = (updates.data?.items ?? []).filter((item) => item.securityId !== '300274')
   const themesByCompany = new Map<string, EvidenceFeedItem[]>()
   for (const item of todayThemeItems) themesByCompany.set(item.securityId, [...(themesByCompany.get(item.securityId) ?? []), item])
   const companyThemeBundles = [...themesByCompany.values()].map((themes) => {
@@ -160,10 +149,13 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
   return <div className="dashboard-page">
     <aside className="coverage-panel" aria-label="我的覆盖">
       <div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>
-      {Object.entries(grouped).map(([industry, rows]) => <section className="coverage-group" key={industry}>
-        <button className="coverage-industry" aria-expanded={expandedIndustries.has(industry)} onClick={() => toggle(industry)}><span>{expandedIndustries.has(industry) ? '⌄' : '›'} ▥ {industry}</span><b>{rows.length}</b></button>
-        {expandedIndustries.has(industry) && <div className="coverage-companies">{rows.map((thesis) => <NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`} key={thesis.thesisId}><span>▥ {securityById.get(thesis.securityId)?.name || thesis.securityId}</span><b>{evidenceByThesis.get(thesis.thesisId)?.length || 0}</b></NavLink>)}</div>}
-      </section>)}
+      {coverage.isLoading && <div className="coverage-loading" role="status">正在加载维护中的公司…</div>}
+      {coverage.error && <div className="coverage-loading coverage-loading-error">覆盖数据暂时不可用</div>}
+      {coverage.data?.map((industry) => {
+        const expanded = expandedIndustries.size === 0 || expandedIndustries.has(industry.name)
+        return <section className="coverage-group" key={industry.name}><button className="coverage-industry" aria-expanded={expanded} onClick={() => toggle(industry.name)}><span>{expanded ? '⌄' : '›'} ▥ {industry.name}</span><b>{industry.companies.length}</b></button>{expanded && <div className="coverage-companies">{industry.companies.map((company) => <NavLink to={`/companies/${encodeURIComponent(company.securityId)}`} key={company.securityId}><span><strong>▥ {company.name}</strong><small>{company.industry || '行业分类待补充'}</small></span></NavLink>)}</div>}</section>
+      })}
+      {coverage.data && coverage.data.length === 0 && <div className="coverage-loading">暂无正在维护的公司</div>}
       <nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets?from=workbench">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink>{quantEnabled && <NavLink to="/quant">▦ 模型与因子</NavLink>}<NavLink to="/updates">♧ 最新动态</NavLink>{retrospectiveEnabled && <NavLink to="/retrospective">↺ 复盘中心</NavLink>}</nav>
       <button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button>
     </aside>
@@ -182,13 +174,13 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
         </article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的主投资逻辑变化。资料可能仍在分析，或尚未触发任何现行假设；可查看数据运行了解详情。</div>}</div>
         <NavLink className="dashboard-more" to="/updates">查看全部公司变化 ⌄</NavLink>
       </section>
-      <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">现行主投资逻辑</h2><span>{current.length} 家公司</span></header><div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>核心假设 / 指标</span><span>操作</span></div>{current.map((thesis) => <div className="logic-table-row" role="row" key={thesis.thesisId}><strong>{securityById.get(thesis.securityId)?.name || thesis.securityId}</strong><span>{thesis.title}</span><b className={`logic-state state-${thesis.status}`}>{thesis.status}</b><span>{thesis.hypotheses.filter((item) => item.importance === '核心').length} 项核心假设 · {thesis.hypotheses.reduce((count, item) => count + item.mappings.length, 0)} 个指标</span><div className="logic-table-actions"><NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`}>查看逻辑</NavLink>{retrospectiveEnabled && <NavLink to={`/retrospective/new?thesisId=${encodeURIComponent(thesis.thesisId)}`}>发起复盘</NavLink>}</div></div>)}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section>
+      <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">现行主投资逻辑</h2><span>{coverage.isLoading ? '正在读取…' : `${current.length} 家公司`}</span></header>{coverage.error && <InlineError error={coverage.error} />}<div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>核心假设 / 指标</span><span>操作</span></div>{current.map((company) => <div className="logic-table-row" role="row" key={company.thesisId}><strong>{company.name}</strong><span>{company.thesisTitle ?? '暂无投资逻辑'}</span><b className={`logic-state state-${company.thesisStatus}`}>{company.thesisStatus}</b><span>{company.hypothesisCount} 项核心假设 · {company.configuredMetricCount} 个指标</span><div className="logic-table-actions"><NavLink to={`/theses/${encodeURIComponent(company.thesisId!)}`}>查看逻辑</NavLink>{retrospectiveEnabled && <NavLink to={`/retrospective/new?thesisId=${encodeURIComponent(company.thesisId!)}`}>发起复盘</NavLink>}</div></div>)}{coverage.isLoading && <div className="muted">覆盖目录正在从远程数据库加载，页面其余内容可先使用。</div>}{!coverage.isLoading && !coverage.error && !current.length && <div className="muted">暂无现行投资逻辑</div>}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section>
     </main>
     <aside className="dashboard-right">
-      <section className="dashboard-card attention-card"><header className="dashboard-card-header"><h2>研究覆盖状态</h2></header><div className="attention-row attention-0"><i>▥</i><strong>{current.length} 家公司维护现行主逻辑</strong></div><div className="attention-row attention-1"><i>◈</i><strong>{current.reduce((total, item) => total + item.hypotheses.length, 0)} 条假设已纳入维护</strong></div><div className="attention-row attention-2"><i>⌁</i><strong>{updates.data.total} 张影响聚合卡可复核</strong></div></section>
+      <section className="dashboard-card attention-card"><header className="dashboard-card-header"><h2>研究覆盖状态</h2></header><div className="attention-row attention-0"><i>▥</i><strong>{coverage.isLoading ? '正在读取覆盖目录…' : `${current.length} 家公司维护现行主逻辑`}</strong></div><div className="attention-row attention-1"><i>◈</i><strong>{coverage.isLoading ? '—' : `${current.reduce((total, item) => total + item.hypothesisCount, 0)} 条假设已纳入维护`}</strong></div><div className="attention-row attention-2"><i>⌁</i><strong>{updates.data?.total ?? '—'} 张影响聚合卡可复核</strong></div></section>
       <section className="dashboard-card data-asset-card" aria-labelledby="data-asset-card-title"><header className="dashboard-card-header"><div><h2 id="data-asset-card-title">数据资产</h2><span>工作台使用的资料均可回查</span></div><NavLink to="/assets?from=workbench">进入数据中心 ›</NavLink></header>{assets.data ? <div className="data-asset-summary"><NavLink to="/assets/documents?from=workbench"><strong>{assets.data.documents.toLocaleString()}</strong><span>可见资料</span></NavLink><NavLink to="/assets/documents?content_status=完整正文&from=workbench"><strong>{assets.data.fullTextDocuments.toLocaleString()}</strong><span>完整正文</span></NavLink><NavLink className={assets.data.recentFailedRuns ? 'has-risk' : ''} to="/assets/runs?status=failed&from=workbench"><strong>{assets.data.recentFailedRuns.toLocaleString()}</strong><span>失败运行</span></NavLink></div> : <p className="data-asset-loading">{assets.error ? '数据资产摘要暂不可用，可进入数据中心查看。' : '正在读取数据资产摘要…'}</p>}</section>
       {retrospectiveEnabled && <section className="dashboard-card workbench-retrospective-card" aria-labelledby="workbench-retrospective-title"><header className="dashboard-card-header"><h2 id="workbench-retrospective-title">复盘进度</h2><NavLink to="/retrospective">进入中心 ›</NavLink></header>{retrospective.isLoading && <p className="muted">正在汇总复盘进度…</p>}{retrospective.error && <div className="workbench-card-error"><strong>复盘进度暂不可用</strong><NavLink to="/retrospective">打开复盘中心</NavLink></div>}{retrospective.data && <><div className="workbench-retrospective-summary"><strong>{retrospective.data.pending_reports}</strong><span>份待完成复盘</span><em>{Math.round(retrospective.data.average_completeness * 100)}% 平均完整度</em></div><div className="workbench-retrospective-states"><NavLink to="/retrospective?state=草稿"><span>草稿</span><strong>{retrospective.data.state_counts['草稿'] ?? 0}</strong></NavLink><NavLink to="/retrospective?state=待评审"><span>待评审</span><strong>{retrospective.data.state_counts['待评审'] ?? 0}</strong></NavLink><NavLink to="/retrospective?state=已发布"><span>已发布</span><strong>{retrospective.data.state_counts['已发布'] ?? 0}</strong></NavLink></div><NavLink className="workbench-retrospective-action" to="/retrospective/new">＋ 创建一份复盘</NavLink></>}</section>}
-      <section className="dashboard-card todo-card"><header className="dashboard-card-header"><h2>待确认影响</h2><NavLink to="/updates">更多 ›</NavLink></header>{updates.data.items.filter((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending').slice(0, 5).map((item) => <article className="todo-row" key={item.relationId}><span className="todo-level level-中">待确认</span><strong>{item.securityName}：{item.hypothesisStatement}</strong><small>{item.sourceDocumentTitle}</small><NavLink to={`/updates/${encodeURIComponent(item.evidenceId)}?relationId=${encodeURIComponent(item.relationId)}`}>去复核</NavLink></article>)}{!updates.data.items.some((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending') && <p className="muted">暂无待确认影响。</p>}</section>
+      <section className="dashboard-card todo-card"><header className="dashboard-card-header"><h2>待确认影响</h2><NavLink to="/updates">更多 ›</NavLink></header>{updates.data?.items.filter((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending').slice(0, 5).map((item) => <article className="todo-row" key={item.relationId}><span className="todo-level level-中">待确认</span><strong>{item.securityName}：{item.hypothesisStatement}</strong><small>{item.sourceDocumentTitle}</small><NavLink to={`/updates/${encodeURIComponent(item.evidenceId)}?relationId=${encodeURIComponent(item.relationId)}`}>去复核</NavLink></article>)}{(!updates.data || !updates.data.items.some((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending')) && <p className="muted">{updates.error ? '研究动态暂时不可用，请稍后重试。' : '正在读取研究动态…'}</p>}</section>
     </aside>
   </div>
 }
@@ -879,7 +871,7 @@ const thesisResearch = {
 type ResearchMetricPoint = { period: string; value: string }
 type ResearchMetricRow = [string, string, string, string, ResearchMetricPoint[]?]
 type ResearchEvidenceRow = [string, string, string]
-type ResearchHypothesisView = { id: string; title: string; state: string; tone: 'support' | 'conflict' | 'pending' }
+type ResearchHypothesisView = { id: string; title: string; state: string; tone: 'support' | 'conflict' | 'mixed' | 'neutral' | 'pending' }
 type ResearchView = { hypotheses: ResearchHypothesisView[]; metrics: Record<string, ResearchMetricRow[]>; evidence: Record<string, ResearchEvidenceRow[]> }
 type CompanyThesisView = { id: string; title: string; horizon: string; direction: string; health: string; confidence?: number; summary: string; record?: ThesisDetail }
 
@@ -937,18 +929,84 @@ function dynamicThesisView(record: ThesisDetail): CompanyThesisView {
   }
 }
 
+function companyContextText(item: Record<string, unknown>): string {
+  return String(item.statement ?? item.label ?? item.title ?? item.text ?? '').trim()
+}
+
+function CompanyCatalystRiskPanel({ thesis, demo }: { thesis?: ThesisDetail; demo: boolean }) {
+  const fallbackCatalysts = ['新车型密集上市带动销量结构改善', '海外市场放量与渠道拓展提供增量', '电池成本下降改善产品竞争力']
+  const fallbackRisks = ['行业价格战加剧，终端折扣率继续上行', '海外地缘政治、关税及监管政策变化', '原材料价格上涨压缩盈利空间']
+  const catalysts = (thesis?.catalystSuggestions ?? []).map(companyContextText).filter(Boolean)
+  const risks = (thesis?.riskSuggestions ?? []).map(companyContextText).filter(Boolean)
+  const displayedCatalysts = catalysts.length ? catalysts : demo ? fallbackCatalysts : []
+  const displayedRisks = risks.length ? risks : demo ? fallbackRisks : []
+  const renderItems = (items: string[], original: Array<Record<string, unknown>>) => items.map((text, index) => {
+    const item = original[index]
+    const source = item && String(item.source_title ?? item.source ?? '').trim()
+    return <li key={`${text}-${index}`}><span>{text}</span>{source && <small>{source}</small>}</li>
+  })
+  return <section><header><h2>催化剂与风险</h2><span className="company-context-note">基于近期公开资料</span></header><h3 className="support-text">催化剂</h3>{displayedCatalysts.length ? <ul>{renderItems(displayedCatalysts, thesis?.catalystSuggestions ?? [])}</ul> : <p className="company-side-state">暂无已生成的公司催化剂。</p>}<h3 className="conflict-text">风险</h3>{displayedRisks.length ? <ul>{renderItems(displayedRisks, thesis?.riskSuggestions ?? [])}</ul> : <p className="company-side-state">暂无已生成的公司风险。</p>}</section>
+}
+
+function ResearchAuditDetails({ detail, modelVersion }: { detail?: Record<string, unknown>; modelVersion?: string }) {
+  const labels: Record<string, string> = {
+    suggested_status: '建议状态', suggested_thesis_status: '建议逻辑状态', suggested_logic_status: '建议逻辑状态', current_status: '当前状态',
+    previous_thesis_status: '变更前状态', reason: '原因', reasons: '触发原因', suggestion_reasons: '触发原因', rule_version: '规则版本',
+    prompt_version: '提示词版本', ai_status: 'AI 状态', batch_id: '批次 ID', digest_id: '归并 ID',
+    suggestion_id: '建议 ID', thesis_id: '逻辑 ID', relation_count: '关联数量', confirmed_count: '已确认', pending_count: '待观察',
+    rejected_count: '不纳入', requires_status_decision: '需要人工变更', note: '备注', version: '版本', changed_fields: '变更字段',
+  }
+  const entries = Object.entries(detail ?? {}).filter(([key]) => key !== 'items' && key !== 'before' && key !== 'after' && key !== 'reasons' && key !== 'suggestion_reasons' && key !== 'suggested_status')
+  const valueText = (value: unknown): string => {
+    if (Array.isArray(value)) return value.length ? value.map((item) => typeof item === 'object' ? JSON.stringify(item) : String(item)).join('；') : '—'
+    if (value && typeof value === 'object') return Object.entries(value as Record<string, unknown>).map(([key, item]) => `${key}: ${String(item)}`).join('；')
+    if (typeof value === 'boolean') return value ? '是' : '否'
+    return value == null || value === '' ? '—' : String(value)
+  }
+  const batchItems = Array.isArray(detail?.items) ? detail.items : []
+  const reasonValue = detail?.reasons ?? detail?.suggestion_reasons
+  const reasons = Array.isArray(reasonValue) ? reasonValue.map((item) => String(item)).join('；') : reasonValue ? String(reasonValue) : ''
+  if (!entries.length && !batchItems.length && !modelVersion && !reasons) return null
+  return <div className="research-history-detail-inline">{reasons && <div className="research-history-trigger"><dt>触发原因</dt><dd>{reasons}</dd></div>}<div className="research-history-detail-grid">{entries.map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd>{valueText(value)}</dd></div>)}{modelVersion && <div><dt>模型版本</dt><dd>{modelVersion}</dd></div>}{batchItems.length > 0 && <div><dt>批次明细</dt><dd>{batchItems.length} 条</dd></div>}{(detail?.before != null || detail?.after != null) && <div className="research-history-transition"><dt>状态变化</dt><dd>{detail?.before != null ? valueText(detail.before) : '—'} → {detail?.after != null ? valueText(detail.after) : '—'}</dd></div>}</div></div>
+}
+
+function groupResearchAuditEntries(entries: AuditItem[]) {
+  const groups = new Map<string, AuditItem & { repeatCount: number }>()
+  for (const entry of entries) {
+    const detail = entry.detail ?? {}
+    const reasonValue = detail.reasons ?? detail.suggestion_reasons
+    const reasons = Array.isArray(reasonValue) ? reasonValue.map((item) => String(item)).join('；') : String(detail.reason ?? reasonValue ?? '')
+    const suggestedStatus = detail.suggested_status ?? detail.suggested_logic_status ?? ''
+    const key = [entry.action, formatDate(entry.occurredAt), suggestedStatus, reasons, detail.rule_version ?? ''].join('\u0000')
+    const existing = groups.get(key)
+    if (existing) existing.repeatCount += 1
+    else groups.set(key, { ...entry, repeatCount: 1 })
+  }
+  return [...groups.values()]
+}
+
 export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesisId?: string, securityId?: string) => void; onCreate?: (security?: Security) => void } = {}) {
   const { securityId: routeSecurityId } = useParams()
   const [companyParams, setCompanyParams] = useSearchParams()
   const isDemoGeely = routeSecurityId === 'geely'
   const securityId = isDemoGeely ? '00175' : routeSecurityId ?? ''
-  const [companyTab, setCompanyTab] = useState(companyParams.get('tab') || '投资逻辑')
+  const [companyTab, setCompanyTab] = useState(() => {
+    const requested = companyParams.get('tab')
+    return requested === '指标中心' || requested === '资料库' || requested === '研究记录' ? requested : '总览'
+  })
   const security = useQuery({ queryKey: ['security', securityId], queryFn: () => getSecurity(securityId), enabled: Boolean(securityId) && !isDemoGeely })
   const companyMetrics = useQuery({ queryKey: ['company-metric-center', securityId], queryFn: () => getCompanyMetricCenter(securityId), enabled: Boolean(securityId) && !isDemoGeely, refetchInterval: 60_000 })
   const maintainedTheses = useQuery({ queryKey: ['company-theses', securityId], queryFn: () => listTheses(securityId, false, true), enabled: Boolean(securityId) && !isDemoGeely })
+  const keyNodeDocuments = useQuery({
+    queryKey: ['company-key-node-documents', securityId],
+    queryFn: () => listDataCenterDocuments(new URLSearchParams({ security_id: securityId, sort: 'published_at', direction: 'desc', limit: '5', offset: '0' })),
+    enabled: Boolean(securityId) && !isDemoGeely && companyTab === '总览',
+    staleTime: 60_000,
+  })
   const [activeThesis, setActiveThesis] = useState('product')
   const [activeHypothesis, setActiveHypothesis] = useState('H2')
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showAddHypothesisDialog, setShowAddHypothesisDialog] = useState(false)
   useEffect(() => {
     if (isDemoGeely) return
     const first = maintainedTheses.data?.[0]
@@ -962,6 +1020,9 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   }, [activeHypothesis, activeRecord, isDemoGeely])
   const trends = useQuery({ queryKey: ['company-thesis-trends', activeRecord?.thesisId], queryFn: () => getTrends(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
   const evidenceFeed = useQuery({ queryKey: ['company-thesis-evidence', activeRecord?.thesisId], queryFn: () => getThesisEvidenceFeed(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
+  const researchAudit = useQuery({ queryKey: ['audit', activeRecord?.thesisId], queryFn: () => getAudit(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely && companyTab === '研究记录' })
+  const visibleResearchAudit = (researchAudit.data ?? []).filter((entry) => entry.action !== '查看')
+  const groupedResearchAudit = groupResearchAuditEntries(visibleResearchAudit)
   const staticBaseResearch = activeThesis === 'product' ? thesisResearch.product : {
     hypotheses: activeThesis === 'overseas' ? [
       { id: 'H1', title: '重点海外市场渠道覆盖持续扩大', state: '支持', tone: 'support' },
@@ -977,7 +1038,10 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   }
   const staticResearch = normalizeResearchView(staticBaseResearch)
   const dynamicResearch: ResearchView | undefined = activeRecord ? {
-    hypotheses: activeRecord.hypotheses.map((item) => ({ id: item.hypothesisId, title: item.statement, state: item.status, tone: item.status.includes('冲突') ? 'conflict' : item.status.includes('支持') ? 'support' : 'pending' })),
+    hypotheses: activeRecord.hypotheses.map((item) => {
+      const evidenceState = getConfirmedHypothesisEvidenceState(evidenceFeed.data?.items ?? [], item.hypothesisId)
+      return { id: item.hypothesisId, title: item.statement, state: evidenceState.label, tone: evidenceState.tone }
+    }),
     metrics: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (trends.data ?? []).filter((trend) => trend.hypothesisId === item.hypothesisId && trend.metricId).map((trend) => metricRowFromTrend(trend, companyMetrics.data?.metrics.find((metric) => metric.metricId === trend.metricId)?.observations ?? undefined))])),
     evidence: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (evidenceFeed.data?.items ?? []).filter((feed) => feed.hypothesisId === item.hypothesisId).map((feed) => [feed.direction === 'support' ? '支持' : feed.direction === 'conflict' ? '冲突' : '待验证', feed.sourceDocumentTitle, `公开资料 · ${formatDate(feed.disclosedAt)}`] as ResearchEvidenceRow)])),
   } : undefined
@@ -986,7 +1050,18 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   const research = isDemoGeely ? staticResearch : dynamicResearch
   const selected = research?.hypotheses.find((item) => item.id === activeHypothesis) ?? research?.hypotheses[0]
   const metrics = selected ? research?.metrics[selected.id] ?? [] : []
-  const evidence = selected ? research?.evidence[selected.id] ?? [] : []
+  const evidenceRows = selected ? research?.evidence[selected.id] ?? [] : []
+  const evidenceCards: CompanyEvidenceCard[] = isDemoGeely
+    ? evidenceRows.filter(([state]) => state !== '待验证').map(([state, summary, source], index) => ({
+        documentKey: `${selected?.id ?? 'H'}-${index}-${source}`,
+        evidenceId: '', relationId: '', title: source, summary,
+        disclosedAt: source.match(/\d{4}-\d{2}-\d{2}/u)?.[0] ?? '', ingestedAt: '', sourceUrl: '',
+        direction: state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'neutral',
+        confirmationStatus: 'confirmed', evidenceCount: 1, aiConfidence: 0,
+      }))
+    : selected
+      ? buildCompanyEvidenceCards(evidenceFeed.data?.items ?? [], selected.id)
+      : []
   const chooseThesis = (id: string) => { setActiveThesis(id); const target = availableTheses.find((item) => item.id === id); setActiveHypothesis(target?.record?.hypotheses[0]?.hypothesisId ?? 'H2') }
   const displaySecurity = security.data ?? (isDemoGeely ? { securityId: '00175', name: '吉利汽车', ticker: '0175.HK', industry: '汽车' } : undefined)
   const closeMetric = companyMetrics.data?.metrics.find((item) => item.metricId === 'MKT-CLOSE-D')
@@ -997,22 +1072,95 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
     <header className="company-identity">
       <NavLink className="company-back" to="/workbench" aria-label="返回工作台">‹</NavLink><div className="company-emblem">{displaySecurity?.name.slice(0, 1) || '研'}</div><div className="company-name"><span>公司研究 / {displaySecurity?.industry || '待分类'}</span><h1>{displaySecurity?.name || securityId} <small>{displaySecurity?.ticker || securityId}</small></h1></div>
       <div className="company-quote"><span>最新收盘价</span><strong>{formatCompanyNumber(closeMetric?.latestValue)} <small>{closeMetric?.unit || '—'}</small></strong><em>{returnMetric ? `${formatCompanyNumber(returnMetric.latestValue)}%` : '—'}</em></div><div className="company-stat"><span>投资评级</span><strong>{thesis?.record?.investmentRating || thesis?.direction || '待研究员填写'}</strong></div><div className="company-stat"><span>目标价（12个月）</span><strong>{thesis?.record?.targetPrice ? formatCompanyNumber(thesis.record.targetPrice) : '—'}</strong></div><div className="company-stat"><span>分析师</span><strong>{thesis?.record?.owner || '张明'}</strong></div><div className="company-stat"><span>数据更新</span><strong>{companyMetrics.data?.updatedAt || '尚未同步'}</strong></div>
-      <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => { if (activeRecord) { setCompanyTab('投资逻辑'); setCompanyParams({}); return } onCreate?.(displaySecurity) }}><span aria-hidden>＋</span>新建逻辑</button></div>
+      <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => { if (activeRecord) { setCompanyTab('总览'); setCompanyParams({}); return } onCreate?.(displaySecurity) }}><span aria-hidden>＋</span>新建逻辑</button></div>
     </header>
-    <nav className="company-tabs" aria-label="公司研究导航">{['总览', '投资逻辑', '事件与证据', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '投资逻辑' ? {} : { tab: item }) }}>{item}</button>)}</nav>
-    {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : <main className="company-canvas">
+    <nav className="company-tabs" aria-label="公司研究导航">{['总览', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '总览' ? {} : { tab: item }) }}>{item}</button>)}</nav>
+    {companyTab === '研究记录'
+      ? <main className="company-canvas company-research-history"><section className="research-history-header"><div><span>RESEARCH DECISION LOG</span><h2>研究决策与操作记录</h2><p>按时间还原证据处理、状态建议、正式状态变化与版本演进。</p></div>{activeRecord && <NavLink className="button primary" to={`/retrospective/new?thesisId=${encodeURIComponent(activeRecord.thesisId)}`}>基于记录发起复盘</NavLink>}</section>{isDemoGeely ? <EmptyState title="暂无可用研究记录" description="演示公司未接入数据库审计记录。" /> : !activeRecord ? <EmptyState title="尚未建立投资逻辑" description="建立投资逻辑后，这里会显示对应的研究决策与操作记录。" /> : researchAudit.isLoading ? <LoadingState text="正在加载研究记录…" /> : researchAudit.error ? <ErrorState error={researchAudit.error} /> : groupedResearchAudit.length ? <div className="research-history-list">{groupedResearchAudit.map((entry, index) => <article key={`${entry.action}-${entry.occurredAt}-${index}`}><div className="research-history-card-meta"><strong>{entry.action}</strong><time>{formatDate(entry.occurredAt)}</time><p>{entry.actor}{entry.objectType ? ` · ${entry.objectType}` : ''}</p>{entry.repeatCount > 1 && <small className="research-history-repeat">重复生成 {entry.repeatCount} 次</small>}</div><div className="research-history-card-content"><header><span>记录内容</span>{Boolean(entry.detail?.suggested_status || entry.detail?.suggested_logic_status) && <b className="research-history-status">建议状态：{String(entry.detail?.suggested_status ?? entry.detail?.suggested_logic_status)}</b>}</header><ResearchAuditDetails detail={entry.detail} modelVersion={entry.modelVersion} /></div></article>)}</div> : <EmptyState title="暂无研究操作记录" description="证据确认、状态建议和逻辑版本变更会按时间记录在这里。" />}</main>
+      : companyTab === '指标中心'
+        ? <CompanyMetricCenterPanel securityId={securityId} />
+        : companyTab === '资料库'
+          ? <CompanyLibraryPanel securityId={securityId} securityName={displaySecurity?.name || securityId} />
+          : <main className="company-canvas">
       {!thesis || !research || !selected ? <EmptyState title="尚未建立投资逻辑" description="该证券已建档，但数据库中暂时没有可展示的投资逻辑。" /> : <>
       <section className="thesis-switcher" aria-label="投资逻辑选择">{availableTheses.map((item) => <button key={item.id} className={activeThesis === item.id ? 'active' : ''} onClick={() => chooseThesis(item.id)} aria-pressed={activeThesis === item.id}><strong>{item.title}</strong><span><i className={`dot ${item.health === '证据不足' ? 'warning' : ''}`} />{item.direction} · {item.health} · {item.confidence == null ? '待计算' : `${item.confidence}%`}</span></button>)}</section>
-      <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><div className="confidence-block"><span>逻辑置信度 ⓘ</span><strong>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</strong><i><b style={{ width: `${thesis.confidence ?? 0}%` }} /></i></div><dl><div><dt>逻辑负责人</dt><dd>{thesis.record?.owner || '张明'}</dd></div><div><dt>最后更新</dt><dd>{thesis.record?.establishedOn || '2025-05-20'}</dd></div></dl><button className="edit-thesis" disabled={!activeRecord} onClick={() => setShowEditDialog(true)}>✎ 编辑逻辑</button></section>
-       <div className="company-research-grid"><section className="hypothesis-panel"><header><h2>核心假设</h2><button>＋ 添加假设</button></header><div className="hypothesis-list">{research.hypotheses.map((item) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => setActiveHypothesis(item.id)}><div className="hypothesis-card-copy"><span className={isDemoGeely ? 'hypothesis-index' : 'hypothesis-id'}>{item.id}</span><strong>{item.title}</strong></div><em className={item.tone}>{item.state}</em></button>)}</div><button className="view-all-hypotheses">查看全部假设（{research.hypotheses.length}）⌄</button></section>
-          <section className="verification-panel"><header><div><span>当前验证对象</span><h2><span className="hypothesis-id">{selected.id}</span><span>{selected.title}</span></h2></div><button>收起⌃</button></header><h3>关键指标</h3><div className="metric-table"><div className="metric-table-head"><span>指标</span><span>最新值</span><span>趋势（vs 前值）</span><span>近期波动</span><span>状态</span></div>{metrics.map(([name, value, delta, state, points]) => <div className="metric-table-row" key={name}><strong>{name}</strong><b>{value}</b><em className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{delta}</em><div className="key-metric-wave"><KeyMetricSparkline points={points} state={state} /></div><span className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</span></div>)}</div><h3>证据验证 <small>（{evidence.length}）</small></h3><div className="company-evidence-list">{evidence.map(([state, title, source]) => <article key={title}><i className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state === '支持' ? '↗' : state === '冲突' ? '!' : '?'}</i><div><strong>{title}</strong><span>来源：{source}</span></div><b className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</b></article>)}</div></section>
-        <aside className="company-side-column"><section><header><h2>催化剂与风险</h2><button>⌃</button></header><h3 className="support-text">催化剂</h3><ul><li>新车型密集上市（银河星舰7/极氪007GT等）</li><li>海外市场放量超预期</li><li>电池成本下降超预期</li></ul><h3 className="conflict-text">风险</h3><ul><li>行业价格战加剧，折扣率继续上行</li><li>海外地缘政治及关税风险</li><li>原材料价格大幅上涨</li></ul></section><section><header><h2>待复核事项 <small>2</small></h2></header><label><input type="checkbox" />5月中旬渠道调研更新终端折扣率数据<time>05-28</time></label><label><input type="checkbox" />Q2订单跟踪与交付节奏复核<time>06-10</time></label></section><section><header><h2>近期关键节点</h2></header><ol><li><time>2025-05-22</time>2025年Q1业绩发布</li><li><time>2025-06-10</time>5月销量发布</li><li><time>2025-06-18</time>证券机构策略会</li></ol></section></aside>
+      <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><dl><div><dt>逻辑负责人</dt><dd>{thesis.record?.owner || '张明'}</dd></div><div><dt>最后更新</dt><dd>{thesis.record?.establishedOn || '2025-05-20'}</dd></div></dl><button className="edit-thesis" disabled={!activeRecord} onClick={() => setShowEditDialog(true)}>✎ 编辑逻辑</button></section>
+       <div className="company-research-grid"><section className="hypothesis-panel"><header><h2>核心假设</h2><button disabled={!activeRecord || activeRecord.hypotheses.length >= 5} title={activeRecord?.hypotheses.length === 5 ? '一条投资逻辑最多维护 5 条关键假设' : undefined} onClick={() => setShowAddHypothesisDialog(true)}>＋ 添加假设</button></header><div className="hypothesis-list">{research.hypotheses.map((item) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => setActiveHypothesis(item.id)}><div className="hypothesis-card-copy"><span className={isDemoGeely ? 'hypothesis-index' : 'hypothesis-id'}>{item.id}</span><strong>{item.title}</strong></div><em className={item.tone}>{item.state}</em></button>)}</div></section>
+      <section className="verification-panel"><header><div><span>当前验证对象</span><h2><span className="hypothesis-id">{selected.id}</span><span>{selected.title}</span></h2></div></header><h3>关键指标</h3><div className="metric-table"><div className="metric-table-head"><span>指标</span><span>最新值</span><span>趋势（vs 前值）</span><span>近期波动</span><span>状态</span></div>{metrics.map(([name, value, delta, state, points]) => <div className="metric-table-row" key={name}><strong>{name}</strong><b>{value}</b><em className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{delta}</em><div className="key-metric-wave"><KeyMetricSparkline points={points} state={state} /></div><span className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</span></div>)}</div><h3>已确认资料证据 <small>（{evidenceCards.length} 份资料）</small></h3><div className="company-evidence-list">{!isDemoGeely && evidenceFeed.isLoading && <p className="company-evidence-state">正在读取该假设的已确认资料…</p>}{!isDemoGeely && evidenceFeed.error && <p className="company-evidence-state error">关联资料暂时不可用，请稍后重试。</p>}{evidenceCards.map((card) => { const directionClass = card.direction === 'support' ? 'support' : card.direction === 'conflict' ? 'conflict' : card.direction === 'mixed' ? 'mixed' : 'neutral'; const directionLabel = card.direction === 'mixed' ? '证据分歧' : card.direction === 'neutral' ? '中性' : updateDirectionLabel(card.direction); return <article className={`company-evidence-card ${directionClass}`} key={card.documentKey}><i /><div className="company-evidence-card-body"><div className="company-evidence-meta"><span>资料证据{card.disclosedAt ? ` · ${formatDate(card.disclosedAt)}` : ''}</span><strong className={directionClass}>{directionLabel}</strong></div><h4>{card.title}</h4><p>{card.summary}</p><footer><span>{card.evidenceCount} 条证据</span>{card.aiConfidence > 0 && <span>AI 置信度 {Math.round(card.aiConfidence * 100)}%</span>}<b className={`status-${updateStatusLabel(card.confirmationStatus)}`}>{updateStatusLabel(card.confirmationStatus)}</b></footer></div>{card.evidenceId && <NavLink to={`/radar/${encodeURIComponent(card.evidenceId)}`}>查看证据</NavLink>}</article> })}{!evidenceFeed.isLoading && !evidenceCards.length && <p className="company-evidence-state">该假设暂未关联已确认的资料证据。</p>}</div></section>
+        <aside className="company-side-column"><CompanyCatalystRiskPanel thesis={activeRecord} demo={isDemoGeely} /><CompanyRecentKeyNodes documents={keyNodeDocuments.data?.items ?? []} loading={keyNodeDocuments.isLoading} error={keyNodeDocuments.error} demo={isDemoGeely} /></aside>
       </div>
       <section className="company-version"><header><h2>逻辑版本记录</h2><button>查看全部版本⌃</button></header><div><strong>{isDemoGeely ? 'v1.2（当前）' : `v${thesis.record?.version ?? 0}（当前）`}</strong><span>{isDemoGeely ? '下调单车收入预期；更新4月销量与折扣率数据；补充渠道反馈证据' : `数据库记录 · ${thesis.record?.status || '草稿'}`}</span><span>{thesis.record?.owner || '张明'}</span><time>{thesis.record?.establishedOn || '2025-05-20'}</time><b>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</b><button>查看详情</button></div></section>
       </>}
     </main>}
     {showEditDialog && activeRecord && <EditLogicDialog thesis={activeRecord} onClose={() => setShowEditDialog(false)} />}
+    {showAddHypothesisDialog && activeRecord && <AddHypothesisDialog thesis={activeRecord} onClose={() => setShowAddHypothesisDialog(false)} onAdded={(hypothesisId) => { setActiveHypothesis(hypothesisId); setShowAddHypothesisDialog(false) }} />}
   </div>
+}
+
+function CompanyRecentKeyNodes({ documents, loading, error, demo }: { documents: DataCenterDocument[]; loading: boolean; error: Error | null; demo: boolean }) {
+  const demoNodes = [
+    { documentId: 'demo-q1', publishedAt: '2025-05-22', title: '2025年Q1业绩发布' },
+    { documentId: 'demo-sales', publishedAt: '2025-06-10', title: '5月销量发布' },
+    { documentId: 'demo-strategy', publishedAt: '2025-06-18', title: '证券机构策略会' },
+  ]
+  const rows = demo ? demoNodes : documents
+  return <section className="company-key-nodes"><header><h2>近期关键节点</h2></header>{loading && !demo ? <p className="company-side-state">正在读取该公司的资料节点…</p> : error && !demo ? <p className="company-side-state error">近期节点暂时不可用。</p> : rows.length ? <ol>{rows.map((item) => <li key={item.documentId}><time>{item.publishedAt.slice(0, 10)}</time>{demo ? <span>{item.title}</span> : <NavLink to={`/assets/documents/${encodeURIComponent(item.documentId)}`}>{item.title}</NavLink>}</li>)}</ol> : <p className="company-side-state">该公司暂时没有已入库资料节点。</p>}</section>
+}
+
+function CompanyLibraryPanel({ securityId, securityName }: { securityId: string; securityName: string }) {
+  const [direction, setDirection] = useState<'asc' | 'desc'>('desc')
+  const documents = useQuery({
+    queryKey: ['company-library-documents', securityId, direction],
+    queryFn: () => listDataCenterDocuments(new URLSearchParams({ security_id: securityId, sort: 'published_at', direction, limit: '100', offset: '0' })),
+    staleTime: 60_000,
+  })
+  return <main className="company-library">
+    <header className="company-library-header"><div><span>公司资料库 / COMPANY LIBRARY</span><h2>{securityName}相关资料</h2><p>展示数据库中已关联到 {securityId} 的公告、研报和上传资料。</p></div><div className="company-library-sort" role="group" aria-label="资料时间排序"><small>共 {documents.data?.total ?? 0} 份资料</small><button className={direction === 'desc' ? 'active' : ''} onClick={() => setDirection('desc')}>时间倒序</button><button className={direction === 'asc' ? 'active' : ''} onClick={() => setDirection('asc')}>时间正序</button></div></header>
+    {documents.isLoading ? <LoadingState /> : documents.error || !documents.data ? <ErrorState error={documents.error} /> : documents.data.items.length ? <section className="company-library-list">{documents.data.items.map((item) => <CompanyLibraryDocumentCard item={item} securityName={securityName} key={item.documentId} />)}</section> : <EmptyState title="暂无公司资料" description="新增并关联该公司的资料后，会按公开时间显示在这里。" />}
+  </main>
+}
+
+function CompanyLibraryDocumentCard({ item, securityName }: { item: DataCenterDocument; securityName: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const sourceName = !item.sourceName.trim() || item.sourceName.trim() === '未登记来源' || item.sourceName.trim() === '来源待补充'
+    ? '今日投资新闻 API'
+    : item.sourceName
+  const content = useQuery({
+    queryKey: ['company-library-document-content', item.documentId],
+    queryFn: () => getFullDocument(item.documentId),
+    enabled: expanded && item.segmentCount > 0,
+    staleTime: 5 * 60_000,
+  })
+  return <article className={`company-library-card ${expanded ? 'expanded' : ''}`}>
+    <div className="company-library-date"><time>{item.publishedAt.slice(0, 10)}</time><span>{item.docType || '研究资料'}</span></div>
+    <div className="company-library-copy"><div><span>{sourceName}</span><b>{item.contentStatus}</b></div><h3>{item.title}</h3><p>关联证券：{item.securityNames.length ? item.securityNames.join('、') : securityName}</p><footer><span>{item.segmentCount} 个内容片段</span><span>{item.revisionCount} 个版本</span>{item.ingestedAt && <span>入库于 {item.ingestedAt.slice(0, 10)}</span>}</footer></div>
+    <div className="company-library-actions"><button aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? '收起内容' : '展开内容'}<i>{expanded ? '⌃' : '⌄'}</i></button></div>
+    {expanded && <div className="company-library-content">{item.segmentCount === 0 ? <p>该资料当前没有可展开的正文片段。</p> : content.isLoading ? <p>正在读取资料正文…</p> : content.error || !content.data ? <p className="error">正文暂时不可用，请稍后重试。</p> : <><header><span>资料具体内容</span><small>{content.data.segmentCount} 个可回查片段</small></header><div>{content.data.segments.map((segment) => <section key={segment.locator}><span>{segment.page ? `第 ${segment.page} 页` : `第 ${segment.ordinal} 段`}</span><p>{segment.content}</p></section>)}</div></>}</div>}
+  </article>
+}
+
+function AddHypothesisDialog({ thesis, onClose, onAdded }: { thesis: ThesisDetail; onClose: () => void; onAdded: (hypothesisId: string) => void }) {
+  const qc = useQueryClient()
+  const [statement, setStatement] = useState('')
+  const [hypothesisType, setHypothesisType] = useState('盈利')
+  const [importance, setImportance] = useState('核心')
+  const [observationWindow, setObservationWindow] = useState('')
+  const [invalidationRule, setInvalidationRule] = useState('')
+  const knownIds = new Set(thesis.hypotheses.map((item) => item.hypothesisId))
+  const mutation = useMutation({
+    mutationFn: () => createHypothesis(thesis.thesisId, { statement: statement.trim(), hypothesisType, importance, observationWindow: observationWindow.trim(), invalidationRule: invalidationRule.trim() }),
+    onSuccess: async (updated) => {
+      const created = updated.hypotheses.find((item) => !knownIds.has(item.hypothesisId))
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['company-theses', thesis.securityId] }),
+        qc.invalidateQueries({ queryKey: ['theses'] }),
+        qc.invalidateQueries({ queryKey: ['thesis', thesis.thesisId] }),
+        qc.invalidateQueries({ queryKey: ['audit', thesis.thesisId] }),
+      ])
+      onAdded(created?.hypothesisId ?? updated.hypotheses.at(-1)?.hypothesisId ?? '')
+    },
+  })
+  return <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}><section className="dialog maintenance-dialog add-hypothesis-dialog" role="dialog" aria-modal="true" aria-labelledby="add-hypothesis-title" onMouseDown={(event) => event.stopPropagation()}><header><div><span className="eyebrow">投资逻辑维护</span><h2 id="add-hypothesis-title">增加核心假设</h2><p>新增内容会写入当前投资逻辑，并生成一条新的版本记录。</p></div><button type="button" aria-label="关闭" onClick={onClose}>×</button></header><form onSubmit={(event) => { event.preventDefault(); mutation.mutate() }}><label>假设内容<textarea autoFocus value={statement} onChange={(event) => setStatement(event.target.value)} placeholder="输入一个可验证、可证伪的关键假设" maxLength={2000} required /></label><div className="form-grid two"><label>假设类型<select value={hypothesisType} onChange={(event) => setHypothesisType(event.target.value)}><option>盈利</option><option>增长</option><option>竞争</option><option>估值</option><option>风险</option><option>其他</option></select></label><label>重要程度<select value={importance} onChange={(event) => setImportance(event.target.value)}><option>核心</option><option>辅助</option></select></label><label>观察窗口<input value={observationWindow} onChange={(event) => setObservationWindow(event.target.value)} placeholder="例如：未来 4 个季度" maxLength={128} /></label><label>失效条件<input value={invalidationRule} onChange={(event) => setInvalidationRule(event.target.value)} placeholder="例如：连续两个季度低于阈值" maxLength={2000} /></label></div><InlineError error={mutation.error} /><div className="dialog-actions"><button type="button" className="button secondary" onClick={onClose}>取消</button><button type="submit" className="button primary" disabled={mutation.isPending || !statement.trim()}>{mutation.isPending ? '正在保存…' : '保存假设'}</button></div></form></section></div>
 }
 
 const metricCategories = ['全部指标', '价格与成交量', '技术指标', '财务与运营', '估值指标', '宏观及行业']
@@ -1335,12 +1483,13 @@ function DraftPublishWorkspace({ thesis }: { thesis: ThesisDetail }) {
   const [metricKeyword, setMetricKeyword] = useState('')
   const metrics = useQuery({ queryKey: ['metrics', metricKeyword], queryFn: () => listMetrics(metricKeyword) })
   const trends = useQuery({ queryKey: ['trends', thesis.thesisId], queryFn: () => getTrends(thesis.thesisId) })
+  const aiRiskSuggestions = thesis.riskSuggestions.filter((item) => !String(item.source_url ?? '').trim())
   return <>
     <section className="content-section draft-config"><div className="section-heading"><div><span className="eyebrow">人工配置</span><h2>假设、指标与失效条件</h2></div><span className="muted">草稿阶段：可在每条假设下重新推荐相关指标</span></div>
       <label className="metric-search">搜索指标字典<input value={metricKeyword} onChange={(event) => setMetricKeyword(event.target.value)} placeholder="输入指标名称或 ID" /></label>
       <InlineError error={metrics.error} />
       <div className="hypothesis-editor-list">{thesis.hypotheses.map((hypothesis) => <HypothesisEditor key={hypothesis.hypothesisId} thesisId={thesis.thesisId} hypothesis={hypothesis} metrics={metrics.data ?? []} trend={trends.data?.find((item) => item.hypothesisId === hypothesis.hypothesisId)} />)}</div>
-      {(thesis.riskSuggestions.length > 0 || thesis.invalidationSuggestions.length > 0) && <div className="ai-candidate-panel"><strong>AI 风险与失效建议（待人工判断）</strong>{[...thesis.riskSuggestions, ...thesis.invalidationSuggestions].map((item, index) => <p key={index}>{String(item.statement ?? '未提供建议文本')}</p>)}</div>}
+      {(aiRiskSuggestions.length > 0 || thesis.invalidationSuggestions.length > 0) && <div className="ai-candidate-panel"><strong>AI 风险与失效建议（待人工判断）</strong>{[...aiRiskSuggestions, ...thesis.invalidationSuggestions].map((item, index) => <p key={index}>{String(item.statement ?? '未提供建议文本')}</p>)}</div>}
     </section>
     <PublishPanel thesisId={thesis.thesisId} />
   </>
@@ -1410,38 +1559,66 @@ export function EvidencePage() {
   const { evidenceId = '' } = useParams()
   const [params] = useSearchParams()
   const requestedRelationId = params.get('relationId')
-  const qc = useQueryClient()
   const evidence = useQuery({ queryKey: ['evidence', evidenceId], queryFn: () => getEvidence(evidenceId) })
   const retrievalTrace = useQuery({ queryKey: ['evidence-retrieval-trace', evidenceId], queryFn: () => getEvidenceRetrievalTrace(evidenceId) })
   const relations = useQuery({ queryKey: ['relations', evidenceId], queryFn: () => getRelations(evidenceId) })
   const source = useQuery({ queryKey: ['source-segment', evidence.data?.evidenceLocator], queryFn: () => getDocumentSegment(evidence.data!.evidenceLocator), enabled: Boolean(evidence.data?.evidenceLocator) })
-  const theses = useQuery({ queryKey: ['target-theses', evidence.data?.securityId], queryFn: () => listTheses(evidence.data!.securityId), enabled: Boolean(evidence.data?.securityId) })
-  // 可编辑目标必须由后端按当前身份过滤，前端不再依赖写死的负责人账号。
-  const manageableTheses = useQuery({ queryKey: ['manageable-theses', evidence.data?.securityId], queryFn: () => listTheses(evidence.data!.securityId, true), enabled: Boolean(evidence.data?.securityId) })
+  const theses = useQuery({ queryKey: ['target-theses', evidence.data?.securityId], queryFn: () => listTheses(evidence.data!.securityId, false, true), enabled: Boolean(evidence.data?.securityId) })
   const activeRelation = relations.data?.find((item) => item.relationId === requestedRelationId) ?? relations.data?.find((item) => item.status !== 'deactivated')
   const activeFeed = useQuery({ queryKey: ['thesis-evidence-feed', activeRelation?.thesisId], queryFn: () => getThesisEvidenceFeed(activeRelation!.thesisId), enabled: Boolean(activeRelation?.thesisId) })
-  const [dialog, setDialog] = useState<{ relation: Relation; action: '确认' | '驳回' | '暂不判断' | '解除' } | null>(null)
-  const [editing, setEditing] = useState<Relation | null>(null)
   const context = activeFeed.data?.items.find((item) => item.evidenceId === evidenceId && item.relationId === activeRelation?.relationId)
-  const invalidate = async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['relations', evidenceId] }), qc.invalidateQueries({ queryKey: ['workbench-tasks'] }), qc.invalidateQueries({ queryKey: ['workbench'] }), qc.invalidateQueries({ queryKey: ['radar-evidence'] }), qc.invalidateQueries({ queryKey: ['thesis-evidence-feed'] }), qc.invalidateQueries({ queryKey: ['suggestions'] })]) }
-  const action = useMutation({ mutationFn: async (input: { relation: Relation; action: string; reason: string }) => input.action === '解除' ? deactivateRelation(evidenceId, input.relation.relationId, input.reason) : reviewRelation(evidenceId, input.relation.relationId, input.action, input.reason), onSuccess: async () => { setDialog(null); await invalidate() } })
-  if (evidence.isLoading || relations.isLoading || theses.isLoading || manageableTheses.isLoading) return <LoadingState />
-  if (evidence.error || relations.error || theses.error || manageableTheses.error || !evidence.data || !relations.data || !theses.data || !manageableTheses.data) return <ErrorState error={evidence.error ?? relations.error ?? theses.error ?? manageableTheses.error} />
+  if (evidence.isLoading || relations.isLoading || theses.isLoading) return <LoadingState />
+  if (evidence.error || relations.error || theses.error || !evidence.data || !relations.data || !theses.data) return <ErrorState error={evidence.error ?? relations.error ?? theses.error} />
   const item = evidence.data
   const thesisMap = new Map(theses.data.map((thesis) => [thesis.thesisId, thesis]))
   const activeThesis = activeRelation ? thesisMap.get(activeRelation.thesisId) : undefined
   const activeHypothesis = activeThesis?.hypotheses.find((hypothesis) => hypothesis.hypothesisId === activeRelation?.hypothesisId)
-  return <>
-    <PageTitle eyebrow={`${item.securityId} · 公开披露`} title={item.sourceDocumentTitle} description={`披露于 ${formatDate(item.disclosedAt)}，请核验事实来源及其对投资假设的影响。`} />
-    <section className="fact-panel"><div className="panel-label">原文回查</div><blockquote>{source.data?.content ?? item.factExcerpt}</blockquote>{source.error && <p className="inline-error">数据库原文段落暂不可用，当前展示证据摘录。</p>}<div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}{source.data?.contentKind === 'table_row' ? ` · 表 ${source.data.tableIndex} / 单元格 ${source.data.cellRange}` : ''}{source.data?.extractionMethod === 'ocr' ? ` · OCR${source.data.confidence == null ? '' : ` ${Math.round(source.data.confidence * 100)}%`}` : ''}{source.data?.locator ? ` · 定位 ${source.data.locator}` : ''}</span><SafeSourceLink url={item.sourceUrl} /></div></section>
-    {context && <section className="content-section"><div className="section-heading"><div><span className="eyebrow">数据验证</span><h2>这条证据是否可用于研究判断</h2></div><span className="validation-summary">{context.validationItems.filter((v) => v.status === 'passed').length}/{context.validationItems.length} 项通过</span></div><ValidationChain items={context.validationItems} /></section>}
-    <RetrievalTracePanel trace={retrievalTrace.data} loading={retrievalTrace.isLoading} error={retrievalTrace.error} />
-    <section className="impact-panel"><div><span className="eyebrow">当前影响</span><h2>{activeHypothesis?.statement ?? '选择一条有效关联后进行判断'}</h2><p>{activeThesis?.title ?? '当前没有可操作的逻辑关联'}</p><div className="badge-row">{activeRelation && <><DirectionBadge direction={activeRelation.direction} /><StatusBadge state={activeRelation.status} /><span className="badge neutral-badge">{strengthText[activeRelation.strength]}强度</span><span className="badge neutral-badge">AI {Math.round(item.aiConfidence * 100)}%</span></>}</div></div>{activeRelation?.canManage && activeRelation.status !== 'deactivated' && <div className="decision-panel"><span>你的判断</span><div className="button-row"><button className="button primary" onClick={() => setDialog({ relation: activeRelation, action: '确认' })}>确认关联</button><button className="button secondary" onClick={() => setDialog({ relation: activeRelation, action: '驳回' })}>驳回</button><button className="button ghost" onClick={() => setDialog({ relation: activeRelation, action: '暂不判断' })}>暂不判断</button></div></div>}</section>
-    <InlineError error={action.error} />
-    <details className="content-section disclosure"><summary>高级关联管理 <span>{relations.data.length} 条关联</span></summary><div className="relation-list">{relations.data.map((relation) => { const target = thesisMap.get(relation.thesisId); const hypothesis = target?.hypotheses.find((h) => h.hypothesisId === relation.hypothesisId); return <article className={`relation-row ${relation.status === 'deactivated' ? 'disabled' : ''}`} key={relation.relationId}><div><div className="badge-row"><StatusBadge state={relation.status} /><DirectionBadge direction={relation.direction} /></div><h3>{hypothesis?.statement ?? '假设信息待加载'}</h3><p>{target?.title ?? relation.thesisId}</p><small>关联理由：{relation.reason || '未填写'} · 创建人：{relation.createdBy}{relation.reviewedBy ? ` · 审核人：${relation.reviewedBy}` : ''}</small></div>{relation.canManage && relation.status !== 'deactivated' && <div className="relation-actions"><button className="button secondary" onClick={() => setEditing(relation)}>修改</button><button className="button danger-link" onClick={() => setDialog({ relation, action: '解除' })}>解除</button></div>}</article> })}</div><RelationForm evidenceId={evidenceId} thesisList={manageableTheses.data} editing={editing} onDone={async () => { setEditing(null); await invalidate() }} /></details>
-    <details className="content-section disclosure technical"><summary>技术信息</summary><dl><dt>证据 ID</dt><dd>{item.evidenceId}</dd><dt>来源文档 ID</dt><dd>{item.sourceDocumentId}</dd><dt>原文定位</dt><dd>{item.evidenceLocator}</dd><dt>模型版本</dt><dd>{item.modelVersion}</dd><dt>提示词版本</dt><dd>{item.promptVersion}</dd></dl></details>
-    {dialog && <ConfirmDialog title={dialog.action === '解除' ? '解除这条证据关联' : `${dialog.action}这条证据关联`} description={dialog.action === '解除' ? '解除后该关联保留为历史记录，不再参与状态建议。' : '本次人工判断将被记录并刷新受影响逻辑的状态建议。'} confirmText={dialog.action} danger={dialog.action === '解除' || dialog.action === '驳回'} requireReason={dialog.action === '解除'} onClose={() => setDialog(null)} onConfirm={(reason) => action.mutate({ relation: dialog.relation, action: dialog.action, reason })} />}
-  </>
+  const confirmedFacts = (activeFeed.data?.items ?? []).filter((candidate) => {
+    const primaryConfirmed = candidate.evidenceId === item.evidenceId && (item.confirmationStatus === 'confirmed' || activeRelation?.status === 'confirmed')
+    if ((!primaryConfirmed && candidate.confirmationStatus !== 'confirmed') || candidate.hypothesisId !== activeRelation?.hypothesisId) return false
+    if (candidate.sourceDocumentId && item.sourceDocumentId) return candidate.sourceDocumentId === item.sourceDocumentId
+    if (candidate.sourceUrl && item.sourceUrl) return candidate.sourceUrl === item.sourceUrl
+    return candidate.sourceDocumentTitle === item.sourceDocumentTitle && candidate.disclosedAt.slice(0, 10) === item.disclosedAt.slice(0, 10)
+  })
+  const factRows = confirmedFacts.length > 0 ? confirmedFacts : (item.confirmationStatus === 'confirmed' || activeRelation?.status === 'confirmed') ? [{
+    evidenceId: item.evidenceId, factExcerpt: item.factExcerpt, evidenceLocator: item.evidenceLocator,
+    direction: item.direction, strength: item.strength, aiConfidence: item.aiConfidence,
+  }] : []
+  return <div className="evidence-detail-page">
+    <header className="evidence-detail-header">
+      <div className="evidence-detail-heading">
+        <NavLink to={`/companies/${encodeURIComponent(item.securityId)}`}>← 返回公司总览</NavLink>
+        <span>证据验证 / EVIDENCE REVIEW · {item.securityId}</span>
+        <h1>{item.sourceDocumentTitle}</h1>
+        <p>披露于 {formatDate(item.disclosedAt)}，以下内容均来自数据库归档的资料、事实和关联记录。</p>
+      </div>
+      <div className="evidence-detail-status">
+        <DirectionBadge direction={activeRelation?.direction ?? item.direction} />
+        <StatusBadge state={activeRelation?.status ?? item.confirmationStatus} />
+        <span><small>AI 关系置信度</small><strong>{Math.round(item.aiConfidence * 100)}%</strong></span>
+      </div>
+    </header>
+    <main className="evidence-detail-layout">
+      <div className="evidence-detail-main">
+        <section className="fact-panel evidence-detail-card evidence-source-card">
+          <header><div><span>01 / 资料证据</span><h2>数据库已确认的资料内容</h2></div><SafeSourceLink url={item.sourceUrl} /></header>
+          <div className="evidence-fact-list">{factRows.length ? factRows.map((fact, index) => { const label = fact.direction === 'support' ? '支持' : fact.direction === 'conflict' ? '冲突' : '中性'; return <details className={`evidence-fact-card ${fact.direction}`} key={fact.evidenceId}><summary><span className="evidence-fact-number">{String(index + 1).padStart(2, '0')}</span><div><b>{label}</b><strong>{fact.factExcerpt}</strong></div><small>查看原文<i>⌄</i></small></summary><div><blockquote className="evidence-source-copy">{fact.evidenceId === item.evidenceId ? source.data?.content ?? fact.factExcerpt : fact.factExcerpt}</blockquote><p>证据编号：{fact.evidenceId} · 原文定位：{fact.evidenceLocator || '未记录'}</p></div></details> }) : <p className="company-evidence-state">该资料暂未找到已确认的事实证据。</p>}</div>
+          {source.error && <p className="inline-error">数据库原文段落暂不可用，当前展示证据摘录。</p>}
+          <div className="source-footer"><span>{item.sourceDocumentTitle} · {formatDate(item.disclosedAt)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}{source.data?.contentKind === 'table_row' ? ` · 表 ${source.data.tableIndex} / 单元格 ${source.data.cellRange}` : ''}{source.data?.extractionMethod === 'ocr' ? ` · OCR${source.data.confidence == null ? '' : ` ${Math.round(source.data.confidence * 100)}%`}` : ''}{source.data?.locator ? ` · 定位 ${source.data.locator}` : ''}</span></div>
+        </section>
+        {context && <section className="content-section evidence-detail-card evidence-validation-card"><div className="section-heading"><div><span className="eyebrow">02 / 验证记录</span><h2>数据库验证结果</h2></div><span className="validation-summary">{context.validationItems.filter((v) => v.status === 'passed').length}/{context.validationItems.length} 项通过</span></div><ValidationChain items={context.validationItems} /></section>}
+        <div className="evidence-trace-wrap"><RetrievalTracePanel trace={retrievalTrace.data} loading={retrievalTrace.isLoading} error={retrievalTrace.error} /></div>
+      </div>
+      <aside className="evidence-detail-side">
+        <section className="impact-panel evidence-detail-card"><div><span className="eyebrow">03 / 关联假设</span><h2>{activeHypothesis?.statement ?? '未找到关联假设'}</h2><p>{activeThesis?.title ?? '当前资料没有可展示的投资逻辑关联'}</p><div className="badge-row">{activeRelation && <><DirectionBadge direction={activeRelation.direction} /><StatusBadge state={activeRelation.status} /><span className="badge neutral-badge">{strengthText[activeRelation.strength]}强度</span></>}</div></div><p className="read-only-note">此页面只展示数据库中已确认的资料和关联信息。</p></section>
+        <section className="evidence-audit-card evidence-detail-card"><span>可追溯信息</span><dl><div><dt>证据编号</dt><dd>{item.evidenceId}</dd></div><div><dt>关联数量</dt><dd>{relations.data.length} 条</dd></div><div><dt>来源资料</dt><dd>{item.sourceDocumentId}</dd></div><div><dt>处理模型</dt><dd>{item.modelVersion}</dd></div></dl></section>
+      </aside>
+    </main>
+    <section className="evidence-detail-lower">
+      <details className="content-section disclosure evidence-detail-card"><summary>关联假设记录 <span>{relations.data.length} 条关联</span></summary><div className="relation-list">{relations.data.map((relation) => { const target = thesisMap.get(relation.thesisId); const hypothesis = target?.hypotheses.find((h) => h.hypothesisId === relation.hypothesisId); return <article className={`relation-row ${relation.status === 'deactivated' ? 'disabled' : ''}`} key={relation.relationId}><div><div className="badge-row"><StatusBadge state={relation.status} /><DirectionBadge direction={relation.direction} /></div><h3>{hypothesis?.statement ?? '假设信息待加载'}</h3><p>{target?.title ?? relation.thesisId}</p><small>关联理由：{relation.reason || '未填写'} · 创建人：{relation.createdBy}{relation.reviewedBy ? ` · 审核人：${relation.reviewedBy}` : ''}</small></div></article> })}</div></details>
+      <details className="content-section disclosure technical evidence-detail-card"><summary>技术信息</summary><dl><dt>证据 ID</dt><dd>{item.evidenceId}</dd><dt>来源文档 ID</dt><dd>{item.sourceDocumentId}</dd><dt>原文定位</dt><dd>{item.evidenceLocator}</dd><dt>模型版本</dt><dd>{item.modelVersion}</dd><dt>提示词版本</dt><dd>{item.promptVersion}</dd></dl></details>
+    </section>
+  </div>
 }
 
 function RetrievalTracePanel({ trace, loading, error }: { trace?: EvidenceRetrievalTrace; loading: boolean; error: Error | null }) {
@@ -1480,17 +1657,6 @@ function RetrievalTracePanel({ trace, loading, error }: { trace?: EvidenceRetrie
 
 function ScoreBar({ label, value, tone }: { label: string; value: number; tone: 'text' | 'graph' | 'fused' }) {
   return <div className="retrieval-score"><span>{label}</span><div><i className={`score-${tone}`} style={{ width: `${Math.round(value * 100)}%` }} /></div><strong>{value.toFixed(3)}</strong></div>
-}
-
-function RelationForm({ evidenceId, thesisList, editing, onDone }: { evidenceId: string; thesisList: ThesisDetail[]; editing: Relation | null; onDone: () => void | Promise<void> }) {
-  const [thesisId, setThesisId] = useState(editing?.thesisId ?? thesisList[0]?.thesisId ?? '')
-  const [hypothesisId, setHypothesisId] = useState(editing?.hypothesisId ?? '')
-  const [direction, setDirection] = useState(editing?.direction === 'support' ? '支持' : editing?.direction === 'conflict' ? '冲突' : '中性')
-  const [strength, setStrength] = useState(editing?.strength === 'high' ? '高' : editing?.strength === 'low' ? '低' : '中')
-  const [reason, setReason] = useState(editing?.reason ?? '')
-  const selected = thesisList.find((item) => item.thesisId === thesisId)
-  const mutation = useMutation({ mutationFn: () => editing ? updateRelation(evidenceId, editing.relationId, { thesisId, hypothesisId, direction, strength, reason }) : createRelation(evidenceId, { thesisId, hypothesisId, direction, strength, reason }), onSuccess: onDone })
-  return <form className="relation-form" onSubmit={(event) => { event.preventDefault(); mutation.mutate() }}><h3>{editing ? '修改关联' : '新增关联'}</h3><div className="form-grid two"><label>目标逻辑<select value={thesisId} disabled={Boolean(editing)} onChange={(event) => { setThesisId(event.target.value); setHypothesisId('') }} required><option value="">选择逻辑</option>{thesisList.map((item) => <option key={item.thesisId} value={item.thesisId}>{item.title}</option>)}</select></label><label>目标假设<select value={hypothesisId} onChange={(event) => setHypothesisId(event.target.value)} required><option value="">选择假设</option>{selected?.hypotheses.map((hypothesis) => <option key={hypothesis.hypothesisId} value={hypothesis.hypothesisId}>{hypothesis.statement}</option>)}</select></label><label>影响方向<select value={direction} onChange={(event) => setDirection(event.target.value)}><option>支持</option><option>冲突</option><option>中性</option></select></label><label>影响强度<select value={strength} onChange={(event) => setStrength(event.target.value)}><option>高</option><option>中</option><option>低</option></select></label></div><label>关联理由<textarea value={reason} onChange={(event) => setReason(event.target.value)} required placeholder="说明这条事实为什么影响目标假设" /></label><button className="button primary" disabled={mutation.isPending}>{mutation.isPending ? '提交中…' : editing ? '保存修改' : '新增关联'}</button><InlineError error={mutation.error} /></form>
 }
 
 function ReviewDraftPanel() {

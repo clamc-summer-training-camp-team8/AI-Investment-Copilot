@@ -24,6 +24,7 @@ export interface EvidenceFeedItem {
   hypothesisStatement: string
   sourceDocumentTitle: string
   factExcerpt: string
+  evidenceLocator?: string
   disclosedAt: string
   ingestedAt: string
   occurredAt?: string
@@ -300,6 +301,7 @@ export interface ThesisDetail extends ThesisSummary {
   targetPrice?: string
   observationPeriod?: string
   hypotheses: Hypothesis[]
+  catalystSuggestions: Array<Record<string, unknown>>
   riskSuggestions: Array<Record<string, unknown>>
   invalidationSuggestions: Array<Record<string, unknown>>
 }
@@ -414,6 +416,9 @@ export interface Trend {
 export interface AuditItem {
   action: string
   actor: string
+  objectType?: string
+  objectId?: string
+  modelVersion?: string
   occurredAt?: string
   detail?: Record<string, unknown>
 }

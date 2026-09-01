@@ -209,7 +209,7 @@ class Thesis(Base):
     )
     draft_suggestions: Mapped[dict | None] = mapped_column(
         JSONB,
-        comment="AI 草稿建议候选；未经研究员采用不得进入正式配置",
+        comment="AI 草稿建议与公司级催化剂/风险展示上下文；未经研究员采用不得进入正式配置",
     )
 
     source_document_id: Mapped[str | None] = mapped_column(ForeignKey("document.document_id"))

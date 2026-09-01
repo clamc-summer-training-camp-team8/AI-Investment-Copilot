@@ -302,6 +302,7 @@ function toThesis(item: Record<string, unknown>): ThesisDetail {
       qualityWarning: h.quality_warning ? String(h.quality_warning) : undefined,
       mappings: ((h.mappings ?? []) as Array<Record<string, unknown>>).map(toMapping),
     })),
+    catalystSuggestions: (item.catalyst_suggestions ?? []) as Array<Record<string, unknown>>,
     riskSuggestions: (item.risk_suggestions ?? []) as Array<Record<string, unknown>>,
     invalidationSuggestions: (item.invalidation_suggestions ?? []) as Array<Record<string, unknown>>,
   }
@@ -321,11 +322,11 @@ function toMapping(item: Record<string, unknown>): MetricMapping {
 function toFeedItem(item: Record<string, unknown>): EvidenceFeedItem {
   return {
     evidenceId: String(item.evidence_id), relationId: String(item.relation_id),
-    sourceDocumentId: String(item.source_document_id ?? ''),
     securityId: String(item.security_id), securityName: String(item.security_name),
     thesisId: String(item.thesis_id), thesisTitle: String(item.thesis_title), thesisCoreView: String(item.thesis_core_view ?? item.thesis_title),
     hypothesisId: String(item.hypothesis_id), hypothesisStatement: String(item.hypothesis_statement),
-    sourceDocumentTitle: String(item.source_document_title), factExcerpt: String(item.fact_excerpt),
+    sourceDocumentId: String(item.source_document_id ?? ''), sourceDocumentTitle: String(item.source_document_title), factExcerpt: String(item.fact_excerpt),
+    evidenceLocator: item.evidence_locator ? String(item.evidence_locator) : undefined,
     disclosedAt: String(item.disclosed_at), ingestedAt: String(item.ingested_at ?? item.disclosed_at), occurredAt: item.occurred_at ? String(item.occurred_at) : undefined,
     sourceUrl: String(item.source_url), direction: toDirection(item.direction),
     strength: toStrength(item.strength), aiConfidence: Number(item.ai_confidence ?? 0),
@@ -851,7 +852,7 @@ export async function recheckThesisQuality(thesisId: string): Promise<ThesisDeta
 export async function getAudit(thesisId: string): Promise<AuditItem[]> {
   if (useMock) return demoAudit
   const page = await request<{ items: Array<Record<string, unknown>> }>(`/api/theses/${thesisId}/audit`)
-  return page.items.map((item) => ({ action: String(item.action), actor: String(item.actor), occurredAt: item.occurred_at ? String(item.occurred_at) : undefined, detail: item.detail as Record<string, unknown> | undefined }))
+  return page.items.map((item) => ({ action: String(item.action), actor: String(item.actor), objectType: item.object_type ? String(item.object_type) : undefined, objectId: item.object_id ? String(item.object_id) : undefined, modelVersion: item.model_version ? String(item.model_version) : undefined, occurredAt: item.occurred_at ? String(item.occurred_at) : undefined, detail: item.detail as Record<string, unknown> | undefined }))
 }
 
 export async function getWorkbench(): Promise<WorkbenchData> {
@@ -911,6 +912,37 @@ export async function updateHypothesis(thesisId: string, hypothesisId: string, p
     return { ...thesis, hypotheses: thesis.hypotheses.map((item) => item.hypothesisId === hypothesisId ? { ...item, ...payload } : item) }
   }
   return toThesis(await request<Record<string, unknown>>(`/api/theses/${thesisId}/hypotheses/${hypothesisId}`, { method: 'PATCH', body: JSON.stringify({ statement: payload.statement, hypothesis_type: payload.hypothesisType, importance: payload.importance, observation_window: payload.observationWindow || null, invalidation_rule: payload.invalidationRule || null }) }))
+}
+
+export async function createHypothesis(thesisId: string, payload: { statement: string; hypothesisType: string; importance: string; observationWindow?: string; invalidationRule?: string }): Promise<ThesisDetail> {
+  if (useMock) {
+    const thesis = demoTheses.find((item) => item.thesisId === thesisId) ?? demoThesis
+    const hypothesisId = `${thesisId}-H${thesis.hypotheses.length + 1}`
+    return {
+      ...thesis,
+      hypotheses: [...thesis.hypotheses, {
+        hypothesisId,
+        statement: payload.statement,
+        hypothesisType: payload.hypothesisType,
+        importance: payload.importance,
+        observationWindow: payload.observationWindow,
+        invalidationRule: payload.invalidationRule,
+        status: '待验证',
+        mappings: [],
+        metricSuggestions: [],
+      }],
+    }
+  }
+  return toThesis(await request<Record<string, unknown>>(`/api/theses/${encodeURIComponent(thesisId)}/hypotheses`, {
+    method: 'POST',
+    body: JSON.stringify({
+      statement: payload.statement,
+      hypothesis_type: payload.hypothesisType,
+      importance: payload.importance,
+      observation_window: payload.observationWindow || null,
+      invalidation_rule: payload.invalidationRule || null,
+    }),
+  }))
 }
 
 export async function updateThesisDraft(thesisId: string, payload: { title: string; coreView: string }): Promise<ThesisDetail> {
@@ -1293,9 +1325,13 @@ export async function listDataCenterDocuments(params: URLSearchParams): Promise<
   if (useMock) {
     const q = (params.get('q') ?? '').toLowerCase()
     const contentStatus = params.get('content_status')
+    const securityId = params.get('security_id')
+    const direction = params.get('direction') === 'asc' ? 1 : -1
     const rows = mockDataCenterDocuments().filter((item) =>
       (!q || item.title.toLowerCase().includes(q) || item.documentId.toLowerCase().includes(q))
-      && (!contentStatus || item.contentStatus === contentStatus))
+      && (!contentStatus || item.contentStatus === contentStatus)
+      && (!securityId || item.securityIds.includes(securityId)))
+      .sort((left, right) => left.publishedAt.localeCompare(right.publishedAt) * direction)
     const limit = Number(params.get('limit') ?? 20)
     const offset = Number(params.get('offset') ?? 0)
     return { items: rows.slice(offset, offset + limit), total: rows.length, limit, offset }

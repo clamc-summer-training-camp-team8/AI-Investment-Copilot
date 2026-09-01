@@ -180,6 +180,39 @@ def test_mapping_rejects_metric_outside_dictionary() -> None:
         application.dependency_overrides.clear()
 
 
+def test_researcher_can_add_hypothesis_and_create_new_version() -> None:
+    uow = _draft_uow()
+    application = create_app()
+    application.dependency_overrides[get_uow] = lambda: uow
+    try:
+        with TestClient(application) as client:
+            response = client.post(
+                "/api/theses/THS-CONFIG-1/hypotheses",
+                headers={"X-User-Id": "analyst-mvp"},
+                json={
+                    "statement": "费用率继续下降",
+                    "hypothesis_type": "盈利",
+                    "importance": "核心",
+                    "observation_window": "未来 4 个季度",
+                    "invalidation_rule": "费用率连续两个季度上升",
+                },
+            )
+        assert response.status_code == 201, response.text
+        created = next(
+            item for item in response.json()["hypotheses"] if item["statement"] == "费用率继续下降"
+        )
+        assert created["importance"] == "核心"
+        assert created["observation_window"] == "未来 4 个季度"
+    finally:
+        application.dependency_overrides.clear()
+
+    snapshot = uow.versions.latest("THS-CONFIG-1")
+    assert snapshot is not None
+    assert any(
+        item["statement"] == "费用率继续下降" for item in snapshot.snapshot["hypotheses"]
+    )
+
+
 def test_duplicate_company_draft_returns_visible_existing_thesis_without_calling_model() -> None:
     uow = build_fake_uow()
     uow.securities.add(SecurityRecord(security_id="688981", name="中芯国际"))

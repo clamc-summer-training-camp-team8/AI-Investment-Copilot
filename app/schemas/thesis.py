@@ -57,6 +57,14 @@ class HypothesisUpdateIn(Base):
     invalidation_rule: str | None = Field(default=None, max_length=2000)
 
 
+class HypothesisCreateIn(Base):
+    statement: Annotated[str, Field(min_length=1, max_length=2000)]
+    hypothesis_type: Annotated[str, Field(min_length=1, max_length=32)] = "其他"
+    importance: Annotated[str, Field(pattern="^(核心|辅助)$")] = "辅助"
+    observation_window: str | None = Field(default=None, max_length=128)
+    invalidation_rule: str | None = Field(default=None, max_length=2000)
+
+
 class ThesisDraftUpdateIn(Base):
     title: Annotated[str, Field(min_length=1, max_length=TITLE_MAX)]
     core_view: Annotated[str, Field(min_length=1, max_length=CORE_VIEW_MAX)]
@@ -193,6 +201,7 @@ class ThesisOut(Base):
     target_price: Decimal | None = None
     observation_period: str | None = None
     hypotheses: list[HypothesisOut] = Field(default_factory=list)
+    catalyst_suggestions: list[dict[str, object]] = Field(default_factory=list)
     risk_suggestions: list[dict[str, object]] = Field(default_factory=list)
     invalidation_suggestions: list[dict[str, object]] = Field(default_factory=list)
 

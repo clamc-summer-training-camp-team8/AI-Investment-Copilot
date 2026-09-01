@@ -33,6 +33,7 @@ export const demoThesis: ThesisDetail = {
   horizonEndOn: '2027-07-18', nextReviewAt: '2026-10-18',
   coreView: '逆变器全球份额与储能系统集成能力构成双重护城河，核心验证点是海外毛利率、储能交付质量与现金流的同步性。',
   hypotheses,
+  catalystSuggestions: [],
   riskSuggestions: [{ label: '价格竞争加剧', source: 'AI 候选' }, { label: '海外渠道库存波动', source: 'AI 候选' }],
   invalidationSuggestions: [{ label: '海外毛利率连续两季低于 30%', source: 'AI 候选' }],
 }
@@ -69,9 +70,9 @@ export const demoEvidenceFeed: EvidenceFeedItem = {
 
 export const demoEvidenceFeeds: EvidenceFeedItem[] = [
   demoEvidenceFeed,
-  { ...demoEvidenceFeed, evidenceId: 'EVD-SG-002', relationId: 'REL-SG-002', sourceDocumentTitle: '阳光电源 2026 年一季度报告', factExcerpt: '海外地区收入同比增长 31.8%，渠道库存周转保持在正常区间。', disclosedAt: '2026-04-29T18:00:00+08:00', direction: 'support', strength: 'medium', aiConfidence: .91, confirmationStatus: 'confirmed', priority: 'medium' },
-  { ...demoEvidenceFeed, evidenceId: 'EVD-SG-003', relationId: 'REL-SG-003', sourceDocumentTitle: '关于储能系统订单的自愿性公告', factExcerpt: '公司签署海外储能系统供货协议，合同金额约 42.6 亿元。', disclosedAt: '2026-07-16T18:00:00+08:00', direction: 'support', strength: 'high', aiConfidence: .88, hypothesisId: 'HYP-SG-002', hypothesisStatement: hypotheses[1].statement, priority: 'high' },
-  { ...demoEvidenceFeed, evidenceId: 'EVD-SG-004', relationId: 'REL-SG-004', sourceDocumentTitle: '投资者关系活动记录表', factExcerpt: '管理层表示价格竞争仍将持续，短期盈利弹性存在不确定性。', disclosedAt: '2026-08-20T18:00:00+08:00', direction: 'neutral', strength: 'low', aiConfidence: .67, hypothesisId: 'HYP-SG-003', hypothesisStatement: hypotheses[2].statement, priority: 'low' },
+  { ...demoEvidenceFeed, evidenceId: 'EVD-SG-002', relationId: 'REL-SG-002', sourceDocumentId: 'DOC-SG-2026-Q1', sourceDocumentTitle: '阳光电源 2026 年一季度报告', factExcerpt: '海外地区收入同比增长 31.8%，渠道库存周转保持在正常区间。', disclosedAt: '2026-04-29T18:00:00+08:00', direction: 'support', strength: 'medium', aiConfidence: .91, confirmationStatus: 'confirmed', priority: 'medium' },
+  { ...demoEvidenceFeed, evidenceId: 'EVD-SG-003', relationId: 'REL-SG-003', sourceDocumentId: 'DOC-SG-ORDER-202607', sourceDocumentTitle: '关于储能系统订单的自愿性公告', factExcerpt: '公司签署海外储能系统供货协议，合同金额约 42.6 亿元。', disclosedAt: '2026-07-16T18:00:00+08:00', direction: 'support', strength: 'high', aiConfidence: .88, hypothesisId: 'HYP-SG-002', hypothesisStatement: hypotheses[1].statement, priority: 'high' },
+  { ...demoEvidenceFeed, evidenceId: 'EVD-SG-004', relationId: 'REL-SG-004', sourceDocumentId: 'DOC-SG-IR-202608', sourceDocumentTitle: '投资者关系活动记录表', factExcerpt: '管理层表示价格竞争仍将持续，短期盈利弹性存在不确定性。', disclosedAt: '2026-08-20T18:00:00+08:00', direction: 'neutral', strength: 'low', aiConfidence: .67, hypothesisId: 'HYP-SG-003', hypothesisStatement: hypotheses[2].statement, priority: 'low' },
 ]
 
 export const demoRelations: Relation[] = [{ relationId: 'REL-SG-001', thesisId: demoThesis.thesisId, hypothesisId: 'HYP-SG-001', direction: 'conflict', strength: 'high', status: 'pending', reason: '收入高速增长但毛利率未同步改善，可能削弱盈利韧性。', createdBy: 'ai-runtime', canManage: true }]
