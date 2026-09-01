@@ -175,14 +175,12 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   const collectionStatus = collectionStatusPresentation(collection.data, analysisStatus, todayThemeItems.length)
   const totalHypotheses = current.reduce((total, item) => total + item.hypotheses.length, 0)
   const totalMappings = current.reduce((total, item) => total + item.hypotheses.reduce((count, hypothesis) => count + hypothesis.mappings.length, 0), 0)
-  const affectedCompanyCount = themesByCompany.size
   const cumulativeAffectedCompanyCount = dailyThemesByCompany.size
   const pendingTodayCount = todayThemeItems.filter((item) => item.confirmationStatus === 'pending').length
   const confirmedTodayCount = Math.max(dailyThemeItems.length - pendingTodayCount, 0)
   const supportImpactCount = dailyThemeItems.filter((item) => (item.themeDirection ?? item.direction) === 'support').length
   const conflictImpactCount = dailyThemeItems.filter((item) => (item.themeDirection ?? item.direction) === 'conflict').length
   const divergentImpactCount = dailyThemeItems.filter((item) => ['mixed', 'divergent'].includes(item.themeDirection ?? item.direction)).length
-  const companiesWithoutChanges = Math.max(current.length - affectedCompanyCount, 0)
   const rankDirection = (direction: EvidenceFeedItem['themeDirection']) => direction === 'conflict' ? 4 : direction === 'divergent' ? 3 : direction === 'mixed' ? 2 : direction === 'support' ? 1 : 0
   const actionItems = todayThemeItems
     .filter((item) => item.confirmationStatus === 'pending')
@@ -192,11 +190,6 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
     .flatMap((thesis) => thesis.hypotheses
       .filter((hypothesis) => hypothesis.importance === '核心' && hypothesis.mappings.length === 0)
       .map((hypothesis) => ({ thesis, hypothesis })))
-    .slice(0, 4)
-  const reviewHorizon = new Date()
-  reviewHorizon.setDate(reviewHorizon.getDate() + 7)
-  const reviewDueTheses = current
-    .filter((thesis) => thesis.nextReviewAt && new Date(thesis.nextReviewAt) <= reviewHorizon)
     .slice(0, 4)
   const collectedToday = ((collection.data?.news.queuedToday ?? collection.data?.news.queued ?? 0) + (collection.data?.reports.queuedToday ?? collection.data?.reports.queued ?? 0))
   const skippedSeenToday = ((collection.data?.news.skippedSeen ?? 0) + (collection.data?.reports.skippedSeen ?? 0))
@@ -214,10 +207,11 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
       : dailyThemeItems.length
         ? `今日累计归并 ${cumulativeAffectedCompanyCount} 家公司的 ${dailyUpdates.data.total} 张影响卡`
         : '今日暂未形成新的主逻辑影响'
-  const impactBreakdownItems = [
-    { label: '支持', value: supportImpactCount, note: '强化现有逻辑' },
-    { label: '冲突', value: conflictImpactCount, note: '可能削弱假设' },
-    { label: '分歧', value: divergentImpactCount, note: '同一逻辑方向不一致' },
+  const failedProcessingCount = (analysisStatus?.failed ?? 0) + (analysisStatus?.stale ?? 0)
+  const radarAttentionItems = [
+    { label: '冲突影响', value: conflictImpactCount, note: '优先核验是否承压', tone: 'conflict' },
+    { label: '分歧影响', value: divergentImpactCount, note: '确认哪条证据链更强', tone: 'mixed' },
+    { label: '失败资料', value: failedProcessingCount, note: '需要重跑或排除', tone: 'failed' },
   ]
   const pipelineNextAction = collection.data?.overallStatus === 'failed'
     ? '建议先查看采集状态并立即补跑，原有资料不会丢失。'
@@ -246,11 +240,6 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
     { label: '盘后研报', time: '18:20', state: roundState(18, 20, collection.data?.reports.status !== 'disabled', collection.data?.overallStatus) },
     { label: '夜间补齐', time: '20:30', state: roundState(20, 30, collection.data?.reports.status !== 'disabled', collection.data?.overallStatus) },
   ]
-  const radarMetrics = [
-    { label: '今日影响', value: dailyUpdates.data.total, note: '累计归并影响卡' },
-    { label: '已处理', value: handledTodayCount, note: '已完成研究决策' },
-    { label: '待确认', value: pendingTodayCount, note: '当前需人工判断' },
-  ]
   const radarSuggestions = [
     collection.data?.overallStatus === 'failed' ? '采集异常，先进入采集状态页补跑。' : '',
     divergentImpactCount > 0 ? `${divergentImpactCount} 张影响卡存在分歧，建议优先复核证据方向。` : '',
@@ -259,11 +248,6 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
     !pendingTodayCount && !conflictImpactCount && !divergentImpactCount && supportImpactCount > 0 ? '今日影响以支持为主，可将已确认内容沉淀到对应假设证据库。' : '',
     !dailyUpdates.data.total ? '当前暂无影响卡，等待下一轮自动采集和 AI 归并。' : '',
   ].filter(Boolean)
-  const researchGaps = [
-    ...(missingMetricTasks.length ? [{ label: '假设缺少监控指标', count: missingMetricTasks.length, note: '先补指标，否则后续验证只能停留在文字判断。', to: '/radar' }] : []),
-    ...(reviewDueTheses.length ? [{ label: '逻辑临近复核日期', count: reviewDueTheses.length, note: '需要重新检查近期证据是否改变原判断。', to: '/reviews' }] : []),
-    ...(companiesWithoutChanges ? [{ label: '今日无新增影响覆盖', count: companiesWithoutChanges, note: '这些公司不是待办，但可在盘后抽查资料覆盖是否充分。', to: '/coverage' }] : []),
-  ].slice(0, 3)
   const marketBriefs = [...dailyThemeItems]
     .sort((left, right) => (right.priority === 'high' ? 2 : right.priority === 'medium' ? 1 : 0) - (left.priority === 'high' ? 2 : left.priority === 'medium' ? 1 : 0) || right.atomicEvidenceCount - left.atomicEvidenceCount || right.sourceDocumentCount - left.sourceDocumentCount)
     .slice(0, 5)
@@ -271,8 +255,8 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   return <div className="dashboard-page">
     <aside className="coverage-panel" aria-label="我的覆盖"><div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>{Object.entries(grouped).map(([industry, rows]) => <section className="coverage-group" key={industry}><button className="coverage-industry" aria-expanded={expandedIndustries.has(industry)} onClick={() => toggle(industry)}><span>{expandedIndustries.has(industry) ? '⌄' : '›'} ▥ {industry}</span><b>{rows.length}</b></button>{expandedIndustries.has(industry) && <div className="coverage-companies">{rows.map((thesis) => <NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`} key={thesis.thesisId}><span>▥ {securityById.get(thesis.securityId)?.name || thesis.securityId}</span><b>{evidenceByThesis.get(thesis.thesisId)?.length || 0}</b></NavLink>)}</div>}</section>)}<nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink><NavLink to="/updates">♧ 最新动态</NavLink></nav><button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button></aside>
     <main className="dashboard-main"><section className="dashboard-card research-feed company-theme-feed" aria-labelledby="research-feed-title"><header className="dashboard-card-header"><div><h2 id="research-feed-title">今日公司变化</h2><span>AI 已将当日资料映射到核心假设，并按主投资逻辑汇总</span></div><NavLink to="/updates">全部逻辑变化 ›</NavLink></header><div className={`dashboard-collection-state ${collectionStatus.tone}`}><i /><div><strong>{collectionStatus.title}</strong><small>{collectionStatus.detail}</small></div><NavLink to="/updates">查看采集状态 ›</NavLink></div><div className="company-theme-bundles">{companyThemeBundles.slice(0, 4).map((bundle) => <article className="company-theme-bundle" key={bundle.securityId}><header><div><div className="company-theme-company"><strong>{bundle.securityName}</strong><time>今日 · {compactDate(bundle.date)}</time></div><span>今日 {bundle.sourceCount} 份资料 · 1 条主投资逻辑变化 · 涉及 {bundle.hypothesisCount} 项核心假设</span></div>{bundle.pending && <b className="ai-label">待确认</b>}</header><div className="company-theme-list">{bundle.themes.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <section className="company-theme-row logic-change-row" key={item.thesisId}><i className={themeDirection === 'conflict' ? 'conflict' : themeDirection === 'mixed' ? 'mixed' : ''} /><div><div className="company-theme-meta"><span>主投资逻辑变化</span><strong className={themeDirection}>{updateThemeDirectionLabel(themeDirection)}</strong></div><h3>{item.thesisCoreView}</h3><p className="logic-change-summary">{item.aggregationSummary}</p><ThemeImpactLines item={item} /></div><div className="company-theme-actions"><NavLink to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink><NavLink to={impactHref}>查看影响</NavLink></div></section> })}</div></article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的主投资逻辑变化。资料可能仍在分析，或尚未触发任何现行假设；可查看采集状态了解详情。</div>}</div><NavLink className="dashboard-more" to="/updates">查看全部公司变化 ⌄</NavLink></section>
-    <section className="dashboard-card workbench-closure" aria-labelledby="closure-title"><header className="dashboard-card-header"><div><h2 id="closure-title">今日研究闭环</h2><span>从资料进入系统到研究员确认，按处理阶段看今天卡在哪里</span></div><div className="dashboard-card-actions"><NavLink to="/status-simulator">状态沙盘 ›</NavLink><NavLink to="/reviews">查看研究记录 ›</NavLink></div></header><div className="closure-grid">{closureItems.map((item) => <NavLink className="closure-step" to={item.to} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><p>{item.note}</p></NavLink>)}</div></section><section className="dashboard-card research-gap-radar" aria-labelledby="gap-title"><header className="dashboard-card-header"><div><h2 id="gap-title">研究缺口雷达</h2><span>这里不重复公司变化，只提示会影响后续判断质量的缺口</span></div><NavLink to="/radar">查看监控 ›</NavLink></header>{researchGaps.length ? <div className="gap-radar-list">{researchGaps.map((item) => <NavLink className="gap-radar-row" to={item.to} key={item.label}><b>{item.count}</b><div><strong>{item.label}</strong><p>{item.note}</p></div></NavLink>)}</div> : <div className="side-empty">当前没有明显研究缺口；后续若缺指标、到期复核或资料覆盖不足，会在这里提醒。</div>}</section></main>
-    <aside className="dashboard-right"><section className={`dashboard-card work-radar-card ${pipelineTone}`}><header className="dashboard-card-header"><div><h2>工作雷达监控</h2><span>{collectionStatus.title}</span></div><NavLink to="/updates">详情 ›</NavLink></header><div className="radar-hero"><strong>{pipelineSummary}</strong><p>这里按影响卡统计今日工作量；采集轮次仅用于说明后续还会自动刷新。</p></div><div className="radar-rounds">{collectionRounds.map((round) => <article className={`radar-round state-${round.state}`} key={`${round.label}-${round.time}`}><time>{round.time}</time><span>{round.label}</span><b>{round.state}</b></article>)}</div><div className="radar-metrics">{radarMetrics.map((metric) => <article key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.note}</small></article>)}</div><div className="radar-funnel impact-breakdown">{impactBreakdownItems.map((item) => <article key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.note}</small></article>)}</div><div className="radar-next"><span>下一步建议</span>{radarSuggestions.map((suggestion) => <p key={suggestion}>{suggestion}</p>)}</div></section><section className="dashboard-card market-brief-card"><header className="dashboard-card-header"><div><h2>最新资讯精选</h2><span>按优先级、证据数量和来源覆盖筛选</span></div><NavLink to="/updates">全部资讯 ›</NavLink></header>{marketBriefs.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <NavLink className={`market-brief-row ${themeDirection}`} to={impactHref} key={item.relationId}><div><span>{item.securityName}</span><b>{updatePriorityLabel(item.priority)}关注</b></div><strong>{item.sourceDocumentTitle}</strong><p>{item.factExcerpt || item.aggregationSummary || item.thesisCoreView}</p><footer><small>{item.sourceDocumentCount} 份来源 · {item.atomicEvidenceCount} 条事实</small><em>{updateThemeDirectionLabel(themeDirection)}</em></footer></NavLink> })}{!marketBriefs.length && <div className="side-empty">今日暂无可精选资讯；采集完成后会按关注度自动进入这里。</div>}</section></aside>
+    <section className="dashboard-card market-brief-card market-brief-main"><header className="dashboard-card-header"><div><h2>最新资讯精选</h2><span>按优先级、证据数量和来源覆盖筛选，放在公司变化下方供快速扫读</span></div><NavLink to="/updates">全部资讯 ›</NavLink></header>{marketBriefs.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <NavLink className={`market-brief-row ${themeDirection}`} to={impactHref} key={item.relationId}><div><span>{item.securityName}</span><b>{updatePriorityLabel(item.priority)}关注</b></div><strong>{item.sourceDocumentTitle}</strong><p>{item.factExcerpt || item.aggregationSummary || item.thesisCoreView}</p><footer><small>{item.sourceDocumentCount} 份来源 · {item.atomicEvidenceCount} 条事实</small><em>{updateThemeDirectionLabel(themeDirection)}</em></footer></NavLink> })}{!marketBriefs.length && <div className="side-empty">今日暂无可精选资讯；采集完成后会按关注度自动进入这里。</div>}</section></main>
+    <aside className="dashboard-right"><section className={`dashboard-card work-radar-card ${pipelineTone}`}><header className="dashboard-card-header"><div><h2>工作雷达监控</h2><span>{collectionStatus.title}</span></div><NavLink to="/updates">详情 ›</NavLink></header><div className="radar-scroll"><div className="radar-hero"><span>当前状态</span><strong>{pipelineSummary}</strong><p>优先看是否有待确认、冲突分歧或失败资料；底部再看今日处理闭环。</p></div><section className="radar-section"><header><span>今日采集轮次</span><small>自动刷新</small></header><div className="radar-rounds">{collectionRounds.map((round) => <article className={`radar-round state-${round.state}`} key={`${round.label}-${round.time}`}><time>{round.time}</time><span>{round.label}</span><b>{round.state}</b></article>)}</div></section><section className="radar-section"><header><span>需要关注</span><small>只保留行动信号</small></header><div className="radar-attention-grid">{radarAttentionItems.map((item) => <article className={`radar-attention-item ${item.tone}`} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.note}</small></article>)}</div></section><div className="radar-next"><span>下一步建议</span>{radarSuggestions.map((suggestion) => <p key={suggestion}>{suggestion}</p>)}{!radarSuggestions.length && <p>{pipelineNextAction}</p>}</div><section className="work-radar-closure" aria-labelledby="closure-title"><header><div><h3 id="closure-title">今日研究闭环</h3><span>从资料进入到研究员确认</span></div><div><NavLink to="/status-simulator">状态沙盘 ›</NavLink><NavLink to="/reviews">研究记录 ›</NavLink></div></header><div className="closure-grid">{closureItems.map((item) => <NavLink className="closure-step" to={item.to} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><p>{item.note}</p></NavLink>)}</div></section></div></section></aside>
   </div>
 }
 
