@@ -21,6 +21,7 @@ from app.db.models.core import (
     Experiment,
     Hypothesis,
     HypothesisMetricMap,
+    MarketSecurity,
     Metric,
     MetricAlias,
     MetricObservation,
@@ -29,6 +30,7 @@ from app.db.models.core import (
     Signal,
     Thesis,
 )
+from app.db.models.coverage import CoverageCompany, CoverageSector, MarketSector
 from app.db.models.governance import (
     AdjudicationDecision,
     AuditLog,
@@ -51,6 +53,8 @@ __all__ = [
     "AiRun",
     "AuditLog",
     "Base",
+    "CoverageCompany",
+    "CoverageSector",
     "DataQualityResult",
     "Document",
     "DocumentFact",
@@ -69,6 +73,8 @@ __all__ = [
     "IngestionRun",
     "LogicTopic",
     "LogicTopicRelation",
+    "MarketSector",
+    "MarketSecurity",
     "Metric",
     "MetricAlias",
     "MetricObservation",

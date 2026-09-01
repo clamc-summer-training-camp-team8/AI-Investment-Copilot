@@ -149,6 +149,7 @@ def expectation_gap(
     relative = ((actual / expected) - Decimal(1)).quantize(QUANT) if expected != 0 else None
 
     if direction in (
+        ExpectationDirection.RISING,
         ExpectationDirection.HIGHER_BETTER,
         ExpectationDirection.NOT_BELOW_THRESHOLD,
     ):
@@ -241,6 +242,7 @@ def trend(
             act < exp
             if direction
             in (
+                ExpectationDirection.RISING,
                 ExpectationDirection.HIGHER_BETTER,
                 ExpectationDirection.NOT_BELOW_THRESHOLD,
             )

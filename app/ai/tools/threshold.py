@@ -204,10 +204,12 @@ def _insufficient_history(
 
 def _lower_is_bad(expected_direction: str) -> bool:
     """判断失效侧；无法识别的方向不默认为任意一侧。"""
-    if expected_direction in {"越高越好", "不低于阈值"}:
+    if expected_direction in {"上升", "越高越好", "不低于阈值"}:
         return True
-    if expected_direction in {"越低越好", "不高于阈值"}:
+    if expected_direction in {"下降", "越低越好", "不高于阈值"}:
         return False
+    if expected_direction == "波动":
+        raise ValueError("波动方向需要由研究员分别填写上限或下限，不能生成单侧阈值")
     raise ValueError(f"不支持的预期方向: {expected_direction}")
 
 

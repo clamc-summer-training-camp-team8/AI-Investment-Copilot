@@ -11,6 +11,8 @@ from arq.connections import RedisSettings
 from arq.cron import cron
 
 from app.core.config import settings
+from app.workers.company_metric_sync import sync_company_metrics_daily_job
+from app.workers.eastmoney_sync import sync_eastmoney_daily_job
 from app.workers.jobs import (
     analyze_document_job,
     cleanup_uploads_job,
@@ -26,10 +28,14 @@ class WorkerSettings:
         analyze_document_job,
         cleanup_uploads_job,
         recover_stale_jobs,
+        sync_eastmoney_daily_job,
+        sync_company_metrics_daily_job,
     ]
     cron_jobs: ClassVar[list[object]] = [
         cron(cleanup_uploads_job, hour=3, minute=15),
         cron(recover_stale_jobs, minute={0, 15, 30, 45}, run_at_startup=True),
+        cron(sync_eastmoney_daily_job, hour=4, minute=0),
+        cron(sync_company_metrics_daily_job, hour=18, minute=10),
     ]
     redis_settings: ClassVar[RedisSettings] = RedisSettings.from_dsn(settings.redis_url)
     max_jobs = 10

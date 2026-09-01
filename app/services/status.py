@@ -21,12 +21,13 @@ from app.calc.rules import (
     InvalidationCheck,
     StatusSuggestion,
     check_invalidation,
+    check_invalidation_range,
     evaluate_thesis_invalidation,
     suggest_status,
     summarize_evidence,
 )
 from app.core.config import RuleThresholds
-from app.core.enums import ConfirmationStatus, ThesisStatus
+from app.core.enums import ConfirmationStatus, ExpectationDirection, ThesisStatus
 from app.core.timeutil import now
 from app.services import audit, demo, version
 from app.services.errors import HumanGateRequired, IllegalTransition, ValidationFailed
@@ -104,12 +105,19 @@ def compute_suggestion(
             # （「营业收入同比转负则失效」就是阈值 0），而 Decimal("0.00") 为假，
             # 用 `or` 会把它替换成预期值，失效判定从「同比转负」变成「同比低于预期」。
             # 北方华创 2026Q1 同比 +26% 被判失效就是这个原因：26% < 预期 30%。
+            uses_range = mapping.expected_direction in {
+                ExpectationDirection.RISING,
+                ExpectationDirection.FALLING,
+                ExpectationDirection.FLUCTUATING,
+            }
             threshold = (
                 mapping.invalidation_threshold
                 if mapping.invalidation_threshold is not None
                 else mapping.expected_value
             )
-            if threshold is None:
+            if not uses_range and threshold is None:
+                continue
+            if uses_range and mapping.expected_lower is None and mapping.expected_upper is None:
                 continue
             observations = [
                 Observation(
@@ -140,8 +148,21 @@ def compute_suggestion(
             ):
                 # 数据过期只意味着当前不可判定，不能把旧突破直接升级为新的失效建议。
                 continue
-            checks.append(
-                check_invalidation(
+            if uses_range:
+                checks.append(
+                    check_invalidation_range(
+                        hypothesis.hypothesis_id,
+                        observations,
+                        thesis_established_on=thesis.established_on,
+                        lower=mapping.expected_lower,
+                        upper=mapping.expected_upper,
+                        thresholds=thresholds,
+                        required_consecutive=mapping.invalidation_consecutive_periods,
+                    )
+                )
+            else:
+                assert threshold is not None
+                checks.append(check_invalidation(
                     hypothesis.hypothesis_id,
                     observations,
                     thesis_established_on=thesis.established_on,
@@ -149,8 +170,7 @@ def compute_suggestion(
                     direction=mapping.expected_direction,
                     thresholds=thresholds,
                     required_consecutive=mapping.invalidation_consecutive_periods,
-                )
-            )
+                ))
 
     composite = evaluate_thesis_invalidation(
         thesis.thesis_id,

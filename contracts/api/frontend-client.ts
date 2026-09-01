@@ -37,8 +37,10 @@ export interface MetricMapping {
   metric_name: string
   metric_unit: string
   metric_version: string
-  expected_direction: '越高越好' | '越低越好' | '不低于阈值' | '不高于阈值'
+  expected_direction: '上升' | '下降' | '波动' | '越高越好' | '越低越好' | '不低于阈值' | '不高于阈值'
   expected_value: DecimalString | null
+  expected_lower: DecimalString | null
+  expected_upper: DecimalString | null
   invalidation_threshold: DecimalString | null
   invalidation_consecutive_periods: number | null
   expectation_source: string
@@ -75,9 +77,39 @@ export interface Thesis {
   next_review_at: IsoDate | null
   thesis_kind: string
   thesis_series_id: string | null
+  investment_rating: string | null
+  target_price: DecimalString | null
+  observation_period: string | null
   hypotheses: Hypothesis[]
   risk_suggestions: Record<string, unknown>[]
   invalidation_suggestions: Record<string, unknown>[]
+}
+
+export interface CoverageCompany {
+  coverage_company_id: string
+  sector_id: string
+  security_id: string
+  name: string
+  ticker: string | null
+  industry: string | null
+  market: string | null
+  owner: string
+  status: '正常覆盖' | '待建档' | '暂停覆盖' | string
+  thesis_id: string | null
+  thesis_title: string | null
+  thesis_status: string | null
+  hypothesis_count: number
+  configured_metric_count: number
+  updated_at: IsoDateTime | null
+}
+
+export interface CoverageSector {
+  sector_id: string
+  name: string
+  code: string | null
+  description: string | null
+  status: string
+  companies: CoverageCompany[]
 }
 
 export interface MetricDefinition {
@@ -193,6 +225,8 @@ export interface MetricMappingInput {
   metric_version?: string
   expected_direction: MetricMapping['expected_direction']
   expected_value?: DecimalString | null
+  expected_lower?: DecimalString | null
+  expected_upper?: DecimalString | null
   invalidation_threshold?: DecimalString | null
   invalidation_consecutive_periods?: number | null
   expectation_source: string
@@ -249,6 +283,35 @@ export class InvestmentCopilotApi {
     return this.request<{ items: Thesis[]; next_cursor: string | null }>(`/theses?${query}`)
   }
 
+  listCoverage(query?: string) {
+    const suffix = query?.trim() ? `?query=${encodeURIComponent(query.trim())}` : ''
+    return this.request<CoverageSector[]>(`/coverage${suffix}`)
+  }
+
+  createCoverageSector(input: { name: string; code?: string | null; description?: string | null }) {
+    return this.request<CoverageSector>('/coverage/sectors', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+    })
+  }
+
+  updateCoverageSector(sectorId: string, input: { name: string }) {
+    return this.request<CoverageSector>(`/coverage/sectors/${encodeURIComponent(sectorId)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+    })
+  }
+
+  createCoverageCompany(sectorId: string, input: { security_id?: string | null; name?: string | null; ticker?: string | null; industry?: string | null; market?: string | null; owner?: string | null }) {
+    return this.request<CoverageCompany>(`/coverage/sectors/${encodeURIComponent(sectorId)}/companies`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+    })
+  }
+
+  updateCoverageCompany(coverageCompanyId: string, input: { status?: string; owner?: string }) {
+    return this.request<CoverageCompany>(`/coverage/companies/${encodeURIComponent(coverageCompanyId)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+    })
+  }
+
   getThesis(thesisId: string) {
     return this.request<Thesis>(`/theses/${encodeURIComponent(thesisId)}`)
   }
@@ -265,6 +328,31 @@ export class InvestmentCopilotApi {
     invalidation_rule?: string | null
   }) {
     return this.request<Thesis>(`/theses/${encodeURIComponent(thesisId)}/hypotheses/${encodeURIComponent(hypothesisId)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+    })
+  }
+
+  updateThesisMaintenance(thesisId: string, input: {
+    title: string
+    core_view: string
+    direction: '看多' | '看空' | '观察'
+    investment_rating?: string | null
+    target_price?: DecimalString | null
+    observation_period?: string | null
+    horizon_end_on?: IsoDate | null
+    next_review_at?: IsoDate | null
+    hypotheses: Array<{
+      hypothesis_id: string
+      statement: string
+      hypothesis_type?: string
+      importance: '核心' | '辅助'
+      observation_window?: string | null
+      invalidation_rule?: string | null
+    }>
+    mappings: Array<MetricMappingInput & { hypothesis_id: string; mapping_id?: string | null }>
+    reason: string
+  }) {
+    return this.request<Thesis>(`/theses/${encodeURIComponent(thesisId)}/maintenance`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
     })
   }
@@ -373,4 +461,3 @@ export class InvestmentCopilotApi {
     })
   }
 }
-

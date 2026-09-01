@@ -57,12 +57,56 @@ class HypothesisUpdateIn(Base):
     invalidation_rule: str | None = Field(default=None, max_length=2000)
 
 
+class ThesisDraftUpdateIn(Base):
+    title: Annotated[str, Field(min_length=1, max_length=TITLE_MAX)]
+    core_view: Annotated[str, Field(min_length=1, max_length=CORE_VIEW_MAX)]
+
+
+class ThesisMaintenanceHypothesisIn(Base):
+    hypothesis_id: Annotated[str, Field(min_length=1, max_length=64)]
+    statement: Annotated[str, Field(min_length=1, max_length=2000)]
+    hypothesis_type: Annotated[str, Field(min_length=1, max_length=32)] = "其他"
+    importance: Annotated[str, Field(pattern="^(核心|辅助)$")]
+    observation_window: str | None = Field(default=None, max_length=128)
+    invalidation_rule: str | None = Field(default=None, max_length=2000)
+
+
+class ThesisMaintenanceMappingIn(Base):
+    hypothesis_id: Annotated[str, Field(min_length=1, max_length=64)]
+    mapping_id: str | None = Field(default=None, max_length=64)
+    metric_id: Annotated[str, Field(min_length=1, max_length=64)]
+    metric_version: Annotated[str, Field(min_length=1, max_length=16)] = "v1.0"
+    expected_direction: Annotated[str, Field(pattern="^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$")]
+    expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
+    invalidation_threshold: Decimal | None = None
+    invalidation_consecutive_periods: int | None = Field(default=None, ge=1, le=12)
+    expectation_source: Annotated[str, Field(min_length=1, max_length=255)]
+
+
+class ThesisMaintenanceIn(Base):
+    title: Annotated[str, Field(min_length=1, max_length=TITLE_MAX)]
+    core_view: Annotated[str, Field(min_length=1, max_length=CORE_VIEW_MAX)]
+    direction: Annotated[str, Field(pattern="^(看多|看空|观察)$")]
+    investment_rating: str | None = Field(default=None, max_length=32)
+    target_price: Decimal | None = None
+    observation_period: str | None = Field(default=None, max_length=128)
+    horizon_end_on: date | None = None
+    next_review_at: date | None = None
+    hypotheses: list[ThesisMaintenanceHypothesisIn] = Field(default_factory=list)
+    mappings: list[ThesisMaintenanceMappingIn] = Field(default_factory=list)
+    reason: Annotated[str, Field(min_length=2, max_length=2000)] = "研究员维护逻辑"
+
+
 class MetricMappingIn(Base):
     mapping_id: str | None = Field(default=None, max_length=64)
     metric_id: Annotated[str, Field(min_length=1, max_length=64)]
     metric_version: Annotated[str, Field(min_length=1, max_length=16)] = "v1.0"
-    expected_direction: Annotated[str, Field(pattern="^(越高越好|越低越好|不低于阈值|不高于阈值)$")]
+    expected_direction: Annotated[str, Field(pattern="^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$")]
     expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
     invalidation_threshold: Decimal | None = None
     invalidation_consecutive_periods: int | None = Field(default=None, ge=1, le=12)
     expectation_source: Annotated[str, Field(min_length=1, max_length=255)]
@@ -95,6 +139,8 @@ class MetricMappingOut(Base):
     metric_id: str
     metric_name: str = ""
     expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
     invalidation_threshold: Decimal | None = None
     invalidation_consecutive_periods: int | None = None
     metric_version: str
@@ -102,7 +148,7 @@ class MetricMappingOut(Base):
     expectation_source: str
     confirmation_status: str
 
-    @field_serializer("expected_value", "invalidation_threshold")
+    @field_serializer("expected_value", "expected_lower", "expected_upper", "invalidation_threshold")
     def _decimal_as_str(self, value: Decimal | None) -> str | None:
         return None if value is None else str(value)
 
@@ -137,9 +183,27 @@ class ThesisOut(Base):
     next_review_at: date | None = None
     thesis_kind: str = "canonical"
     thesis_series_id: str | None = None
+    investment_rating: str | None = None
+    target_price: Decimal | None = None
+    observation_period: str | None = None
     hypotheses: list[HypothesisOut] = Field(default_factory=list)
     risk_suggestions: list[dict[str, object]] = Field(default_factory=list)
     invalidation_suggestions: list[dict[str, object]] = Field(default_factory=list)
+
+    @field_serializer("target_price")
+    def _target_price_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+
+class ThesisSummaryOut(Base):
+    thesis_id: str
+    security_id: str
+    title: str
+    status: str
+    owner: str
+    direction: str
+    thesis_kind: str = "canonical"
+    thesis_series_id: str | None = None
 
 
 class PublishReadinessItemOut(Base):
@@ -366,6 +430,11 @@ class ThesisPage(Base):
     page: PageMeta
 
 
+class ThesisSummaryPage(Base):
+    items: list[ThesisSummaryOut]
+    page: PageMeta
+
+
 class ErrorOut(Base):
     """错误响应。
 
@@ -408,6 +477,11 @@ class HypothesisTrendOut(Base):
     statement: str
     metric_id: str
     metric_name: str = ""
+    expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
+    invalidation_threshold: Decimal | None = None
+    invalidation_consecutive_periods: int | None = None
     unit: str
     period_type: str
     metric_version: str

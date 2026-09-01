@@ -121,6 +121,8 @@ def build_hypothesis_input(
                 metric_id=mapping.metric_id,
                 expected_direction=mapping.expected_direction.value,
                 expected_value=mapping.expected_value,
+                expected_lower=mapping.expected_lower,
+                expected_upper=mapping.expected_upper,
                 invalidation_threshold=mapping.invalidation_threshold,
             )
             for mapping in mappings

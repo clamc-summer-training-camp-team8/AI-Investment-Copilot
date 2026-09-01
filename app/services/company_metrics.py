@@ -1,4 +1,4 @@
-"""公司定期经营数据采集服务；当前支持比亚迪月度产销快报。"""
+"""通用公司定期经营数据采集服务；适配器按公告格式复用。"""
 
 from __future__ import annotations
 
@@ -21,18 +21,20 @@ class CompanyMetricObservation:
     observation_date: date
     source_document_id: str
     source_url: str
-    data_version: str = "byd-ir-monthly-v1"
+    data_version: str = "company-ir-periodic-v1"
 
 
-def fetch_byd_periodic_metrics(
+def fetch_periodic_metrics(
     *,
     security_id: str,
     cache_dir: Path,
     limit: int = 24,
 ) -> list[CompanyMetricObservation]:
-    """抓取并解析比亚迪产销快报，结果缓存在 cache_dir，不生成缺失值。"""
-    if security_id != "002594":
-        return []
+    """抓取并解析指定公司的定期公告，不生成缺失值。
+
+    适配器按公告格式工作，不按公司拆分；公司差异由公告元数据和指标
+    字典决定。没有匹配公告时返回空列表，由上层显示数据源不可用。
+    """
     source = Path(__file__).resolve().parents[2] / "real_data" / "raw" / "announcements.json"
     if not source.exists():
         return []
@@ -40,21 +42,22 @@ def fetch_byd_periodic_metrics(
     rows = [
         item
         for item in announcements
-        if item.get("security_id") == security_id and "产销快报" in str(item.get("title", ""))
+        if item.get("security_id") == security_id
+        and any(token in str(item.get("title", "")) for token in ("产销快报", "销量公告", "销量", "月报表"))
     ]
     rows.sort(key=lambda item: str(item.get("disclosure_time", "")), reverse=True)
     fetcher = NoticeFetcher(cache_dir)
     results: list[CompanyMetricObservation] = []
     for item in rows[: max(1, limit)]:
         title = str(item.get("title", ""))
-        match = re.search(r"(20\d{2})年(\d{1,2})月", title)
-        if not match:
+        period = _period_from_title(title)
+        if period is None:
             continue
         try:
             notice = fetcher.fetch(
                 NoticeRecord(
                     security_id=security_id,
-                    security_name="比亚迪",
+                    security_name=str(item.get("company") or security_id),
                     title=title,
                     notice_date=str(item["disclosure_time"])[:10],
                     detail_url=str(item["url"]),
@@ -63,7 +66,6 @@ def fetch_byd_periodic_metrics(
         except Exception:
             continue
         text = "\n".join(segment.content for segment in notice.parsed.segments)
-        period = f"{match.group(1)}-{int(match.group(2)):02d}"
         sales = _parse_nev_sales(text)
         if sales is not None:
             results.append(
@@ -107,6 +109,25 @@ def fetch_byd_periodic_metrics(
                 )
             )
     return results
+
+
+# 兼容已有调用方；新代码应使用通用函数。
+fetch_byd_periodic_metrics = fetch_periodic_metrics
+
+
+def _period_from_title(title: str) -> str | None:
+    """从常见公告标题提取月度期间；无法确认时不生成观测。"""
+    match = re.search(r"(20\d{2})年(\d{1,2})月", title)
+    if match:
+        return f"{match.group(1)}-{int(match.group(2)):02d}"
+    match = re.search(r"(20\d{2})[-年](\d{1,2})", title)
+    if match:
+        return f"{match.group(1)}-{int(match.group(2)):02d}"
+    # 港股公告常见“截至31/12/2023”格式。
+    match = re.search(r"(?:截至|至)\s*\d{1,2}/(\d{1,2})/(20\d{2})", title)
+    if match:
+        return f"{match.group(2)}-{int(match.group(1)):02d}"
+    return None
 
 
 def _numbers_after(text: str, marker: str, count: int) -> list[str]:

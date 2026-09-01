@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import replace
 
 from sqlalchemy import case, func, select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.domain import (
@@ -352,6 +354,14 @@ class SqlObservationRepo:
     def __init__(self, session: Session) -> None:
         self._session = session
 
+    def list_for_security(self, security_id: str) -> list[ObservationRecord]:
+        rows = self._session.scalars(
+            select(MetricObservation)
+            .where(MetricObservation.security_id == security_id)
+            .order_by(MetricObservation.metric_id, MetricObservation.observation_date)
+        ).all()
+        return [_to_observation(row) for row in rows]
+
     def list_for_metric(self, security_id: str, metric_id: str) -> list[ObservationRecord]:
         rows = self._session.scalars(
             select(MetricObservation)
@@ -361,24 +371,16 @@ class SqlObservationRepo:
             )
             .order_by(MetricObservation.observation_date)
         ).all()
-        return [
-            ObservationRecord(
-                security_id=r.security_id,
-                metric_id=r.metric_id,
-                period=r.period,
-                observation_date=r.observation_date,
-                unit=r.unit,
-                actual_value=r.actual_value,
-                expected_value=r.expected_value,
-                benchmark_value=r.benchmark_value,
-                metric_version=r.metric_version,
-                period_type=r.period_type,
-                source_document_id=r.source_document_id,
-                data_version=r.data_version,
-                ingested_at=r.ingested_at,
+        return [_to_observation(row) for row in rows]
+
+    def existing_keys(self, security_id: str, data_version: str) -> set[tuple[str, str]]:
+        rows = self._session.execute(
+            select(MetricObservation.metric_id, MetricObservation.period).where(
+                MetricObservation.security_id == security_id,
+                MetricObservation.data_version == data_version,
             )
-            for r in rows
-        ]
+        ).all()
+        return set(rows)
 
     def add(self, record: ObservationRecord) -> None:
         row = MetricObservation(
@@ -399,6 +401,92 @@ class SqlObservationRepo:
             row.ingested_at = record.ingested_at
         self._session.add(row)
         self._session.flush()
+
+    def add_if_absent(self, record: ObservationRecord) -> bool:
+        """写入一条观测；并发刷新命中唯一键时安全忽略重复项。"""
+        row = MetricObservation(
+            security_id=record.security_id,
+            metric_id=record.metric_id,
+            metric_version=record.metric_version,
+            period=record.period,
+            period_type=record.period_type,
+            observation_date=record.observation_date,
+            actual_value=record.actual_value,
+            unit=record.unit,
+            expected_value=record.expected_value,
+            benchmark_value=record.benchmark_value,
+            source_document_id=record.source_document_id,
+            data_version=record.data_version,
+        )
+        if record.ingested_at is not None:
+            row.ingested_at = record.ingested_at
+        try:
+            with self._session.begin_nested():
+                self._session.add(row)
+                self._session.flush()
+        except IntegrityError:
+            return False
+        return True
+
+    def add_many_if_absent(self, records: list[ObservationRecord]) -> int:
+        """批量写入观测，以一次数据库往返忽略已存在的唯一键。"""
+        if not records:
+            return 0
+        inserted = 0
+        # psycopg/PostgreSQL limits a statement to 65535 bind parameters;
+        # 13 columns per observation means a 2,000-row chunk stays below it.
+        for start in range(0, len(records), 2_000):
+            values = [
+                {
+                    "security_id": record.security_id,
+                    "metric_id": record.metric_id,
+                    "metric_version": record.metric_version,
+                    "period": record.period,
+                    "period_type": record.period_type,
+                    "observation_date": record.observation_date,
+                    "actual_value": record.actual_value,
+                    "unit": record.unit,
+                    "expected_value": record.expected_value,
+                    "benchmark_value": record.benchmark_value,
+                    "source_document_id": record.source_document_id,
+                    "data_version": record.data_version,
+                }
+                for record in records[start : start + 2_000]
+            ]
+            statement = (
+                insert(MetricObservation)
+                .values(values)
+                .on_conflict_do_nothing(
+                    index_elements=(
+                        "security_id",
+                        "metric_id",
+                        "metric_version",
+                        "period",
+                        "data_version",
+                    )
+                )
+                .returning(MetricObservation.id)
+            )
+            inserted += len(self._session.scalars(statement).all())
+        return inserted
+
+
+def _to_observation(row: MetricObservation) -> ObservationRecord:
+    return ObservationRecord(
+        security_id=row.security_id,
+        metric_id=row.metric_id,
+        period=row.period,
+        observation_date=row.observation_date,
+        unit=row.unit,
+        actual_value=row.actual_value,
+        expected_value=row.expected_value,
+        benchmark_value=row.benchmark_value,
+        metric_version=row.metric_version,
+        period_type=row.period_type,
+        source_document_id=row.source_document_id,
+        data_version=row.data_version,
+        ingested_at=row.ingested_at,
+    )
 
 
 class SqlSuggestionRepo:

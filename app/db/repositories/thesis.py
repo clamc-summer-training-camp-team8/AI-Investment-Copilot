@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -48,6 +48,9 @@ def _to_thesis(row: Thesis, *, participating: list[str] | None = None) -> Thesis
         draft_suggestions=row.draft_suggestions or {},
         thesis_kind=row.thesis_kind,
         thesis_series_id=row.thesis_series_id,
+        investment_rating=row.investment_rating,
+        target_price=row.target_price,
+        observation_period=row.observation_period,
     )
 
 
@@ -85,6 +88,9 @@ class SqlThesisRepo:
                 is_illustrative=record.is_illustrative,
                 thesis_kind=record.thesis_kind,
                 thesis_series_id=record.thesis_series_id,
+                investment_rating=record.investment_rating,
+                target_price=record.target_price,
+                observation_period=record.observation_period,
             )
         )
         self._session.flush()
@@ -105,6 +111,9 @@ class SqlThesisRepo:
         row.next_review_at = record.next_review_at
         row.draft_suggestions = record.draft_suggestions
         row.draft_suggestions = record.draft_suggestions or None
+        row.investment_rating = record.investment_rating
+        row.target_price = record.target_price
+        row.observation_period = record.observation_period
         self._session.flush()
 
     def list_hypotheses(self, thesis_id: str) -> list[HypothesisRecord]:
@@ -170,6 +179,8 @@ class SqlThesisRepo:
                 expected_direction=ExpectationDirection(r.expected_direction),
                 metric_version=r.metric_version,
                 expected_value=r.expected_value,
+                expected_lower=r.expected_lower,
+                expected_upper=r.expected_upper,
                 invalidation_threshold=r.invalidation_threshold,
                 invalidation_consecutive_periods=_parse_periods(r.invalidation_rule),
                 expectation_source=r.expectation_source,
@@ -187,6 +198,8 @@ class SqlThesisRepo:
                 metric_version=record.metric_version,
                 expected_direction=record.expected_direction.value,
                 expected_value=record.expected_value,
+                expected_lower=record.expected_lower,
+                expected_upper=record.expected_upper,
                 expectation_source=record.expectation_source,
                 invalidation_threshold=record.invalidation_threshold,
                 invalidation_rule=_format_periods(record.invalidation_consecutive_periods),
@@ -203,10 +216,16 @@ class SqlThesisRepo:
         row.metric_version = record.metric_version
         row.expected_direction = record.expected_direction.value
         row.expected_value = record.expected_value
+        row.expected_lower = record.expected_lower
+        row.expected_upper = record.expected_upper
         row.expectation_source = record.expectation_source
         row.invalidation_threshold = record.invalidation_threshold
         row.invalidation_rule = _format_periods(record.invalidation_consecutive_periods)
         row.confirmation_status = record.confirmation_status.value
+        self._session.flush()
+
+    def remove_mapping(self, mapping_id: str) -> None:
+        self._session.execute(delete(HypothesisMetricMap).where(HypothesisMetricMap.mapping_id == mapping_id))
         self._session.flush()
 
     def get_by_security(self, security_id: str) -> ThesisRecord | None:
@@ -218,6 +237,43 @@ class SqlThesisRepo:
             if row is None
             else _to_thesis(row, participating=self._participating(row.thesis_id))
         )
+
+    def get_by_securities(self, security_ids: tuple[str, ...]) -> dict[str, ThesisRecord]:
+        if not security_ids:
+            return {}
+        rows = self._session.scalars(
+            select(Thesis).where(
+                Thesis.security_id.in_(security_ids), Thesis.is_current.is_(True)
+            )
+        ).all()
+        participating = self._participating_bulk([row.thesis_id for row in rows])
+        return {
+            row.security_id: _to_thesis(row, participating=participating.get(row.thesis_id, []))
+            for row in rows
+        }
+
+    def counts_for_theses(self, thesis_ids: tuple[str, ...]) -> dict[str, tuple[int, int]]:
+        if not thesis_ids:
+            return {}
+        hypothesis_counts = dict(
+            self._session.execute(
+                select(Hypothesis.thesis_id, func.count(Hypothesis.hypothesis_id))
+                .where(Hypothesis.thesis_id.in_(thesis_ids))
+                .group_by(Hypothesis.thesis_id)
+            ).all()
+        )
+        mapping_counts = dict(
+            self._session.execute(
+                select(Hypothesis.thesis_id, func.count(HypothesisMetricMap.mapping_id))
+                .join(HypothesisMetricMap, HypothesisMetricMap.hypothesis_id == Hypothesis.hypothesis_id)
+                .where(Hypothesis.thesis_id.in_(thesis_ids))
+                .group_by(Hypothesis.thesis_id)
+            ).all()
+        )
+        return {
+            thesis_id: (int(hypothesis_counts.get(thesis_id, 0)), int(mapping_counts.get(thesis_id, 0)))
+            for thesis_id in thesis_ids
+        }
 
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]:
         """条件分页查询。

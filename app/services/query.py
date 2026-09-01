@@ -31,7 +31,7 @@ from app.core.domain import (
     ThesisRecord,
     UnitOfWork,
 )
-from app.core.enums import ConfirmationStatus, ThesisStatus
+from app.core.enums import ConfirmationStatus, ExpectationDirection, ThesisStatus
 from app.services.permission import Actor, can_view_thesis
 
 # 单页上限。前端分页器默认 20，给到 100 已足够；再大就该走导出而不是列表接口。
@@ -114,6 +114,8 @@ class HypothesisTrend:
     data_version: str | None
     result: TrendResult | None
     expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
     invalidation_threshold: Decimal | None = None
     invalidation_consecutive_periods: int | None = None
     note: str = ""
@@ -224,11 +226,23 @@ def _trend_for(
         note = "草稿阶段展示历史参考；正式状态判断仍按逻辑建立日裁剪"
     elif excluded:
         note = f"已排除逻辑建立日之前的 {excluded} 期观测"
-    expectation_note = (
-        f"预期值：{mapping.expected_value if mapping.expected_value is not None else '未设置'}；"
-        f"失效阈值：{mapping.invalidation_threshold if mapping.invalidation_threshold is not None else '未设置'}；"
-        f"连续：{mapping.invalidation_consecutive_periods or '—'} 期"
-    )
+    if mapping.expected_direction in {
+        ExpectationDirection.RISING,
+        ExpectationDirection.FALLING,
+        ExpectationDirection.FLUCTUATING,
+    }:
+        expectation_note = (
+            f"方向：{mapping.expected_direction.value}；"
+            f"允许区间：[{mapping.expected_lower if mapping.expected_lower is not None else '-∞'}, "
+            f"{mapping.expected_upper if mapping.expected_upper is not None else '+∞'}]；"
+            f"连续越界：{mapping.invalidation_consecutive_periods or '—'} 期后提醒复核"
+        )
+    else:
+        expectation_note = (
+            f"预期值：{mapping.expected_value if mapping.expected_value is not None else '未设置'}；"
+            f"失效阈值：{mapping.invalidation_threshold if mapping.invalidation_threshold is not None else '未设置'}；"
+            f"连续：{mapping.invalidation_consecutive_periods or '—'} 期"
+        )
     note = f"{note}；{expectation_note}" if note else expectation_note
     metric_definition = uow.metrics.get(mapping.metric_id, mapping.metric_version)
     return HypothesisTrend(
@@ -237,6 +251,8 @@ def _trend_for(
         metric_id=mapping.metric_id,
         metric_name=metric_definition.name if metric_definition else mapping.metric_id,
         expected_value=mapping.expected_value,
+        expected_lower=mapping.expected_lower,
+        expected_upper=mapping.expected_upper,
         invalidation_threshold=mapping.invalidation_threshold,
         invalidation_consecutive_periods=mapping.invalidation_consecutive_periods,
         unit=display_latest.unit if display_latest else "",

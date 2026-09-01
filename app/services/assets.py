@@ -647,6 +647,16 @@ def _updated_mappings(
                     if "expected_value" in item
                     else mapping.expected_value
                 ),
+                expected_lower=(
+                    _optional_decimal(item["expected_lower"])
+                    if "expected_lower" in item
+                    else mapping.expected_lower
+                ),
+                expected_upper=(
+                    _optional_decimal(item["expected_upper"])
+                    if "expected_upper" in item
+                    else mapping.expected_upper
+                ),
                 invalidation_threshold=(
                     _optional_decimal(item["invalidation_threshold"])
                     if "invalidation_threshold" in item

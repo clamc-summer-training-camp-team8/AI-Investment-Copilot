@@ -22,7 +22,7 @@
           "metric_name": {"type": "string", "minLength": 1},
           "relation_type": {"type": "string", "enum": ["直接指标", "代理指标"]},
           "rationale": {"type": "string", "minLength": 1},
-          "expected_direction": {"type": ["string", "null"], "enum": ["越高越好", "越低越好", "不低于阈值", "不高于阈值", null]},
+          "expected_direction": {"type": ["string", "null"], "enum": ["上升", "下降", "波动", "越高越好", "越低越好", "不低于阈值", "不高于阈值", null]},
           "observation_frequency": {"type": "string", "minLength": 1},
           "availability_grade": {"type": "string", "enum": ["A", "B", "C", "D"]},
           "source_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},

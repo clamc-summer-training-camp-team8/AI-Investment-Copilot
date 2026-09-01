@@ -454,6 +454,311 @@ components:
       - content
       title: CitationSegmentOut
       type: object
+    CompanyMetricCenterOut:
+      properties:
+        metrics:
+          items:
+            $ref: '#/components/schemas/CompanyMetricOut'
+          title: Metrics
+          type: array
+        security_id:
+          title: Security Id
+          type: string
+        updated_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Updated At
+      required:
+      - security_id
+      title: CompanyMetricCenterOut
+      type: object
+    CompanyMetricOut:
+      properties:
+        category:
+          title: Category
+          type: string
+        change_rate:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Change Rate
+        change_value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Change Value
+        definition:
+          title: Definition
+          type: string
+        frequency:
+          title: Frequency
+          type: string
+        latest_date:
+          title: Latest Date
+          type: string
+        latest_period:
+          title: Latest Period
+          type: string
+        latest_value:
+          title: Latest Value
+          type: string
+        metric_id:
+          title: Metric Id
+          type: string
+        name:
+          title: Name
+          type: string
+        observations:
+          items:
+            $ref: '#/components/schemas/MetricPointOut'
+          title: Observations
+          type: array
+        previous_value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Previous Value
+        source_id:
+          title: Source Id
+          type: string
+        unit:
+          title: Unit
+          type: string
+      required:
+      - metric_id
+      - name
+      - category
+      - unit
+      - frequency
+      - definition
+      - source_id
+      - latest_value
+      - latest_period
+      - latest_date
+      title: CompanyMetricOut
+      type: object
+    CompanyMetricRefreshOut:
+      properties:
+        errors:
+          items:
+            type: string
+          title: Errors
+          type: array
+        fetched:
+          title: Fetched
+          type: integer
+        inserted:
+          title: Inserted
+          type: integer
+        security_id:
+          title: Security Id
+          type: string
+      required:
+      - security_id
+      - fetched
+      - inserted
+      title: CompanyMetricRefreshOut
+      type: object
+    CoverageCompanyIn:
+      properties:
+        industry:
+          anyOf:
+          - maxLength: 128
+            type: string
+          - type: 'null'
+          title: Industry
+        market:
+          anyOf:
+          - maxLength: 32
+            type: string
+          - type: 'null'
+          title: Market
+        name:
+          anyOf:
+          - maxLength: 255
+            type: string
+          - type: 'null'
+          title: Name
+        owner:
+          anyOf:
+          - maxLength: 64
+            type: string
+          - type: 'null'
+          title: Owner
+        security_id:
+          anyOf:
+          - maxLength: 64
+            type: string
+          - type: 'null'
+          title: Security Id
+        ticker:
+          anyOf:
+          - maxLength: 32
+            type: string
+          - type: 'null'
+          title: Ticker
+      title: CoverageCompanyIn
+      type: object
+    CoverageCompanyOut:
+      properties:
+        configured_metric_count:
+          default: 0
+          title: Configured Metric Count
+          type: integer
+        coverage_company_id:
+          title: Coverage Company Id
+          type: string
+        hypothesis_count:
+          default: 0
+          title: Hypothesis Count
+          type: integer
+        industry:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Industry
+        market:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Market
+        name:
+          title: Name
+          type: string
+        owner:
+          title: Owner
+          type: string
+        sector_id:
+          title: Sector Id
+          type: string
+        security_id:
+          title: Security Id
+          type: string
+        status:
+          title: Status
+          type: string
+        thesis_count:
+          default: 0
+          title: Thesis Count
+          type: integer
+        thesis_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Thesis Id
+        thesis_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Thesis Status
+        thesis_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Thesis Title
+        ticker:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ticker
+        updated_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Updated At
+      required:
+      - coverage_company_id
+      - sector_id
+      - security_id
+      - name
+      - owner
+      - status
+      title: CoverageCompanyOut
+      type: object
+    CoverageCompanyUpdateIn:
+      properties:
+        owner:
+          anyOf:
+          - maxLength: 64
+            type: string
+          - type: 'null'
+          title: Owner
+        status:
+          anyOf:
+          - maxLength: 16
+            type: string
+          - type: 'null'
+          title: Status
+      title: CoverageCompanyUpdateIn
+      type: object
+    CoverageSectorIn:
+      properties:
+        code:
+          anyOf:
+          - maxLength: 64
+            type: string
+          - type: 'null'
+          title: Code
+        description:
+          anyOf:
+          - maxLength: 500
+            type: string
+          - type: 'null'
+          title: Description
+        name:
+          maxLength: 128
+          minLength: 1
+          title: Name
+          type: string
+      required:
+      - name
+      title: CoverageSectorIn
+      type: object
+    CoverageSectorOut:
+      properties:
+        code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Code
+        companies:
+          items:
+            $ref: '#/components/schemas/CoverageCompanyOut'
+          title: Companies
+          type: array
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        name:
+          title: Name
+          type: string
+        sector_id:
+          title: Sector Id
+          type: string
+        status:
+          title: Status
+          type: string
+      required:
+      - sector_id
+      - name
+      - status
+      title: CoverageSectorOut
+      type: object
+    CoverageSectorUpdateIn:
+      properties:
+        name:
+          maxLength: 128
+          minLength: 1
+          title: Name
+          type: string
+      required:
+      - name
+      title: CoverageSectorUpdateIn
+      type: object
     DemoUploadOut:
       properties:
         document_id:
@@ -1593,6 +1898,11 @@ components:
       type: object
     HypothesisOut:
       properties:
+        causal_level:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Causal Level
         hypothesis_id:
           title: Hypothesis Id
           type: string
@@ -1607,6 +1917,11 @@ components:
           - type: string
           - type: 'null'
           title: Invalidation Rule
+        logic_dimension:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Logic Dimension
         mappings:
           items:
             $ref: '#/components/schemas/MetricMappingOut'
@@ -1622,6 +1937,11 @@ components:
           - type: string
           - type: 'null'
           title: Observation Window
+        quality_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Quality Warning
         statement:
           title: Statement
           type: string
@@ -1665,11 +1985,40 @@ components:
         direction:
           title: Direction
           type: string
+        expected_lower:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Expected Lower
+        expected_upper:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Expected Upper
+        expected_value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Expected Value
         hypothesis_id:
           title: Hypothesis Id
           type: string
+        invalidation_consecutive_periods:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Invalidation Consecutive Periods
+        invalidation_threshold:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Invalidation Threshold
         metric_id:
           title: Metric Id
+          type: string
+        metric_name:
+          default: ''
+          title: Metric Name
           type: string
         metric_version:
           title: Metric Version
@@ -1893,9 +2242,21 @@ components:
           title: Expectation Source
           type: string
         expected_direction:
-          pattern: ^(越高越好|越低越好|不低于阈值|不高于阈值)$
+          pattern: ^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$
           title: Expected Direction
           type: string
+        expected_lower:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Expected Lower
+        expected_upper:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Expected Upper
         expected_value:
           anyOf:
           - type: number
@@ -1949,6 +2310,16 @@ components:
         expected_direction:
           title: Expected Direction
           type: string
+        expected_lower:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Expected Lower
+        expected_upper:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Expected Upper
         expected_value:
           anyOf:
           - type: string
@@ -1969,6 +2340,10 @@ components:
           type: string
         metric_id:
           title: Metric Id
+          type: string
+        metric_name:
+          default: ''
+          title: Metric Name
           type: string
         metric_version:
           title: Metric Version
@@ -2035,6 +2410,23 @@ components:
       - period_type
       - status
       title: MetricOut
+      type: object
+    MetricPointOut:
+      properties:
+        date:
+          title: Date
+          type: string
+        period:
+          title: Period
+          type: string
+        value:
+          title: Value
+          type: string
+      required:
+      - period
+      - date
+      - value
+      title: MetricPointOut
       type: object
     MetricRecommendationIn:
       description: 重新生成指标候选时允许控制数量和事前数据截止日。
@@ -2562,6 +2954,235 @@ components:
       - exit_reason
       title: QuantTradeOut
       type: object
+    RankedItemOut:
+      properties:
+        content:
+          title: Content
+          type: string
+        document_id:
+          title: Document Id
+          type: string
+        feature_scores:
+          additionalProperties:
+            type: number
+          title: Feature Scores
+          type: object
+        final_score:
+          title: Final Score
+          type: number
+        graph_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Graph Score
+        keyword_score:
+          title: Keyword Score
+          type: number
+        locator:
+          title: Locator
+          type: string
+        metadata:
+          title: Metadata
+          type: object
+        object_id:
+          title: Object Id
+          type: string
+        object_type:
+          title: Object Type
+          type: string
+        prior_score:
+          title: Prior Score
+          type: number
+        rank:
+          title: Rank
+          type: integer
+        reason_codes:
+          items:
+            type: string
+          title: Reason Codes
+          type: array
+        retrieval_score:
+          title: Retrieval Score
+          type: number
+        vector_score:
+          title: Vector Score
+          type: number
+        visibility_label:
+          title: Visibility Label
+          type: string
+      required:
+      - object_id
+      - object_type
+      - document_id
+      - locator
+      - content
+      - visibility_label
+      - rank
+      - keyword_score
+      - vector_score
+      - graph_score
+      - retrieval_score
+      - prior_score
+      - final_score
+      - feature_scores
+      - reason_codes
+      - metadata
+      title: RankedItemOut
+      type: object
+    RankedSearchIn:
+      properties:
+        as_of:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: As Of
+        direction:
+          default: 看多
+          title: Direction
+          type: string
+        horizon:
+          default: 12M
+          title: Horizon
+          type: string
+        industries:
+          items:
+            type: string
+          maxItems: 20
+          title: Industries
+          type: array
+        object_types:
+          items:
+            type: string
+          title: Object Types
+          type: array
+        query:
+          maxLength: 500
+          minLength: 1
+          title: Query
+          type: string
+        ranking_profile:
+          default: document_search
+          title: Ranking Profile
+          type: string
+        security_ids:
+          items:
+            type: string
+          maxItems: 20
+          minItems: 1
+          title: Security Ids
+          type: array
+        top_k:
+          default: 10
+          maximum: 100.0
+          minimum: 1.0
+          title: Top K
+          type: integer
+      required:
+      - query
+      - security_ids
+      title: RankedSearchIn
+      type: object
+    RankedSearchOut:
+      properties:
+        embedding_version:
+          title: Embedding Version
+          type: string
+        items:
+          items:
+            $ref: '#/components/schemas/RankedItemOut'
+          title: Items
+          type: array
+        prior_snapshot_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prior Snapshot Id
+        ranking_profile:
+          title: Ranking Profile
+          type: string
+        retrieval_version:
+          default: prior-rag-v1
+          title: Retrieval Version
+          type: string
+      required:
+      - embedding_version
+      - prior_snapshot_id
+      - ranking_profile
+      - items
+      title: RankedSearchOut
+      type: object
+    RankedTopicOut:
+      properties:
+        base_score:
+          title: Base Score
+          type: number
+        citation_locators:
+          items:
+            type: string
+          title: Citation Locators
+          type: array
+        direction:
+          title: Direction
+          type: string
+        feature_scores:
+          additionalProperties:
+            type: number
+          title: Feature Scores
+          type: object
+        horizon:
+          title: Horizon
+          type: string
+        metadata:
+          title: Metadata
+          type: object
+        name:
+          title: Name
+          type: string
+        normalized_statement:
+          title: Normalized Statement
+          type: string
+        primary_eligible:
+          title: Primary Eligible
+          type: boolean
+        rank:
+          title: Rank
+          type: integer
+        reason_codes:
+          items:
+            type: string
+          title: Reason Codes
+          type: array
+        relations:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/TopicRelationOut'
+            type: array
+          title: Relations
+          type: object
+        score:
+          title: Score
+          type: number
+        topic_id:
+          title: Topic Id
+          type: string
+      required:
+      - topic_id
+      - name
+      - normalized_statement
+      - direction
+      - horizon
+      - rank
+      - score
+      - base_score
+      - feature_scores
+      - reason_codes
+      - primary_eligible
+      - citation_locators
+      - relations
+      - metadata
+      title: RankedTopicOut
+      type: object
     ReprocessIn:
       properties:
         document_id:
@@ -2763,6 +3384,38 @@ components:
       - name
       title: SecurityIn
       type: object
+    SecurityLookupOut:
+      properties:
+        aliases:
+          items:
+            type: string
+          title: Aliases
+          type: array
+        industry:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Industry
+        name:
+          title: Name
+          type: string
+        security_id:
+          title: Security Id
+          type: string
+        source:
+          title: Source
+          type: string
+        ticker:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ticker
+      required:
+      - security_id
+      - name
+      - source
+      title: SecurityLookupOut
+      type: object
     SecurityOut:
       properties:
         aliases:
@@ -2890,18 +3543,213 @@ components:
           title: Security Id
           type: string
         use_rag:
-          default: false
+          default: true
           title: Use Rag
           type: boolean
         view:
+          default: ''
           maxLength: 2000
-          minLength: 1
           title: View
           type: string
       required:
       - security_id
-      - view
       title: ThesisDraftIn
+      type: object
+    ThesisDraftUpdateIn:
+      properties:
+        core_view:
+          maxLength: 200
+          minLength: 1
+          title: Core View
+          type: string
+        title:
+          maxLength: 40
+          minLength: 1
+          title: Title
+          type: string
+      required:
+      - title
+      - core_view
+      title: ThesisDraftUpdateIn
+      type: object
+    ThesisMaintenanceHypothesisIn:
+      properties:
+        hypothesis_id:
+          maxLength: 64
+          minLength: 1
+          title: Hypothesis Id
+          type: string
+        hypothesis_type:
+          default: 其他
+          maxLength: 32
+          minLength: 1
+          title: Hypothesis Type
+          type: string
+        importance:
+          pattern: ^(核心|辅助)$
+          title: Importance
+          type: string
+        invalidation_rule:
+          anyOf:
+          - maxLength: 2000
+            type: string
+          - type: 'null'
+          title: Invalidation Rule
+        observation_window:
+          anyOf:
+          - maxLength: 128
+            type: string
+          - type: 'null'
+          title: Observation Window
+        statement:
+          maxLength: 2000
+          minLength: 1
+          title: Statement
+          type: string
+      required:
+      - hypothesis_id
+      - statement
+      - importance
+      title: ThesisMaintenanceHypothesisIn
+      type: object
+    ThesisMaintenanceIn:
+      properties:
+        core_view:
+          maxLength: 200
+          minLength: 1
+          title: Core View
+          type: string
+        direction:
+          pattern: ^(看多|看空|观察)$
+          title: Direction
+          type: string
+        horizon_end_on:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Horizon End On
+        hypotheses:
+          items:
+            $ref: '#/components/schemas/ThesisMaintenanceHypothesisIn'
+          title: Hypotheses
+          type: array
+        investment_rating:
+          anyOf:
+          - maxLength: 32
+            type: string
+          - type: 'null'
+          title: Investment Rating
+        mappings:
+          items:
+            $ref: '#/components/schemas/ThesisMaintenanceMappingIn'
+          title: Mappings
+          type: array
+        next_review_at:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Next Review At
+        observation_period:
+          anyOf:
+          - maxLength: 128
+            type: string
+          - type: 'null'
+          title: Observation Period
+        reason:
+          default: 研究员维护逻辑
+          maxLength: 2000
+          minLength: 2
+          title: Reason
+          type: string
+        target_price:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Target Price
+        title:
+          maxLength: 40
+          minLength: 1
+          title: Title
+          type: string
+      required:
+      - title
+      - core_view
+      - direction
+      title: ThesisMaintenanceIn
+      type: object
+    ThesisMaintenanceMappingIn:
+      properties:
+        expectation_source:
+          maxLength: 255
+          minLength: 1
+          title: Expectation Source
+          type: string
+        expected_direction:
+          pattern: ^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$
+          title: Expected Direction
+          type: string
+        expected_lower:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Expected Lower
+        expected_upper:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Expected Upper
+        expected_value:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Expected Value
+        hypothesis_id:
+          maxLength: 64
+          minLength: 1
+          title: Hypothesis Id
+          type: string
+        invalidation_consecutive_periods:
+          anyOf:
+          - maximum: 12.0
+            minimum: 1.0
+            type: integer
+          - type: 'null'
+          title: Invalidation Consecutive Periods
+        invalidation_threshold:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+          title: Invalidation Threshold
+        mapping_id:
+          anyOf:
+          - maxLength: 64
+            type: string
+          - type: 'null'
+          title: Mapping Id
+        metric_id:
+          maxLength: 64
+          minLength: 1
+          title: Metric Id
+          type: string
+        metric_version:
+          default: v1.0
+          maxLength: 16
+          minLength: 1
+          title: Metric Version
+          type: string
+      required:
+      - hypothesis_id
+      - metric_id
+      - expected_direction
+      - expectation_source
+      title: ThesisMaintenanceMappingIn
       type: object
     ThesisOut:
       properties:
@@ -2931,12 +3779,22 @@ components:
             type: object
           title: Invalidation Suggestions
           type: array
+        investment_rating:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Investment Rating
         next_review_at:
           anyOf:
           - format: date
             type: string
           - type: 'null'
           title: Next Review At
+        observation_period:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observation Period
         owner:
           title: Owner
           type: string
@@ -2951,6 +3809,11 @@ components:
         status:
           title: Status
           type: string
+        target_price:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Price
         thesis_id:
           title: Thesis Id
           type: string
@@ -3116,6 +3979,58 @@ components:
       - payload
       title: ThesisRevisionUpdateIn
       type: object
+    ThesisSummaryOut:
+      properties:
+        direction:
+          title: Direction
+          type: string
+        owner:
+          title: Owner
+          type: string
+        security_id:
+          title: Security Id
+          type: string
+        status:
+          title: Status
+          type: string
+        thesis_id:
+          title: Thesis Id
+          type: string
+        thesis_kind:
+          default: canonical
+          title: Thesis Kind
+          type: string
+        thesis_series_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Thesis Series Id
+        title:
+          title: Title
+          type: string
+      required:
+      - thesis_id
+      - security_id
+      - title
+      - status
+      - owner
+      - direction
+      title: ThesisSummaryOut
+      type: object
+    ThesisSummaryPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ThesisSummaryOut'
+          title: Items
+          type: array
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - items
+      - page
+      title: ThesisSummaryPage
+      type: object
     TimelineEventOut:
       properties:
         actor_name:
@@ -3215,6 +4130,90 @@ components:
       - limit
       - offset
       title: TimelinePageOut
+      type: object
+    TopicContextIn:
+      properties:
+        as_of:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: As Of
+        direction:
+          default: 看多
+          title: Direction
+          type: string
+        horizon:
+          default: 12M
+          title: Horizon
+          type: string
+        security_id:
+          maxLength: 64
+          minLength: 1
+          title: Security Id
+          type: string
+        top_k:
+          default: 3
+          maximum: 10.0
+          minimum: 1.0
+          title: Top K
+          type: integer
+      required:
+      - security_id
+      title: TopicContextIn
+      type: object
+    TopicContextOut:
+      properties:
+        alternative_topics:
+          items:
+            $ref: '#/components/schemas/RankedTopicOut'
+          title: Alternative Topics
+          type: array
+        primary_topic:
+          anyOf:
+          - $ref: '#/components/schemas/RankedTopicOut'
+          - type: 'null'
+        prior_snapshot_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prior Snapshot Id
+        retrieval_version:
+          default: logic-topic-prior-v1
+          title: Retrieval Version
+          type: string
+      required:
+      - prior_snapshot_id
+      - primary_topic
+      - alternative_topics
+      title: TopicContextOut
+      type: object
+    TopicRelationOut:
+      properties:
+        citation_locators:
+          items:
+            type: string
+          title: Citation Locators
+          type: array
+        confidence:
+          title: Confidence
+          type: number
+        object_id:
+          title: Object Id
+          type: string
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        relation:
+          title: Relation
+          type: string
+      required:
+      - object_id
+      - relation
+      - confidence
+      title: TopicRelationOut
       type: object
     TrendPointOut:
       description: 趋势上的一个点。值用字符串传，理由见模块文档第 1 条。
@@ -4167,6 +5166,279 @@ paths:
       summary: Publish Thesis Revision
       tags:
       - assets
+  /api/coverage:
+    get:
+      operationId: list_coverage_api_coverage_get
+      parameters:
+      - in: query
+        name: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Query
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CoverageSectorOut'
+                title: Response List Coverage Api Coverage Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Coverage
+      tags:
+      - coverage
+  /api/coverage/companies/{coverage_company_id}:
+    patch:
+      operationId: edit_company_api_coverage_companies__coverage_company_id__patch
+      parameters:
+      - in: path
+        name: coverage_company_id
+        required: true
+        schema:
+          title: Coverage Company Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoverageCompanyUpdateIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageCompanyOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Edit Company
+      tags:
+      - coverage
+  /api/coverage/sectors:
+    post:
+      operationId: add_sector_api_coverage_sectors_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoverageSectorIn'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageSectorOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add Sector
+      tags:
+      - coverage
+  /api/coverage/sectors/{sector_id}:
+    patch:
+      operationId: edit_sector_api_coverage_sectors__sector_id__patch
+      parameters:
+      - in: path
+        name: sector_id
+        required: true
+        schema:
+          title: Sector Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoverageSectorUpdateIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageSectorOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Edit Sector
+      tags:
+      - coverage
+  /api/coverage/sectors/{sector_id}/companies:
+    post:
+      operationId: add_company_api_coverage_sectors__sector_id__companies_post
+      parameters:
+      - in: path
+        name: sector_id
+        required: true
+        schema:
+          title: Sector Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoverageCompanyIn'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageCompanyOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add Company
+      tags:
+      - coverage
   /api/demo/theses/{thesis_id}/documents:
     post:
       operationId: upload_demo_material_api_demo_theses__thesis_id__documents_post
@@ -5054,6 +6326,57 @@ paths:
       summary: Get Job
       tags:
       - jobs
+  /api/jobs/{job_id}/reanalyze:
+    post:
+      description: 复用已入库段落重新执行 AI 阶段，不重新下载或解析原文件。
+      operationId: reanalyze_job_api_jobs__job_id__reanalyze_post
+      parameters:
+      - in: path
+        name: job_id
+        required: true
+        schema:
+          title: Job Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Reanalyze Job
+      tags:
+      - jobs
   /api/jobs/{job_id}/replay:
     post:
       operationId: replay_job_api_jobs__job_id__replay_post
@@ -5305,6 +6628,106 @@ paths:
       summary: List Radar Evidence
       tags:
       - radar
+  /api/retrieval/ranked-search:
+    post:
+      operationId: ranked_search_api_retrieval_ranked_search_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RankedSearchIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RankedSearchOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Ranked Search
+      tags:
+      - retrieval
+  /api/retrieval/topic-context:
+    post:
+      operationId: topic_context_api_retrieval_topic_context_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicContextIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicContextOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Topic Context
+      tags:
+      - retrieval
   /api/reviews:
     get:
       operationId: list_reviews_api_reviews_get
@@ -5958,6 +7381,213 @@ paths:
       summary: Create Security
       tags:
       - securities
+  /api/securities/resolve:
+    get:
+      description: 市场全状态表优先；未命中时实时查询并回写市场表。
+      operationId: resolve_security_api_securities_resolve_get
+      parameters:
+      - in: query
+        name: query
+        required: true
+        schema:
+          maxLength: 100
+          minLength: 1
+          title: Query
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SecurityLookupOut'
+                title: Response Resolve Security Api Securities Resolve Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Resolve Security
+      tags:
+      - securities
+  /api/securities/{security_id}:
+    get:
+      description: 返回公司研究页所需的证券主数据。
+      operationId: get_security_api_securities__security_id__get
+      parameters:
+      - in: path
+        name: security_id
+        required: true
+        schema:
+          title: Security Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Security
+      tags:
+      - securities
+  /api/securities/{security_id}/metric-center:
+    get:
+      operationId: get_metric_center_api_securities__security_id__metric_center_get
+      parameters:
+      - in: path
+        name: security_id
+        required: true
+        schema:
+          title: Security Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMetricCenterOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Metric Center
+      tags:
+      - securities
+  /api/securities/{security_id}/metric-center/refresh:
+    post:
+      operationId: refresh_metric_center_api_securities__security_id__metric_center_refresh_post
+      parameters:
+      - in: path
+        name: security_id
+        required: true
+        schema:
+          title: Security Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMetricRefreshOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Refresh Metric Center
+      tags:
+      - securities
   /api/theses:
     get:
       description: '卡片列表。强制分页，只返回当前用户可见的卡片。
@@ -6141,6 +7771,60 @@ paths:
       summary: Create Draft
       tags:
       - thesis
+  /api/theses/summaries:
+    get:
+      description: 顶部研究上下文使用的轻量列表，不展开假设、指标和建议。
+      operationId: list_thesis_summaries_api_theses_summaries_get
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 100
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThesisSummaryPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Thesis Summaries
+      tags:
+      - thesis
   /api/theses/{thesis_id}:
     get:
       operationId: get_thesis_api_theses__thesis_id__get
@@ -6189,6 +7873,61 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Get Thesis
+      tags:
+      - thesis
+    patch:
+      operationId: update_thesis_draft_api_theses__thesis_id__patch
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThesisDraftUpdateIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThesisOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update Thesis Draft
       tags:
       - thesis
   /api/theses/{thesis_id}/audit:
@@ -6575,6 +8314,63 @@ paths:
       summary: Get Derived Hypothesis Health
       tags:
       - demo
+  /api/theses/{thesis_id}/maintenance:
+    patch:
+      description: 公司看台统一维护入口：一次提交逻辑、假设、指标与研究员字段。
+      operationId: update_thesis_maintenance_api_theses__thesis_id__maintenance_patch
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThesisMaintenanceIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThesisOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update Thesis Maintenance
+      tags:
+      - thesis
   /api/theses/{thesis_id}/publish:
     post:
       description: 发布，生成 V1（FR-T-005）。只有负责人可以发布。
@@ -6686,6 +8482,57 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Publish Readiness
+      tags:
+      - thesis
+  /api/theses/{thesis_id}/quality-check:
+    post:
+      description: 用 AI 复核草稿逻辑，确定性规则负责兜底维度和重复检查。
+      operationId: recheck_thesis_quality_api_theses__thesis_id__quality_check_post
+      parameters:
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThesisOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Recheck Thesis Quality
       tags:
       - thesis
   /api/theses/{thesis_id}/status:

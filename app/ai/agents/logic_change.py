@@ -26,6 +26,27 @@ class InvestmentLogicChangeAgent:
         self.retriever = retriever
 
     @staticmethod
+    def _metric_rule_context(rule: Any) -> dict[str, object]:
+        """保持旧契约稳定，仅在配置了范围边界时发送新字段。"""
+        payload: dict[str, object] = {
+            "metric_id": rule.metric_id,
+            "expected_direction": rule.expected_direction,
+            "expected_value": (
+                str(rule.expected_value) if rule.expected_value is not None else None
+            ),
+            "invalidation_threshold": (
+                str(rule.invalidation_threshold)
+                if rule.invalidation_threshold is not None
+                else None
+            ),
+        }
+        if rule.expected_lower is not None:
+            payload["expected_lower"] = str(rule.expected_lower)
+        if rule.expected_upper is not None:
+            payload["expected_upper"] = str(rule.expected_upper)
+        return payload
+
+    @staticmethod
     def _hypothesis_context(
         hypothesis: HypothesisInput,
         retrieval: RetrievalResult,
@@ -41,18 +62,7 @@ class InvestmentLogicChangeAgent:
             "expected_direction": hypothesis.expected_direction,
             "invalidation_rule": hypothesis.invalidation_rule,
             "metric_rules": [
-                {
-                    "metric_id": rule.metric_id,
-                    "expected_direction": rule.expected_direction,
-                    "expected_value": (
-                        str(rule.expected_value) if rule.expected_value is not None else None
-                    ),
-                    "invalidation_threshold": (
-                        str(rule.invalidation_threshold)
-                        if rule.invalidation_threshold is not None
-                        else None
-                    ),
-                }
+                InvestmentLogicChangeAgent._metric_rule_context(rule)
                 for rule in hypothesis.metric_rules
             ],
             "retrieved_locators": [item.locator for item in retrieval.items],

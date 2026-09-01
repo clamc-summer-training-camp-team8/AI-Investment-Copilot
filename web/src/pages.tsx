@@ -9,16 +9,20 @@ import {
   listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listTheses,
   publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
   recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
+  updateThesisMaintenance,
   getAssetInventory, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
   getGoldQuality, runQuantBacktest,
+  getCompanyMetricCenter, getSecurity, getMaintainedCoverage, getCoverageUniverse, refreshCompanyMetrics,
+  createCoverageSector, createCoverageCompany, updateCoverageCompany, updateCoverageSector,
 } from './api'
-import type { Trend } from './types'
+import type { CompanyMetric, Trend } from './types'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
-import type { Adjudication, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, QuantBacktestRequest, QuantBacktestRun, QuantEquityPoint, Relation, ReviewTask, ThesisDetail, ThesisRevision } from './types'
+import { MetricEditorCard } from './metric-editor'
+import type { Adjudication, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, QuantBacktestRequest, QuantBacktestRun, QuantEquityPoint, Relation, ReviewTask, Security, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function OperationalWorkbenchPage() {
@@ -43,14 +47,10 @@ export function OperationalWorkbenchPage() {
   </>
 }
 
-export function WorkbenchPage() {
+export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   const [feedFilter, setFeedFilter] = useState('全部')
-  const [expandedIndustries, setExpandedIndustries] = useState(() => new Set(['新能源汽车', '医药', '芯片半导体']))
-  const industries = [
-    { name: '新能源汽车', count: 3, companies: [['吉利汽车', 2], ['比亚迪', 5], ['小鹏汽车', 1]] },
-    { name: '医药', count: 2, companies: [['云南白药', 1], ['恒瑞医药', 3], ['药明康德', 2]] },
-    { name: '芯片半导体', count: 2, companies: [['北方华创', 2], ['兆易创新', 1], ['中芯国际', 4]] },
-  ] as const
+  const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set())
+  const coverage = useQuery({ queryKey: ['maintained-coverage'], queryFn: getMaintainedCoverage, staleTime: 30_000 })
   const events = [
     { time: '09:42', company: '比亚迪', source: '公司公告', title: '2024年一季度业绩预告：归母净利润同比增长 86.04%–118.88%', thesis: '销量增长驱动盈利提升；规模效应改善毛利率', importance: '高重要性', direction: '支持', status: 'AI生成' },
     { time: '09:15', company: '中芯国际', source: '行业资讯 · 芯思想', title: 'Q1产能利用率提升至 92.1%，价格年内趋稳', thesis: '成熟制程需求回暖；产能利用率提升驱动盈利改善', importance: '高重要性', direction: '支持', status: 'AI生成' },
@@ -67,9 +67,13 @@ export function WorkbenchPage() {
     ['中芯国际', '国产替代＋稼动率提升驱动盈利改善', '待观察', '今日 09:15 数据待进一步验证'],
   ] as const
   const filteredEvents = feedFilter === '全部' ? events : events.filter((item) => feedFilter === '公司' ? item.source === '公司公告' : feedFilter === '行业' ? item.source.includes('行业') : feedFilter === '宏观' ? item.source.includes('宏观') : true)
-  const toggleIndustry = (name: string) => setExpandedIndustries((current) => { const next = new Set(current); if (next.has(name)) next.delete(name); else next.add(name); return next })
+  const toggleIndustry = (name: string) => setExpandedIndustries((current) => {
+    const next = current.size ? new Set(current) : new Set((coverage.data ?? []).map((item) => item.name))
+    if (next.has(name)) next.delete(name); else next.add(name)
+    return next
+  })
   return <div className="dashboard-page">
-    <aside className="coverage-panel" aria-label="我的覆盖"><div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>{industries.map((industry) => <section className="coverage-group" key={industry.name}><button className="coverage-industry" aria-expanded={expandedIndustries.has(industry.name)} onClick={() => toggleIndustry(industry.name)}><span>{expandedIndustries.has(industry.name) ? '⌄' : '›'} ▥ {industry.name}</span><b>{industry.count}</b></button>{expandedIndustries.has(industry.name) && <div className="coverage-companies">{industry.companies.map(([company, count]) => <NavLink to={company === '吉利汽车' ? '/companies/geely' : '/theses'} key={company}><span>▥ {company}</span><b>{count}</b></NavLink>)}</div>}</section>)}<nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业总览</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets">▤ 数据中心</NavLink><NavLink to="/assets">⌕ 知识库</NavLink><NavLink to="/theses">◇ 模型与因子</NavLink><NavLink to="/assets">▱ 研报与文档</NavLink><NavLink to="/radar">♧ 监控与预警</NavLink></nav><button className="new-research-button">＋ 新建研究主题</button></aside>
+    <aside className="coverage-panel" aria-label="我的覆盖"><div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>{coverage.isLoading && <div className="coverage-loading" role="status">正在加载维护中的公司…</div>}{coverage.error && <div className="coverage-loading coverage-loading-error">覆盖数据暂时不可用</div>}{coverage.data?.map((industry) => { const expanded = expandedIndustries.size === 0 || expandedIndustries.has(industry.name); return <section className="coverage-group" key={industry.name}><button className="coverage-industry" aria-expanded={expanded} onClick={() => toggleIndustry(industry.name)}><span>{expanded ? '⌄' : '›'} ▥ {industry.name}</span><b>{industry.companies.length}</b></button>{expanded && <div className="coverage-companies">{industry.companies.map((company) => <NavLink to={`/companies/${encodeURIComponent(company.securityId)}`} key={company.securityId}><span><strong>▥ {company.name}</strong><small>{company.industry || '行业分类待补充'}</small></span></NavLink>)}</div>}</section>})}{coverage.data && coverage.data.length === 0 && <div className="coverage-loading">暂无正在维护的公司</div>}<nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业总览</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets">▤ 数据中心</NavLink><NavLink to="/assets">⌕ 知识库</NavLink><NavLink to="/theses">◇ 模型与因子</NavLink><NavLink to="/assets">▱ 研报与文档</NavLink><NavLink to="/radar">♧ 监控与预警</NavLink></nav><button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button></aside>
     <main className="dashboard-main"><section className="dashboard-card research-feed" aria-labelledby="research-feed-title"><header className="dashboard-card-header"><h2 id="research-feed-title">今日研究动态</h2><button>筛选 ⌄</button></header><div className="feed-tabs" role="tablist" aria-label="动态分类">{['全部', '公司', '行业', '宏观', '政策'].map((tab) => <button role="tab" aria-selected={feedFilter === tab} className={feedFilter === tab ? 'active' : ''} onClick={() => setFeedFilter(tab)} key={tab}>{tab}<span>{tab === '全部' ? 12 : tab === '公司' ? 8 : tab === '行业' ? 2 : 1}</span></button>)}</div><div className="dashboard-feed-list">{filteredEvents.map((item, index) => <article className="dashboard-event" key={`${item.time}-${item.company}`}><time>{item.time}</time><i className={item.direction === '冲突' ? 'conflict' : ''} /><div className="event-copy"><div className="event-meta"><strong>{item.company}</strong><span>{item.source}</span></div><h3>{item.title}</h3><p>相关假设：{item.thesis}</p></div><span className={`importance importance-${item.importance[0]}`}>{item.importance}</span><strong className={`direction-text ${item.direction === '冲突' ? 'conflict' : ''}`}>{item.direction} {item.direction === '支持' ? '↑' : '↓'}</strong><div className="event-actions"><span className={item.status === '研究员确认' ? 'human-label' : 'ai-label'}>{item.status}</span><NavLink to={`/updates/${index + 1}`}>查看影响</NavLink><button>加入证据</button></div></article>)}</div><NavLink className="dashboard-more" to="/updates">查看更多动态 ⌄</NavLink></section>
     <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">主投资逻辑状态</h2><span>截至今天 10:00</span></header><div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>最新变化</span><span>操作</span></div>{logicRows.map(([company, logic, status, change]) => <div className="logic-table-row" role="row" key={company}><strong>{company}</strong><span>{logic}</span><b className={`logic-state state-${status}`}>{status}</b><span>{change}</span><NavLink to="/theses">查看演变</NavLink></div>)}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section>
     <section className="dashboard-card indicator-panel"><header className="dashboard-card-header"><h2>关键指标异动</h2><NavLink to="/radar">更多 ›</NavLink></header>{[['比亚迪', '毛利率（%）', '20.14', '+2.41', 'up'], ['中芯国际', '产能利用率（%）', '92.1', '-3.12', 'down'], ['吉利汽车', '单车均价（万元）', '11.28', '-1.18', 'down']].map(([company, metric, value, delta, trend], index) => <div className="indicator-row" key={company}><strong>{company}</strong><span>{metric}</span><b>{value}</b><svg viewBox="0 0 120 28" aria-label={`${company}${metric}趋势`}><polyline points={index === 0 ? '0,19 12,18 24,20 36,13 48,16 60,5 72,17 84,12 96,18 108,15 120,18' : '0,8 12,11 24,6 36,13 48,10 60,17 72,14 84,20 96,16 108,21 120,18'} /></svg><em className={trend}>{delta} {trend === 'up' ? '↑' : '↓'}</em></div>)}<NavLink className="dashboard-more" to="/radar">查看全部异常指标 ›</NavLink></section></main>
@@ -124,53 +128,97 @@ export function MacroStrategyPage() {
   </div>
 }
 
-type CoverageCompany = { id: string; name: string; code: string; market: string; owner: string; thesisCount: number; status: '正常覆盖' | '待建档' | '暂停覆盖'; updated: string }
+type CoverageCompany = { id: string; securityId: string; name: string; code: string; industry?: string; market: string; owner: string; thesisCount: number; status: '正常覆盖' | '待建档' | '暂停覆盖'; updated: string }
 type CoverageIndustry = { id: string; name: string; code: string; color: string; description: string; companies: CoverageCompany[] }
 
-const initialCoverageIndustries: CoverageIndustry[] = [
-  { id: 'auto', name: '新能源汽车', code: 'AUTO.NE', color: '#1473e6', description: '整车、动力电池与智能驾驶产业链', companies: [
-    { id: 'geely', name: '吉利汽车', code: '0175.HK', market: '港股', owner: '张明', thesisCount: 3, status: '正常覆盖', updated: '今天 10:30' },
-    { id: 'byd', name: '比亚迪', code: '002594.SZ', market: 'A股', owner: '张明', thesisCount: 2, status: '正常覆盖', updated: '今天 09:42' },
-    { id: 'xpeng', name: '小鹏汽车', code: '9868.HK', market: '港股', owner: '李然', thesisCount: 2, status: '正常覆盖', updated: '昨天 18:20' },
-  ] },
-  { id: 'pharma', name: '创新医药', code: 'PHARMA.CN', color: '#16a173', description: '创新药、CXO与中药消费', companies: [
-    { id: 'hengrui', name: '恒瑞医药', code: '600276.SH', market: 'A股', owner: '王妍', thesisCount: 2, status: '正常覆盖', updated: '今天 08:47' },
-    { id: 'wuxi', name: '药明康德', code: '603259.SH', market: 'A股', owner: '王妍', thesisCount: 1, status: '正常覆盖', updated: '昨天 16:10' },
-    { id: 'ynby', name: '云南白药', code: '000538.SZ', market: 'A股', owner: '周宁', thesisCount: 0, status: '待建档', updated: '3天前' },
-  ] },
-  { id: 'semi', name: '芯片半导体', code: 'SEMI.CN', color: '#7558c7', description: '制造、设备、材料与设计公司', companies: [
-    { id: 'naura', name: '北方华创', code: '002371.SZ', market: 'A股', owner: '赵谦', thesisCount: 2, status: '正常覆盖', updated: '今天 09:15' },
-    { id: 'giga', name: '兆易创新', code: '603986.SH', market: 'A股', owner: '赵谦', thesisCount: 1, status: '正常覆盖', updated: '昨天 15:32' },
-    { id: 'smic', name: '中芯国际', code: '0981.HK', market: '港股', owner: '赵谦', thesisCount: 3, status: '正常覆盖', updated: '今天 09:15' },
-  ] },
-]
+const coverageColors = ['#1473e6', '#16a173', '#7558c7', '#df8b2c', '#4f718e']
 
-export function CoverageManagementPage() {
-  const [industries, setIndustries] = useState<CoverageIndustry[]>(initialCoverageIndustries)
-  const [activeIndustryId, setActiveIndustryId] = useState('auto')
+function coverageMarket(ticker: string | undefined) {
+  const value = ticker?.toUpperCase() ?? ''
+  if (value.endsWith('.HK')) return '港股'
+  if (value.endsWith('.US')) return '美股'
+  if (value.endsWith('.SH') || value.endsWith('.SZ') || /^\d{6}$/.test(value)) return 'A股'
+  return '未标注'
+}
+
+function toCoverageIndustries(groups: Awaited<ReturnType<typeof getCoverageUniverse>>): CoverageIndustry[] {
+  return groups.map((group, index) => ({
+    id: group.sectorId || `industry-${group.name}`,
+    name: group.name,
+    code: group.code || (group.name === '未分类' ? 'UNCLASSIFIED' : `IND-${String(index + 1).padStart(2, '0')}`),
+    color: coverageColors[index % coverageColors.length],
+    description: group.description || '研究板块；公司下方显示正式行业分类',
+    companies: group.companies.map((company) => ({
+      id: company.coverageCompanyId || company.securityId,
+      securityId: company.securityId,
+      name: company.name,
+      code: company.ticker || company.securityId,
+      industry: company.industry,
+      market: company.market || coverageMarket(company.ticker),
+      owner: company.owner || '待分配',
+      thesisCount: company.thesisCount,
+      status: (company.status as CoverageCompany['status']) || (company.thesisId ? '正常覆盖' : '待建档'),
+      updated: company.updatedAt ? new Date(company.updatedAt).toLocaleDateString('zh-CN') : '尚未建立逻辑',
+    })),
+  }))
+}
+
+export function CoverageManagementPage({ onCreate }: { onCreate?: (security?: Security) => void } = {}) {
+  const [industries, setIndustries] = useState<CoverageIndustry[]>([])
+  const [activeIndustryId, setActiveIndustryId] = useState('')
+  const [sectorQuery, setSectorQuery] = useState('')
   const [query, setQuery] = useState('')
-  const [dialog, setDialog] = useState<'industry' | 'company' | null>(null)
+  const [statusFilter, setStatusFilter] = useState<'全部' | CoverageCompany['status']>('全部')
+  const [dialog, setDialog] = useState<'industry' | 'sector-edit' | 'company' | null>(null)
   const [toast, setToast] = useState('')
+  const coverage = useQuery({ queryKey: ['coverage-universe', sectorQuery], queryFn: () => getCoverageUniverse(sectorQuery), staleTime: 30_000 })
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!coverage.data) return
+    const next = toCoverageIndustries(coverage.data)
+    setIndustries(next)
+    setActiveIndustryId((current) => next.some((item) => item.id === current) ? current : next[0]?.id ?? '')
+  }, [coverage.data])
   const industry = industries.find((item) => item.id === activeIndustryId) ?? industries[0]
-  const companies = industry.companies.filter((item) => `${item.name}${item.code}${item.owner}`.toLowerCase().includes(query.trim().toLowerCase()))
+  const currentIndustry: CoverageIndustry = industry ?? { id: '', name: '暂无板块', code: '-', color: '#4f718e', description: '请先新增研究板块', companies: [] }
+  const createSectorMutation = useMutation({
+    mutationFn: createCoverageSector,
+    onSuccess: (created) => { setActiveIndustryId(created.sectorId || ''); setDialog(null); void qc.invalidateQueries({ queryKey: ['coverage-universe'] }); showToast(`已添加板块：${created.name}`) },
+  })
+  const createCompanyMutation = useMutation({
+    mutationFn: (payload: { sectorId: string; securityId?: string; name?: string; industry?: string; market?: string; owner?: string }) => createCoverageCompany(payload.sectorId, payload),
+    onSuccess: (created) => { setDialog(null); void qc.invalidateQueries({ queryKey: ['coverage-universe'] }); void qc.invalidateQueries({ queryKey: ['securities'] }); showToast(`已将${created.name}加入${currentIndustry.name}`) },
+  })
+  const updateSectorMutation = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => updateCoverageSector(id, { name }),
+    onSuccess: (updated) => { setDialog(null); void qc.invalidateQueries({ queryKey: ['coverage-universe'] }); showToast(`已将板块更名为：${updated.name}`) },
+  })
+  const updateCompanyMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => updateCoverageCompany(id, { status }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['coverage-universe'] }); void qc.invalidateQueries({ queryKey: ['maintained-coverage'] }); showToast('覆盖状态已更新') },
+  })
+  if (coverage.isLoading) return <LoadingState text="正在加载行业与公司数据…" />
+  if (coverage.error) return <ErrorState error={coverage.error} />
+  const companies = currentIndustry.companies.filter((item) => (statusFilter === '全部' || item.status === statusFilter) && `${item.name}${item.code}${item.owner}`.toLowerCase().includes(query.trim().toLowerCase()))
   const totalCompanies = industries.reduce((sum, item) => sum + item.companies.length, 0)
   const totalTheses = industries.reduce((sum, item) => sum + item.companies.reduce((companySum, company) => companySum + company.thesisCount, 0), 0)
   const showToast = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2200) }
-  const addIndustry = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); const name = String(data.get('name') ?? '').trim(); if (!name) return; const id = `industry-${Date.now()}`; setIndustries((current) => [...current, { id, name, code: String(data.get('code') || 'CUSTOM'), color: '#df8b2c', description: String(data.get('description') || '自定义研究行业'), companies: [] }]); setActiveIndustryId(id); setDialog(null); showToast(`已添加行业：${name}`) }
-  const addCompany = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); const name = String(data.get('name') ?? '').trim(); if (!name) return; const company: CoverageCompany = { id: `company-${Date.now()}`, name, code: String(data.get('code') || '待补充'), market: String(data.get('market') || 'A股'), owner: String(data.get('owner') || '待分配'), thesisCount: 0, status: '待建档', updated: '刚刚' }; setIndustries((current) => current.map((item) => item.id === activeIndustryId ? { ...item, companies: [...item.companies, company] } : item)); setDialog(null); showToast(`已将${name}加入${industry.name}`) }
-  const toggleCoverage = (companyId: string) => setIndustries((current) => current.map((item) => item.id === activeIndustryId ? { ...item, companies: item.companies.map((company) => company.id === companyId ? { ...company, status: company.status === '暂停覆盖' ? '正常覆盖' : '暂停覆盖' } : company) } : item))
+  const addIndustry = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); createSectorMutation.mutate({ name: String(data.get('name') ?? '').trim(), code: String(data.get('code') || '').trim() || undefined, description: String(data.get('description') || '').trim() || undefined }) }
+  const editIndustry = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!currentIndustry.id) return; const data = new FormData(event.currentTarget); updateSectorMutation.mutate({ id: currentIndustry.id, name: String(data.get('name') ?? '').trim() }) }
+  const addCompany = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!currentIndustry.id) return; const data = new FormData(event.currentTarget); createCompanyMutation.mutate({ sectorId: currentIndustry.id, securityId: String(data.get('code') || '').trim() || undefined, name: String(data.get('name') || '').trim() || undefined, industry: String(data.get('industry') || '').trim() || undefined, market: String(data.get('market') || '').trim() || undefined, owner: String(data.get('owner') || '').trim() || undefined }) }
+  const toggleCoverage = (company: CoverageCompany) => { if (!company.id.startsWith('COV-')) return; updateCompanyMutation.mutate({ id: company.id, status: company.status === '暂停覆盖' ? '正常覆盖' : '暂停覆盖' }) }
   return <div className="coverage-management-page">
-    <header className="coverage-management-header"><div><span>研究覆盖管理 / COVERAGE UNIVERSE</span><h1>行业与公司管理</h1><p>维护研究团队的行业分类、公司覆盖范围与负责人。新增对象后可继续建立投资逻辑和指标体系。</p></div><div className="coverage-header-actions"><button onClick={() => setDialog('industry')}>＋ 新增行业</button><button className="primary" onClick={() => setDialog('company')}>＋ 添加公司</button></div></header>
-    <section className="coverage-summary" aria-label="覆盖概况"><div><span>行业分类</span><strong>{industries.length}</strong><small>个活跃行业</small></div><div><span>覆盖公司</span><strong>{totalCompanies}</strong><small>家公司</small></div><div><span>活跃投资逻辑</span><strong>{totalTheses}</strong><small>条逻辑</small></div><div><span>待完善档案</span><strong>{industries.flatMap((item) => item.companies).filter((item) => item.status === '待建档').length}</strong><small>需要处理</small></div><div className="coverage-governance"><b>覆盖治理</b><span>行业、公司和研究逻辑为三级独立对象</span><em>最后同步：今天 10:30</em></div></section>
+    <header className="coverage-management-header"><div><span>研究覆盖管理 / COVERAGE UNIVERSE</span><h1>板块与公司管理</h1><p>维护研究团队的研究板块、公司覆盖范围与负责人。公司下方保留正式行业分类，新增对象后可继续建立投资逻辑和指标体系。</p></div><div className="coverage-header-actions"><button onClick={() => setDialog('industry')}>＋ 新增板块</button></div></header>
+    <section className="coverage-summary" aria-label="覆盖概况"><div><span>研究板块</span><strong>{industries.length}</strong><small>个活跃板块</small></div><div><span>覆盖公司</span><strong>{totalCompanies}</strong><small>家公司</small></div><div><span>活跃投资逻辑</span><strong>{totalTheses}</strong><small>条逻辑</small></div><div><span>待完善档案</span><strong>{industries.flatMap((item) => item.companies).filter((item) => item.status === '待建档').length}</strong><small>需要处理</small></div><div className="coverage-governance"><b>覆盖治理</b><span>板块、公司和研究逻辑为三级独立对象</span><em>最后同步：今天 10:30</em></div></section>
     <main className="coverage-management-grid">
-      <aside className="industry-manager"><header><div><span>01</span><h2>行业目录</h2></div><button onClick={() => setDialog('industry')} aria-label="新增行业">＋</button></header><label className="industry-search"><span>⌕</span><input placeholder="搜索行业" aria-label="搜索行业" /></label><div className="industry-list">{industries.map((item) => <button key={item.id} className={activeIndustryId === item.id ? 'active' : ''} onClick={() => { setActiveIndustryId(item.id); setQuery('') }}><i style={{ background: item.color }}>{item.name.slice(0,1)}</i><span><strong>{item.name}</strong><small>{item.description}</small></span><b>{item.companies.length}</b></button>)}</div><footer><span>归档行业 <b>0</b></span><button>查看归档 ›</button></footer></aside>
-      <section className="company-manager"><header className="company-manager-title"><div><span>02 / {industry.code}</span><h2>{industry.name}</h2><p>{industry.description} · 当前覆盖 {industry.companies.length} 家公司</p></div><div><button>行业设置</button><button className="primary" onClick={() => setDialog('company')}>＋ 添加公司</button></div></header><div className="company-manager-toolbar"><label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索公司名称、代码或负责人" aria-label="搜索公司" /></label><div className="company-filters"><button className="active">全部 {industry.companies.length}</button><button>正常覆盖</button><button>待建档</button><button>暂停覆盖</button></div><button>筛选⌄</button></div>
-        <div className="coverage-company-table" role="table" aria-label={`${industry.name}公司列表`}><div className="coverage-company-head" role="row"><span>公司</span><span>市场</span><span>研究负责人</span><span>投资逻辑</span><span>覆盖状态</span><span>最近更新</span><span>操作</span></div>{companies.map((company) => <article className="coverage-company-row" role="row" key={company.id}><div className="coverage-company-name"><i>{company.name.slice(0,1)}</i><span><strong>{company.name}</strong><small>{company.code}</small></span></div><span>{company.market}</span><div className="coverage-owner"><i>{company.owner.slice(0,1)}</i><span>{company.owner}</span></div><b className={company.thesisCount ? '' : 'empty'}>{company.thesisCount ? `${company.thesisCount} 条` : '未建立'}</b><em className={`coverage-status status-${company.status}`}>{company.status}</em><time>{company.updated}</time><div className="coverage-row-actions">{company.id === 'geely' ? <NavLink to="/companies/geely">进入研究</NavLink> : <button>{company.thesisCount ? '查看研究' : '完善档案'}</button>}<button className="more" aria-label={`${company.name}更多操作`}>···</button><div className="coverage-quick-menu"><button onClick={() => showToast(`已打开${company.name}编辑项`)}>编辑公司</button><button onClick={() => toggleCoverage(company.id)}>{company.status === '暂停覆盖' ? '恢复覆盖' : '暂停覆盖'}</button></div></div></article>)}</div>
-        {!companies.length && <div className="coverage-empty"><strong>没有匹配的公司</strong><span>调整搜索条件，或将新公司添加到当前行业。</span><button onClick={() => setDialog('company')}>＋ 添加公司</button></div>}
-        <footer className="company-manager-footer"><span>显示 {companies.length} / {industry.companies.length} 家公司</span><div><button disabled>‹</button><b>1</b><button disabled>›</button></div></footer>
+      <aside className="industry-manager"><header><div><span>01</span><h2>板块目录</h2></div><button onClick={() => setDialog('industry')} aria-label="新增板块">＋</button></header><label className="industry-search"><span>⌕</span><input value={sectorQuery} onChange={(event) => setSectorQuery(event.target.value)} placeholder="搜索板块" aria-label="搜索板块" /></label><div className="industry-list">{industries.map((item) => <button key={item.id} className={activeIndustryId === item.id ? 'active' : ''} onClick={() => { setActiveIndustryId(item.id); setQuery(''); setStatusFilter('全部') }}><i style={{ background: item.color }}>{item.name.slice(0,1)}</i><span><strong>{item.name}</strong><small>{item.description}</small></span><b>{item.companies.length}</b></button>)}</div>{!industries.length && <div className="coverage-empty"><strong>没有匹配的板块</strong><span>请调整搜索条件，或新建研究板块。</span></div>}<footer><span>归档板块 <b>0</b></span><button>查看归档 ›</button></footer></aside>
+      <section className="company-manager"><header className="company-manager-title"><div><span>02 / {currentIndustry.code}</span><h2>{currentIndustry.name}</h2><p>{currentIndustry.description} · 当前覆盖 {currentIndustry.companies.length} 家公司</p></div><div><button onClick={() => currentIndustry.id && setDialog('sector-edit')} disabled={!currentIndustry.id}>板块设置</button><button className="primary" onClick={() => currentIndustry.id && setDialog('company')} disabled={!currentIndustry.id}>＋ 添加公司</button></div></header><div className="company-manager-toolbar"><label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索公司名称、代码或负责人" aria-label="搜索公司" /></label><div className="company-filters">{(['全部','正常覆盖','待建档','暂停覆盖'] as const).map((status) => <button key={status} className={statusFilter === status ? 'active' : ''} onClick={() => setStatusFilter(status)}>{status}{status === '全部' ? ` ${currentIndustry.companies.length}` : ''}</button>)}</div><button>筛选⌄</button></div>
+        <div className="coverage-company-table" role="table" aria-label={`${currentIndustry.name}公司列表`}><div className="coverage-company-head" role="row"><span>公司</span><span>市场</span><span>研究负责人</span><span>投资逻辑</span><span>覆盖状态</span><span>最近更新</span><span>操作</span></div>{companies.map((company) => <article className="coverage-company-row" role="row" key={company.id}><div className="coverage-company-name"><i>{company.name.slice(0,1)}</i><span><strong>{company.name}</strong><small>{company.code}</small><small className="company-industry-caption" title={company.industry || '行业分类待补充'}>{company.industry || '行业分类待补充'}</small></span></div><span>{company.market}</span><div className="coverage-owner"><i>{company.owner.slice(0,1)}</i><span>{company.owner}</span></div><b className={company.thesisCount ? '' : 'empty'}>{company.thesisCount} 条</b><em className={`coverage-status status-${company.status}`}>{company.status}</em><time>{company.updated}</time><div className="coverage-row-actions">{onCreate ? <button onClick={() => onCreate({ securityId: company.securityId, name: company.name, ticker: company.code, industry: company.industry })}>进入研究</button> : <NavLink to={`/companies/${encodeURIComponent(company.securityId)}`}>进入研究</NavLink>}<button className="coverage-pause-button" disabled={updateCompanyMutation.isPending} onClick={() => toggleCoverage(company)}>{company.status === '暂停覆盖' ? '恢复覆盖' : '暂停覆盖'}</button></div></article>)}</div>
+        {!companies.length && <div className="coverage-empty"><strong>没有匹配的公司</strong><span>调整搜索条件，或将新公司添加到当前板块。</span><button onClick={() => currentIndustry.id && setDialog('company')} disabled={!currentIndustry.id}>＋ 添加公司</button></div>}
+        <footer className="company-manager-footer"><span>显示 {companies.length} / {currentIndustry.companies.length} 家公司</span><div><button disabled>‹</button><b>1</b><button disabled>›</button></div></footer>
       </section>
     </main>
-    {dialog && <div className="coverage-dialog-backdrop" role="presentation" onMouseDown={() => setDialog(null)}><section className="coverage-dialog" role="dialog" aria-modal="true" aria-labelledby="coverage-dialog-title" onMouseDown={(event) => event.stopPropagation()}><header><span>{dialog === 'industry' ? 'INDUSTRY SETUP' : 'COMPANY SETUP'}</span><h2 id="coverage-dialog-title">{dialog === 'industry' ? '新增研究行业' : `添加公司到“${industry.name}”`}</h2><p>{dialog === 'industry' ? '建立行业分类后，可继续添加覆盖公司和行业级研究资料。' : '这里只建立静态公司档案，不会自动创建投资逻辑。'}</p><button onClick={() => setDialog(null)} aria-label="关闭">×</button></header><form onSubmit={dialog === 'industry' ? addIndustry : addCompany}>{dialog === 'industry' ? <><label>行业名称<input name="name" placeholder="例如：消费电子" required autoFocus /></label><label>行业代码<input name="code" placeholder="例如：ELEC.CN" /></label><label>行业说明<textarea name="description" placeholder="简要描述行业覆盖范围" /></label></> : <><div className="coverage-form-two"><label>公司名称<input name="name" placeholder="例如：理想汽车" required autoFocus /></label><label>证券代码<input name="code" placeholder="例如：2015.HK" /></label></div><div className="coverage-form-two"><label>上市市场<select name="market"><option>A股</option><option>港股</option><option>美股</option><option>未上市</option></select></label><label>研究负责人<input name="owner" placeholder="输入姓名" /></label></div></>}<div className="coverage-dialog-actions"><button type="button" onClick={() => setDialog(null)}>取消</button><button type="submit" className="primary">{dialog === 'industry' ? '创建行业' : '添加公司'}</button></div></form></section></div>}
+    {dialog && <div className="coverage-dialog-backdrop" role="presentation" onMouseDown={() => setDialog(null)}><section className="coverage-dialog" role="dialog" aria-modal="true" aria-labelledby="coverage-dialog-title" onMouseDown={(event) => event.stopPropagation()}><header><span>{dialog === 'company' ? 'COMPANY SETUP' : 'SECTOR SETUP'}</span><h2 id="coverage-dialog-title">{dialog === 'industry' ? '新增研究板块' : dialog === 'sector-edit' ? '修改板块名称' : `添加公司到“${currentIndustry.name}”`}</h2><p>{dialog === 'industry' ? '建立研究板块后，可继续添加覆盖公司和行业级研究资料。' : dialog === 'sector-edit' ? '更名后会立即保存到板块目录并更新前端展示。' : '这里只建立公司档案；代码和名称填写一个即可，系统会优先从市场主数据补全并判断上市市场。添加后投资逻辑数量默认为 0。'}</p><button onClick={() => setDialog(null)} aria-label="关闭">×</button></header><form onSubmit={dialog === 'industry' ? addIndustry : dialog === 'sector-edit' ? editIndustry : addCompany}>{dialog === 'industry' ? <><label>板块名称<input name="name" placeholder="例如：消费电子" required autoFocus /></label><label>板块代码<input name="code" placeholder="例如：ELEC.CN" /></label><label>板块说明<textarea name="description" placeholder="简要描述板块覆盖范围" /></label></> : dialog === 'sector-edit' ? <label>板块名称<input name="name" defaultValue={currentIndustry.name} required autoFocus /></label> : <><div className="coverage-form-two"><label>公司名称<input name="name" placeholder="例如：理想汽车" autoFocus /></label><label>证券代码<input name="code" placeholder="例如：2015.HK" /></label></div><div className="coverage-form-two"><label>所属行业<input name="industry" placeholder="可从证券主数据补全" /></label><label>上市市场<select name="market"><option value="">自动识别</option><option>A股</option><option>港股</option><option>美股</option><option>未上市</option></select></label></div><label>研究负责人<input name="owner" placeholder="输入姓名" /></label></>}<div className="coverage-dialog-actions"><button type="button" onClick={() => setDialog(null)}>取消</button><button type="submit" className="primary" disabled={createSectorMutation.isPending || updateSectorMutation.isPending || createCompanyMutation.isPending}>{dialog === 'industry' ? (createSectorMutation.isPending ? '创建中…' : '创建板块') : dialog === 'sector-edit' ? (updateSectorMutation.isPending ? '保存中…' : '保存名称') : (createCompanyMutation.isPending ? '添加中…' : '添加公司')}</button></div><InlineError error={createSectorMutation.error ?? updateSectorMutation.error ?? createCompanyMutation.error} /></form></section></div>}
     {toast && <div className="coverage-toast" role="status">✓ {toast}</div>}
   </div>
 }
@@ -203,12 +251,76 @@ const thesisResearch = {
   valuation: null,
 } as const
 
-export function CompanyResearchPage() {
-  const [activeThesis, setActiveThesis] = useState<(typeof companyTheses)[number]['id']>('product')
+type ResearchMetricRow = [string, string, string, string]
+type ResearchEvidenceRow = [string, string, string]
+type ResearchHypothesisView = { id: string; title: string; state: string; tone: 'support' | 'conflict' | 'pending' }
+type ResearchView = { hypotheses: ResearchHypothesisView[]; metrics: Record<string, ResearchMetricRow[]>; evidence: Record<string, ResearchEvidenceRow[]> }
+type CompanyThesisView = { id: string; title: string; horizon: string; direction: string; health: string; confidence?: number; summary: string; record?: ThesisDetail }
+
+function normalizeResearchView(value: { hypotheses: readonly { id: string; title: string; state: string; tone: string }[]; metrics: Readonly<Record<string, ReadonlyArray<ReadonlyArray<string>>>>; evidence: Readonly<Record<string, ReadonlyArray<ReadonlyArray<string>>>> }): ResearchView {
+  return {
+    hypotheses: value.hypotheses.map((item) => ({ ...item, tone: item.tone === 'support' || item.tone === 'conflict' ? item.tone : 'pending' })),
+    metrics: Object.fromEntries(Object.entries(value.metrics).map(([key, rows]) => [key, rows.map((row) => [String(row[0]), String(row[1]), String(row[2]), String(row[3])] as ResearchMetricRow)])),
+    evidence: Object.fromEntries(Object.entries(value.evidence).map(([key, rows]) => [key, rows.map((row) => [String(row[0]), String(row[1]), String(row[2])] as ResearchEvidenceRow)])),
+  }
+}
+
+function metricRowFromTrend(item: Trend): ResearchMetricRow {
+  const latest = item.points.at(-1)?.value
+  const previous = item.points.at(-2)?.value
+  const latestNumber = latest == null ? Number.NaN : Number(latest)
+  const previousNumber = previous == null ? Number.NaN : Number(previous)
+  const delta = Number.isFinite(latestNumber) && Number.isFinite(previousNumber) && previousNumber !== 0
+    ? `${latestNumber - previousNumber >= 0 ? '+' : ''}${(((latestNumber - previousNumber) / Math.abs(previousNumber)) * 100).toFixed(2)}%`
+    : '—'
+  const state = item.verdict?.includes('冲突') ? '冲突' : item.verdict?.includes('支持') ? '支持' : '待验证'
+  return [item.metricName || item.metricId, latest ?? '—', delta, state]
+}
+
+function formatCompanyNumber(value?: string) {
+  if (value == null || value.trim() === '') return '—'
+  const numeric = Number(value.replaceAll(',', ''))
+  return Number.isFinite(numeric) ? numeric.toFixed(2) : value
+}
+
+function dynamicThesisView(record: ThesisDetail): CompanyThesisView {
+  return {
+    id: record.thesisId,
+    title: record.title,
+    horizon: record.horizonEndOn ? `截至 ${record.horizonEndOn}` : '观察期未设置',
+    direction: record.direction,
+    health: record.status === '草稿' ? '待验证' : record.status,
+    summary: record.coreView,
+    record,
+  }
+}
+
+export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesisId?: string, securityId?: string) => void; onCreate?: (security?: Security) => void } = {}) {
+  const { securityId: routeSecurityId } = useParams()
+  const [companyParams, setCompanyParams] = useSearchParams()
+  const isDemoGeely = routeSecurityId === 'geely'
+  const securityId = isDemoGeely ? '00175' : routeSecurityId ?? ''
+  const [companyTab, setCompanyTab] = useState(companyParams.get('tab') || '投资逻辑')
+  const security = useQuery({ queryKey: ['security', securityId], queryFn: () => getSecurity(securityId), enabled: Boolean(securityId) && !isDemoGeely })
+  const companyMetrics = useQuery({ queryKey: ['company-metric-center', securityId], queryFn: () => getCompanyMetricCenter(securityId), enabled: Boolean(securityId) && !isDemoGeely, refetchInterval: 60_000 })
+  const maintainedTheses = useQuery({ queryKey: ['company-theses', securityId], queryFn: () => listTheses(securityId, false, true), enabled: Boolean(securityId) && !isDemoGeely })
+  const [activeThesis, setActiveThesis] = useState('product')
   const [activeHypothesis, setActiveHypothesis] = useState('H2')
-  const thesis = companyTheses.find((item) => item.id === activeThesis) ?? companyTheses[0]
-  const baseResearch = thesisResearch.product
-  const research = activeThesis === 'product' ? baseResearch : {
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  useEffect(() => {
+    if (isDemoGeely) return
+    const first = maintainedTheses.data?.[0]
+    if (first && !maintainedTheses.data?.some((item) => item.thesisId === activeThesis)) setActiveThesis(first.thesisId)
+  }, [activeThesis, isDemoGeely, maintainedTheses.data])
+  const activeRecord = maintainedTheses.data?.find((item) => item.thesisId === activeThesis) ?? maintainedTheses.data?.[0]
+  useEffect(() => {
+    const first = isDemoGeely ? 'H2' : activeRecord?.hypotheses[0]?.hypothesisId
+    const ids = isDemoGeely ? ['H1', 'H2', 'H3'] : activeRecord?.hypotheses.map((item) => item.hypothesisId) ?? []
+    if (first && !ids.includes(activeHypothesis)) setActiveHypothesis(first)
+  }, [activeHypothesis, activeRecord, isDemoGeely])
+  const trends = useQuery({ queryKey: ['company-thesis-trends', activeRecord?.thesisId], queryFn: () => getTrends(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
+  const evidenceFeed = useQuery({ queryKey: ['company-thesis-evidence', activeRecord?.thesisId], queryFn: () => getThesisEvidenceFeed(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
+  const staticBaseResearch = activeThesis === 'product' ? thesisResearch.product : {
     hypotheses: activeThesis === 'overseas' ? [
       { id: 'H1', title: '重点海外市场渠道覆盖持续扩大', state: '支持', tone: 'support' },
       { id: 'H2', title: '海外新品供给能够转化为有效销量', state: '待验证', tone: 'pending' },
@@ -218,30 +330,266 @@ export function CompanyResearchPage() {
       { id: 'H2', title: '市场盈利预期具备上修空间', state: '冲突', tone: 'conflict' },
       { id: 'H3', title: '当前估值已充分反映价格竞争风险', state: '支持', tone: 'support' },
     ],
-    metrics: baseResearch.metrics,
-    evidence: baseResearch.evidence,
+    metrics: thesisResearch.product.metrics,
+    evidence: thesisResearch.product.evidence,
   }
-  const selected = research.hypotheses.find((item) => item.id === activeHypothesis) ?? research.hypotheses[0]
-  const metrics = research.metrics[selected.id as keyof typeof research.metrics]
-  const evidence = research.evidence[selected.id as keyof typeof research.evidence]
-  const chooseThesis = (id: (typeof companyTheses)[number]['id']) => { setActiveThesis(id); setActiveHypothesis('H2') }
+  const staticResearch = normalizeResearchView(staticBaseResearch)
+  const dynamicResearch: ResearchView | undefined = activeRecord ? {
+    hypotheses: activeRecord.hypotheses.map((item) => ({ id: item.hypothesisId, title: item.statement, state: item.status, tone: item.status.includes('冲突') ? 'conflict' : item.status.includes('支持') ? 'support' : 'pending' })),
+    metrics: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (trends.data ?? []).filter((trend) => trend.hypothesisId === item.hypothesisId && trend.metricId).map(metricRowFromTrend)])),
+    evidence: Object.fromEntries(activeRecord.hypotheses.map((item) => [item.hypothesisId, (evidenceFeed.data?.items ?? []).filter((feed) => feed.hypothesisId === item.hypothesisId).map((feed) => [feed.direction === 'support' ? '支持' : feed.direction === 'conflict' ? '冲突' : '待验证', feed.sourceDocumentTitle, `公开资料 · ${formatDate(feed.disclosedAt)}`] as ResearchEvidenceRow)])),
+  } : undefined
+  const availableTheses: CompanyThesisView[] = isDemoGeely ? companyTheses.map((item) => ({ ...item })) : (maintainedTheses.data ?? []).map(dynamicThesisView)
+  const thesis = availableTheses.find((item) => item.id === activeThesis) ?? availableTheses[0]
+  const research = isDemoGeely ? staticResearch : dynamicResearch
+  const selected = research?.hypotheses.find((item) => item.id === activeHypothesis) ?? research?.hypotheses[0]
+  const metrics = selected ? research?.metrics[selected.id] ?? [] : []
+  const evidence = selected ? research?.evidence[selected.id] ?? [] : []
+  const chooseThesis = (id: string) => { setActiveThesis(id); const target = availableTheses.find((item) => item.id === id); setActiveHypothesis(target?.record?.hypotheses[0]?.hypothesisId ?? 'H2') }
+  const displaySecurity = security.data ?? (isDemoGeely ? { securityId: '00175', name: '吉利汽车', ticker: '0175.HK', industry: '汽车' } : undefined)
+  const closeMetric = companyMetrics.data?.metrics.find((item) => item.metricId === 'MKT-CLOSE-D')
+  const returnMetric = companyMetrics.data?.metrics.find((item) => item.metricId === 'MKT-CHANGE-PCT-D')
+  if (!isDemoGeely && (security.isLoading || maintainedTheses.isLoading)) return <LoadingState />
+  if (!isDemoGeely && (security.error || maintainedTheses.error)) return <ErrorState error={security.error ?? maintainedTheses.error} />
   return <div className="company-research-page">
     <header className="company-identity">
-      <NavLink className="company-back" to="/workbench" aria-label="返回工作台">‹</NavLink><div className="company-emblem">吉</div><div className="company-name"><span>公司研究 / 汽车</span><h1>吉利汽车 <small>0175.HK</small></h1></div>
-      <div className="company-quote"><span>当前价</span><strong>13.42 <small>HKD</small></strong><em>+2.18%</em></div><div className="company-stat"><span>投资评级</span><strong>增持</strong></div><div className="company-stat"><span>目标价（12个月）</span><strong>16.80 <small>HKD</small></strong></div><div className="company-stat"><span>分析师</span><strong>张明</strong></div><div className="company-stat"><span>最后更新</span><strong>2025-05-20 10:30</strong></div>
-      <div className="company-actions"><button>添加资料</button><button className="primary">更新观点</button></div>
+      <NavLink className="company-back" to="/workbench" aria-label="返回工作台">‹</NavLink><div className="company-emblem">{displaySecurity?.name.slice(0, 1) || '研'}</div><div className="company-name"><span>公司研究 / {displaySecurity?.industry || '待分类'}</span><h1>{displaySecurity?.name || securityId} <small>{displaySecurity?.ticker || securityId}</small></h1></div>
+      <div className="company-quote"><span>最新收盘价</span><strong>{formatCompanyNumber(closeMetric?.latestValue)} <small>{closeMetric?.unit || '—'}</small></strong><em>{returnMetric ? `${formatCompanyNumber(returnMetric.latestValue)}%` : '—'}</em></div><div className="company-stat"><span>投资评级</span><strong>{thesis?.record?.investmentRating || thesis?.direction || '待研究员填写'}</strong></div><div className="company-stat"><span>目标价（12个月）</span><strong>{thesis?.record?.targetPrice ? formatCompanyNumber(thesis.record.targetPrice) : '—'}</strong></div><div className="company-stat"><span>分析师</span><strong>{thesis?.record?.owner || '张明'}</strong></div><div className="company-stat"><span>数据更新</span><strong>{companyMetrics.data?.updatedAt || '尚未同步'}</strong></div>
+      <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => onCreate?.(displaySecurity)}><span aria-hidden>＋</span>新建逻辑</button></div>
     </header>
-    <nav className="company-tabs" aria-label="公司研究导航">{['总览', '投资逻辑', '事件与证据', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === '投资逻辑' ? 'active' : ''} key={item}>{item}</button>)}</nav>
-    <main className="company-canvas">
-      <section className="thesis-switcher" aria-label="投资逻辑选择">{companyTheses.map((item) => <button key={item.id} className={activeThesis === item.id ? 'active' : ''} onClick={() => chooseThesis(item.id)} aria-pressed={activeThesis === item.id}><strong>{item.title}</strong><span><i className={`dot ${item.health === '证据不足' ? 'warning' : ''}`} />{item.direction} · {item.health} · {item.confidence}%</span></button>)}<div className="thesis-switch-actions"><button>☷ 全部逻辑</button><button>＋ 新建逻辑</button></div></section>
-      <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><div className="confidence-block"><span>逻辑置信度 ⓘ</span><strong>{thesis.confidence}%</strong><i><b style={{ width: `${thesis.confidence}%` }} /></i></div><dl><div><dt>逻辑负责人</dt><dd>张明</dd></div><div><dt>最后更新</dt><dd>2025-05-20</dd></div></dl><button className="edit-thesis">✎ 编辑逻辑</button></section>
-      <div className="company-research-grid"><section className="hypothesis-panel"><header><h2>核心假设</h2><button>＋ 添加假设</button></header><div className="hypothesis-list">{research.hypotheses.map((item) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => setActiveHypothesis(item.id)}><span>{item.id}</span><strong>{item.title}</strong><em className={item.tone}>{item.state}</em></button>)}</div><button className="view-all-hypotheses">查看全部假设（3）⌄</button></section>
-        <section className="verification-panel"><header><div><span>当前验证对象</span><h2>{selected.id} · {selected.title}</h2></div><button>收起⌃</button></header><h3>关键指标</h3><div className="metric-table"><div className="metric-table-head"><span>指标</span><span>最新值</span><span>趋势（vs 前值）</span><span>状态</span></div>{metrics.map(([name, value, delta, state]) => <div className="metric-table-row" key={name}><strong>{name}</strong><b>{value}</b><em className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{delta}</em><span className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</span></div>)}</div><h3>证据验证 <small>（{evidence.length}）</small></h3><div className="company-evidence-list">{evidence.map(([state, title, source]) => <article key={title}><i className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state === '支持' ? '↗' : state === '冲突' ? '!' : '?'}</i><div><strong>{title}</strong><span>来源：{source}</span></div><b className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</b></article>)}</div></section>
+    <nav className="company-tabs" aria-label="公司研究导航">{['总览', '投资逻辑', '事件与证据', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '投资逻辑' ? {} : { tab: item }) }}>{item}</button>)}</nav>
+    {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : <main className="company-canvas">
+      {!thesis || !research || !selected ? <EmptyState title="尚未建立投资逻辑" description="该证券已建档，但数据库中暂时没有可展示的投资逻辑。" /> : <>
+      <section className="thesis-switcher" aria-label="投资逻辑选择">{availableTheses.map((item) => <button key={item.id} className={activeThesis === item.id ? 'active' : ''} onClick={() => chooseThesis(item.id)} aria-pressed={activeThesis === item.id}><strong>{item.title}</strong><span><i className={`dot ${item.health === '证据不足' ? 'warning' : ''}`} />{item.direction} · {item.health} · {item.confidence == null ? '待计算' : `${item.confidence}%`}</span></button>)}</section>
+      <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><div className="confidence-block"><span>逻辑置信度 ⓘ</span><strong>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</strong><i><b style={{ width: `${thesis.confidence ?? 0}%` }} /></i></div><dl><div><dt>逻辑负责人</dt><dd>{thesis.record?.owner || '张明'}</dd></div><div><dt>最后更新</dt><dd>{thesis.record?.establishedOn || '2025-05-20'}</dd></div></dl><button className="edit-thesis" disabled={!activeRecord} onClick={() => setShowEditDialog(true)}>✎ 编辑逻辑</button></section>
+       <div className="company-research-grid"><section className="hypothesis-panel"><header><h2>核心假设</h2><button>＋ 添加假设</button></header><div className="hypothesis-list">{research.hypotheses.map((item) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => setActiveHypothesis(item.id)}><div className="hypothesis-card-copy"><span className={isDemoGeely ? 'hypothesis-index' : 'hypothesis-id'}>{item.id}</span><strong>{item.title}</strong></div><em className={item.tone}>{item.state}</em></button>)}</div><button className="view-all-hypotheses">查看全部假设（{research.hypotheses.length}）⌄</button></section>
+         <section className="verification-panel"><header><div><span>当前验证对象</span><h2><span className="hypothesis-id">{selected.id}</span><span>{selected.title}</span></h2></div><button>收起⌃</button></header><h3>关键指标</h3><div className="metric-table"><div className="metric-table-head"><span>指标</span><span>最新值</span><span>趋势（vs 前值）</span><span>状态</span></div>{metrics.map(([name, value, delta, state]) => <div className="metric-table-row" key={name}><strong>{name}</strong><b>{value}</b><em className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{delta}</em><span className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</span></div>)}</div><h3>证据验证 <small>（{evidence.length}）</small></h3><div className="company-evidence-list">{evidence.map(([state, title, source]) => <article key={title}><i className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state === '支持' ? '↗' : state === '冲突' ? '!' : '?'}</i><div><strong>{title}</strong><span>来源：{source}</span></div><b className={state === '支持' ? 'support' : state === '冲突' ? 'conflict' : 'pending'}>{state}</b></article>)}</div></section>
         <aside className="company-side-column"><section><header><h2>催化剂与风险</h2><button>⌃</button></header><h3 className="support-text">催化剂</h3><ul><li>新车型密集上市（银河星舰7/极氪007GT等）</li><li>海外市场放量超预期</li><li>电池成本下降超预期</li></ul><h3 className="conflict-text">风险</h3><ul><li>行业价格战加剧，折扣率继续上行</li><li>海外地缘政治及关税风险</li><li>原材料价格大幅上涨</li></ul></section><section><header><h2>待复核事项 <small>2</small></h2></header><label><input type="checkbox" />5月中旬渠道调研更新终端折扣率数据<time>05-28</time></label><label><input type="checkbox" />Q2订单跟踪与交付节奏复核<time>06-10</time></label></section><section><header><h2>近期关键节点</h2></header><ol><li><time>2025-05-22</time>2025年Q1业绩发布</li><li><time>2025-06-10</time>5月销量发布</li><li><time>2025-06-18</time>证券机构策略会</li></ol></section></aside>
       </div>
-      <section className="company-version"><header><h2>逻辑版本记录</h2><button>查看全部版本⌃</button></header><div><strong>v1.2（当前）</strong><span>下调单车收入预期；更新4月销量与折扣率数据；补充渠道反馈证据</span><span>张明</span><time>2025-05-20 10:30</time><b>{thesis.confidence}%</b><button>查看详情</button></div></section>
-    </main>
+      <section className="company-version"><header><h2>逻辑版本记录</h2><button>查看全部版本⌃</button></header><div><strong>{isDemoGeely ? 'v1.2（当前）' : `v${thesis.record?.version ?? 0}（当前）`}</strong><span>{isDemoGeely ? '下调单车收入预期；更新4月销量与折扣率数据；补充渠道反馈证据' : `数据库记录 · ${thesis.record?.status || '草稿'}`}</span><span>{thesis.record?.owner || '张明'}</span><time>{thesis.record?.establishedOn || '2025-05-20'}</time><b>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</b><button>查看详情</button></div></section>
+      </>}
+    </main>}
+    {showEditDialog && activeRecord && <EditLogicDialog thesis={activeRecord} onClose={() => setShowEditDialog(false)} />}
   </div>
+}
+
+const metricCategories = ['全部指标', '价格与成交量', '技术指标', '财务与运营', '估值指标', '宏观及行业']
+
+function CompanyMetricCenterPanel({ securityId }: { securityId: string }) {
+  const qc = useQueryClient()
+  const [category, setCategory] = useState('全部指标')
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const center = useQuery({ queryKey: ['company-metric-center', securityId], queryFn: () => getCompanyMetricCenter(securityId), refetchInterval: 60_000 })
+  const refresh = useMutation({ mutationFn: () => refreshCompanyMetrics(securityId), onSuccess: async () => { await qc.invalidateQueries({ queryKey: ['company-metric-center', securityId] }); await qc.refetchQueries({ queryKey: ['company-metric-center', securityId], type: 'active' }) } })
+  if (center.isLoading) return <main className="company-metric-center"><LoadingState /></main>
+  if (center.error || !center.data) return <main className="company-metric-center"><ErrorState error={center.error} /></main>
+  const metrics = category === '全部指标' ? center.data.metrics : center.data.metrics.filter((item) => item.category === category)
+  const counts = Object.fromEntries(metricCategories.map((item) => [item, item === '全部指标' ? center.data.metrics.length : center.data.metrics.filter((metric) => metric.category === item).length]))
+  return <main className="company-metric-center"><header><div><span>企业量化数据中心</span><h2>指标中心</h2><p>展示该公司全部已入库指标，与投资假设关联相互独立。数据按来源频率增量更新。</p></div><div><small>数据更新至 {center.data.updatedAt || '尚无数据'}</small><button disabled={refresh.isPending} onClick={() => refresh.mutate()}>{refresh.isPending ? '正在更新…' : '更新最新数据'}</button>{refresh.isSuccess && <div className={`metric-refresh-notice ${refresh.data.errors.length ? 'warning' : 'success'}`} role="status"><strong>{refresh.data.errors.length && refresh.data.fetched === 0 ? '指标数据刷新失败' : refresh.data.errors.length ? '主要指标已刷新，部分数据源暂不可用' : '指标数据已刷新'}</strong><span>公开数据源本次获取 {refresh.data.fetched} 条，新增入库 {refresh.data.inserted} 条。</span>{refresh.data.errors.length > 0 && <ul>{refresh.data.errors.map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul>}</div>}<InlineError error={refresh.error} /></div></header><div className="metric-center-layout"><aside>{metricCategories.map((item) => <button className={category === item ? 'active' : ''} onClick={() => setCategory(item)} key={item}><span>{item}</span><b>{counts[item]}</b></button>)}</aside><section className="metric-center-list"><div className="metric-center-head"><span>指标</span><span>频率</span><span>最新值</span><span>趋势（vs 前值）</span><span>近期波动</span><span /></div>{metrics.map((metric) => <CompanyMetricRow metric={metric} expanded={expanded === metric.metricId} onToggle={() => setExpanded(expanded === metric.metricId ? null : metric.metricId)} key={metric.metricId} />)}{!metrics.length && <div className="metric-center-empty">当前分类暂无已入库数据。点击“更新最新数据”后再次查看；数据源不可用时不会生成模拟值。</div>}</section></div></main>
+}
+
+function CompanyMetricRow({ metric, expanded, onToggle }: { metric: CompanyMetric; expanded: boolean; onToggle: () => void }) {
+  const values = metric.observations.map((item) => Number(item.value)).filter(Number.isFinite)
+  const min = Math.min(...values), max = Math.max(...values), range = max - min || 1
+  const points = values.map((value, index) => `${(index / Math.max(values.length - 1, 1)) * 110},${28 - ((value - min) / range) * 23}`).join(' ')
+  const change = metric.changeRate == null ? null : Number(metric.changeRate)
+  const format = (value: string) => new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(Number(value))
+  return <article className={`metric-center-row ${expanded ? 'expanded' : ''}`}><button onClick={onToggle} aria-expanded={expanded}><strong>{metric.name}<small>{metric.metricId}</small></strong><span>{metric.frequency}</span><b>{format(metric.latestValue)} <small>{metric.unit}</small></b><em className={change == null ? '' : change >= 0 ? 'up' : 'down'}>{change == null ? '—' : `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`}</em><svg viewBox="0 0 110 32" preserveAspectRatio="none"><polyline points={points} /></svg><i>{expanded ? '︿' : '﹀'}</i></button>{expanded && <div className="metric-center-detail"><div><h3>指标说明</h3><p>{metric.definition}</p><dl><div><dt>数据来源</dt><dd>{metric.sourceId}</dd></div><div><dt>最近期间</dt><dd>{metric.latestPeriod}</dd></div><div><dt>前值</dt><dd>{metric.previousValue == null ? '—' : format(metric.previousValue)}</dd></div><div><dt>更新时间</dt><dd>{metric.latestDate}</dd></div></dl></div><MetricDetailChart metric={metric} /></div>}</article>
+}
+
+function MetricDetailChart({ metric }: { metric: CompanyMetric }) {
+  const values = metric.observations.map((item) => Number(item.value))
+  const min = Math.min(...values), max = Math.max(...values), range = max - min || 1
+  const points = values.map((value, index) => `${20 + (index / Math.max(values.length - 1, 1)) * 520},${130 - ((value - min) / range) * 105}`).join(' ')
+  return <div className="metric-detail-chart"><svg viewBox="0 0 560 155" preserveAspectRatio="none"><line x1="20" y1="130" x2="540" y2="130" /><polyline points={points} /></svg><div><span>{metric.observations[0]?.period}</span><b>最高 {new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(max)}</b><b>最低 {new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(min)}</b><span>{metric.observations.at(-1)?.period}</span></div></div>
+}
+
+type MaintenanceMappingState = {
+  key: string
+  mappingId?: string
+  metricId: string
+  metricVersion: string
+  metricName: string
+  expectedDirection: string
+  expectedLower: string
+  expectedUpper: string
+  invalidationThreshold: string
+  invalidationConsecutivePeriods: number
+  expectationSource: string
+  expanded: boolean
+}
+
+type MaintenanceHypothesisState = {
+  hypothesisId: string
+  statement: string
+  hypothesisType: string
+  importance: string
+  observationWindow: string
+  invalidationRule: string
+  mappings: MaintenanceMappingState[]
+  suggestions: Array<Record<string, unknown>>
+}
+
+function toMaintenanceMapping(mapping: NonNullable<ThesisDetail['hypotheses'][number]['mappings']>[number]): MaintenanceMappingState {
+  return {
+    key: mapping.mappingId,
+    mappingId: mapping.mappingId,
+    metricId: mapping.metricId,
+    metricVersion: mapping.metricVersion,
+    metricName: mapping.metricName || mapping.metricId,
+    expectedDirection: ['下降', '越低越好', '不高于阈值'].includes(mapping.expectedDirection) ? '下降' : mapping.expectedDirection === '波动' ? '波动' : '上升',
+    expectedLower: mapping.expectedLower || '',
+    expectedUpper: mapping.expectedUpper || '',
+    invalidationThreshold: mapping.invalidationThreshold || '',
+    invalidationConsecutivePeriods: mapping.invalidationConsecutivePeriods || 1,
+    expectationSource: mapping.expectationSource || '研究员人工确认',
+    expanded: false,
+  }
+}
+
+function EditLogicDialog({ thesis, onClose }: { thesis: ThesisDetail; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [title, setTitle] = useState(thesis.title)
+  const [coreView, setCoreView] = useState(thesis.coreView)
+  const [rating, setRating] = useState(thesis.investmentRating || thesis.direction || '观察')
+  const [targetPrice, setTargetPrice] = useState(thesis.targetPrice || '')
+  const [observationPeriod, setObservationPeriod] = useState(thesis.observationPeriod || '')
+  const [horizonEndOn, setHorizonEndOn] = useState(thesis.horizonEndOn || '')
+  const [nextReviewAt, setNextReviewAt] = useState(thesis.nextReviewAt || '')
+  const [reason, setReason] = useState('研究员维护逻辑')
+  const [rows, setRows] = useState<MaintenanceHypothesisState[]>(() => thesis.hypotheses.map((item) => ({
+    hypothesisId: item.hypothesisId,
+    statement: item.statement,
+    hypothesisType: item.hypothesisType,
+    importance: item.importance,
+    observationWindow: item.observationWindow || '',
+    invalidationRule: item.invalidationRule || '',
+    mappings: item.mappings.map(toMaintenanceMapping),
+    suggestions: item.metricSuggestions,
+  })))
+  const [recommendingHypothesisIds, setRecommendingHypothesisIds] = useState<Set<string>>(() => new Set())
+  const metrics = useQuery({ queryKey: ['metrics', 'maintenance-editor'], queryFn: () => listMetrics(), staleTime: 5 * 60_000 })
+  const companyMetrics = useQuery({ queryKey: ['company-metric-center', thesis.securityId], queryFn: () => getCompanyMetricCenter(thesis.securityId), staleTime: 60_000 })
+  const updateRow = (hypothesisId: string, patch: Partial<MaintenanceHypothesisState>) => setRows((current) => current.map((row) => row.hypothesisId === hypothesisId ? { ...row, ...patch } : row))
+  const updateMapping = (hypothesisId: string, mappingKey: string, patch: Partial<MaintenanceMappingState>) => setRows((current) => current.map((row) => row.hypothesisId === hypothesisId ? { ...row, mappings: row.mappings.map((mapping) => mapping.key === mappingKey ? { ...mapping, ...patch } : mapping) } : row))
+  const removeMapping = (hypothesisId: string, mappingKey: string) => setRows((current) => current.map((row) => row.hypothesisId === hypothesisId ? { ...row, mappings: row.mappings.filter((mapping) => mapping.key !== mappingKey) } : row))
+  const recommendation = useMutation({
+    mutationFn: (hypothesisId: string) => recommendHypothesisMetrics(thesis.thesisId, hypothesisId),
+    onMutate: (hypothesisId) => setRecommendingHypothesisIds((current) => new Set(current).add(hypothesisId)),
+    onSuccess: (candidate, hypothesisId) => {
+      const suggestions = Array.isArray(candidate.payload.recommendations) ? candidate.payload.recommendations as Array<Record<string, unknown>> : []
+      updateRow(hypothesisId, { suggestions })
+    },
+    onSettled: (_candidate, _error, hypothesisId) => setRecommendingHypothesisIds((current) => {
+      const next = new Set(current)
+      next.delete(hypothesisId)
+      return next
+    }),
+  })
+  const adoptSuggestion = (hypothesisId: string, item: Record<string, unknown>) => {
+    const metricId = String(item.metric_id ?? '')
+    if (!metricId) return
+    const threshold = (item.threshold_suggestion ?? {}) as Record<string, unknown>
+    const direction = String(item.expected_direction ?? '上升')
+    const falling = ['下降', '越低越好', '不高于阈值'].includes(direction)
+    const value = threshold.value == null ? '' : String(threshold.value)
+    const metric = (metrics.data ?? []).find((entry) => entry.metricId === metricId)
+    const mapping: MaintenanceMappingState = {
+      key: `new-${hypothesisId}-${metricId}-${Date.now()}`,
+      metricId,
+      metricVersion: String(item.metric_version ?? metric?.version ?? 'v1.0'),
+      metricName: String(item.metric_name ?? metric?.name ?? metricId),
+      expectedDirection: falling ? '下降' : direction === '波动' ? '波动' : '上升',
+      expectedLower: falling ? '' : value,
+      expectedUpper: falling ? value : '',
+      invalidationThreshold: '',
+      invalidationConsecutivePeriods: 1,
+      expectationSource: '人工确认 Agent 候选',
+      expanded: true,
+    }
+    setRows((current) => current.map((row) => row.hypothesisId === hypothesisId ? { ...row, mappings: [...row.mappings, mapping] } : row))
+  }
+  const adoptCenterMetric = (hypothesisId: string, metric: CompanyMetric) => {
+    setRows((current) => current.map((row) => {
+      if (row.hypothesisId !== hypothesisId || row.mappings.some((mapping) => mapping.metricId === metric.metricId)) return row
+      return { ...row, mappings: [...row.mappings, {
+        key: `new-${hypothesisId}-${metric.metricId}-${Date.now()}`,
+        metricId: metric.metricId,
+        metricVersion: 'v1.0',
+        metricName: metric.name,
+        expectedDirection: '上升',
+        expectedLower: '',
+        expectedUpper: '',
+        invalidationThreshold: '',
+        invalidationConsecutivePeriods: 1,
+        expectationSource: '指标中心人工选择',
+        expanded: true,
+      }] }
+    }))
+  }
+  const save = useMutation({
+    mutationFn: () => {
+      const mappings = rows.flatMap((row) => row.mappings.map((mapping) => ({
+        hypothesisId: row.hypothesisId,
+        mappingId: mapping.mappingId?.startsWith('new-') ? undefined : mapping.mappingId,
+        metricId: mapping.metricId,
+        metricVersion: mapping.metricVersion,
+        expectedDirection: mapping.expectedDirection,
+        expectedLower: mapping.expectedLower,
+        expectedUpper: mapping.expectedUpper,
+        invalidationThreshold: mapping.invalidationThreshold,
+        invalidationConsecutivePeriods: mapping.invalidationConsecutivePeriods,
+        expectationSource: mapping.expectationSource,
+      })))
+      return updateThesisMaintenance(thesis.thesisId, {
+        title, coreView, direction: rating, investmentRating: rating, targetPrice, observationPeriod, horizonEndOn, nextReviewAt, reason,
+        hypotheses: rows.map((row) => ({ hypothesisId: row.hypothesisId, statement: row.statement, hypothesisType: row.hypothesisType, importance: row.importance, observationWindow: row.observationWindow, invalidationRule: row.invalidationRule })),
+        mappings,
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['company-theses', thesis.securityId] }),
+        qc.invalidateQueries({ queryKey: ['theses'] }),
+        qc.invalidateQueries({ queryKey: ['thesis', thesis.thesisId] }),
+        qc.invalidateQueries({ queryKey: ['audit', thesis.thesisId] }),
+        qc.invalidateQueries({ queryKey: ['company-thesis-trends', thesis.thesisId] }),
+      ])
+      onClose()
+    },
+  })
+  return <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}><section className="dialog maintenance-dialog" role="dialog" aria-modal="true" aria-labelledby="maintenance-title" onMouseDown={(event) => event.stopPropagation()}>
+    <span className="eyebrow">逻辑维护 · 版本化保存</span><h2 id="maintenance-title">编辑投资逻辑</h2><p>修改会写入新的逻辑版本并保留审计记录；AI 推荐只作为候选，只有你提交的指标才会进入维护数据。</p>
+    <div className="form-grid two"><label>逻辑标题<input value={title} maxLength={40} onChange={(event) => setTitle(event.target.value)} /></label><label>投资评级<select value={rating} onChange={(event) => setRating(event.target.value)}><option>看多</option><option>看空</option><option>观察</option></select></label><label className="revision-core-view">核心观点<textarea value={coreView} maxLength={200} onChange={(event) => setCoreView(event.target.value)} /></label><label>目标价（可选）<input inputMode="decimal" value={targetPrice} onChange={(event) => setTargetPrice(event.target.value)} placeholder="可不填" /></label><label>观察期（可选）<input value={observationPeriod} onChange={(event) => setObservationPeriod(event.target.value)} placeholder="例如：未来 12 个月" /></label><label>逻辑截止日（可选）<input type="date" value={horizonEndOn} onChange={(event) => setHorizonEndOn(event.target.value)} /></label><label>下次复核（可选）<input type="date" value={nextReviewAt} onChange={(event) => setNextReviewAt(event.target.value)} /></label></div>
+    <div className="maintenance-hypotheses">{rows.map((row) => {
+      const suggestions = row.suggestions.filter((item) => String(item.metric_id ?? ''))
+      const suggestionMetricIds = new Set(suggestions.map((item) => String(item.metric_id)))
+      const additionalMappings = row.mappings.filter((mapping) => !suggestionMetricIds.has(mapping.metricId))
+      return <article className="maintenance-hypothesis" key={row.hypothesisId}>
+        <header><strong>{row.hypothesisId}</strong><span>{row.mappings.length} 个关联指标</span><button type="button" className="button secondary" disabled={recommendingHypothesisIds.has(row.hypothesisId)} onClick={() => recommendation.mutate(row.hypothesisId)}>{recommendingHypothesisIds.has(row.hypothesisId) ? '推荐中…' : '重新推荐指标'}</button></header>
+        <label>从指标中心添加<select value="" onChange={(event) => { const metric = companyMetrics.data?.metrics.find((item) => item.metricId === event.target.value); if (metric) adoptCenterMetric(row.hypothesisId, metric) }}><option value="">选择已获取指标</option>{companyMetrics.data?.metrics.map((metric) => <option value={metric.metricId} key={metric.metricId}>{metric.name} · {metric.category}</option>)}</select></label>
+        <label>投资假设<textarea value={row.statement} onChange={(event) => updateRow(row.hypothesisId, { statement: event.target.value })} /></label>
+        <div className="form-grid two"><label>假设类型<select value={row.hypothesisType} onChange={(event) => updateRow(row.hypothesisId, { hypothesisType: event.target.value })}><option>行业</option><option>公司竞争力</option><option>经营</option><option>盈利</option><option>政策</option><option>估值</option><option>其他</option></select></label><label>重要性<select value={row.importance} onChange={(event) => updateRow(row.hypothesisId, { importance: event.target.value })}><option>核心</option><option>辅助</option></select></label><label>观察窗口<input value={row.observationWindow} onChange={(event) => updateRow(row.hypothesisId, { observationWindow: event.target.value })} placeholder="例如：未来 4 个季度" /></label><label>失效条件<textarea value={row.invalidationRule} onChange={(event) => updateRow(row.hypothesisId, { invalidationRule: event.target.value })} /></label></div>
+        {suggestions.length > 0 && <section className="maintenance-metric-section"><span>AI 候选指标</span><div className="metric-candidate-list">{suggestions.map((item, index) => {
+          const metricId = String(item.metric_id ?? '')
+          const mapping = row.mappings.find((candidate) => candidate.metricId === metricId)
+          const centerMetric = companyMetrics.data?.metrics.find((metric) => metric.metricId === metricId)
+          const observations = Array.isArray(item.observations) ? item.observations as Array<Record<string, unknown>> : centerMetric?.observations
+          const unit = String(item.unit ?? centerMetric?.unit ?? '未标注')
+          return <MetricEditorCard key={`${metricId}-${index}`} selected={Boolean(mapping)} name={String(item.metric_name ?? centerMetric?.name ?? metricId)} metricId={metricId} meta={`${unit} · ${String(item.observation_frequency ?? centerMetric?.frequency ?? '频率待确认')}`} tag={mapping ? '已加入' : String(item.relation_type ?? 'AI 候选')} description={String(item.rationale ?? centerMetric?.definition ?? 'AI 尚未提供指标说明')} observations={observations} unit={unit} latestPeriod={centerMetric?.latestPeriod} expanded={mapping?.expanded} onToggleSelected={() => mapping ? removeMapping(row.hypothesisId, mapping.key) : adoptSuggestion(row.hypothesisId, item)} onToggleExpanded={() => mapping && updateMapping(row.hypothesisId, mapping.key, { expanded: !mapping.expanded })}>
+            {mapping && <div className="metric-config-grid"><label>变化方向<select value={mapping.expectedDirection} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectedDirection: event.target.value })}><option>上升</option><option>下降</option><option>波动</option></select></label><label>下限（可选）<input value={mapping.expectedLower} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectedLower: event.target.value })} /></label><label>上限（可选）<input value={mapping.expectedUpper} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectedUpper: event.target.value })} /></label><label>连续触发期数<input type="number" min="1" max="12" value={mapping.invalidationConsecutivePeriods} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { invalidationConsecutivePeriods: Number(event.target.value) || 1 })} /></label><label>失效阈值（可选）<input value={mapping.invalidationThreshold} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { invalidationThreshold: event.target.value })} /></label><label>判断依据<input value={mapping.expectationSource} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectationSource: event.target.value })} /></label><p className="metric-rule-help">连续越出允许区间后，仅生成复核提醒，不自动改变假设或逻辑状态。</p></div>}
+          </MetricEditorCard>
+        })}</div></section>}
+        {additionalMappings.length > 0 && <section className="maintenance-metric-section"><span>从指标中心加入</span><div className="metric-candidate-list">{additionalMappings.map((mapping) => {
+          const centerMetric = companyMetrics.data?.metrics.find((item) => item.metricId === mapping.metricId)
+          return <MetricEditorCard key={mapping.key} selected name={mapping.metricName} metricId={mapping.metricId} meta={centerMetric ? `${centerMetric.unit} · ${centerMetric.frequency}` : mapping.metricVersion} tag="已关联" description={centerMetric?.definition ?? '已保存的指标关联，当前中心暂无指标说明。'} observations={centerMetric?.observations} unit={centerMetric?.unit} latestPeriod={centerMetric?.latestPeriod} expanded={mapping.expanded} onToggleSelected={() => removeMapping(row.hypothesisId, mapping.key)} onToggleExpanded={() => updateMapping(row.hypothesisId, mapping.key, { expanded: !mapping.expanded })}>
+            <div className="metric-config-grid"><label>变化方向<select value={mapping.expectedDirection} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectedDirection: event.target.value })}><option>上升</option><option>下降</option><option>波动</option></select></label><label>下限（可选）<input value={mapping.expectedLower} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectedLower: event.target.value })} /></label><label>上限（可选）<input value={mapping.expectedUpper} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectedUpper: event.target.value })} /></label><label>连续触发期数<input type="number" min="1" max="12" value={mapping.invalidationConsecutivePeriods} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { invalidationConsecutivePeriods: Number(event.target.value) || 1 })} /></label><label>失效阈值（可选）<input value={mapping.invalidationThreshold} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { invalidationThreshold: event.target.value })} /></label><label>判断依据<input value={mapping.expectationSource} onChange={(event) => updateMapping(row.hypothesisId, mapping.key, { expectationSource: event.target.value })} /></label><p className="metric-rule-help">连续越出允许区间后，仅生成复核提醒，不自动改变假设或逻辑状态。</p></div>
+          </MetricEditorCard>
+        })}</div></section>}
+      </article>
+    })}</div>
+    <label>本次修改说明<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="说明为什么调整逻辑或指标" /></label><InlineError error={save.error ?? recommendation.error ?? metrics.error ?? companyMetrics.error} /><div className="dialog-actions"><button type="button" className="button secondary" onClick={onClose}>取消</button><button type="button" className="button primary" disabled={save.isPending || !title.trim() || !coreView.trim()} onClick={() => save.mutate()}>{save.isPending ? '保存并生成版本…' : '保存修改'}</button></div>
+  </section></div>
 }
 
 export function RadarPage() {
@@ -378,9 +726,9 @@ function HypothesisEditor({ thesisId, hypothesis, metrics, trend }: { thesisId: 
   const [observationWindow, setObservationWindow] = useState(hypothesis.observationWindow ?? '')
   const [invalidationRule, setInvalidationRule] = useState(hypothesis.invalidationRule ?? '')
   const [metricKey, setMetricKey] = useState(initial ? `${initial.metricId}@@${initial.metricVersion}` : '')
-  const [expectedDirection, setExpectedDirection] = useState(initial?.expectedDirection ?? '越高越好')
-  const [expectedValue, setExpectedValue] = useState(initial?.expectedValue ?? '')
-  const [threshold, setThreshold] = useState(initial?.invalidationThreshold ?? '')
+  const [expectedDirection, setExpectedDirection] = useState(['下降', '越低越好', '不高于阈值'].includes(initial?.expectedDirection ?? '') ? '下降' : initial?.expectedDirection === '波动' ? '波动' : '上升')
+  const [lowerBound, setLowerBound] = useState(initial?.expectedLower ?? '')
+  const [upperBound, setUpperBound] = useState(initial?.expectedUpper ?? '')
   const [periods, setPeriods] = useState(String(initial?.invalidationConsecutivePeriods ?? 1))
   const [source, setSource] = useState(initial?.expectationSource ?? '研究员人工录入')
   const [agentSuggestions, setAgentSuggestions] = useState(hypothesis.metricSuggestions)
@@ -389,20 +737,20 @@ function HypothesisEditor({ thesisId, hypothesis, metrics, trend }: { thesisId: 
   const selected = metrics.find((item) => `${item.metricId}@@${item.version}` === metricKey) ?? adoptedMetric
   const refresh = async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['thesis', thesisId] }), qc.invalidateQueries({ queryKey: ['trends', thesisId] }), qc.invalidateQueries({ queryKey: ['publish-readiness', thesisId] }), qc.invalidateQueries({ queryKey: ['audit', thesisId] })]) }
   const hypothesisMutation = useMutation({ mutationFn: () => updateHypothesis(thesisId, hypothesis.hypothesisId, { statement, hypothesisType, importance, observationWindow, invalidationRule }), onSuccess: refresh })
-  const mappingMutation = useMutation({ mutationFn: () => { if (!selected) throw new Error('请从指标字典选择指标。'); if (!expectedValue && !threshold) throw new Error('预期值与失效阈值至少填写一项。'); return saveMetricMapping(thesisId, hypothesis.hypothesisId, { mappingId: mappingId || undefined, metricId: selected.metricId, metricVersion: selected.version, expectedDirection, expectedValue, invalidationThreshold: threshold, invalidationConsecutivePeriods: Number(periods), expectationSource: source }) }, onSuccess: async (saved) => { setMappingId(saved.mappingId); await refresh() } })
+  const mappingMutation = useMutation({ mutationFn: () => { if (!selected) throw new Error('请从指标字典选择指标。'); if (!lowerBound && !upperBound) throw new Error('上限和下限至少填写一项。'); if (expectedDirection === '上升' && !lowerBound) throw new Error('上升方向需要填写下限。'); if (expectedDirection === '下降' && !upperBound) throw new Error('下降方向需要填写上限。'); return saveMetricMapping(thesisId, hypothesis.hypothesisId, { mappingId: mappingId || undefined, metricId: selected.metricId, metricVersion: selected.version, expectedDirection, expectedLower: lowerBound, expectedUpper: upperBound, invalidationConsecutivePeriods: Number(periods), expectationSource: source }) }, onSuccess: async (saved) => { setMappingId(saved.mappingId); await refresh() } })
   const agentMutation = useMutation({ mutationFn: () => recommendHypothesisMetrics(thesisId, hypothesis.hypothesisId), onSuccess: (candidate) => setAgentSuggestions((candidate.payload.recommendations ?? []) as Array<Record<string, unknown>>) })
   useEffect(() => {
     if (agentMutation.isPending) setAdoptedNotice('正在读取历史数据并推荐指标…')
     else if (agentMutation.isSuccess) setAdoptedNotice(`已完成指标推荐，共 ${agentSuggestions.length} 个候选；请人工确认后保存。`)
   }, [agentMutation.isPending, agentMutation.isSuccess, agentSuggestions.length])
-  const chooseMetric = (value: string) => { setMetricKey(value); setAdoptedMetric(null); const metric = metrics.find((item) => `${item.metricId}@@${item.version}` === value); if (metric?.expectedDirection) setExpectedDirection(metric.expectedDirection) }
-  const chooseMapping = (value: string) => { const item = hypothesis.mappings.find((mapping) => mapping.mappingId === value); setMappingId(value); setMetricKey(item ? `${item.metricId}@@${item.metricVersion}` : ''); setExpectedDirection(item?.expectedDirection ?? '越高越好'); setExpectedValue(item?.expectedValue ?? ''); setThreshold(item?.invalidationThreshold ?? ''); setPeriods(String(item?.invalidationConsecutivePeriods ?? 1)); setSource(item?.expectationSource ?? '研究员人工录入') }
-  const adoptSuggestion = (item: Record<string, unknown>) => { const thresholdSuggestion = (item.threshold_suggestion ?? {}) as Record<string, unknown>; const metric = item.metric_id ? metrics.find((candidate) => `${candidate.metricId}` === String(item.metric_id) && `${candidate.version}` === String(item.metric_version ?? 'v1.0')) ?? { metricId: String(item.metric_id), version: String(item.metric_version ?? 'v1.0'), name: String(item.metric_name ?? item.metric_id), unit: '', status: '待确认' } : metrics.find((candidate) => candidate.name.includes(String(item.metric_name ?? '')) || String(item.metric_name ?? '').includes(candidate.name)); if (!metric) { setMetricKey(''); setSource('请先将 Agent 候选匹配到指标字典'); return } setAdoptedMetric(metric); setMappingId(''); setMetricKey(`${metric.metricId}@@${metric.version}`); setExpectedDirection(String(item.expected_direction ?? metric.expectedDirection ?? '越高越好')); setExpectedValue(''); setThreshold(thresholdSuggestion.value == null ? '' : String(thresholdSuggestion.value)); setSource(`人工确认 Agent 候选；依据：${String(thresholdSuggestion.rationale ?? item.rationale ?? '待补充')}`); setAdoptedNotice(`已填入：${metric.name}。请检查并补充阈值或预期值后保存。`) }
+  const chooseMetric = (value: string) => { setMetricKey(value); setAdoptedMetric(null); const metric = metrics.find((item) => `${item.metricId}@@${item.version}` === value); if (metric?.expectedDirection) setExpectedDirection(['下降', '越低越好', '不高于阈值'].includes(metric.expectedDirection) ? '下降' : metric.expectedDirection === '波动' ? '波动' : '上升') }
+  const chooseMapping = (value: string) => { const item = hypothesis.mappings.find((mapping) => mapping.mappingId === value); const direction = item?.expectedDirection ?? '上升'; setMappingId(value); setMetricKey(item ? `${item.metricId}@@${item.metricVersion}` : ''); setExpectedDirection(['下降', '越低越好', '不高于阈值'].includes(direction) ? '下降' : direction === '波动' ? '波动' : '上升'); setLowerBound(item?.expectedLower ?? ''); setUpperBound(item?.expectedUpper ?? ''); setPeriods(String(item?.invalidationConsecutivePeriods ?? 1)); setSource(item?.expectationSource ?? '研究员人工录入') }
+  const adoptSuggestion = (item: Record<string, unknown>) => { const thresholdSuggestion = (item.threshold_suggestion ?? {}) as Record<string, unknown>; const metric = item.metric_id ? metrics.find((candidate) => `${candidate.metricId}` === String(item.metric_id) && `${candidate.version}` === String(item.metric_version ?? 'v1.0')) ?? { metricId: String(item.metric_id), version: String(item.metric_version ?? 'v1.0'), name: String(item.metric_name ?? item.metric_id), unit: '', status: '待确认' } : metrics.find((candidate) => candidate.name.includes(String(item.metric_name ?? '')) || String(item.metric_name ?? '').includes(candidate.name)); if (!metric) { setMetricKey(''); setSource('请先将 Agent 候选匹配到指标字典'); return } const falling = ['下降', '越低越好', '不高于阈值'].includes(String(item.expected_direction ?? metric.expectedDirection ?? '')); const bound = thresholdSuggestion.value == null ? '' : String(thresholdSuggestion.value); setAdoptedMetric(metric); setMappingId(''); setMetricKey(`${metric.metricId}@@${metric.version}`); setExpectedDirection(falling ? '下降' : '上升'); setLowerBound(falling ? '' : bound); setUpperBound(falling ? bound : ''); setSource(`人工确认 Agent 候选；依据：${String(thresholdSuggestion.rationale ?? item.rationale ?? '待补充')}`); setAdoptedNotice(`已填入：${metric.name}。请确认方向和上下界后保存。`) }
   const renderSuggestionDetails = (item: Record<string, unknown>) => { const thresholdSuggestion = (item.threshold_suggestion ?? {}) as Record<string, unknown>; const observations = Array.isArray(item.observations) ? item.observations as Array<Record<string, unknown>> : []; const unit = String(item.unit ?? (String(item.metric_id ?? '').startsWith('AUTO-') ? '辆' : '')) ; return <><span className="suggestion-meta">{String(item.relation_type ?? '候选指标')} · {String(item.expected_direction ?? '待确认')}</span>{thresholdSuggestion.formula && <span className="suggestion-meta">阈值依据：{String(thresholdSuggestion.formula)} · 样本 {String(thresholdSuggestion.sample_count ?? 0)} 期</span>}{thresholdSuggestion.value != null && <span className="suggestion-meta">建议阈值：{String(thresholdSuggestion.value)}（单位：{unit || '未标注'}）</span>}{observations.length > 0 ? <MiniHistoryChart observations={observations} unit={unit} /> : <span className="suggestion-meta">暂无可用历史观测（可点击重新推荐以触发数据补取）</span>}</> }
   return <article className="hypothesis-editor"><div className="editor-heading"><div><strong>{hypothesis.hypothesisId}</strong><span className={`badge ${importance === '核心' ? 'priority-high' : 'neutral-badge'}`}>{importance}</span>{(hypothesis.logicDimension || hypothesis.causalLevel) && <span className="badge neutral-badge">{hypothesis.logicDimension || hypothesis.causalLevel}</span>}</div><span className="muted">{hypothesis.mappings.length} 个验证指标</span></div>{hypothesis.qualityWarning && <p className="warning-note">{hypothesis.qualityWarning}</p>}
     <div className="ai-suggestions"><span>Agent 指标与阈值依据（仅候选）</span><button className="button secondary" disabled={agentMutation.isPending} onClick={() => agentMutation.mutate()}>{agentMutation.isPending ? '生成中…' : '重新推荐相关指标'}</button>{agentSuggestions.map((item, index) => <em key={index}><strong>{String(item.metric_name ?? '未命名指标')}</strong>{item.rationale ? ` · ${String(item.rationale)}` : ''}{renderSuggestionDetails(item)}<button className="button secondary" onClick={() => adoptSuggestion(item)}>填入人工确认区</button></em>)}<InlineError error={agentMutation.error} /></div>
     <div className="form-grid two"><label>假设内容<textarea value={statement} onChange={(event) => setStatement(event.target.value)} /></label><label>失效条件描述<textarea value={invalidationRule} onChange={(event) => setInvalidationRule(event.target.value)} placeholder="由研究员确认，不自动采用 AI 建议" /></label><label>假设类型<select value={hypothesisType} onChange={(event) => setHypothesisType(event.target.value)}><option>行业</option><option>公司竞争力</option><option>经营</option><option>盈利</option><option>政策</option><option>估值</option><option>其他</option></select></label><label>重要性<select value={importance} onChange={(event) => setImportance(event.target.value)}><option>核心</option><option>辅助</option></select></label><label>观察窗口<input value={observationWindow} onChange={(event) => setObservationWindow(event.target.value)} placeholder="例如：未来 4 个季度" /></label><div className="editor-action"><button className="button secondary" disabled={hypothesisMutation.isPending || !statement.trim()} onClick={() => hypothesisMutation.mutate()}>保存假设</button></div></div><InlineError error={hypothesisMutation.error} />
-    <div className="mapping-editor"><h3>验证指标与研究员预期</h3>{adoptedNotice && <p className="success-note">{adoptedNotice}</p>}{trend && <div className="existing-trend"><strong>已有指标历史波动</strong><span>{trend.metricId} · {trend.points.length} 期 · {trend.points.map((point) => `${point.period} ${point.value}${trend.unit}`).join('，')}</span></div>}<div className="form-grid mapping-grid"><label>编辑映射<select value={mappingId} onChange={(event) => chooseMapping(event.target.value)}><option value="">新增指标映射</option>{hypothesis.mappings.map((item) => <option key={item.mappingId} value={item.mappingId}>{item.metricId} · {item.metricVersion}</option>)}</select></label><label>指标字典<select value={metricKey} onChange={(event) => chooseMetric(event.target.value)}><option value="">选择已有指标</option>{metrics.map((item) => <option key={`${item.metricId}-${item.version}`} value={`${item.metricId}@@${item.version}`}>{item.name}（{item.metricId} · {item.unit}）</option>)}</select></label><label>预期方向<select value={expectedDirection} onChange={(event) => setExpectedDirection(event.target.value)}><option>越高越好</option><option>越低越好</option><option>不低于阈值</option><option>不高于阈值</option></select></label><label>预期值<input inputMode="decimal" value={expectedValue} onChange={(event) => setExpectedValue(event.target.value)} placeholder="可选" /></label><label>失效阈值<input inputMode="decimal" value={threshold} onChange={(event) => setThreshold(event.target.value)} placeholder="可选" /></label><label>连续期数<input type="number" min="1" max="12" value={periods} onChange={(event) => setPeriods(event.target.value)} /></label><label>预期来源<input value={source} onChange={(event) => setSource(event.target.value)} placeholder="会议纪要、研究员判断等" /></label></div><button className="button primary" disabled={mappingMutation.isPending || !metricKey || !source.trim()} onClick={() => mappingMutation.mutate()}>{mappingMutation.isPending ? '保存中…' : current ? '更新指标映射' : '人工确认并新增指标'}</button><InlineError error={mappingMutation.error} /></div>
+    <div className="mapping-editor"><h3>验证指标与研究员判断区间</h3>{adoptedNotice && <p className="success-note">{adoptedNotice}</p>}{trend && <div className="existing-trend"><strong>已有指标历史波动</strong><span>{trend.metricId} · {trend.points.length} 期 · {trend.points.map((point) => `${point.period} ${point.value}${trend.unit}`).join('，')}</span></div>}<div className="form-grid mapping-grid"><label>编辑映射<select value={mappingId} onChange={(event) => chooseMapping(event.target.value)}><option value="">新增指标映射</option>{hypothesis.mappings.map((item) => <option key={item.mappingId} value={item.mappingId}>{item.metricName ? `${item.metricName}（${item.metricId}）` : item.metricId} · {item.metricVersion}</option>)}</select></label><label>指标字典<select value={metricKey} onChange={(event) => chooseMetric(event.target.value)}><option value="">选择已有指标</option>{metrics.map((item) => <option key={`${item.metricId}-${item.version}`} value={`${item.metricId}@@${item.version}`}>{item.name}（{item.metricId} · {item.unit}）</option>)}</select></label><label>变化方向<select value={expectedDirection} onChange={(event) => setExpectedDirection(event.target.value)}><option>上升</option><option>下降</option><option>波动</option></select></label><label>下限（可选）<input inputMode="decimal" value={lowerBound} onChange={(event) => setLowerBound(event.target.value)} placeholder={expectedDirection === '上升' ? '上升方向必填' : '允许区间下界'} /></label><label>上限（可选）<input inputMode="decimal" value={upperBound} onChange={(event) => setUpperBound(event.target.value)} placeholder={expectedDirection === '下降' ? '下降方向必填' : '允许区间上界'} /></label><label>连续期数<input type="number" min="1" max="12" value={periods} onChange={(event) => setPeriods(event.target.value)} /></label><label>判断依据<input value={source} onChange={(event) => setSource(event.target.value)} placeholder="会议纪要、研究员判断等" /></label></div><p className="metric-rule-help">连续越出允许区间后，后端仅生成复核提醒，不自动改变假设或投资逻辑状态。</p><button className="button primary" disabled={mappingMutation.isPending || !metricKey || !source.trim()} onClick={() => mappingMutation.mutate()}>{mappingMutation.isPending ? '保存中…' : current ? '更新指标映射' : '人工确认并新增指标'}</button><InlineError error={mappingMutation.error} /></div>
   </article>
 }
 

@@ -18,14 +18,14 @@ from app.ai.gateway import Gateway
 from app.ai.integration import to_backend_envelope
 from app.ai.retrieval import RetrievalDocument
 from app.ai.runtime import InvestmentResearchAgent, RuntimeExecution
-from app.ai.tools import ThresholdObservation
+from app.ai.tools import MetricCatalogTool, ThresholdObservation
 from app.core.config import Settings
 from app.core.domain import ObservationRecord, ThesisRevisionDraftRecord, UnitOfWork
 from app.core.enums import ConfirmationStatus, ThesisStatus
 from app.core.timeutil import now
 from app.services import assets, audit, permission, query, version
 from app.services.ai_runtime import SqlRuntimeRecorder
-from app.services.company_metrics import CompanyMetricObservation, fetch_byd_periodic_metrics
+from app.services.company_metrics import CompanyMetricObservation, fetch_periodic_metrics
 from app.services.errors import HumanGateRequired, NotVisible, ValidationFailed
 from app.services.permission import Actor
 
@@ -58,6 +58,149 @@ def build_runtime(settings: Settings) -> InvestmentResearchAgent:
         Gateway.build(settings),
         recorder=SqlRuntimeRecorder(),
     )
+
+
+def build_database_metric_catalog(uow: UnitOfWork, security_id: str) -> MetricCatalogTool:
+    """把当前证券的 PostgreSQL 指标投影为 Agent 可用的受控目录。
+
+    ``app.ai`` 只接收目录快照，不依赖 ORM。推荐候选必须来自已经存在观测值的
+    指标，避免把“指标字典里有定义”误报成“该证券已经有数据”。没有数据库观测时
+    回退到版本化种子目录，以保持没有生产数据的单元测试和演示可运行。
+    """
+    security = uow.securities.get(security_id)
+    definitions = uow.metrics.search(limit=500)
+    if security is None or not definitions:
+        return MetricCatalogTool.from_seed()
+
+    metrics: list[dict[str, Any]] = []
+    availability: list[dict[str, Any]] = []
+    source_ids: set[str] = set()
+    for definition in definitions:
+        observations = uow.observations.list_for_metric(security.security_id, definition.metric_id)
+        if not observations:
+            continue
+        category = definition.category or _infer_metric_category(definition.metric_id)
+        source_id = definition.source_id or "postgresql-metric-observation"
+        source_ids.add(source_id)
+        metrics.append(
+            {
+                "metric_id": definition.metric_id,
+                "version": definition.version,
+                "name": definition.name,
+                "definition": definition.definition or "数据库中已入库的证券指标。",
+                "unit": definition.unit,
+                "frequency": definition.frequency or "随数据源",
+                "period_type": definition.period_type or "未标注",
+                "expected_direction": _enum_value(definition.expected_direction),
+                "industries": [security.industry or "通用"],
+                "keywords": _database_metric_keywords(
+                    metric_id=definition.metric_id,
+                    name=definition.name,
+                    definition=definition.definition,
+                    category=category,
+                ),
+                "relation_type": "直接指标" if category in {"财务与运营", "经营", "盈利"} else "代理指标",
+                "threshold_policy": "已有历史观测，可由研究员确认后设置区间；不自动写入正式规则",
+            }
+        )
+        availability.append(
+            {
+                "metric_id": definition.metric_id,
+                "security_id": security.security_id,
+                "source_id": source_id,
+                "availability_grade": "A",
+                "observation_frequency": definition.frequency or "随数据源",
+                "polling_frequency": "按数据源更新",
+                "note": f"PostgreSQL 已有 {len(observations)} 条该证券观测。",
+            }
+        )
+
+    if not metrics:
+        return MetricCatalogTool.from_seed()
+
+    sources = [
+        {
+            "source_id": source_id,
+            "name": source_id,
+            "source_type": "PostgreSQL 指标观测",
+            "authorization_status": "已入库",
+            "base_url": "",
+            "note": "候选来自当前证券已入库观测，不代表数据源持续可用。",
+        }
+        for source_id in sorted(source_ids)
+    ]
+    content = {
+        "catalog_version": "postgresql-metric-catalog-v1",
+        "verified_on": now().date().isoformat(),
+        "companies": [
+            {
+                "security_id": security.security_id,
+                "name": security.name,
+                "industry": security.industry or "通用",
+                "role": "",
+                "market": "",
+            }
+        ],
+        "sources": sources,
+        "metrics": metrics,
+        "availability": availability,
+    }
+    return MetricCatalogTool.from_snapshot(content)
+
+
+def _enum_value(value: Any) -> str | None:
+    """兼容 ``StrEnum`` 与普通字符串，避免把枚举 repr 传给模型。"""
+    if value is None:
+        return None
+    return str(getattr(value, "value", value))
+
+
+def _infer_metric_category(metric_id: str) -> str:
+    prefix = metric_id.upper().split("-", 1)[0]
+    return {
+        "MKT": "价格与成交量",
+        "TECH": "技术指标",
+        "VAL": "估值指标",
+        "FIN": "财务与运营",
+        "INDUSTRY": "宏观及行业",
+        "MACRO": "宏观及行业",
+    }.get(prefix, "其他")
+
+
+def _database_metric_keywords(
+    *, metric_id: str, name: str, definition: str | None, category: str
+) -> list[str]:
+    """从数据库口径生成有限的业务短语，供候选召回而非自由编造指标。"""
+    normalized_id = metric_id.upper()
+    keywords: list[str] = [name.strip()] if len(name.strip()) >= 2 else []
+    if normalized_id.startswith("FIN-REVENUE") or "营业收入" in name or "营收" in name:
+        keywords.extend(("收入", "营收", "销售", "需求", "增长", "订单", "业绩", "市场份额"))
+    elif normalized_id.startswith("FIN-NET-PROFIT") or "净利润" in name:
+        keywords.extend(("利润", "盈利", "业绩", "增长", "改善", "收入"))
+    elif normalized_id.startswith("FIN-GROSS-MARGIN") or "毛利率" in name:
+        keywords.extend(("毛利率", "盈利", "利润", "改善", "成本", "价格", "产品结构"))
+    elif normalized_id.startswith("FIN-ROE") or "净资产收益率" in name:
+        keywords.extend(("净资产收益率", "盈利", "回报", "利润"))
+    elif normalized_id.startswith("FIN-DEBT") or "资产负债率" in name:
+        keywords.extend(("负债", "杠杆", "财务风险", "偿债"))
+    elif normalized_id.startswith("FIN-OCF") or "现金流" in name:
+        keywords.extend(("现金流", "回款", "经营", "资金压力", "经营质量"))
+    elif normalized_id.startswith("VAL-") or category == "估值指标":
+        keywords.extend(("估值", "股价", "市场表现", "价值", "盈利"))
+    elif normalized_id.startswith("MKT-") or category == "价格与成交量":
+        keywords.extend(("股价", "行情", "市场表现", "收益", "估值"))
+    elif normalized_id.startswith("TECH-") or category == "技术指标":
+        keywords.extend(("趋势", "波动", "股价", "行情", "市场表现"))
+    elif normalized_id.startswith("INDUSTRY-"):
+        keywords.extend(("行业", "市场", "需求", "增长", "景气"))
+    elif normalized_id.startswith("MACRO-CPI"):
+        keywords.extend(("消费", "价格", "通胀", "需求"))
+    elif normalized_id.startswith("MACRO-PPI"):
+        keywords.extend(("成本", "价格", "工业", "通胀"))
+    elif normalized_id.startswith("MACRO-PMI"):
+        keywords.extend(("制造业", "景气", "需求", "产能"))
+    # 未登记的指标只保留指标全名，避免按单字或宽泛类别误召回。
+    return list(dict.fromkeys(keywords))
 
 
 def candidate_from_execution(execution: RuntimeExecution) -> AgentCandidate:
@@ -103,6 +246,8 @@ def enrich_draft_metric_suggestions(
     """
 
     active_runtime = runtime or build_runtime(settings)
+    if runtime is None:
+        active_runtime.metric_research.catalog = build_database_metric_catalog(uow, security_id)
     enriched = deepcopy(draft)
     hypotheses = enriched.get("hypotheses")
     if not isinstance(hypotheses, list):
@@ -182,6 +327,10 @@ def recommend_metrics(
         raise HumanGateRequired("只有逻辑负责人可以生成指标候选")
     active_runtime = runtime or build_runtime(settings)
     security = uow.securities.get(thesis.security_id)
+    if runtime is None:
+        active_runtime.metric_research.catalog = build_database_metric_catalog(
+            uow, thesis.security_id
+        )
     execution = active_runtime.recommend_metrics(
         security_id=thesis.security_id,
         hypothesis_id=hypothesis.hypothesis_id,
@@ -428,17 +577,25 @@ def _recommendation_with_threshold(
             "FIN-GROSS-MARGIN-Q": "%",
         }.get(metric_id, "")
     direction = result.get("expected_direction")
-    if not metric_id or not direction:
+    if not metric_id or not direction or direction == "波动":
         result["threshold_suggestion"] = {
             "value": None,
-            "method": "missing_direction",
+            "method": "direction_requires_bounds" if direction == "波动" else "missing_direction",
             "formula": "未计算",
-            "rationale": "指标目录尚未确定预期方向，不能选择失效侧。",
+            "rationale": (
+                "波动方向需要研究员分别填写上限或下限，不能由单个候选值代替。"
+                if direction == "波动"
+                else "指标目录尚未确定预期方向，不能选择失效侧。"
+            ),
             "sample_count": 0,
             "source_periods": [],
             "source_ids": [],
             "confidence": 0.0,
-            "warnings": ["请研究员先确认预期方向。"],
+            "warnings": [
+                "请研究员确认上限或下限。"
+                if direction == "波动"
+                else "请研究员先确认预期方向。"
+            ],
             "requires_human_review": True,
         }
         return result
@@ -526,7 +683,7 @@ def _refresh_metric_history(
     """
     try:
         if metric_id in {"AUTO-SALES-M", "AUTO-EXPORT-SALES-M", "AUTO-BATTERY-INSTALL-M"}:
-            candidates = fetch_byd_periodic_metrics(
+            candidates = fetch_periodic_metrics(
                 security_id=security_id,
                 cache_dir=__import__("pathlib").Path(__file__).resolve().parents[2]
                 / ".runtime"

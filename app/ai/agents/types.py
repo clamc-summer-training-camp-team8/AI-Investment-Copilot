@@ -28,6 +28,8 @@ class MetricRuleInput:
     metric_id: str
     expected_direction: str
     expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
     invalidation_threshold: Decimal | None = None
 
 

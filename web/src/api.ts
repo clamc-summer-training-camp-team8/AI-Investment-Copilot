@@ -7,11 +7,15 @@ import type {
   AuditItem, ConfirmationState, Direction, EvidenceDetail, EvidenceFeedItem, EvidenceRetrievalTrace,
   Adjudication, DocumentSegment, IngestionReview, JobAccepted, JobStatus, PageResult, ProcessingJob, Relation,
   ReviewTask, ReviewDraftCandidate, Security, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
-  MetricDefinition, MetricMapping, PublishReadiness,
+  MetricDefinition, MetricMapping, PublishReadiness, ThesisSummary,
   AssetInventory, AssetSearchHit,
   ThesisRevision, ThesisRevisionDiff,
   QuantBacktestRequest, QuantBacktestRun,
+  CompanyMetricCenter,
   GoldQualityReport,
+  CoverageUniverseCompany,
+  CoverageUniverseIndustry,
+  MaintainedCoverageIndustry,
 } from './types'
 
 export const useMock = import.meta.env.VITE_USE_MOCK === 'true'
@@ -62,6 +66,9 @@ function toThesis(item: Record<string, unknown>): ThesisDetail {
     establishedOn: String(item.established_on),
     horizonEndOn: item.horizon_end_on ? String(item.horizon_end_on) : undefined,
     nextReviewAt: item.next_review_at ? String(item.next_review_at) : undefined,
+    investmentRating: item.investment_rating ? String(item.investment_rating) : undefined,
+    targetPrice: item.target_price == null ? undefined : String(item.target_price),
+    observationPeriod: item.observation_period ? String(item.observation_period) : undefined,
     hypotheses: ((item.hypotheses ?? []) as Array<Record<string, unknown>>).map((h) => ({
       hypothesisId: String(h.hypothesis_id), statement: String(h.statement),
       hypothesisType: String(h.hypothesis_type), importance: String(h.importance), status: String(h.status),
@@ -80,8 +87,9 @@ function toThesis(item: Record<string, unknown>): ThesisDetail {
 
 function toMapping(item: Record<string, unknown>): MetricMapping {
   return {
-    mappingId: String(item.mapping_id), metricId: String(item.metric_id), metricVersion: String(item.metric_version),
+    mappingId: String(item.mapping_id), metricId: String(item.metric_id), metricName: item.metric_name ? String(item.metric_name) : undefined, metricVersion: String(item.metric_version),
     expectedDirection: String(item.expected_direction), expectedValue: item.expected_value == null ? undefined : String(item.expected_value),
+    expectedLower: item.expected_lower == null ? undefined : String(item.expected_lower), expectedUpper: item.expected_upper == null ? undefined : String(item.expected_upper),
     invalidationThreshold: item.invalidation_threshold == null ? undefined : String(item.invalidation_threshold),
     invalidationConsecutivePeriods: item.invalidation_consecutive_periods == null ? undefined : Number(item.invalidation_consecutive_periods),
     expectationSource: String(item.expectation_source), confirmationStatus: String(item.confirmation_status),
@@ -184,10 +192,30 @@ export async function getThesis(thesisId: string): Promise<ThesisDetail> {
   return toThesis(await request<Record<string, unknown>>(`/api/theses/${thesisId}`))
 }
 
-export async function listTheses(securityId?: string, manageable = false, includeSnapshots = false): Promise<ThesisDetail[]> {
+export async function listTheses(securityId?: string, manageable = false, includeSnapshots = false, limit = 50): Promise<ThesisDetail[]> {
   if (useMock) return demoTheses.filter((item) => !securityId || item.securityId === securityId).map((item) => ({ ...item, owner: manageable ? 'analyst-mvp' : item.owner }))
-  const page = await request<{ items: Array<Record<string, unknown>> }>(`/api/theses?limit=50${securityId ? `&security_id=${encodeURIComponent(securityId)}` : ''}${manageable ? '&manageable=true' : ''}${includeSnapshots ? '&include_snapshots=true' : ''}`)
+  const page = await request<{ items: Array<Record<string, unknown>> }>(`/api/theses?limit=${limit}${securityId ? `&security_id=${encodeURIComponent(securityId)}` : ''}${manageable ? '&manageable=true' : ''}${includeSnapshots ? '&include_snapshots=true' : ''}`)
   return page.items.map(toThesis)
+}
+
+export async function listThesisSummaries(): Promise<ThesisSummary[]> {
+  if (useMock) return demoTheses
+  try {
+    const page = await request<{ items: Array<Record<string, unknown>> }>('/api/theses/summaries?limit=100')
+    return page.items.map((item) => ({
+      thesisId: String(item.thesis_id),
+      securityId: String(item.security_id),
+      title: String(item.title),
+      status: String(item.status),
+      owner: String(item.owner),
+      direction: String(item.direction),
+      thesisKind: String(item.thesis_kind ?? 'canonical'),
+      thesisSeriesId: item.thesis_series_id ? String(item.thesis_series_id) : undefined,
+    }))
+  } catch {
+    // 开发后端尚未重启时保持兼容；重启后会自动使用轻量摘要接口。
+    return listTheses(undefined, false, false, 100)
+  }
 }
 
 export async function listSecurities(): Promise<Security[]> {
@@ -200,11 +228,205 @@ export async function listSecurities(): Promise<Security[]> {
   }))
 }
 
-export async function createSecurity(payload: { securityId: string; name: string; industry?: string }): Promise<Security> {
+/**
+ * 将数据源的正式行业分类映射为工作台使用的研究板块。
+ *
+ * 原始行业分类仍保留在 company.industry，用于公司名称下方的详细说明；
+ * 这里仅负责导航分组，避免把“制造业-...”这类完整路径直接作为板块名称。
+ */
+function researchSector(industry?: string): string {
+  const value = industry?.trim() ?? ''
+  if (!value) return '未分类'
+  if (value.includes('新能源汽车')) return '新能源汽车'
+  if (value.includes('光伏') || value.includes('储能') || value.includes('电力设备') || value.includes('电气机械')) return '新能源与储能'
+  if (value.includes('医药') || value.includes('医疗')) return '医药'
+  if (value.includes('半导体') || value.includes('芯片')) return '芯片半导体'
+  if (value.includes('汽车')) return '汽车'
+  if (value.includes('酒') || value.includes('饮料') || value.includes('食品') || value.includes('消费')) return '大消费'
+  if (value.includes('软件') || value.includes('计算机') || value.includes('通信') || value.includes('电子设备')) return '电子信息'
+  return value.split('-')[0]?.trim() || value
+}
+
+/** 证券主数据中的维护公司，按研究板块分组，并合并已有投资逻辑状态。 */
+export async function getMaintainedCoverage(): Promise<MaintainedCoverageIndustry[]> {
+  const sectors = await getCoverageUniverse()
+  return sectors
+    .map((sector) => ({
+      name: sector.name,
+      companies: sector.companies
+        .filter((company) => company.status !== '暂停覆盖')
+        .map((company) => ({
+          securityId: company.securityId,
+          name: company.name,
+          ticker: company.ticker,
+          industry: company.industry,
+          thesisId: company.thesisId,
+          thesisTitle: company.thesisTitle,
+          thesisStatus: company.thesisStatus ?? '未建立',
+          hypothesisCount: company.hypothesisCount,
+          configuredMetricCount: company.configuredMetricCount,
+          updatedAt: company.updatedAt ?? '',
+        })),
+    }))
+    .filter((sector) => sector.companies.length > 0)
+}
+
+/** 覆盖总览使用证券主数据作为全集，并按研究板块分组。 */
+export async function getCoverageUniverse(query?: string): Promise<CoverageUniverseIndustry[]> {
+  if (!useMock) {
+    try {
+      const items = await request<Array<Record<string, unknown>>>(`/api/coverage${query?.trim() ? `?query=${encodeURIComponent(query.trim())}` : ''}`)
+      return items.map((sector) => ({
+        sectorId: String(sector.sector_id),
+        name: String(sector.name),
+        code: sector.code ? String(sector.code) : undefined,
+        description: sector.description ? String(sector.description) : undefined,
+        status: sector.status ? String(sector.status) : undefined,
+        companies: ((sector.companies ?? []) as Array<Record<string, unknown>>).map((company) => ({
+          coverageCompanyId: company.coverage_company_id ? String(company.coverage_company_id) : undefined,
+          sectorId: String(company.sector_id ?? sector.sector_id),
+          securityId: String(company.security_id),
+          name: String(company.name),
+          ticker: company.ticker ? String(company.ticker) : undefined,
+          industry: company.industry ? String(company.industry) : undefined,
+          market: company.market ? String(company.market) : undefined,
+          thesisId: company.thesis_id ? String(company.thesis_id) : undefined,
+          thesisTitle: company.thesis_title ? String(company.thesis_title) : undefined,
+          thesisStatus: company.thesis_status ? String(company.thesis_status) : undefined,
+          thesisCount: Number(company.thesis_count ?? (company.thesis_id ? 1 : 0)),
+          owner: company.owner ? String(company.owner) : undefined,
+          hypothesisCount: Number(company.hypothesis_count ?? 0),
+          configuredMetricCount: Number(company.configured_metric_count ?? 0),
+          updatedAt: company.updated_at ? String(company.updated_at) : undefined,
+          status: company.status ? String(company.status) : undefined,
+        })),
+      }))
+    } catch {
+      // 旧数据库可能尚未创建覆盖目录表，回退到证券主数据的只读视图。
+    }
+  }
+  // /api/theses 的单页上限为 100；使用合法上限，避免行业总览因 422 无法加载。
+  const [securities, theses] = await Promise.all([listSecurities(), listTheses(undefined, false, false, 100)])
+  const thesisBySecurity = new Map(theses.map((thesis) => [thesis.securityId, thesis]))
+  const groups = new Map<string, CoverageUniverseIndustry>()
+  for (const security of securities) {
+    const thesis = thesisBySecurity.get(security.securityId)
+    const industry = researchSector(security.industry)
+    const company: CoverageUniverseIndustry['companies'][number] = {
+      securityId: security.securityId,
+      name: security.name,
+      ticker: security.ticker,
+      industry: security.industry,
+      thesisId: thesis?.thesisId,
+      thesisTitle: thesis?.title,
+      thesisStatus: thesis?.status,
+      thesisCount: thesis ? 1 : 0,
+      owner: thesis?.owner,
+      hypothesisCount: thesis?.hypotheses.length ?? 0,
+      configuredMetricCount: thesis?.hypotheses.reduce((total, item) => total + item.mappings.length, 0) ?? 0,
+      updatedAt: thesis?.establishedOn,
+    }
+    const group = groups.get(industry) ?? { name: industry, companies: [] }
+    group.companies.push(company)
+    groups.set(industry, group)
+  }
+  const normalizedQuery = query?.trim().toLocaleLowerCase('zh-CN') ?? ''
+  return [...groups.values()]
+    .filter((group) => !normalizedQuery || group.name.toLocaleLowerCase('zh-CN').includes(normalizedQuery))
+    .map((group) => ({ ...group, companies: group.companies.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')) }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+}
+
+export async function createCoverageSector(payload: { name: string; code?: string; description?: string }): Promise<CoverageUniverseIndustry> {
+  const item = await request<Record<string, unknown>>('/api/coverage/sectors', {
+    method: 'POST',
+    body: JSON.stringify({ name: payload.name, code: payload.code || null, description: payload.description || null }),
+  })
+  return {
+    sectorId: String(item.sector_id), name: String(item.name), code: item.code ? String(item.code) : undefined,
+    description: item.description ? String(item.description) : undefined, status: String(item.status ?? 'active'), companies: [],
+  }
+}
+
+export async function updateCoverageSector(sectorId: string, payload: { name: string }): Promise<CoverageUniverseIndustry> {
+  const item = await request<Record<string, unknown>>(`/api/coverage/sectors/${encodeURIComponent(sectorId)}`, {
+    method: 'PATCH', body: JSON.stringify({ name: payload.name }),
+  })
+  return {
+    sectorId: String(item.sector_id), name: String(item.name), code: item.code ? String(item.code) : undefined,
+    description: item.description ? String(item.description) : undefined, status: String(item.status ?? 'active'), companies: [],
+  }
+}
+
+export async function createCoverageCompany(sectorId: string, payload: { securityId?: string; name?: string; ticker?: string; industry?: string; market?: string; owner?: string }): Promise<CoverageUniverseCompany> {
+  const item = await request<Record<string, unknown>>(`/api/coverage/sectors/${encodeURIComponent(sectorId)}/companies`, {
+    method: 'POST',
+    body: JSON.stringify({ security_id: payload.securityId || null, name: payload.name || null, ticker: payload.ticker || null, industry: payload.industry || null, market: payload.market || null, owner: payload.owner || null }),
+  })
+  return {
+    coverageCompanyId: String(item.coverage_company_id), sectorId: String(item.sector_id), securityId: String(item.security_id), name: String(item.name),
+    ticker: item.ticker ? String(item.ticker) : undefined, industry: item.industry ? String(item.industry) : undefined,
+    market: item.market ? String(item.market) : undefined, owner: String(item.owner ?? '待分配'), status: String(item.status ?? '待建档'),
+    thesisCount: Number(item.thesis_count ?? 0),
+    hypothesisCount: Number(item.hypothesis_count ?? 0), configuredMetricCount: Number(item.configured_metric_count ?? 0),
+    updatedAt: item.updated_at ? String(item.updated_at) : undefined,
+  }
+}
+
+export async function updateCoverageCompany(coverageCompanyId: string, payload: { status?: string; owner?: string }): Promise<CoverageUniverseCompany> {
+  const item = await request<Record<string, unknown>>(`/api/coverage/companies/${encodeURIComponent(coverageCompanyId)}`, {
+    method: 'PATCH', body: JSON.stringify({ status: payload.status, owner: payload.owner }),
+  })
+  return {
+    coverageCompanyId: String(item.coverage_company_id), sectorId: String(item.sector_id), securityId: String(item.security_id), name: String(item.name),
+    ticker: item.ticker ? String(item.ticker) : undefined, industry: item.industry ? String(item.industry) : undefined,
+    market: item.market ? String(item.market) : undefined, owner: String(item.owner ?? '待分配'), status: String(item.status ?? '待建档'),
+    thesisCount: Number(item.thesis_count ?? (item.thesis_id ? 1 : 0)),
+    hypothesisCount: Number(item.hypothesis_count ?? 0), configuredMetricCount: Number(item.configured_metric_count ?? 0),
+    updatedAt: item.updated_at ? String(item.updated_at) : undefined,
+  }
+}
+
+export async function getSecurity(securityId: string): Promise<Security> {
+  if (useMock) return demoSecurities.find((item) => item.securityId === securityId) ?? { securityId, name: securityId }
+  const item = await request<Record<string, unknown>>(`/api/securities/${encodeURIComponent(securityId)}`)
+  return { securityId: String(item.security_id), name: String(item.name), ticker: item.ticker ? String(item.ticker) : undefined, industry: item.industry ? String(item.industry) : undefined }
+}
+
+export async function getCompanyMetricCenter(securityId: string): Promise<CompanyMetricCenter> {
+  if (useMock) return { securityId, metrics: [] }
+  const data = await request<{ security_id: string; updated_at?: string; metrics: Array<Record<string, unknown>> }>(`/api/securities/${encodeURIComponent(securityId)}/metric-center`)
+  const currency = (() => {
+    const value = securityId.toUpperCase()
+    return value.length === 5 && /^\d+$/.test(value) ? 'HKD' : 'CNY'
+  })()
+  const currencyMetricIds = new Set(['MKT-OPEN-D', 'MKT-HIGH-D', 'MKT-LOW-D', 'MKT-CLOSE-D', 'MKT-CHANGE-D', 'MKT-AMOUNT-D', 'TECH-MA5-D', 'TECH-MA20-D', 'TECH-MA60-D', 'VAL-MARKET-CAP-D'])
+  return { securityId: data.security_id, updatedAt: data.updated_at, metrics: data.metrics.map((item) => ({
+    metricId: String(item.metric_id), name: String(item.name), category: String(item.category), unit: currencyMetricIds.has(String(item.metric_id)) && ['交易币种', '元'].includes(String(item.unit ?? '')) ? currency : String(item.unit ?? ''), frequency: String(item.frequency), definition: String(item.definition), sourceId: String(item.source_id), latestValue: String(item.latest_value), latestPeriod: String(item.latest_period), latestDate: String(item.latest_date), previousValue: item.previous_value == null ? undefined : String(item.previous_value), changeValue: item.change_value == null ? undefined : String(item.change_value), changeRate: item.change_rate == null ? undefined : String(item.change_rate), observations: ((item.observations ?? []) as Array<Record<string, unknown>>).map((point) => ({ period: String(point.period), date: String(point.date), value: String(point.value) })),
+  })) }
+}
+
+export async function refreshCompanyMetrics(securityId: string): Promise<{ fetched: number; inserted: number; errors: string[] }> {
+  if (useMock) return { fetched: 0, inserted: 0, errors: [] }
+  return request(`/api/securities/${encodeURIComponent(securityId)}/metric-center/refresh`, { method: 'POST' })
+}
+
+export async function lookupSecurities(query: string): Promise<Array<Security & { source: string }>> {
+  if (useMock) return demoSecurities.filter((item) => `${item.securityId} ${item.name}`.toLowerCase().includes(query.toLowerCase())).map((item) => ({ ...item, source: 'database' }))
+  const items = await request<Array<Record<string, unknown>>>(`/api/securities/resolve?query=${encodeURIComponent(query)}`)
+  return items.map((item) => ({
+    securityId: String(item.security_id), name: String(item.name),
+    ticker: item.ticker ? String(item.ticker) : undefined,
+    industry: item.industry ? String(item.industry) : undefined,
+    source: String(item.source),
+  }))
+}
+
+export async function createSecurity(payload: { securityId: string; name: string; ticker?: string; industry?: string }): Promise<Security> {
   if (useMock) return { ...payload, ticker: payload.securityId }
   const item = await request<Record<string, unknown>>('/api/securities', {
     method: 'POST',
-    body: JSON.stringify({ security_id: payload.securityId, name: payload.name, ticker: payload.securityId, industry: payload.industry || null }),
+    body: JSON.stringify({ security_id: payload.securityId, name: payload.name, ticker: payload.ticker || payload.securityId, industry: payload.industry || null }),
   })
   return {
     securityId: String(item.security_id), name: String(item.name),
@@ -249,7 +471,7 @@ export async function getTrends(thesisId: string): Promise<Trend[]> {
   if (useMock) return demoTrends
   const items = await request<Array<Record<string, unknown>>>(`/api/theses/${thesisId}/trends`)
   const names: Record<string, string> = { 'AUTO-SALES-M': '月度汽车销量', 'AUTO-EXPORT-SALES-M': '月度海外销量/出口量', 'AUTO-BATTERY-INSTALL-M': '月度动力电池装机量', 'FIN-REVENUE-Q': '单季度营业收入', 'FIN-REVENUE-YOY-Q': '单季度营业收入同比', 'FIN-GROSS-MARGIN-Q': '单季度毛利率' }
-  return items.map((item) => ({ hypothesisId: String(item.hypothesis_id), statement: String(item.statement), metricId: String(item.metric_id), metricName: item.metric_name ? String(item.metric_name) : names[String(item.metric_id)] ?? String(item.metric_id), unit: String(item.unit), direction: String(item.direction), expectedValue: item.expected_value != null ? String(item.expected_value) : undefined, invalidationThreshold: item.invalidation_threshold != null ? String(item.invalidation_threshold) : undefined, invalidationConsecutivePeriods: item.invalidation_consecutive_periods != null ? Number(item.invalidation_consecutive_periods) : undefined, slope: item.slope != null ? String(item.slope) : undefined, verdict: item.verdict ? String(item.verdict) : undefined, note: item.note ? String(item.note) : undefined, points: (item.points as Array<Record<string, unknown>>).map((p) => ({ period: String(p.period), value: String(p.value), publishedOn: String(p.published_on), acquiredAt: p.acquired_at ? String(p.acquired_at) : undefined, sourceDocumentId: p.source_document_id ? String(p.source_document_id) : undefined, dataVersion: p.data_version ? String(p.data_version) : undefined })) }))
+  return items.map((item) => ({ hypothesisId: String(item.hypothesis_id), statement: String(item.statement), metricId: String(item.metric_id), metricName: item.metric_name ? String(item.metric_name) : names[String(item.metric_id)] ?? String(item.metric_id), unit: String(item.unit), direction: String(item.direction), expectedValue: item.expected_value != null ? String(item.expected_value) : undefined, expectedLower: item.expected_lower != null ? String(item.expected_lower) : undefined, expectedUpper: item.expected_upper != null ? String(item.expected_upper) : undefined, invalidationThreshold: item.invalidation_threshold != null ? String(item.invalidation_threshold) : undefined, invalidationConsecutivePeriods: item.invalidation_consecutive_periods != null ? Number(item.invalidation_consecutive_periods) : undefined, slope: item.slope != null ? String(item.slope) : undefined, verdict: item.verdict ? String(item.verdict) : undefined, note: item.note ? String(item.note) : undefined, points: (item.points as Array<Record<string, unknown>>).map((p) => ({ period: String(p.period), value: String(p.value), publishedOn: String(p.published_on), acquiredAt: p.acquired_at ? String(p.acquired_at) : undefined, sourceDocumentId: p.source_document_id ? String(p.source_document_id) : undefined, dataVersion: p.data_version ? String(p.data_version) : undefined })) }))
 }
 
 export async function recheckThesisQuality(thesisId: string): Promise<ThesisDetail> {
@@ -321,19 +543,47 @@ export async function updateHypothesis(thesisId: string, hypothesisId: string, p
   return toThesis(await request<Record<string, unknown>>(`/api/theses/${thesisId}/hypotheses/${hypothesisId}`, { method: 'PATCH', body: JSON.stringify({ statement: payload.statement, hypothesis_type: payload.hypothesisType, importance: payload.importance, observation_window: payload.observationWindow || null, invalidation_rule: payload.invalidationRule || null }) }))
 }
 
+export async function updateThesisDraft(thesisId: string, payload: { title: string; coreView: string }): Promise<ThesisDetail> {
+  if (useMock) return { ...(demoTheses.find((item) => item.thesisId === thesisId) ?? demoThesis), title: payload.title, coreView: payload.coreView }
+  return toThesis(await request<Record<string, unknown>>(`/api/theses/${thesisId}`, { method: 'PATCH', body: JSON.stringify({ title: payload.title, core_view: payload.coreView }) }))
+}
+
+export type ThesisMaintenancePayload = {
+  title: string; coreView: string; direction: string; investmentRating?: string; targetPrice?: string; observationPeriod?: string;
+  horizonEndOn?: string; nextReviewAt?: string; reason: string;
+  hypotheses: Array<{ hypothesisId: string; statement: string; hypothesisType: string; importance: string; observationWindow?: string; invalidationRule?: string }>;
+  mappings: Array<{ hypothesisId: string; mappingId?: string; metricId: string; metricVersion: string; expectedDirection: string; expectedValue?: string; expectedLower?: string; expectedUpper?: string; invalidationThreshold?: string; invalidationConsecutivePeriods?: number; expectationSource: string }>;
+}
+
+export async function updateThesisMaintenance(thesisId: string, payload: ThesisMaintenancePayload): Promise<ThesisDetail> {
+  if (useMock) return { ...(demoTheses.find((item) => item.thesisId === thesisId) ?? demoThesis), title: payload.title, coreView: payload.coreView, direction: payload.direction, investmentRating: payload.investmentRating || payload.direction, targetPrice: payload.targetPrice, observationPeriod: payload.observationPeriod }
+  const numeric = (value?: string) => value?.replace(/[\s,，]/g, '').trim() || null
+  const item = await request<Record<string, unknown>>(`/api/theses/${encodeURIComponent(thesisId)}/maintenance`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      title: payload.title, core_view: payload.coreView, direction: payload.direction,
+      investment_rating: payload.investmentRating || null, target_price: numeric(payload.targetPrice), observation_period: payload.observationPeriod || null,
+      horizon_end_on: payload.horizonEndOn || null, next_review_at: payload.nextReviewAt || null, reason: payload.reason,
+      hypotheses: payload.hypotheses.map((item) => ({ hypothesis_id: item.hypothesisId, statement: item.statement, hypothesis_type: item.hypothesisType, importance: item.importance, observation_window: item.observationWindow || null, invalidation_rule: item.invalidationRule || null })),
+      mappings: payload.mappings.map((item) => ({ hypothesis_id: item.hypothesisId, mapping_id: item.mappingId || null, metric_id: item.metricId, metric_version: item.metricVersion, expected_direction: item.expectedDirection, expected_value: numeric(item.expectedValue), expected_lower: numeric(item.expectedLower), expected_upper: numeric(item.expectedUpper), invalidation_threshold: numeric(item.invalidationThreshold), invalidation_consecutive_periods: item.invalidationConsecutivePeriods || null, expectation_source: item.expectationSource })),
+    }),
+  })
+  return toThesis(item)
+}
+
 export async function listMetrics(keyword = ''): Promise<MetricDefinition[]> {
   if (useMock) return demoMetrics.filter((item) => !keyword || item.name.includes(keyword) || item.metricId.includes(keyword))
   const items = await request<Array<Record<string, unknown>>>(`/api/metrics?limit=100${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ''}`)
   return items.map((item) => ({ metricId: String(item.metric_id), version: String(item.version), name: String(item.name), unit: String(item.unit), category: item.category ? String(item.category) : undefined, definition: item.definition ? String(item.definition) : undefined, frequency: item.frequency ? String(item.frequency) : undefined, expectedDirection: item.expected_direction ? String(item.expected_direction) : undefined, status: String(item.status) }))
 }
 
-export async function saveMetricMapping(thesisId: string, hypothesisId: string, payload: { mappingId?: string; metricId: string; metricVersion: string; expectedDirection: string; expectedValue?: string; invalidationThreshold?: string; invalidationConsecutivePeriods?: number; expectationSource: string }): Promise<MetricMapping> {
+export async function saveMetricMapping(thesisId: string, hypothesisId: string, payload: { mappingId?: string; metricId: string; metricVersion: string; expectedDirection: string; expectedValue?: string; expectedLower?: string; expectedUpper?: string; invalidationThreshold?: string; invalidationConsecutivePeriods?: number; expectationSource: string }): Promise<MetricMapping> {
   if (useMock) return { ...payload, mappingId: payload.mappingId ?? `MAP-DEMO-${Date.now()}`, confirmationStatus: '已确认' }
   const numeric = (value?: string) => {
     const normalized = value?.replace(/[\s,，]/g, '').trim()
     return normalized || null
   }
-  const item = await request<Record<string, unknown>>(`/api/theses/${thesisId}/hypotheses/${hypothesisId}/mappings`, { method: 'POST', body: JSON.stringify({ mapping_id: payload.mappingId || null, metric_id: payload.metricId, metric_version: payload.metricVersion, expected_direction: payload.expectedDirection, expected_value: numeric(payload.expectedValue), invalidation_threshold: numeric(payload.invalidationThreshold), invalidation_consecutive_periods: payload.invalidationConsecutivePeriods || null, expectation_source: payload.expectationSource }) })
+  const item = await request<Record<string, unknown>>(`/api/theses/${thesisId}/hypotheses/${hypothesisId}/mappings`, { method: 'POST', body: JSON.stringify({ mapping_id: payload.mappingId || null, metric_id: payload.metricId, metric_version: payload.metricVersion, expected_direction: payload.expectedDirection, expected_value: numeric(payload.expectedValue), expected_lower: numeric(payload.expectedLower), expected_upper: numeric(payload.expectedUpper), invalidation_threshold: numeric(payload.invalidationThreshold), invalidation_consecutive_periods: payload.invalidationConsecutivePeriods || null, expectation_source: payload.expectationSource }) })
   return toMapping(item)
 }
 

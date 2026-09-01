@@ -37,6 +37,35 @@ class SecurityRecord:
     is_illustrative: bool = False
 
 
+@dataclass
+class CoverageSectorRecord:
+    """研究员本地维护的板块目录。"""
+
+    sector_id: str
+    name: str
+    code: str | None = None
+    description: str | None = None
+    status: str = "active"
+    sort_order: int = 0
+    updated_at: datetime | None = None
+
+
+@dataclass
+class CoverageCompanyRecord:
+    """研究员本地维护的公司覆盖档案。"""
+
+    coverage_company_id: str
+    sector_id: str
+    security_id: str
+    name: str
+    ticker: str | None = None
+    industry: str | None = None
+    market: str | None = None
+    owner: str = "待分配"
+    status: str = "待建档"
+    updated_at: datetime | None = None
+
+
 @dataclass(frozen=True)
 class SourceRecord:
     source_id: str
@@ -121,6 +150,10 @@ class ThesisRecord:
     draft_suggestions: dict[str, object] = field(default_factory=dict)
     thesis_kind: str = "canonical"
     thesis_series_id: str | None = None
+    # 公司看台维护字段：评级与目标价由研究员填写，可为空；观察期保留原始文字口径。
+    investment_rating: str | None = None
+    target_price: Decimal | None = None
+    observation_period: str | None = None
 
 
 @dataclass
@@ -152,6 +185,8 @@ class MetricMappingRecord:
     expected_direction: ExpectationDirection
     metric_version: str = "v1.0"
     expected_value: Decimal | None = None
+    expected_lower: Decimal | None = None
+    expected_upper: Decimal | None = None
     invalidation_threshold: Decimal | None = None
     invalidation_consecutive_periods: int | None = None
     expectation_source: str | None = None
@@ -662,6 +697,22 @@ class SecurityRepo(Protocol):
     def get(self, security_id: str) -> SecurityRecord | None: ...
     def add(self, record: SecurityRecord) -> None: ...
     def search(self, keyword: str | None = None, *, limit: int = 100) -> list[SecurityRecord]: ...
+    def search_market(self, keyword: str, *, limit: int = 100) -> list[SecurityRecord]: ...
+    def upsert_market(self, record: SecurityRecord) -> None: ...
+
+
+class CoverageRepo(Protocol):
+    """本地板块与公司覆盖目录仓储。"""
+
+    def list_sectors(self) -> list[CoverageSectorRecord]: ...
+    def get_sector(self, sector_id: str) -> CoverageSectorRecord | None: ...
+    def add_sector(self, record: CoverageSectorRecord) -> None: ...
+    def update_sector(self, record: CoverageSectorRecord) -> None: ...
+    def list_companies(self, sector_id: str | None = None) -> list[CoverageCompanyRecord]: ...
+    def get_company(self, coverage_company_id: str) -> CoverageCompanyRecord | None: ...
+    def find_company(self, *, sector_id: str, security_id: str) -> CoverageCompanyRecord | None: ...
+    def add_company(self, record: CoverageCompanyRecord) -> None: ...
+    def update_company(self, record: CoverageCompanyRecord) -> None: ...
 
 
 class AssetRepo(Protocol):
@@ -740,7 +791,10 @@ class ThesisRepo(Protocol):
     def list_mappings(self, hypothesis_id: str) -> list[MetricMappingRecord]: ...
     def add_mapping(self, record: MetricMappingRecord) -> None: ...
     def update_mapping(self, record: MetricMappingRecord) -> None: ...
+    def remove_mapping(self, mapping_id: str) -> None: ...
     def get_by_security(self, security_id: str) -> ThesisRecord | None: ...
+    def get_by_securities(self, security_ids: tuple[str, ...]) -> dict[str, ThesisRecord]: ...
+    def counts_for_theses(self, thesis_ids: tuple[str, ...]) -> dict[str, tuple[int, int]]: ...
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]: ...
 
     """按条件分页查询，返回（当页记录, 满足条件的总数）。
@@ -786,8 +840,12 @@ class EvidenceFeedRepo(Protocol):
 
 
 class ObservationRepo(Protocol):
+    def list_for_security(self, security_id: str) -> list[ObservationRecord]: ...
     def list_for_metric(self, security_id: str, metric_id: str) -> list[ObservationRecord]: ...
+    def existing_keys(self, security_id: str, data_version: str) -> set[tuple[str, str]]: ...
     def add(self, record: ObservationRecord) -> None: ...
+    def add_if_absent(self, record: ObservationRecord) -> bool: ...
+    def add_many_if_absent(self, records: list[ObservationRecord]) -> int: ...
 
 
 class SuggestionRepo(Protocol):
@@ -892,3 +950,5 @@ class UnitOfWork:
     adjudications: AdjudicationDecisionRepo
     assets: AssetRepo
     ranking: RankingPriorRepo
+    # 兼容旧的测试 fake；真实 build_uow 总会注入覆盖目录仓储。
+    coverage: CoverageRepo | None = None
