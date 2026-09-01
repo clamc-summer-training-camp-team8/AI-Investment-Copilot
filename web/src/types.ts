@@ -415,6 +415,9 @@ export interface Trend {
 export interface AuditItem {
   action: string
   actor: string
+  objectType?: string
+  objectId?: string
+  modelVersion?: string
   occurredAt?: string
   detail?: Record<string, unknown>
 }

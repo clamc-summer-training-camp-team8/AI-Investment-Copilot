@@ -25,7 +25,7 @@ import {
 import { buildCompanyEvidenceCards, getConfirmedHypothesisEvidenceState } from './companyEvidence'
 import type { CompanyEvidenceCard } from './companyEvidence'
 import { MetricEditorCard } from './metric-editor'
-import type { Adjudication, DataCenterDocument, EvidenceFeedItem, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, InvestodayCollectionStatus, LogicChangeDigestDetail, MetricDefinition, ProcessingJob, PortfolioBacktestRun, ReviewTask, Security, Suggestion, ThesisDetail, ThesisRevision } from './types'
+import type { Adjudication, AuditItem, DataCenterDocument, EvidenceFeedItem, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, InvestodayCollectionStatus, LogicChangeDigestDetail, MetricDefinition, ProcessingJob, PortfolioBacktestRun, ReviewTask, Security, Suggestion, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function OperationalWorkbenchPage() {
@@ -99,19 +99,14 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set())
   // 左侧覆盖导航沿用 Phase 2：以覆盖板块/公司为全集，不要求公司已经建立投资逻辑。
   const coverage = useQuery({ queryKey: ['maintained-coverage'], queryFn: getMaintainedCoverage, staleTime: 30_000 })
-  // 当前覆盖的九家公司以季度观察逻辑入库（thesis_kind=observation）。
-  // 工作台需要把它们与 canonical 主逻辑一起读取，仍由后端保证每家公司只返回现行版本。
-  const theses = useQuery({ queryKey: ['theses', 'current-coverage'], queryFn: () => listTheses(undefined, false, true) })
-  const securities = useQuery({ queryKey: ['securities'], queryFn: listSecurities })
   // 自动采集和模型归并在页面打开后仍可能完成；保持轻量轮询，让新主题无需
   // 研究员手动刷新页面才出现。
   const updates = useQuery({ queryKey: ['research-updates', 'today'], queryFn: () => getResearchUpdates({ todayOnly: true }), refetchInterval: 20_000 })
   const collection = useQuery({ queryKey: ['investoday-collection-status'], queryFn: getInvestodayCollectionStatus, refetchInterval: 15_000 })
-  if (theses.isLoading || securities.isLoading) return <LoadingState text="正在加载实际研究覆盖…" />
-  if (theses.error || securities.error || !theses.data || !securities.data) return <ErrorState error={theses.error ?? securities.error} />
-
-  const current = theses.data.filter((item) => item.securityId !== '300274')
-  const securityById = new Map(securities.data.map((item) => [item.securityId, item]))
+  // 覆盖目录接口已经合并了每家公司现行逻辑的摘要，工作台先使用这份轻量结果；
+  // 不再等待完整逻辑明细（含历史观察快照）返回后才绘制页面。
+  const maintainedCompanies = (coverage.data ?? []).flatMap((sector) => sector.companies)
+  const current = maintainedCompanies.filter((company) => company.securityId !== '300274' && company.thesisId)
   const toggle = (industry: string) => setExpandedIndustries((before) => {
     const next = before.size ? new Set(before) : new Set((coverage.data ?? []).map((item) => item.name))
     if (next.has(industry)) next.delete(industry); else next.add(industry)
@@ -146,8 +141,8 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   return <div className="dashboard-page">
     <aside className="coverage-panel" aria-label="我的覆盖"><div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>{coverage.isLoading && <div className="coverage-loading" role="status">正在加载维护中的公司…</div>}{coverage.error && <div className="coverage-loading coverage-loading-error">覆盖数据暂时不可用</div>}{coverage.data?.map((industry) => { const expanded = expandedIndustries.size === 0 || expandedIndustries.has(industry.name); return <section className="coverage-group" key={industry.name}><button className="coverage-industry" aria-expanded={expanded} onClick={() => toggle(industry.name)}><span>{expanded ? '⌄' : '›'} ▥ {industry.name}</span><b>{industry.companies.length}</b></button>{expanded && <div className="coverage-companies">{industry.companies.map((company) => <NavLink to={`/companies/${encodeURIComponent(company.securityId)}`} key={company.securityId}><span><strong>▥ {company.name}</strong><small>{company.industry || '行业分类待补充'}</small></span></NavLink>)}</div>}</section>})}{coverage.data && coverage.data.length === 0 && <div className="coverage-loading">暂无正在维护的公司</div>}<nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业总览</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets">▤ 数据中心</NavLink><NavLink to="/assets">⌕ 知识库</NavLink><NavLink to="/theses">◇ 模型与因子</NavLink><NavLink to="/assets">▱ 研报与文档</NavLink><NavLink to="/radar">♧ 监控与预警</NavLink></nav><button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button></aside>
     <main className="dashboard-main"><section className="dashboard-card research-feed company-theme-feed" aria-labelledby="research-feed-title"><header className="dashboard-card-header"><div><h2 id="research-feed-title">今日公司变化</h2><span>AI 已将当日资料映射到核心假设，并按主投资逻辑汇总</span></div><NavLink to="/updates">全部逻辑变化 ›</NavLink></header><div className={`dashboard-collection-state ${collectionStatus.tone}`}><i /><div><strong>{collectionStatus.title}</strong><small>{collectionStatus.detail}</small></div><NavLink to="/updates">查看采集状态 ›</NavLink></div><div className="company-theme-bundles">{companyThemeBundles.slice(0, 4).map((bundle) => <article className="company-theme-bundle" key={bundle.securityId}><header><div><div className="company-theme-company"><strong>{bundle.securityName}</strong><time>今日 · {compactDate(bundle.date)}</time></div><span>今日 {bundle.sourceCount} 份资料 · 1 条主投资逻辑变化 · 涉及 {bundle.hypothesisCount} 项核心假设</span></div>{bundle.pending && <b className="ai-label">待确认</b>}</header><div className="company-theme-list">{bundle.themes.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <section className="company-theme-row logic-change-row" key={item.thesisId}><i className={themeDirection === 'conflict' ? 'conflict' : themeDirection === 'mixed' ? 'mixed' : ''} /><div><div className="company-theme-meta"><span>主投资逻辑变化</span><strong className={themeDirection}>{updateThemeDirectionLabel(themeDirection)}</strong></div><h3>{item.thesisCoreView}</h3><p className="logic-change-summary">{item.aggregationSummary}</p><ThemeImpactLines item={item} /></div><div className="company-theme-actions"><NavLink to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink><NavLink to={impactHref}>查看影响</NavLink></div></section> })}</div></article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的主投资逻辑变化。资料可能仍在分析，或尚未触发任何现行假设；可查看采集状态了解详情。</div>}</div><NavLink className="dashboard-more" to="/updates">查看全部公司变化 ⌄</NavLink></section>
-    <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">现行主投资逻辑</h2><span>{current.length} 家公司</span></header><div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>核心假设 / 指标</span><span>操作</span></div>{current.map((thesis) => <div className="logic-table-row" role="row" key={thesis.thesisId}><strong>{securityById.get(thesis.securityId)?.name || thesis.securityId}</strong><span>{thesis.title}</span><b className={`logic-state state-${thesis.status}`}>{thesis.status}</b><span>{thesis.hypotheses.filter((item) => item.importance === '核心').length} 项核心假设 · {thesis.hypotheses.reduce((count, item) => count + item.mappings.length, 0)} 个指标</span><NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`}>查看逻辑</NavLink></div>)}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section></main>
-    <aside className="dashboard-right"><section className="dashboard-card attention-card"><header className="dashboard-card-header"><h2>研究覆盖状态</h2></header><div className="attention-row attention-0"><i>▥</i><strong>{current.length} 家公司维护现行主逻辑</strong></div><div className="attention-row attention-1"><i>◈</i><strong>{current.reduce((total, item) => total + item.hypotheses.length, 0)} 条假设已纳入维护</strong></div><div className="attention-row attention-2"><i>⌁</i><strong>{updates.data?.total ?? '—'} 张影响聚合卡可复核</strong></div></section><section className="dashboard-card todo-card"><header className="dashboard-card-header"><h2>待确认影响</h2><NavLink to="/updates">更多 ›</NavLink></header>{updates.data?.items.filter((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending').slice(0, 5).map((item) => <article className="todo-row" key={item.relationId}><span className="todo-level level-中">待确认</span><strong>{item.securityName}：{item.hypothesisStatement}</strong><small>{item.sourceDocumentTitle}</small><NavLink to={`/updates/${encodeURIComponent(item.evidenceId)}?relationId=${encodeURIComponent(item.relationId)}`}>去复核</NavLink></article>)}{(!updates.data || !updates.data.items.some((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending')) && <p className="muted">{updates.error ? '研究动态暂时不可用，请稍后重试。' : '正在读取研究动态…'}</p>}</section></aside>
+    <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">现行主投资逻辑</h2><span>{coverage.isLoading ? '正在读取…' : `${current.length} 家公司`}</span></header>{coverage.error && <InlineError error={coverage.error} />}<div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>核心假设 / 指标</span><span>操作</span></div>{current.map((company) => <div className="logic-table-row" role="row" key={company.thesisId}><strong>{company.name}</strong><span>{company.thesisTitle ?? '暂无投资逻辑'}</span><b className={`logic-state state-${company.thesisStatus}`}>{company.thesisStatus}</b><span>{company.hypothesisCount} 项核心假设 · {company.configuredMetricCount} 个指标</span><NavLink to={`/theses/${encodeURIComponent(company.thesisId!)}`}>查看逻辑</NavLink></div>)}{coverage.isLoading && <div className="muted">覆盖目录正在从远程数据库加载，页面其余内容可先使用。</div>}{!coverage.isLoading && !coverage.error && !current.length && <div className="muted">暂无现行投资逻辑</div>}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section></main>
+    <aside className="dashboard-right"><section className="dashboard-card attention-card"><header className="dashboard-card-header"><h2>研究覆盖状态</h2></header><div className="attention-row attention-0"><i>▥</i><strong>{coverage.isLoading ? '正在读取覆盖目录…' : `${current.length} 家公司维护现行主逻辑`}</strong></div><div className="attention-row attention-1"><i>◈</i><strong>{coverage.isLoading ? '—' : `${current.reduce((total, item) => total + item.hypothesisCount, 0)} 条假设已纳入维护`}</strong></div><div className="attention-row attention-2"><i>⌁</i><strong>{updates.data?.total ?? '—'} 张影响聚合卡可复核</strong></div></section><section className="dashboard-card todo-card"><header className="dashboard-card-header"><h2>待确认影响</h2><NavLink to="/updates">更多 ›</NavLink></header>{updates.data?.items.filter((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending').slice(0, 5).map((item) => <article className="todo-row" key={item.relationId}><span className="todo-level level-中">待确认</span><strong>{item.securityName}：{item.hypothesisStatement}</strong><small>{item.sourceDocumentTitle}</small><NavLink to={`/updates/${encodeURIComponent(item.evidenceId)}?relationId=${encodeURIComponent(item.relationId)}`}>去复核</NavLink></article>)}{(!updates.data || !updates.data.items.some((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending')) && <p className="muted">{updates.error ? '研究动态暂时不可用，请稍后重试。' : '正在读取研究动态…'}</p>}</section></aside>
   </div>
 }
 
@@ -914,6 +909,43 @@ function CompanyCatalystRiskPanel({ thesis, demo }: { thesis?: ThesisDetail; dem
   return <section><header><h2>催化剂与风险</h2><span className="company-context-note">基于近期公开资料</span></header><h3 className="support-text">催化剂</h3>{displayedCatalysts.length ? <ul>{renderItems(displayedCatalysts, thesis?.catalystSuggestions ?? [])}</ul> : <p className="company-side-state">暂无已生成的公司催化剂。</p>}<h3 className="conflict-text">风险</h3>{displayedRisks.length ? <ul>{renderItems(displayedRisks, thesis?.riskSuggestions ?? [])}</ul> : <p className="company-side-state">暂无已生成的公司风险。</p>}</section>
 }
 
+function ResearchAuditDetails({ detail, modelVersion }: { detail?: Record<string, unknown>; modelVersion?: string }) {
+  const labels: Record<string, string> = {
+    suggested_status: '建议状态', suggested_thesis_status: '建议逻辑状态', suggested_logic_status: '建议逻辑状态', current_status: '当前状态',
+    previous_thesis_status: '变更前状态', reason: '原因', reasons: '触发原因', suggestion_reasons: '触发原因', rule_version: '规则版本',
+    prompt_version: '提示词版本', ai_status: 'AI 状态', batch_id: '批次 ID', digest_id: '归并 ID',
+    suggestion_id: '建议 ID', thesis_id: '逻辑 ID', relation_count: '关联数量', confirmed_count: '已确认', pending_count: '待观察',
+    rejected_count: '不纳入', requires_status_decision: '需要人工变更', note: '备注', version: '版本', changed_fields: '变更字段',
+  }
+  const entries = Object.entries(detail ?? {}).filter(([key]) => key !== 'items' && key !== 'before' && key !== 'after' && key !== 'reasons' && key !== 'suggestion_reasons' && key !== 'suggested_status')
+  const valueText = (value: unknown): string => {
+    if (Array.isArray(value)) return value.length ? value.map((item) => typeof item === 'object' ? JSON.stringify(item) : String(item)).join('；') : '—'
+    if (value && typeof value === 'object') return Object.entries(value as Record<string, unknown>).map(([key, item]) => `${key}: ${String(item)}`).join('；')
+    if (typeof value === 'boolean') return value ? '是' : '否'
+    return value == null || value === '' ? '—' : String(value)
+  }
+  const batchItems = Array.isArray(detail?.items) ? detail.items : []
+  const reasonValue = detail?.reasons ?? detail?.suggestion_reasons
+  const reasons = Array.isArray(reasonValue) ? reasonValue.map((item) => String(item)).join('；') : reasonValue ? String(reasonValue) : ''
+  if (!entries.length && !batchItems.length && !modelVersion && !reasons) return null
+  return <div className="research-history-detail-inline">{reasons && <div className="research-history-trigger"><dt>触发原因</dt><dd>{reasons}</dd></div>}<div className="research-history-detail-grid">{entries.map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd>{valueText(value)}</dd></div>)}{modelVersion && <div><dt>模型版本</dt><dd>{modelVersion}</dd></div>}{batchItems.length > 0 && <div><dt>批次明细</dt><dd>{batchItems.length} 条</dd></div>}{(detail?.before || detail?.after) && <div className="research-history-transition"><dt>状态变化</dt><dd>{detail.before ? valueText(detail.before) : '—'} → {detail.after ? valueText(detail.after) : '—'}</dd></div>}</div></div>
+}
+
+function groupResearchAuditEntries(entries: AuditItem[]) {
+  const groups = new Map<string, AuditItem & { repeatCount: number }>()
+  for (const entry of entries) {
+    const detail = entry.detail ?? {}
+    const reasonValue = detail.reasons ?? detail.suggestion_reasons
+    const reasons = Array.isArray(reasonValue) ? reasonValue.map((item) => String(item)).join('；') : String(detail.reason ?? reasonValue ?? '')
+    const suggestedStatus = detail.suggested_status ?? detail.suggested_logic_status ?? ''
+    const key = [entry.action, formatDate(entry.occurredAt), suggestedStatus, reasons, detail.rule_version ?? ''].join('\u0000')
+    const existing = groups.get(key)
+    if (existing) existing.repeatCount += 1
+    else groups.set(key, { ...entry, repeatCount: 1 })
+  }
+  return [...groups.values()]
+}
+
 export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesisId?: string, securityId?: string) => void; onCreate?: (security?: Security) => void } = {}) {
   const { securityId: routeSecurityId } = useParams()
   const [companyParams, setCompanyParams] = useSearchParams()
@@ -949,6 +981,9 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   }, [activeHypothesis, activeRecord, isDemoGeely])
   const trends = useQuery({ queryKey: ['company-thesis-trends', activeRecord?.thesisId], queryFn: () => getTrends(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
   const evidenceFeed = useQuery({ queryKey: ['company-thesis-evidence', activeRecord?.thesisId], queryFn: () => getThesisEvidenceFeed(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
+  const researchAudit = useQuery({ queryKey: ['audit', activeRecord?.thesisId], queryFn: () => getAudit(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely && companyTab === '研究记录' })
+  const visibleResearchAudit = (researchAudit.data ?? []).filter((entry) => entry.action !== '查看')
+  const groupedResearchAudit = groupResearchAuditEntries(visibleResearchAudit)
   const staticBaseResearch = activeThesis === 'product' ? thesisResearch.product : {
     hypotheses: activeThesis === 'overseas' ? [
       { id: 'H1', title: '重点海外市场渠道覆盖持续扩大', state: '支持', tone: 'support' },
@@ -1002,7 +1037,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
     </header>
     <nav className="company-tabs" aria-label="公司研究导航">{['总览', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '总览' ? {} : { tab: item }) }}>{item}</button>)}</nav>
     {companyTab === '研究记录'
-      ? <Navigate to={`/retrospective?security_id=${encodeURIComponent(securityId)}`} replace />
+      ? <main className="company-canvas company-research-history"><section className="research-history-header"><div><span>RESEARCH DECISION LOG</span><h2>研究决策与操作记录</h2><p>按时间还原证据处理、状态建议、正式状态变化与版本演进。</p></div>{activeRecord && <NavLink className="button primary" to={`/retrospective/new?thesisId=${encodeURIComponent(activeRecord.thesisId)}`}>基于记录发起复盘</NavLink>}</section>{isDemoGeely ? <EmptyState title="暂无可用研究记录" description="演示公司未接入数据库审计记录。" /> : !activeRecord ? <EmptyState title="尚未建立投资逻辑" description="建立投资逻辑后，这里会显示对应的研究决策与操作记录。" /> : researchAudit.isLoading ? <LoadingState text="正在加载研究记录…" /> : researchAudit.error ? <ErrorState error={researchAudit.error} /> : groupedResearchAudit.length ? <div className="research-history-list">{groupedResearchAudit.map((entry, index) => <article key={`${entry.action}-${entry.occurredAt}-${index}`}><div className="research-history-card-meta"><strong>{entry.action}</strong><time>{formatDate(entry.occurredAt)}</time><p>{entry.actor}{entry.objectType ? ` · ${entry.objectType}` : ''}</p>{entry.repeatCount > 1 && <small className="research-history-repeat">重复生成 {entry.repeatCount} 次</small>}</div><div className="research-history-card-content"><header><span>记录内容</span>{(entry.detail?.suggested_status || entry.detail?.suggested_logic_status) && <b className="research-history-status">建议状态：{String(entry.detail.suggested_status ?? entry.detail.suggested_logic_status)}</b>}</header><ResearchAuditDetails detail={entry.detail} modelVersion={entry.modelVersion} /></div></article>)}</div> : <EmptyState title="暂无研究操作记录" description="证据确认、状态建议和逻辑版本变更会按时间记录在这里。" />}</main>
       : companyTab === '指标中心'
         ? <CompanyMetricCenterPanel securityId={securityId} />
         : companyTab === '资料库'

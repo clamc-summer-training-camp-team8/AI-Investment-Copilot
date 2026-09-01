@@ -849,7 +849,7 @@ export async function recheckThesisQuality(thesisId: string): Promise<ThesisDeta
 export async function getAudit(thesisId: string): Promise<AuditItem[]> {
   if (useMock) return demoAudit
   const page = await request<{ items: Array<Record<string, unknown>> }>(`/api/theses/${thesisId}/audit`)
-  return page.items.map((item) => ({ action: String(item.action), actor: String(item.actor), occurredAt: item.occurred_at ? String(item.occurred_at) : undefined, detail: item.detail as Record<string, unknown> | undefined }))
+  return page.items.map((item) => ({ action: String(item.action), actor: String(item.actor), objectType: item.object_type ? String(item.object_type) : undefined, objectId: item.object_id ? String(item.object_id) : undefined, modelVersion: item.model_version ? String(item.model_version) : undefined, occurredAt: item.occurred_at ? String(item.occurred_at) : undefined, detail: item.detail as Record<string, unknown> | undefined }))
 }
 
 export async function getWorkbench(): Promise<WorkbenchData> {
