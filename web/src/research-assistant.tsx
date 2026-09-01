@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { askKnowledge, getDocumentSegment, globalSearch, submitAnswerFeedback } from './api'
-import type { DocumentSegment, GlobalSearchItem, KnowledgeAnswer, ThesisSummary } from './types'
+import type { AnswerCitation, DocumentSegment, GlobalSearchItem, KnowledgeAnswer, ThesisSummary } from './types'
 
 const groupLabels = {
   security: '公司 / 证券', industry: '行业', thesis: '投资逻辑', event: '事件', document: '知识资料',
@@ -116,6 +116,7 @@ export function KnowledgeAssistant({
   prefill?: { text: string; nonce: number }
   onOpenSource: (locator: string) => void
 }) {
+  const navigate = useNavigate()
   const activeThesis = theses.find((item) => item.thesisId === currentThesisId)
   const hasActiveThesis = Boolean(activeThesis)
   const [open, setOpen] = useState(false)
@@ -126,6 +127,11 @@ export function KnowledgeAssistant({
   const [error, setError] = useState('')
   const controller = useRef<AbortController | null>(null)
   const messagesEnd = useRef<HTMLDivElement>(null)
+  const openCitation = (citation: AnswerCitation) => {
+    if (citation.contentKind === 'structured_thesis') navigate(`/theses/${encodeURIComponent(citation.documentId)}`)
+    else if (citation.contentKind === 'structured_portfolio') navigate('/theses')
+    else onOpenSource(citation.locator)
+  }
 
   useEffect(() => {
     if (!prefill) return
@@ -163,7 +169,7 @@ export function KnowledgeAssistant({
       <div className="assistant-context"><span>研究范围</span>{activeThesis ? <button className={useContext ? 'active' : ''} onClick={() => { if (messages.length && useContext) setMessages([]); setUseContext(!useContext) }}>{useContext ? '✓ ' : ''}{activeThesis.securityId} · {activeThesis.title}</button> : <em>当前可见知识库</em>}</div>
       <div className="assistant-messages" aria-live="polite">
         {messages.length === 0 && <section className="assistant-welcome"><i>✦</i><strong>基于可回查资料辅助研究</strong><p>事实回答会附原文引用；只有标题或证据不足时，我会明确说明。</p><div>{['最近有哪些证据挑战核心假设？', '总结当前公司毛利率相关资料', '哪些问题还缺少正文证据？'].map((item) => <button key={item} onClick={() => setDraft(item)}>{item}</button>)}</div></section>}
-        {messages.map((message) => <article className={`assistant-message ${message.role}`} key={message.id}><span>{message.role === 'user' ? '你' : 'AI'}</span><div><p>{message.content}</p>{message.result?.inferences.length ? <section className="assistant-inferences"><strong>需要验证的推断</strong>{message.result.inferences.map((item) => <p key={item}>{item}</p>)}</section> : null}{message.result?.citations.length ? <section className="assistant-sources"><strong>可回查来源</strong>{message.result.citations.map((citation) => <button key={citation.locator} onClick={() => onOpenSource(citation.locator)}><b>{citation.ref}</b><span><strong>{citation.title}</strong><small>{citation.contentStatus} · {citation.retrievalMode}</small><p>{citation.excerpt}</p></span></button>)}</section> : null}{message.result && <footer><span>{message.result.answerStatus === 'insufficient_evidence' ? '证据不足' : 'AI 候选 · 需人工复核'}</span><button onClick={() => navigator.clipboard.writeText(message.content)}>复制</button><button onClick={() => submitAnswerFeedback(message.result!.answerId, 'helpful')}>有帮助</button><button onClick={() => submitAnswerFeedback(message.result!.answerId, 'not_helpful')}>无帮助</button></footer>}</div></article>)}
+        {messages.map((message) => <article className={`assistant-message ${message.role}`} key={message.id}><span>{message.role === 'user' ? '你' : 'AI'}</span><div><p>{message.content}</p>{message.result?.inferences.length ? <section className="assistant-inferences"><strong>需要验证的推断</strong>{message.result.inferences.map((item) => <p key={item}>{item}</p>)}</section> : null}{message.result?.citations.length ? <section className="assistant-sources"><strong>可回查来源</strong>{message.result.citations.map((citation) => <button key={citation.locator} onClick={() => openCitation(citation)}><b>{citation.ref}</b><span><strong>{citation.title}</strong><small>{citation.contentStatus} · {citation.retrievalMode}</small><p>{citation.excerpt}</p></span></button>)}</section> : null}{message.result && <footer><span>{message.result.answerStatus === 'insufficient_evidence' ? '证据不足' : 'AI 候选 · 需人工复核'}</span><button onClick={() => navigator.clipboard.writeText(message.content)}>复制</button><button onClick={() => submitAnswerFeedback(message.result!.answerId, 'helpful')}>有帮助</button><button onClick={() => submitAnswerFeedback(message.result!.answerId, 'not_helpful')}>无帮助</button></footer>}</div></article>)}
         {loading && <article className="assistant-message assistant loading"><span>AI</span><div><p>正在检索可见知识并校验引用<span className="thinking-dots">…</span></p><button onClick={() => controller.current?.abort()}>停止</button></div></article>}
         {error && <div className="assistant-error"><strong>本次回答未完成</strong><span>{error}</span><button onClick={() => setError('')}>关闭</button></div>}
         <div ref={messagesEnd} />
