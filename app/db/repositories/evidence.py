@@ -143,9 +143,26 @@ class SqlEvidenceRepo:
             .order_by(Evidence.evidence_id, EvidenceRelation.created_at)
         ).all()
         if relation_rows:
+            # 版本保存会冻结一批证据。一次性读取来源文档权限标签，避免远程库
+            # 下按证据逐条查询造成明显的保存延迟。
+            document_ids = {
+                evidence.evidence_locator.split("#", 1)[0]
+                for evidence, _relation in relation_rows
+            }
+            labels = dict(
+                self._session.execute(
+                    select(Document.document_id, Document.visibility_label).where(
+                        Document.document_id.in_(document_ids)
+                    )
+                ).all()
+            )
             return [
                 replace(
-                    _to_evidence(evidence, label=self._document_label(evidence.evidence_locator)),
+                    _to_evidence(
+                        evidence,
+                        label=labels.get(evidence.evidence_locator.split("#", 1)[0])
+                        or "机密",
+                    ),
                     thesis_id=relation.thesis_id,
                     hypothesis_id=relation.hypothesis_id,
                     direction=ImpactDirection(relation.direction),

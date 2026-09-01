@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from sqlalchemy import inspect, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.domain import CoverageCompanyRecord, CoverageSectorRecord
 from app.db.models.coverage import CoverageCompany, CoverageSector
+
+_availability_cache: dict[int, bool] = {}
 
 
 def _sector(row: CoverageSector) -> CoverageSectorRecord:
@@ -40,7 +43,18 @@ class SqlCoverageRepo:
     def __init__(self, session: Session) -> None:
         self._session = session
         bind = session.get_bind()
-        self.available = bool(bind) and inspect(bind).has_table("coverage_sector") and inspect(bind).has_table("coverage_company")
+        # 覆盖目录表在旧库中可能尚未迁移。这里的探测不能阻断其它接口
+        # （例如公司逻辑保存）；远程库短暂断开时退回只读视图即可。
+        self.available = False
+        if bind and id(bind) in _availability_cache:
+            self.available = _availability_cache[id(bind)]
+        elif bind:
+            try:
+                inspector = inspect(bind)
+                self.available = inspector.has_table("coverage_sector") and inspector.has_table("coverage_company")
+                _availability_cache[id(bind)] = self.available
+            except SQLAlchemyError:
+                self.available = False
 
     def list_sectors(self) -> list[CoverageSectorRecord]:
         rows = self._session.scalars(
