@@ -169,7 +169,7 @@ export async function askKnowledge(requestValue: KnowledgeAnswerRequest, signal?
       answerId: 'ANS-00000000000000000000000000000000', answerStatus: 'supported', aiStatus: '候选',
       answer: `根据当前可回查资料，${citation.content} [S1]`, inferences: [],
       citations: [{ ref: 'S1', locator: citation.locator, documentId: citation.documentId, title: citation.documentId, excerpt: citation.content, contentStatus: citation.contentStatus, contentKind: 'paragraph', retrievalMode: citation.retrievalMode ?? 'hybrid' }],
-      modelVersion: 'mock', promptVersion: 'knowledge-answer-v1-grounded-citations', retrievalVersion: 'mock-hybrid', generatedAt: new Date().toISOString(), requestId: 'QA-MOCK',
+      modelVersion: 'mock', promptVersion: 'knowledge-answer-v2-intent-routed-grounding', retrievalVersion: 'mock-hybrid', generatedAt: new Date().toISOString(), requestId: 'QA-MOCK',
     }
   }
   const item = await request<Record<string, unknown>>('/api/assistant/answers', {
