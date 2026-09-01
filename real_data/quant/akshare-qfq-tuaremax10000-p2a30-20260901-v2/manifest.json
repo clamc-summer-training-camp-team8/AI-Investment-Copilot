@@ -1,0 +1,139 @@
+{
+  "adjustment": "前复权",
+  "adjustment_anchor_date": "2026-08-31",
+  "assets": {
+    "bars": {
+      "path": "bars.json",
+      "sha256": "eb64ab0c78cbeb198c3ad6bb1eaaa2347e52658831472ee795cf1cf56f54d4cc"
+    },
+    "calendar": {
+      "path": "calendar.json",
+      "sha256": "8cad934dad25285885f4ba486eec0c410dffda95df1a838d6b293cf266237b13"
+    },
+    "corporate_actions": {
+      "path": "corporate_actions.json",
+      "sha256": "1bc8ac852fcaf9affb92e9790ec282370ce95e5e0c06bbb2a20f01c65b4e67c5"
+    },
+    "cross_source_quality": {
+      "path": "cross_source_quality.json",
+      "sha256": "bffbddbaa4d521e92c8575d3dc31005764f28256837032cf782a4d7856f2c795"
+    },
+    "cross_source_snapshot": {
+      "path": "cross_source_snapshot.json",
+      "sha256": "a1b5a13a44ab08a3acdc82642043d96d753f1517b4a3dfd7eb530df99bb92188"
+    },
+    "historical_controls": {
+      "path": "historical_controls.json",
+      "sha256": "b6c40832489d78347508c5ccccd085b37ffba201f3f87a61335db35938aaf915"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "924bbc089b6582bc331d3a3bdf3fb70c554a09d6dc7b17060a90b0e2d1320155"
+    },
+    "research_universe": {
+      "path": "research_universe.json",
+      "sha256": "01aadbdd59441891f53af926ad3af7627af6e48d7e2e7238ca6545f7b69fecd1"
+    },
+    "sample_protocol": {
+      "path": "sample_protocol.json",
+      "sha256": "0b7fd3531a292e270eb2ffda78829179bb27efd3d368390eff181a83b3765da2"
+    },
+    "source_snapshot": {
+      "path": "source_snapshot.json",
+      "sha256": "66ae51310f863e3414a583a781b5a241dee541403e43d866861decf7a16a30fa"
+    },
+    "tushare_permission_profile": {
+      "path": "tushare_permission_profile.json",
+      "sha256": "dfa1402aef830d41ed0ae0c43df3c672cd9901c8dbea17c699736e3704ac4e58"
+    },
+    "tushare_reference_snapshot": {
+      "path": "tushare_reference_snapshot.json",
+      "sha256": "94f960daed35e92b26b1d55a29d6bce97f3e6c1729ecf1d6c0af4b1ddf6fb164"
+    }
+  },
+  "authorization": {
+    "policy_id": "akshare-public-research-v1",
+    "scope": "项目内部研究、复算与审计；禁止对外再分发或用于实盘交易",
+    "status": "公开行情研究使用已核验",
+    "supplement": {
+      "api_origin": "https://tuaremax.top",
+      "credential_status": "用户提供有效访问凭证",
+      "scope": "仅限项目内部研究、交叉核验和字段补充；禁止对外再分发",
+      "source_id": "tushare-compatible-supplement-v1"
+    }
+  },
+  "capabilities": {
+    "a_share_point_in_time_market_cap": true,
+    "adjusted_close": true,
+    "capacity_constraint": true,
+    "daily_traded_notional": true,
+    "historical_universe_and_delisted_samples": true,
+    "point_in_time_market_cap": true,
+    "price_limit_status": false,
+    "structured_corporate_action_events": true,
+    "suspension_by_missing_session": true,
+    "trading_calendar": true,
+    "tushare_daily_crosscheck": true,
+    "tushare_market_cap_cache_consumed": true,
+    "tushare_price_limit_cache_consumed": true,
+    "tushare_pro_bar_fallback_authorized": true,
+    "tushare_supplement_configured": true,
+    "tushare_trade_calendar_crosscheck": true,
+    "tushare_trade_calendar_permission_verified": true
+  },
+  "coverage": {
+    "end": "2026-08-31",
+    "start": "2023-12-01"
+  },
+  "data_version": "akshare-qfq-tuaremax10000-p2a30-20260901-v2",
+  "dataset_id": "MDS-akshare-qfq-tuaremax10000-p2a30-20260901-v2",
+  "frozen_at": "2026-09-01T17:58:23.821163+08:00",
+  "limitations": [
+    "AKShare 是研究型聚合接口；上游网页或字段变化时构建必须失败并人工复核，禁止静默切源",
+    "前复权值随锚点可能变化；本版本已固定抓取截止日和源快照，后续只能新增版本",
+    "结构化公司行动当前覆盖分红送转；仍需独立来源复核合并、拆股等其他事件",
+    "退市证券仅作为生存者偏差影子对照，不具备点时行业、基准或人工信号时不得进入收益评价",
+    "A 股点时市值已与冻结行情全量对齐；市值中性仅可用于所选区间无缺口的纯 A 股组合",
+    "A 股涨跌停状态未全量覆盖；不得声称完成涨跌停可成交性模拟",
+    "Tushare 涨跌停历史缓存已提供 19922 条证券日；只有与冻结行情全量对齐时能力才会开启"
+  ],
+  "schema_version": "frozen-market-dataset-v1",
+  "securities": [
+    "688981",
+    "603986",
+    "002371",
+    "603501",
+    "600584",
+    "688012",
+    "688008",
+    "002049",
+    "300782",
+    "688041",
+    "600276",
+    "603259",
+    "000538",
+    "300760",
+    "600436",
+    "000963",
+    "300122",
+    "600196",
+    "600085",
+    "002252",
+    "002594",
+    "300750",
+    "601633",
+    "601238",
+    "600104",
+    "000625",
+    "601127",
+    "002920",
+    "002050",
+    "603596"
+  ],
+  "source_priority": [
+    "akshare",
+    "tushare_optional"
+  ],
+  "status": "frozen",
+  "timezone": "Asia/Shanghai"
+}

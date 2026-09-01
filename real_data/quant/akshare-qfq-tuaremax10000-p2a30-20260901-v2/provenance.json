@@ -1,0 +1,184 @@
+{
+  "data_version": "akshare-qfq-tuaremax10000-p2a30-20260901-v2",
+  "primary": {
+    "interfaces": [
+      "stock_zh_a_hist_tx",
+      "stock_zh_index_daily_tx",
+      "stock_history_dividend_detail"
+    ],
+    "library": "akshare",
+    "library_version": "1.18.94",
+    "source_id": "akshare-research-primary-v1",
+    "upstream_providers": [
+      "Tencent Finance",
+      "Sina Finance"
+    ]
+  },
+  "reference_cache": {
+    "configured": true,
+    "market_cap_rows": 19930,
+    "price_limit_rows": 19922,
+    "source_files": [
+      {
+        "path": "daily_basic/2026-08-31.json",
+        "sha256": "8da814cd0497358ca1ffe3d4555699c888b6a27210dfdd6e6fab3248fde6f557"
+      },
+      {
+        "path": "reference_history/000538-2023-12-01-2026-08-31.json",
+        "sha256": "1843dfd2a48c6bd51c73ea3ca13ad59934bd9a15c890fb5c226310b2a7fc9b68"
+      },
+      {
+        "path": "reference_history/000625-2023-12-01-2026-08-31.json",
+        "sha256": "ba2dd35739536858c8fe2af8acfcb1266938ac95d3d7d33f5121a424a1ee30cd"
+      },
+      {
+        "path": "reference_history/000963-2023-12-01-2026-08-31.json",
+        "sha256": "8e510e09945a2eaf7adde86657d457c2dd98696cbc87689ead1149f6b31fb4b1"
+      },
+      {
+        "path": "reference_history/002049-2023-12-01-2026-08-31.json",
+        "sha256": "6cbe023daa61edd5e954521ca95a92997f7c708c7bcd74af267921f3d3906faf"
+      },
+      {
+        "path": "reference_history/002050-2023-12-01-2026-08-31.json",
+        "sha256": "7206cbeab1e02263d1bf2902b448cfb47ec5a0ae6aaec53c22f40245973f312c"
+      },
+      {
+        "path": "reference_history/002252-2023-12-01-2026-08-31.json",
+        "sha256": "02b56a80d1707e1f1aa660e082880a949851d16b3740dc1673b7ba1eb495b0b9"
+      },
+      {
+        "path": "reference_history/002371-2023-12-01-2026-08-31.json",
+        "sha256": "1c3a4f88cdc73c256fd3ce62e4b45becc6d7e9f93c5f9141a7cabb608b5e8f75"
+      },
+      {
+        "path": "reference_history/002594-2023-12-01-2026-08-31.json",
+        "sha256": "320d48b7bffed99908be2ae8f83fb7a1a535fe1f7663535dae683521e1bcad14"
+      },
+      {
+        "path": "reference_history/002920-2023-12-01-2026-08-31.json",
+        "sha256": "20ac4e1d4a0056aa47037674cf2d6910521d0cc65129839e40031215b564a5f1"
+      },
+      {
+        "path": "reference_history/300122-2023-12-01-2026-08-31.json",
+        "sha256": "4a95eba0a1c7486491edff401728d59afc68f221d43ebb1c91dd123adc62c65f"
+      },
+      {
+        "path": "reference_history/300750-2023-12-01-2026-08-31.json",
+        "sha256": "57c7c6d76d1b3154151139e4d697e583efca42b4fee9931a05dac8f4e76d6aa5"
+      },
+      {
+        "path": "reference_history/300760-2023-12-01-2026-08-31.json",
+        "sha256": "8973f8d50f20e6493700255edf6dc11b5f483cec15b99f4bd09114b8f2efd662"
+      },
+      {
+        "path": "reference_history/300782-2023-12-01-2026-08-31.json",
+        "sha256": "4f5b146394ce0ddf06b9132b2652dd3f31e11fce63adbe89112cd46c7d76aab4"
+      },
+      {
+        "path": "reference_history/600085-2023-12-01-2026-08-31.json",
+        "sha256": "20b29ffcd7b454002281642bb5c839ed5e5a91c1ad4f8021a66b41ab14890b30"
+      },
+      {
+        "path": "reference_history/600104-2023-12-01-2026-08-31.json",
+        "sha256": "e25dcfbdadf6480547fe8a87daede1b88d68ea1874c086684dc6df6d84bc4e5d"
+      },
+      {
+        "path": "reference_history/600196-2023-12-01-2026-08-31.json",
+        "sha256": "7f7f22cd8e8a9d95c8734ebb028a96270e2997b3a49025c373c322c2d9d41228"
+      },
+      {
+        "path": "reference_history/600276-2023-12-01-2026-08-31.json",
+        "sha256": "3fb4acb0cf58115992ea016b0bf028c5637b39401c53ee95982014a941137a1a"
+      },
+      {
+        "path": "reference_history/600436-2023-12-01-2026-08-31.json",
+        "sha256": "fe84c6359ffdf0d3c812241f5691214c0699f147b3dd1e8ceb00878891cfdf85"
+      },
+      {
+        "path": "reference_history/600584-2023-12-01-2026-08-31.json",
+        "sha256": "6d0d62196b31ee90fc091a692343488033eadf4fb7ba76c02b544d26c1baec0b"
+      },
+      {
+        "path": "reference_history/601127-2023-12-01-2026-08-31.json",
+        "sha256": "03ada521d308a9b3cb5bae8130b9263ce2f95ed916114bd2fcba2432aeef507c"
+      },
+      {
+        "path": "reference_history/601238-2023-12-01-2026-08-31.json",
+        "sha256": "653f00f54ac86067b753cfd973e507e457b5fca965e111cb665ef31530dac806"
+      },
+      {
+        "path": "reference_history/601633-2023-12-01-2026-08-31.json",
+        "sha256": "1fcc22ca75bf7d2cdba19e14e5214007a5f1dca67b37ee19b04fe5bd6c388945"
+      },
+      {
+        "path": "reference_history/603259-2023-12-01-2026-08-31.json",
+        "sha256": "f394b470edbe94641440ca404455f8a1f956c7792d9c51b73519c63e1f7e6d86"
+      },
+      {
+        "path": "reference_history/603501-2023-12-01-2026-08-31.json",
+        "sha256": "436720cb586c906010bde184105273e13dbc2cad1f999d5afd16b77ba175df03"
+      },
+      {
+        "path": "reference_history/603596-2023-12-01-2026-08-31.json",
+        "sha256": "849d5213f301402ff85f795ad0f604d0cb4045a428e455d7dcbef02b27d5cb80"
+      },
+      {
+        "path": "reference_history/603986-2023-12-01-2026-08-31.json",
+        "sha256": "d3fcfa07d65fab4836d546c955d3085d9ff3f7f8ef5eda7923910e87eeaa79fe"
+      },
+      {
+        "path": "reference_history/688008-2023-12-01-2026-08-31.json",
+        "sha256": "b8331a228cee6002f7dd19c6cba78db511e874eb1d7ec2d1827f70e96d95c467"
+      },
+      {
+        "path": "reference_history/688012-2023-12-01-2026-08-31.json",
+        "sha256": "52476e1533c4c02d6aab86caadcc6902525d13db452cc0a163932c3000378997"
+      },
+      {
+        "path": "reference_history/688041-2023-12-01-2026-08-31.json",
+        "sha256": "531e6fde6e72810878dc3fb15635eff52b0765c2d5027a3408fe017d8d2c92db"
+      },
+      {
+        "path": "reference_history/688981-2023-12-01-2026-08-31.json",
+        "sha256": "04add2464306ba84680cd2fdb900a1283ce784bd51f712cbc98cbd70922ef875"
+      },
+      {
+        "path": "trade_cal/SSE-2026-asof-20260901T174357.json",
+        "sha256": "7e6073c7b8451bf02a7e5f7bb1f8efc59e9971cfc6218b8e9af36c0923fb9c5c"
+      }
+    ]
+  },
+  "request": {
+    "adjustment": "qfq",
+    "end": "2026-08-31",
+    "start": "2023-12-01"
+  },
+  "retry_policy": {
+    "delay_seconds": 1.0,
+    "events": [],
+    "max_attempts": 3
+  },
+  "row_source_counts": {
+    "akshare.stock_zh_a_hist_tx": 19355,
+    "akshare.stock_zh_a_hist_tx.volume_x100": 1998,
+    "akshare.stock_zh_index_daily_tx": 1998
+  },
+  "schema_version": "market-provenance-v1",
+  "supplement": {
+    "api_origin": "https://tuaremax.top",
+    "available_endpoints": [
+      "daily",
+      "daily_basic",
+      "pro_bar",
+      "stk_limit",
+      "trade_cal"
+    ],
+    "configured": true,
+    "errors": {},
+    "fallback_reasons": {},
+    "fallback_security_count": 0,
+    "library_version": "1.4.29",
+    "source_id": "tushare-compatible-supplement-v1"
+  }
+}

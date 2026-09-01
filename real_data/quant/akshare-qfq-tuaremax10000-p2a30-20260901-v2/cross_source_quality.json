@@ -1,0 +1,866 @@
+{
+  "data_version": "akshare-qfq-tuaremax10000-p2a30-20260901-v2",
+  "schema_version": "market-cross-source-quality-v1",
+  "securities": [
+    {
+      "akshare_rows": 660,
+      "metrics": {
+        "close": {
+          "comparable_rows": 660,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 660,
+          "max_relative_error": "9.943440849432188476454251426E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 660,
+          "max_relative_error": "0.0",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 660,
+      "passed": true,
+      "security_id": "688981",
+      "tushare_rows": 660
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "1.164902258555053479248166091E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000008228832870347195030882124026",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "603986",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "7.071975957741561403123076826E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001984501984501984501984501985",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "002371",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "9.174224018648547098529331115E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001065963192754416447719371749",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "603501",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 661,
+      "metrics": {
+        "close": {
+          "comparable_rows": 661,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 661,
+          "max_relative_error": "1.835305440402034668552708106E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 661,
+          "max_relative_error": "0.000004082973114509643804975901583",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 661,
+      "passed": true,
+      "security_id": "600584",
+      "tushare_rows": 661
+    },
+    {
+      "akshare_rows": 657,
+      "metrics": {
+        "close": {
+          "comparable_rows": 657,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 657,
+          "max_relative_error": "1.605484335633380587459982084E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 657,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 657,
+      "passed": true,
+      "security_id": "688012",
+      "tushare_rows": 657
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "1.369949151597340161525224668E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.0",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "688008",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 656,
+      "metrics": {
+        "close": {
+          "comparable_rows": 656,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 656,
+          "max_relative_error": "2.290888989399522105284217997E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 656,
+          "max_relative_error": "0.000008213924888299549698352536656",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 656,
+      "passed": true,
+      "security_id": "002049",
+      "tushare_rows": 656
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.385577419173804165206245990E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001865914515079192883488826210",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "300782",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 656,
+      "metrics": {
+        "close": {
+          "comparable_rows": 656,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 656,
+          "max_relative_error": "8.580012444879050674819051291E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 656,
+          "max_relative_error": "0.0",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 656,
+      "passed": true,
+      "security_id": "688041",
+      "tushare_rows": 656
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "6.394790743000911705316229640E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000003742178846211418136095560279",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "600276",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "5.427607866639151710120509856E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000004386466796353511080596559484",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "603259",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.737724602996269727310170101E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001257703433530373537919758521",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "000538",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "1.099997889799966506186702417E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00002413386249061460903142765204",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "300760",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.845009678839050254483212701E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00007259001161440185830429732869",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "600436",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.518754224160730102891110057E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001196601651310278808184755295",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "000963",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.931848020035076629711699657E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000006178641517536143122052112207",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "300122",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "4.883951747097090788932470711E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000009887769607394536944178491492",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "600196",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "5.148485539727538407003392608E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001427718543645501564808660949",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "600085",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 656,
+      "metrics": {
+        "close": {
+          "comparable_rows": 656,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 656,
+          "max_relative_error": "4.835621009052193709569582460E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 656,
+          "max_relative_error": "0.000002704833673015362102845890749",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 656,
+      "passed": true,
+      "security_id": "002252",
+      "tushare_rows": 656
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "3.186699054399108964956646075E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000009032632545046327586877234349",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "002594",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.365870519691850096551175909E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000005333649401446011615503140927",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "300750",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.580825938038056121903469736E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000005591742356692711088273965150",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "601633",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "9.215553642816199468815488028E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000006773729220174423527419491406",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "601238",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "3.174589021500980747870509839E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000004857717455721905391094832360",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "600104",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "2.436689863767862027676368461E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000001538131349263127772213478323",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "000625",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "5.509622231131245359358628117E-8",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000004477799072200032240153319840",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "601127",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "1.682284511780006125044972435E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00002513858450431867990202397834",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "002920",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "1.351410419755734368509710687E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.000002992052112239188635255217058",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "002050",
+      "tushare_rows": 666
+    },
+    {
+      "akshare_rows": 666,
+      "metrics": {
+        "close": {
+          "comparable_rows": 666,
+          "max_relative_error": "0",
+          "mismatch_rows": 0,
+          "threshold": "0.0001"
+        },
+        "notional": {
+          "comparable_rows": 666,
+          "max_relative_error": "5.222829102068008198681061557E-7",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        },
+        "volume": {
+          "comparable_rows": 666,
+          "max_relative_error": "0.00001635389836052168935770064189",
+          "mismatch_rows": 0,
+          "threshold": "0.001"
+        }
+      },
+      "overlap_ratio": "1",
+      "overlap_rows": 666,
+      "passed": true,
+      "security_id": "603596",
+      "tushare_rows": 666
+    }
+  ],
+  "status": "passed",
+  "thresholds": {
+    "close_relative_error": "0.0001",
+    "notional_relative_error": "0.001",
+    "overlap_ratio": "0.995",
+    "volume_relative_error": "0.001"
+  },
+  "trading_calendar": {
+    "akshare_observed_open_days": 160,
+    "akshare_only_days": [],
+    "cached_crosscheck_enabled": true,
+    "comparison_end": "2026-08-31",
+    "comparison_start": "2026-01-01",
+    "overlap_open_days": 160,
+    "passed": true,
+    "permission_verified": true,
+    "status": "passed",
+    "tushare_only_days": [],
+    "tushare_open_days": 160
+  }
+}
