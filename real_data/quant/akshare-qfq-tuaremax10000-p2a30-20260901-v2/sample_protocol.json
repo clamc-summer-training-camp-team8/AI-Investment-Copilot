@@ -1,0 +1,83 @@
+{
+  "analysis_gates": {
+    "four_way_neutralization_ablation": "after_research_candidate_gate",
+    "paper_portfolio": "P3_only",
+    "refit_walk_forward": "after_research_candidate_gate",
+    "stability_conclusions": "after_research_candidate_gate"
+  },
+  "forward_return_horizons": [
+    1,
+    5,
+    20
+  ],
+  "frozen_at": "2026-09-01T00:00:00+08:00",
+  "prospective_start_at": "2026-09-01T00:00:00+08:00",
+  "protocol_id": "QSP-confirmed-event-20260901-v1",
+  "required_market_capabilities": [
+    "adjusted_close",
+    "trading_calendar",
+    "daily_traded_notional",
+    "structured_corporate_action_events"
+  ],
+  "research_candidate_gate": {
+    "alpha_claim_allowed": false,
+    "minimum_active_trading_days": 60,
+    "minimum_independent_events": 100,
+    "minimum_unique_nonzero_signal_securities": 20,
+    "requires_independent_review": true
+  },
+  "schema_version": "quant-prospective-sample-protocol-v1",
+  "signal_policy": {
+    "allowed_directions": [
+      "支持",
+      "冲突",
+      "中性"
+    ],
+    "allowed_strengths": [
+      "高",
+      "中",
+      "低"
+    ],
+    "alpha_weight_uses_ai_confidence": false,
+    "backdating_allowed": false,
+    "deduplication_key": [
+      "security_id",
+      "source_evidence_id"
+    ],
+    "independent_event_key": "source_relation_id",
+    "overlapping_forward_horizons_are_independent": false,
+    "required_confirmation_status": "已确认",
+    "required_fields": [
+      "source_relation_id",
+      "source_evidence_id",
+      "security_id",
+      "disclosed_at",
+      "reviewed_at",
+      "direction",
+      "strength"
+    ]
+  },
+  "status": "active",
+  "time_partitions": [
+    {
+      "blind": false,
+      "end": "2026-12-31",
+      "name": "development",
+      "start": "2026-09-01"
+    },
+    {
+      "blind": true,
+      "end": "2027-03-31",
+      "name": "validation",
+      "start": "2027-01-01"
+    },
+    {
+      "blind": true,
+      "end": null,
+      "name": "out_of_time",
+      "start": "2027-04-01"
+    }
+  ],
+  "timezone": "Asia/Shanghai",
+  "universe_id": "QRU-a-share-30-20260901-v1"
+}
