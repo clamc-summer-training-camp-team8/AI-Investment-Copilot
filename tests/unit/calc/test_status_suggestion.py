@@ -26,14 +26,15 @@ from app.core.enums import (
 from tests.conftest import make_observation
 
 
-def test_所有建议都要求人工确认(thresholds: RuleThresholds) -> None:
+def test_未触发状态变化时仅信息沉淀(thresholds: RuleThresholds) -> None:
     suggestion = suggest_status(
         ThesisStatus.VALIDATING,
         [],
         [],
         thresholds=thresholds,
     )
-    assert suggestion.requires_human_confirmation is True
+    assert suggestion.output_type == "信息沉淀"
+    assert suggestion.requires_human_confirmation is False
 
 
 def test_建议携带理由与规则版本(thresholds: RuleThresholds) -> None:
@@ -49,6 +50,8 @@ def test_建议携带理由与规则版本(thresholds: RuleThresholds) -> None:
     assert suggestion.reasons
     assert suggestion.triggered_hypotheses == ["H1"]
     assert suggestion.rule_version == thresholds.version
+    assert suggestion.output_type == "状态变更建议"
+    assert suggestion.requires_human_confirmation is True
 
 
 def test_辅助假设的支持冲突并存不触发分歧(thresholds: RuleThresholds) -> None:
@@ -83,6 +86,8 @@ def test_重大风险优先于出现分歧(thresholds: RuleThresholds) -> None:
 
     assert suggestion.suggested_status is ThesisStatus.MAJOR_RISK
     assert "H2" in suggestion.triggered_hypotheses
+    assert suggestion.output_type == "状态变更建议"
+    assert suggestion.requires_human_confirmation is True
 
 
 def test_已关闭逻辑不再生成建议(thresholds: RuleThresholds) -> None:
@@ -95,6 +100,7 @@ def test_已关闭逻辑不再生成建议(thresholds: RuleThresholds) -> None:
 
     assert suggestion.suggested_status is ThesisStatus.CLOSED
     assert suggestion.requires_human_confirmation is False
+    assert suggestion.output_type == "信息沉淀"
 
 
 def test_只统计已确认证据() -> None:
@@ -113,6 +119,20 @@ def test_只统计已确认证据() -> None:
     assert summary.conflict_count == 0
 
 
+def test_支持证据沉淀为假设健康度而非状态待办(thresholds: RuleThresholds) -> None:
+    suggestion = suggest_status(
+        ThesisStatus.VALIDATING,
+        [EvidenceSummary("H1", Importance.CORE, support_count=2, conflict_count=0)],
+        [],
+        thresholds=thresholds,
+    )
+
+    assert suggestion.output_type == "信息沉淀"
+    assert suggestion.requires_human_confirmation is False
+    assert suggestion.hypothesis_health[0].state == "强化"
+    assert suggestion.hypothesis_health[0].support_count == 2
+
+
 def test_到复核日追加提示(thresholds: RuleThresholds) -> None:
     suggestion = suggest_status(
         ThesisStatus.VALIDATING,
@@ -123,3 +143,5 @@ def test_到复核日追加提示(thresholds: RuleThresholds) -> None:
         today=date(2026, 8, 8),
     )
     assert any("复核" in r for r in suggestion.reasons)
+    assert suggestion.output_type == "研究提醒"
+    assert suggestion.requires_human_confirmation is False

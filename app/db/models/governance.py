@@ -71,6 +71,12 @@ class StatusSuggestionLog(Base):
     reasons: Mapped[list] = mapped_column(JSONB, nullable=False)
     triggered_hypotheses: Mapped[list | None] = mapped_column(JSONB)
     rule_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    output_type: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="信息沉淀", comment="状态变更建议/研究提醒/信息沉淀"
+    )
+    requires_human_confirmation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    research_alerts: Mapped[list | None] = mapped_column(JSONB, comment="不改变正式状态的研究提醒")
+    hypothesis_health: Mapped[list | None] = mapped_column(JSONB, comment="本批假设健康度快照")
 
     human_action: Mapped[str | None] = mapped_column(
         String(16), comment="接受/拒绝/修改；未处置为空"

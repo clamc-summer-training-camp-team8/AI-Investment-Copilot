@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from typing import Protocol
@@ -61,13 +61,43 @@ class EvidenceSummary:
 
 @dataclass(frozen=True)
 class StatusSuggestion:
-    """状态建议。必须携带理由和依据，供人工确认时展示。"""
+    """一次批次计算的结构化输出。
+
+    ``output_type`` 将需要负责人正式处置的「状态变更建议」，与只需研究员
+    关注的「研究提醒」、以及纯粹沉淀支持/冲突结果的「信息沉淀」明确分开。
+    前端不得把后两类渲染成状态变更待办。
+    """
 
     suggested_status: ThesisStatus
     reasons: list[str]
     triggered_hypotheses: list[str]
     rule_version: str
+    output_type: str = "信息沉淀"
+    research_alerts: list["ResearchAlert"] = field(default_factory=list)
+    hypothesis_health: list["HypothesisHealth"] = field(default_factory=list)
     requires_human_confirmation: bool = True
+
+
+@dataclass(frozen=True)
+class ResearchAlert:
+    """不改变正式状态的研究提醒。"""
+
+    category: str
+    level: str
+    title: str
+    detail: str
+    hypothesis_ids: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class HypothesisHealth:
+    """一个核心假设在本批次确认后得到的可解释健康度。"""
+
+    hypothesis_id: str
+    state: str
+    reason: str
+    support_count: int = 0
+    conflict_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -315,13 +345,16 @@ def suggest_status(
     """
     reasons: list[str] = []
     triggered: list[str] = []
+    health = summarize_hypothesis_health(evidence, invalidations, thresholds=thresholds)
 
     if current_status == ThesisStatus.CLOSED:
         return StatusSuggestion(
             suggested_status=ThesisStatus.CLOSED,
-            reasons=["逻辑已关闭，不再生成状态建议"],
+            reasons=["逻辑已关闭；新资料仅留存，不重新开启或生成状态变更建议"],
             triggered_hypotheses=[],
             rule_version=thresholds.version,
+            output_type="信息沉淀",
+            hypothesis_health=health,
             requires_human_confirmation=False,
         )
 
@@ -330,6 +363,43 @@ def suggest_status(
 
     # 有组合条件时以组合结论为准；没有则退回「任一突破即建议重大风险」。
     composite_blocks = thesis_invalidation is not None and not thesis_invalidation.satisfied
+
+    alerts: list[ResearchAlert] = []
+    if breached and composite_blocks and thesis_invalidation is not None:
+        alerts.append(
+            ResearchAlert(
+                category="失效条件部分命中",
+                level="高",
+                title="部分失效条件已命中",
+                detail=(
+                    f"已命中 {'、'.join(c.hypothesis_id for c in breached)}；"
+                    f"{thesis_invalidation.note}，因此暂不建议重大风险。"
+                ),
+                hypothesis_ids=[c.hypothesis_id for c in breached],
+            )
+        )
+    for check in near:
+        alerts.append(
+            ResearchAlert(
+                category="临近失效",
+                level="关注",
+                title=f"{check.hypothesis_id} 临近失效阈值",
+                detail=(
+                    f"当前连续突破 {check.consecutive_breaches} 期，"
+                    f"要求 {check.required_consecutive} 期；建议跟踪下一期指标。"
+                ),
+                hypothesis_ids=[check.hypothesis_id],
+            )
+        )
+    if next_review_at and today and next_review_at <= today:
+        alerts.append(
+            ResearchAlert(
+                category="复核到期",
+                level="普通",
+                title="投资逻辑已到复核日",
+                detail=f"复核日为 {next_review_at}；请复查假设、指标口径与新增证据。",
+            )
+        )
 
     if breached and not composite_blocks:
         triggered = [c.hypothesis_id for c in breached]
@@ -345,6 +415,10 @@ def suggest_status(
             reasons=reasons,
             triggered_hypotheses=triggered,
             rule_version=thresholds.version,
+            output_type="状态变更建议",
+            research_alerts=alerts,
+            hypothesis_health=health,
+            requires_human_confirmation=True,
         )
 
     divergent = [
@@ -376,6 +450,10 @@ def suggest_status(
             triggered_hypotheses=[e.hypothesis_id for e in divergent]
             + [c.hypothesis_id for c in breached if composite_blocks],
             rule_version=thresholds.version,
+            output_type="状态变更建议",
+            research_alerts=alerts,
+            hypothesis_health=health,
+            requires_human_confirmation=True,
         )
 
     reasons = list(blocked_reasons)
@@ -388,6 +466,7 @@ def suggest_status(
     if next_review_at and today and next_review_at <= today:
         reasons.append(f"已到复核日 {next_review_at}，建议发起复核")
 
+    output_type = "研究提醒" if alerts else "信息沉淀"
     return StatusSuggestion(
         suggested_status=current_status
         if current_status != ThesisStatus.DRAFT
@@ -395,7 +474,75 @@ def suggest_status(
         reasons=reasons or ["未触发状态变更条件"],
         triggered_hypotheses=triggered,
         rule_version=thresholds.version,
+        output_type=output_type,
+        research_alerts=alerts,
+        hypothesis_health=health,
+        requires_human_confirmation=False,
     )
+
+
+def summarize_hypothesis_health(
+    evidence: Sequence[EvidenceSummary],
+    invalidations: Sequence[InvalidationCheck],
+    *,
+    thresholds: RuleThresholdsLike,
+) -> list[HypothesisHealth]:
+    """将证据组合和指标状态归为研究员能直接理解的假设健康度。
+
+    这不是正式的假设状态机：它是每次研究批次的解释性快照，正式投资逻辑
+    仍只由 ``suggest_status`` 产生建议并由负责人确认。
+    """
+    checks_by_hypothesis: dict[str, list[InvalidationCheck]] = {}
+    for check in invalidations:
+        checks_by_hypothesis.setdefault(check.hypothesis_id, []).append(check)
+
+    health: list[HypothesisHealth] = []
+    for summary in evidence:
+        checks = checks_by_hypothesis.get(summary.hypothesis_id, [])
+        breached = [check for check in checks if check.breached]
+        near = [check for check in checks if check.near_breach]
+        divergent = (
+            summary.importance == Importance.CORE
+            and summary.support_count >= thresholds.divergence_min_support
+            and summary.conflict_count >= thresholds.divergence_min_conflict
+        )
+        if breached:
+            state = "失效条件命中"
+            reason = "；".join(
+                f"连续 {check.consecutive_breaches} 期越过阈值（要求 {check.required_consecutive} 期）"
+                for check in breached
+            )
+        elif near:
+            state = "临近失效"
+            reason = "；".join(
+                f"接近阈值，连续越界 {check.consecutive_breaches}/{check.required_consecutive} 期"
+                for check in near
+            )
+        elif divergent:
+            state = "分歧"
+            reason = f"已确认支持 {summary.support_count} 条、冲突 {summary.conflict_count} 条，均达到分歧阈值"
+        elif summary.support_count and summary.conflict_count:
+            state = "轻微分歧"
+            reason = f"已确认支持 {summary.support_count} 条、冲突 {summary.conflict_count} 条，尚未同时达到分歧阈值"
+        elif summary.conflict_count:
+            state = "承压"
+            reason = f"已确认 {summary.conflict_count} 条冲突证据，尚无已确认支持证据抵消"
+        elif summary.support_count:
+            state = "强化"
+            reason = f"已确认 {summary.support_count} 条支持证据，尚无已确认冲突证据"
+        else:
+            state = "暂无新增证据"
+            reason = "本批没有进入正式证据链的已确认支持或冲突证据"
+        health.append(
+            HypothesisHealth(
+                hypothesis_id=summary.hypothesis_id,
+                state=state,
+                reason=reason,
+                support_count=summary.support_count,
+                conflict_count=summary.conflict_count,
+            )
+        )
+    return health
 
 
 def summarize_evidence(

@@ -831,7 +831,14 @@ export function getThesisEvidenceFeed(thesisId: string): Promise<PageResult<Evid
 export async function getSuggestions(thesisId: string): Promise<Suggestion[]> {
   if (useMock) return demoSuggestions
   const items = await request<Array<Record<string, unknown>>>(`/api/theses/${thesisId}/suggestions`)
-  return items.map((item) => ({ suggestionId: Number(item.suggestion_id), currentStatus: String(item.current_status), suggestedStatus: String(item.suggested_status), reasons: item.reasons as string[], triggeredHypotheses: (item.triggered_hypotheses ?? []) as string[], ruleVersion: String(item.rule_version), humanAction: item.human_action ? String(item.human_action) : undefined }))
+  return items.map((item) => ({
+    suggestionId: Number(item.suggestion_id), currentStatus: String(item.current_status), suggestedStatus: String(item.suggested_status), reasons: item.reasons as string[], triggeredHypotheses: (item.triggered_hypotheses ?? []) as string[], ruleVersion: String(item.rule_version),
+    outputType: String(item.output_type ?? '信息沉淀') as Suggestion['outputType'],
+    requiresHumanConfirmation: Boolean(item.requires_human_confirmation),
+    researchAlerts: ((item.research_alerts ?? []) as Array<Record<string, unknown>>).map((alert) => ({ category: String(alert.category), level: String(alert.level), title: String(alert.title), detail: String(alert.detail), hypothesisIds: (alert.hypothesis_ids ?? []) as string[] })),
+    hypothesisHealth: ((item.hypothesis_health ?? []) as Array<Record<string, unknown>>).map((health) => ({ hypothesisId: String(health.hypothesis_id), state: String(health.state), reason: String(health.reason), supportCount: Number(health.support_count ?? 0), conflictCount: Number(health.conflict_count ?? 0) })),
+    humanAction: item.human_action ? String(item.human_action) : undefined,
+  }))
 }
 
 export async function getTrends(thesisId: string): Promise<Trend[]> {
@@ -874,6 +881,40 @@ export async function reviewRelation(evidenceId: string, relationId: string, act
     return
   }
   await request(`/api/evidence/${evidenceId}/relations/${relationId}/review`, { method: 'POST', body: JSON.stringify({ action, reason }) })
+}
+
+export type DecisionBatch = {
+  batchId: string; thesisId: string; actor: string; submittedAt?: string; digestId?: string; note?: string
+  confirmedCount: number; pendingCount: number; rejectedCount: number; relationCount: number
+  suggestionId: number; currentStatus: string; suggestedStatus: string; requiresStatusDecision: boolean; statusDecisionAction?: string; suggestionReasons: string[]
+  outputType: Suggestion['outputType']; requiresHumanConfirmation: boolean
+  researchAlerts: Suggestion['researchAlerts']; hypothesisHealth: Suggestion['hypothesisHealth']
+  items: Array<{ relation_id?: string; evidence_id?: string; hypothesis_id?: string; hypothesis_statement?: string; ai_direction?: string; ai_strength?: string; human_action?: string; human_reason?: string }>
+}
+
+export async function batchReviewRelations(thesisId: string, digestId: string, items: Array<{ evidenceId: string; relationId: string; action: string; reason?: string }>): Promise<DecisionBatch> {
+  if (useMock) {
+    items.forEach((item) => mockRelationStates.set(item.relationId, item.action === '确认' ? 'confirmed' : item.action === '驳回' ? 'rejected' : 'pending'))
+    return { batchId: `RDB-DEMO-${Date.now()}`, thesisId, actor: 'demo', digestId, confirmedCount: items.filter((x) => x.action === '确认').length, pendingCount: items.filter((x) => x.action === '暂不判断').length, rejectedCount: items.filter((x) => x.action === '驳回').length, relationCount: items.length, suggestionId: 1, currentStatus: '验证中', suggestedStatus: '验证中', requiresStatusDecision: false, outputType: '信息沉淀', requiresHumanConfirmation: false, researchAlerts: [], hypothesisHealth: [], suggestionReasons: [], items: [] }
+  }
+  const result = await request<Record<string, unknown>>(`/api/theses/${encodeURIComponent(thesisId)}/decision-batches`, { method: 'POST', body: JSON.stringify({ digest_id: digestId, items: items.map((item) => ({ evidence_id: item.evidenceId, relation_id: item.relationId, action: item.action, reason: item.reason })) }) })
+  return toDecisionBatch(result)
+}
+
+function toDecisionBatch(result: Record<string, unknown>): DecisionBatch {
+  return {
+    batchId: String(result.batch_id), thesisId: String(result.thesis_id), actor: String(result.actor), submittedAt: result.submitted_at ? String(result.submitted_at) : undefined, digestId: result.digest_id ? String(result.digest_id) : undefined, note: result.note ? String(result.note) : undefined, confirmedCount: Number(result.confirmed_count), pendingCount: Number(result.pending_count), rejectedCount: Number(result.rejected_count), relationCount: Number(result.relation_count), suggestionId: Number(result.suggestion_id), currentStatus: String(result.current_status), suggestedStatus: String(result.suggested_status), requiresStatusDecision: Boolean(result.requires_status_decision),
+    outputType: String(result.output_type ?? '信息沉淀') as Suggestion['outputType'], requiresHumanConfirmation: Boolean(result.requires_human_confirmation),
+    researchAlerts: ((result.research_alerts ?? []) as Array<Record<string, unknown>>).map((alert) => ({ category: String(alert.category), level: String(alert.level), title: String(alert.title), detail: String(alert.detail), hypothesisIds: (alert.hypothesis_ids ?? []) as string[] })),
+    hypothesisHealth: ((result.hypothesis_health ?? []) as Array<Record<string, unknown>>).map((health) => ({ hypothesisId: String(health.hypothesis_id), state: String(health.state), reason: String(health.reason), supportCount: Number(health.support_count ?? 0), conflictCount: Number(health.conflict_count ?? 0) })),
+    statusDecisionAction: result.status_decision_action ? String(result.status_decision_action) : undefined, suggestionReasons: (result.suggestion_reasons ?? []) as string[], items: (result.items ?? []) as DecisionBatch['items'],
+  }
+}
+
+export async function getLatestDecisionBatch(thesisId: string, digestId: string): Promise<DecisionBatch | null> {
+  if (useMock) return null
+  const result = await request<Record<string, unknown> | null>(`/api/theses/${encodeURIComponent(thesisId)}/decision-batches?digest_id=${encodeURIComponent(digestId)}`)
+  return result ? toDecisionBatch(result) : null
 }
 
 export async function deactivateRelation(evidenceId: string, relationId: string, reason: string): Promise<void> {

@@ -51,7 +51,7 @@ export function EvidenceEventRow({ item, featured = false }: { item: EvidenceFee
     <div className="evidence-side">
       <div className="confidence"><span>AI 置信度</span><strong>{Math.round(item.aiConfidence * 100)}%</strong></div>
       <NavLink className="primary-link" to={`/radar/${item.evidenceId}?thesisId=${encodeURIComponent(item.thesisId)}&relationId=${encodeURIComponent(item.relationId)}`}>去核验 <span>→</span></NavLink>
-      <NavLink className="secondary-link" to={`/theses/${item.thesisId}`}>查看逻辑</NavLink>
+      <NavLink className="secondary-link" to={`/companies/${encodeURIComponent(item.securityId)}?thesisId=${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink>
     </div>
   </article>
 }
@@ -72,7 +72,7 @@ export function ErrorState({ error }: { error: Error | null }) {
   return <div className="page-state error"><span className="state-icon">!</span><strong>数据加载失败</strong><p>{error?.message ?? '请刷新页面或联系管理员。'}</p><button onClick={() => window.location.reload()}>刷新页面</button></div>
 }
 
-export function InlineError({ error }: { error: Error | null }) {
+export function InlineError({ error }: { error: Error | null | undefined }) {
   return error ? <p className="inline-error">{error.message}</p> : null
 }
 

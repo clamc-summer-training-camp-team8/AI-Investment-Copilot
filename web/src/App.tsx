@@ -383,7 +383,7 @@ function CreateDraftDialogV2({ theses, initialSecurity, onClose }: { theses: The
       // 否则新草稿落库后可能被误判成“已有逻辑”而跳回旧页面。
       if (reusedExisting) {
         onClose()
-        navigate(`/theses/${thesis.thesisId}`)
+        navigate(`/companies/${encodeURIComponent(thesis.securityId)}?thesisId=${encodeURIComponent(thesis.thesisId)}`)
         return
       }
       const generatedThesis = thesis as ThesisDetail

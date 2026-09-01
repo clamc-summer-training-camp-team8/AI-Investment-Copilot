@@ -147,6 +147,7 @@ def review(
     reason: str | None,
     actor: Actor,
     thresholds: RuleThresholds,
+    record_status_suggestion: bool = True,
 ) -> tuple[EvidenceRelationRecord, ThesisRecord]:
     record = uow.relations.get(relation_id)
     if record is None:
@@ -190,13 +191,14 @@ def review(
         object_id=relation_id,
         detail={"reason": reason},
     )
-    suggestion = status.compute_suggestion(
-        uow,
-        thesis=thesis,
-        hypotheses=uow.thesis.list_hypotheses(thesis.thesis_id),
-        thresholds=thresholds,
-    )
-    status.record_suggestion(uow, thesis=thesis, suggestion=suggestion, actor=actor.user_id)
+    if record_status_suggestion:
+        suggestion = status.compute_suggestion(
+            uow,
+            thesis=thesis,
+            hypotheses=uow.thesis.list_hypotheses(thesis.thesis_id),
+            thresholds=thresholds,
+        )
+        status.record_suggestion(uow, thesis=thesis, suggestion=suggestion, actor=actor.user_id)
     return updated, thesis
 
 

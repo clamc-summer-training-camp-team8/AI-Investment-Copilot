@@ -76,7 +76,7 @@ export const demoEvidenceFeeds: EvidenceFeedItem[] = [
 
 export const demoRelations: Relation[] = [{ relationId: 'REL-SG-001', thesisId: demoThesis.thesisId, hypothesisId: 'HYP-SG-001', direction: 'conflict', strength: 'high', status: 'pending', reason: '收入高速增长但毛利率未同步改善，可能削弱盈利韧性。', createdBy: 'ai-runtime', canManage: true }]
 
-export const demoSuggestions: Suggestion[] = [{ suggestionId: 2031, currentStatus: '验证中', suggestedStatus: '出现分歧', reasons: ['核心假设同时存在已确认支持证据与高强度冲突候选', '收入增长与毛利率变化方向背离'], triggeredHypotheses: ['HYP-SG-001'], ruleVersion: 'status-rule-v1.8' }]
+export const demoSuggestions: Suggestion[] = [{ suggestionId: 2031, currentStatus: '验证中', suggestedStatus: '出现分歧', reasons: ['核心假设同时存在已确认支持证据与高强度冲突候选', '收入增长与毛利率变化方向背离'], triggeredHypotheses: ['HYP-SG-001'], ruleVersion: 'status-rule-v1.8', outputType: '状态变更建议', requiresHumanConfirmation: true, researchAlerts: [], hypothesisHealth: [{ hypothesisId: 'HYP-SG-001', state: '分歧', reason: '已确认支持 2 条、冲突 2 条，均达到分歧阈值', supportCount: 2, conflictCount: 2 }] }]
 
 export const demoTrends: Trend[] = [
   { hypothesisId: 'HYP-SG-001', statement: hypotheses[0].statement, metricId: 'MET-GM-001', unit: '%', direction: '改善', points: [{ period: '2025Q2', value: '34.2', publishedOn: '2025-08-20' }, { period: '2025Q3', value: '35.1', publishedOn: '2025-10-30' }, { period: '2025Q4', value: '36.5', publishedOn: '2026-04-18' }, { period: '2026Q1', value: '38.4', publishedOn: '2026-04-29' }] },

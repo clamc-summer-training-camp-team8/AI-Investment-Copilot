@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, NavLink, useParams, useSearchParams } from 'react-router-dom'
 import {
-  createRelation, createReviewDraft, deactivateRelation, decideAdjudication, decideStatus, getAudit,
+  batchReviewRelations, createRelation, createReviewDraft, deactivateRelation, decideAdjudication, decideStatus, getAudit, getLatestDecisionBatch,
   getDocumentSegment, getEvidence, getEvidenceRetrievalTrace, getFullDocument, getInvestodayCollectionStatus, getRadarEvidence, getRelations, getResearchUpdates, getSuggestions, syncTodayResearch,
   getLogicChangeDigest, getPublishReadiness, getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks, recheckThesisQuality,
   listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listSecurities, listTheses,
@@ -148,12 +148,57 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
     return match ? `${Number(match[1])}月${Number(match[2])}日` : formatDate(value)
   }
   const collectionStatus = collectionStatusPresentation(collection.data)
+  const totalHypotheses = current.reduce((total, item) => total + item.hypotheses.length, 0)
+  const totalMappings = current.reduce((total, item) => total + item.hypotheses.reduce((count, hypothesis) => count + hypothesis.mappings.length, 0), 0)
+  const affectedCompanyCount = themesByCompany.size
+  const pendingTodayCount = todayThemeItems.filter((item) => item.confirmationStatus === 'pending').length
+  const confirmedTodayCount = todayThemeItems.filter((item) => item.confirmationStatus === 'confirmed').length
+  const companiesWithoutChanges = Math.max(current.length - affectedCompanyCount, 0)
+  const rankDirection = (direction: EvidenceFeedItem['themeDirection']) => direction === 'conflict' ? 4 : direction === 'divergent' ? 3 : direction === 'mixed' ? 2 : direction === 'support' ? 1 : 0
+  const actionItems = todayThemeItems
+    .filter((item) => item.confirmationStatus === 'pending')
+    .sort((left, right) => rankDirection(right.themeDirection ?? right.direction) - rankDirection(left.themeDirection ?? left.direction) || right.atomicEvidenceCount - left.atomicEvidenceCount)
+    .slice(0, 4)
+  const missingMetricTasks = current
+    .flatMap((thesis) => thesis.hypotheses
+      .filter((hypothesis) => hypothesis.importance === '核心' && hypothesis.mappings.length === 0)
+      .map((hypothesis) => ({ thesis, hypothesis })))
+    .slice(0, 4)
+  const reviewHorizon = new Date()
+  reviewHorizon.setDate(reviewHorizon.getDate() + 7)
+  const reviewDueTheses = current
+    .filter((thesis) => thesis.nextReviewAt && new Date(thesis.nextReviewAt) <= reviewHorizon)
+    .slice(0, 4)
+  const collectedToday = ((collection.data?.news.queuedToday ?? collection.data?.news.queued ?? 0) + (collection.data?.reports.queuedToday ?? collection.data?.reports.queued ?? 0))
+  const skippedSeenToday = ((collection.data?.news.skippedSeen ?? 0) + (collection.data?.reports.skippedSeen ?? 0))
+  const closureItems = [
+    { label: '资料入库', value: collectedToday || skippedSeenToday || todayThemeItems.reduce((total, item) => total + item.sourceDocumentCount, 0), note: collectedToday ? '今日新增资料进入分析' : '命中资料多为已处理内容', to: '/updates' },
+    { label: 'AI 归并', value: updates.data.total, note: '已形成主投资逻辑变化卡', to: '/updates' },
+    { label: '待研究员确认', value: pendingTodayCount, note: '需要核验方向和证据链', to: '/updates' },
+    { label: '已沉淀证据', value: confirmedTodayCount, note: '可进入假设证据库', to: '/reviews' },
+  ]
+  const pipelineSteps = [
+    { label: '采集', state: collection.data?.overallStatus === 'failed' ? '异常' : collection.data?.overallStatus === 'running' ? '运行中' : '完成', note: collectionStatus.title },
+    { label: '分析', state: todayThemeItems.length ? '已产出' : '等待中', note: `${updates.data.total} 张影响卡` },
+    { label: '复核', state: actionItems.length ? '待处理' : '无待办', note: `${actionItems.length} 项优先任务` },
+  ]
+  const researchGaps = [
+    ...(missingMetricTasks.length ? [{ label: '假设缺少监控指标', count: missingMetricTasks.length, note: '先补指标，否则后续验证只能停留在文字判断。', to: '/radar' }] : []),
+    ...(reviewDueTheses.length ? [{ label: '逻辑临近复核日期', count: reviewDueTheses.length, note: '需要重新检查近期证据是否改变原判断。', to: '/reviews' }] : []),
+    ...(companiesWithoutChanges ? [{ label: '今日无新增影响覆盖', count: companiesWithoutChanges, note: '这些公司不是待办，但可在盘后抽查资料覆盖是否充分。', to: '/coverage' }] : []),
+  ].slice(0, 3)
+  const quickActions = [
+    { label: '采集与资料状态', note: '查看今日新闻、研报入库和处理记录', to: '/updates' },
+    { label: '补充研究材料', note: '上传财报、研报或调研纪要进入知识库', to: '/assets' },
+    { label: '维护覆盖范围', note: '调整行业、公司和负责人覆盖关系', to: '/coverage' },
+    { label: '指标监控台', note: '查看阈值、预警线和后续验证指标', to: '/radar' },
+  ]
 
   return <div className="dashboard-page">
     <aside className="coverage-panel" aria-label="我的覆盖"><div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>{Object.entries(grouped).map(([industry, rows]) => <section className="coverage-group" key={industry}><button className="coverage-industry" aria-expanded={expandedIndustries.has(industry)} onClick={() => toggle(industry)}><span>{expandedIndustries.has(industry) ? '⌄' : '›'} ▥ {industry}</span><b>{rows.length}</b></button>{expandedIndustries.has(industry) && <div className="coverage-companies">{rows.map((thesis) => <NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`} key={thesis.thesisId}><span>▥ {securityById.get(thesis.securityId)?.name || thesis.securityId}</span><b>{evidenceByThesis.get(thesis.thesisId)?.length || 0}</b></NavLink>)}</div>}</section>)}<nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink><NavLink to="/updates">♧ 最新动态</NavLink></nav><button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button></aside>
     <main className="dashboard-main"><section className="dashboard-card research-feed company-theme-feed" aria-labelledby="research-feed-title"><header className="dashboard-card-header"><div><h2 id="research-feed-title">今日公司变化</h2><span>AI 已将当日资料映射到核心假设，并按主投资逻辑汇总</span></div><NavLink to="/updates">全部逻辑变化 ›</NavLink></header><div className={`dashboard-collection-state ${collectionStatus.tone}`}><i /><div><strong>{collectionStatus.title}</strong><small>{collectionStatus.detail}</small></div><NavLink to="/updates">查看采集状态 ›</NavLink></div><div className="company-theme-bundles">{companyThemeBundles.slice(0, 4).map((bundle) => <article className="company-theme-bundle" key={bundle.securityId}><header><div><div className="company-theme-company"><strong>{bundle.securityName}</strong><time>今日 · {compactDate(bundle.date)}</time></div><span>今日 {bundle.sourceCount} 份资料 · 1 条主投资逻辑变化 · 涉及 {bundle.hypothesisCount} 项核心假设</span></div>{bundle.pending && <b className="ai-label">待确认</b>}</header><div className="company-theme-list">{bundle.themes.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <section className="company-theme-row logic-change-row" key={item.thesisId}><i className={themeDirection === 'conflict' ? 'conflict' : themeDirection === 'mixed' ? 'mixed' : ''} /><div><div className="company-theme-meta"><span>主投资逻辑变化</span><strong className={themeDirection}>{updateThemeDirectionLabel(themeDirection)}</strong></div><h3>{item.thesisCoreView}</h3><p className="logic-change-summary">{item.aggregationSummary}</p><ThemeImpactLines item={item} /></div><div className="company-theme-actions"><NavLink to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink><NavLink to={impactHref}>查看影响</NavLink></div></section> })}</div></article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的主投资逻辑变化。资料可能仍在分析，或尚未触发任何现行假设；可查看采集状态了解详情。</div>}</div><NavLink className="dashboard-more" to="/updates">查看全部公司变化 ⌄</NavLink></section>
-    <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">现行主投资逻辑</h2><span>{current.length} 家公司</span></header><div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>核心假设 / 指标</span><span>操作</span></div>{current.map((thesis) => <div className="logic-table-row" role="row" key={thesis.thesisId}><strong>{securityById.get(thesis.securityId)?.name || thesis.securityId}</strong><span>{thesis.title}</span><b className={`logic-state state-${thesis.status}`}>{thesis.status}</b><span>{thesis.hypotheses.filter((item) => item.importance === '核心').length} 项核心假设 · {thesis.hypotheses.reduce((count, item) => count + item.mappings.length, 0)} 个指标</span><NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`}>查看逻辑</NavLink></div>)}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section></main>
-    <aside className="dashboard-right"><section className="dashboard-card attention-card"><header className="dashboard-card-header"><h2>研究覆盖状态</h2></header><div className="attention-row attention-0"><i>▥</i><strong>{current.length} 家公司维护现行主逻辑</strong></div><div className="attention-row attention-1"><i>◈</i><strong>{current.reduce((total, item) => total + item.hypotheses.length, 0)} 条假设已纳入维护</strong></div><div className="attention-row attention-2"><i>⌁</i><strong>{updates.data.total} 张影响聚合卡可复核</strong></div></section><section className="dashboard-card todo-card"><header className="dashboard-card-header"><h2>待确认影响</h2><NavLink to="/updates">更多 ›</NavLink></header>{updates.data.items.filter((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending').slice(0, 5).map((item) => <article className="todo-row" key={item.relationId}><span className="todo-level level-中">待确认</span><strong>{item.securityName}：{item.hypothesisStatement}</strong><small>{item.sourceDocumentTitle}</small><NavLink to={`/updates/${encodeURIComponent(item.evidenceId)}?relationId=${encodeURIComponent(item.relationId)}`}>去复核</NavLink></article>)}{!updates.data.items.some((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending') && <p className="muted">暂无待确认影响。</p>}</section></aside>
+    <section className="dashboard-card workbench-closure" aria-labelledby="closure-title"><header className="dashboard-card-header"><div><h2 id="closure-title">今日研究闭环</h2><span>从资料进入系统到研究员确认，按处理阶段看今天卡在哪里</span></div><NavLink to="/reviews">查看研究记录 ›</NavLink></header><div className="closure-grid">{closureItems.map((item) => <NavLink className="closure-step" to={item.to} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><p>{item.note}</p></NavLink>)}</div></section><section className="dashboard-card research-gap-radar" aria-labelledby="gap-title"><header className="dashboard-card-header"><div><h2 id="gap-title">研究缺口雷达</h2><span>这里不重复公司变化，只提示会影响后续判断质量的缺口</span></div><NavLink to="/radar">查看监控 ›</NavLink></header>{researchGaps.length ? <div className="gap-radar-list">{researchGaps.map((item) => <NavLink className="gap-radar-row" to={item.to} key={item.label}><b>{item.count}</b><div><strong>{item.label}</strong><p>{item.note}</p></div></NavLink>)}</div> : <div className="side-empty">当前没有明显研究缺口；后续若缺指标、到期复核或资料覆盖不足，会在这里提醒。</div>}</section></main>
+    <aside className="dashboard-right"><section className="dashboard-card pipeline-card"><header className="dashboard-card-header"><h2>今日流水线</h2><NavLink to="/updates">详情 ›</NavLink></header><div className="pipeline-steps">{pipelineSteps.map((step, index) => <article className={`pipeline-step pipeline-${step.state}`} key={step.label}><i>{String(index + 1).padStart(2, '0')}</i><div><strong>{step.label}</strong><span>{step.state}</span><p>{step.note}</p></div></article>)}</div><footer><span>{current.length} 家覆盖公司</span><span>{totalHypotheses} 条假设</span><span>{totalMappings} 个指标</span></footer></section><section className="dashboard-card action-center"><header className="dashboard-card-header"><h2>决策队列</h2><NavLink to="/updates">全部任务 ›</NavLink></header>{actionItems.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <article className={`action-row action-${themeDirection}`} key={item.relationId}><span>{updateThemeDirectionLabel(themeDirection)}</span><strong>{item.securityName}</strong><p>{item.atomicEvidenceCount} 条证据等待确认：{item.thesisCoreView}</p><NavLink to={impactHref}>去复核</NavLink></article> })}{!actionItems.length && <div className="side-empty">当前没有待确认影响，新的 AI 判断会进入这里。</div>}</section><section className="dashboard-card quick-workspace"><header className="dashboard-card-header"><h2>快捷工作区</h2></header><div>{quickActions.map((item) => <NavLink to={item.to} key={item.label}><strong>{item.label}</strong><span>{item.note}</span></NavLink>)}</div></section></aside>
   </div>
 }
 
@@ -470,19 +515,53 @@ function ImpactReasoningChain({
   </div>
 }
 
+function researchOutputTone(outputType: Suggestion['outputType']) {
+  return outputType === '状态变更建议' ? 'decision' : outputType === '研究提醒' ? 'alert' : 'record'
+}
+
+function ResearchOutcomePanel({
+  output,
+  hypothesisNames,
+}: {
+  output?: Pick<Suggestion, 'outputType' | 'currentStatus' | 'suggestedStatus' | 'requiresHumanConfirmation' | 'reasons' | 'researchAlerts' | 'hypothesisHealth'>
+  hypothesisNames: Map<string, string>
+}) {
+  if (!output) return <section className="research-outcome-panel empty"><div><span>研究处理结果</span><h2>等待本批关系完成处置</h2><p>确认、观察或驳回候选关系后，系统会统一输出状态建议、研究提醒与各假设健康度。</p></div></section>
+  const tone = researchOutputTone(output.outputType)
+  const title = output.outputType === '状态变更建议'
+    ? `建议正式状态由“${output.currentStatus}”调整为“${output.suggestedStatus}”`
+    : output.outputType === '研究提醒'
+      ? '正式状态不变，但有需要跟进的研究事项'
+      : '本批仅沉淀证据与假设健康度，正式状态保持不变'
+  return <section className={`research-outcome-panel ${tone}`}>
+    <header><div><span>研究处理结果</span><h2>{title}</h2><p>{output.requiresHumanConfirmation ? '这是状态变更建议，需要负责人填写理由后在右侧接受、拒绝或修改。' : '这不是状态变更待办；请按提醒继续跟踪或将本轮信息留作研究依据。'}</p></div><b>{output.outputType}</b></header>
+    {output.reasons.length > 0 && <div className="research-outcome-rationale"><strong>为什么得到这个结果</strong><ul>{output.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>}
+    {output.researchAlerts.length > 0 && <section className="research-alert-list" aria-label="研究提醒"><header><strong>研究提醒</strong><span>不会自动改正式状态</span></header>{output.researchAlerts.map((alert, index) => <article key={`${alert.title}-${index}`}><b>{alert.level}</b><div><strong>{alert.title}</strong><p>{alert.detail}</p>{alert.hypothesisIds.length > 0 && <small>涉及：{alert.hypothesisIds.map((id) => hypothesisNames.get(id) ?? id).join('；')}</small>}</div></article>)}</section>}
+    {output.hypothesisHealth.length > 0 && <section className="hypothesis-health-list" aria-label="假设健康度"><header><strong>本批假设健康度</strong><span>基于已确认关系与已维护的指标规则</span></header><div>{output.hypothesisHealth.map((health) => <article key={health.hypothesisId}><div><span className={`hypothesis-health-state state-${health.state}`}>{health.state}</span><strong>{hypothesisNames.get(health.hypothesisId) ?? health.hypothesisId}</strong><p>{health.reason}</p></div><small><b>支持 {health.supportCount}</b><b>冲突 {health.conflictCount}</b></small></article>)}</div></section>}
+  </section>
+}
+
 function HypothesisReviewCard({
   impact,
   thesisId,
   currentThesisStatus,
   suggestion,
+  sourceFacts,
 }: {
   impact: LogicChangeDigestDetail['hypothesisImpacts'][number]
   thesisId: string
   currentThesisStatus: string
   suggestion?: Suggestion
+  sourceFacts: Map<string, SourceFactWithDocument>
 }) {
   const qc = useQueryClient()
-  const [note, setNote] = useState('')
+  const [activeDecision, setActiveDecision] = useState<{ relationId: string; kind: 'reject' | 'observe' } | null>(null)
+  const [decisionReason, setDecisionReason] = useState('')
+  const [missingInformation, setMissingInformation] = useState('')
+  const [validationTrigger, setValidationTrigger] = useState('')
+  const [reviewOn, setReviewOn] = useState('')
+  const [statusReason, setStatusReason] = useState('')
+  const [targetStatus, setTargetStatus] = useState(currentThesisStatus)
   const relations = useQuery({
     queryKey: ['logic-change-impact-relations', thesisId, impact.hypothesisId, impact.evidenceIds],
     queryFn: async () => {
@@ -493,12 +572,35 @@ function HypothesisReviewCard({
     },
     enabled: impact.evidenceIds.length > 0,
   })
-  const pendingRelations = (relations.data ?? []).filter((item) => item.relation.status === 'pending')
+  const observationPrefix = '[观察清单]'
+  const observationRelations = (relations.data ?? []).filter((item) => item.relation.status === 'pending' && item.relation.reason.startsWith(observationPrefix))
+  const pendingRelations = (relations.data ?? []).filter((item) => item.relation.status === 'pending' && !item.relation.reason.startsWith(observationPrefix))
   const reviewedRelations = (relations.data ?? []).filter((item) => item.relation.status !== 'pending')
+  const groupRelations = (items: typeof pendingRelations) => {
+    const groups = new Map<string, { key: string; direction: string; strength: string; sourceTitles: Set<string>; sourceTypes: Set<string>; items: typeof pendingRelations }>()
+    for (const item of items) {
+      const fact = sourceFacts.get(item.evidenceId)
+      const title = fact?.documentTitle || '未识别来源资料'
+      const docType = fact?.documentType || '研究资料'
+      const key = `${item.relation.direction}@@${item.relation.strength}`
+      const group = groups.get(key) ?? { key, direction: item.relation.direction, strength: item.relation.strength, sourceTitles: new Set<string>(), sourceTypes: new Set<string>(), items: [] }
+      group.sourceTitles.add(title)
+      group.sourceTypes.add(docType)
+      group.items.push(item)
+      groups.set(key, group)
+    }
+    return [...groups.values()]
+  }
+  const pendingGroups = groupRelations(pendingRelations)
+  const observationGroups = groupRelations(observationRelations)
   const review = useMutation({
-    mutationFn: (action: '确认' | '暂不判断') => Promise.all(pendingRelations.map(({ evidenceId, relation }) => reviewRelation(evidenceId, relation.relationId, action, note || undefined))),
+    mutationFn: ({ items, action, reason }: { items: typeof pendingRelations; action: '确认' | '驳回' | '暂不判断'; reason?: string }) => Promise.all(items.map(({ evidenceId, relation }) => reviewRelation(evidenceId, relation.relationId, action, reason))),
     onSuccess: async () => {
-      setNote('')
+      setActiveDecision(null)
+      setDecisionReason('')
+      setMissingInformation('')
+      setValidationTrigger('')
+      setReviewOn('')
       await Promise.all([
         qc.invalidateQueries({ queryKey: ['logic-change-impact-relations', thesisId, impact.hypothesisId] }),
         qc.invalidateQueries({ queryKey: ['suggestions', thesisId] }),
@@ -508,18 +610,42 @@ function HypothesisReviewCard({
       ])
     },
   })
-  const hasSuggestion = Boolean(suggestion && !suggestion.humanAction && suggestion.suggestedStatus !== suggestion.currentStatus)
+  const hasSuggestion = Boolean(suggestion && !suggestion.humanAction && suggestion.requiresHumanConfirmation)
+  const statusDecision = useMutation({
+    mutationFn: (action: '接受' | '拒绝' | '修改') => decideStatus(thesisId, { suggestionId: suggestion!.suggestionId, action, reason: statusReason, targetStatus: action === '修改' ? targetStatus : undefined }),
+    onSuccess: async () => {
+      setStatusReason('')
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['suggestions', thesisId] }),
+        qc.invalidateQueries({ queryKey: ['thesis', thesisId] }),
+        qc.invalidateQueries({ queryKey: ['logic-change-digest'] }),
+        qc.invalidateQueries({ queryKey: ['workbench'] }),
+      ])
+    },
+  })
+  const observationReason = `${observationPrefix} 缺失信息：${missingInformation.trim()}；触发条件：${validationTrigger.trim() || '获得新的直接证据'}；复查日期：${reviewOn}`
   return <section className={`hypothesis-review-card ${hasSuggestion ? 'has-suggestion' : 'stable'}`}>
     <header>
-      <div><span>研究员处置与状态建议</span><strong>{hasSuggestion ? `建议：${suggestion!.suggestedStatus}` : `维持当前主逻辑状态：${currentThesisStatus}`}</strong></div>
-      <small>{pendingRelations.length ? `${pendingRelations.length} 条当日候选关系待处理` : reviewedRelations.length ? `已处理 ${reviewedRelations.length} 条当日关系` : '本路径暂无可处置关系'}</small>
+      <div><span>第一步 · 证据关系处置</span><strong>{pendingRelations.length ? `决定哪些信息进入“${impact.statement}”的证据链` : '本轮关系已完成分流'}</strong></div>
+      <small>{pendingGroups.length ? `${pendingGroups.length} 个关系包待决策 · 已归并 ${pendingRelations.length} 条底层证据` : `${reviewedRelations.length} 条已处置 · ${observationGroups.length} 个关系包观察中`}</small>
     </header>
-    {hasSuggestion ? <div className="hypothesis-suggestion-reasons"><b>为什么触发</b><ul>{suggestion!.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div> : <p className="hypothesis-stable-copy">本次资料尚未满足状态变更条件；即使 AI 给出了候选方向，也不会自动改变正式投资逻辑。</p>}
-    {pendingRelations.length > 0 ? <div className="hypothesis-review-actions">
-      <label><span>研究员备注（可选）</span><input value={note} onChange={(event) => setNote(event.target.value)} placeholder="说明采纳或暂不判断的依据" /></label>
-      <div><button className="button primary" disabled={review.isPending} onClick={() => review.mutate('确认')}>{review.isPending ? '处理中…' : '采纳本次关系'}</button><button className="button secondary" disabled={review.isPending} onClick={() => review.mutate('暂不判断')}>维持原状态</button><NavLink className="button secondary" to={`/theses/${encodeURIComponent(thesisId)}`}>补充验证</NavLink></div>
-      <InlineError error={review.error} />
-    </div> : <div className="hypothesis-review-complete"><span>{reviewedRelations.some((item) => item.relation.status === 'confirmed') ? '本路径已纳入已确认关系，规则引擎已重新计算状态建议。' : '本路径暂不纳入正式证据链，保留候选推理与资料回查。'}</span><NavLink to={`/theses/${encodeURIComponent(thesisId)}`}>前往逻辑页继续验证 →</NavLink></div>}
+    {pendingGroups.length > 0 && <div className="relation-decision-list">{pendingGroups.map((group, index) => {
+      const active = activeDecision?.relationId === group.key ? activeDecision.kind : null
+      return <article className="relation-decision-item" key={group.key}>
+        <div className="relation-decision-summary"><span>AI 判断主题 {String(index + 1).padStart(2, '0')} · {group.sourceTypes.size} 类资料</span><strong>{group.direction} · {group.strength}强度</strong><small>跨 {group.sourceTitles.size} 份资料归并 · 共 {group.items.length} 条底层证据</small></div>
+        <details className="relation-group-evidence"><summary>查看来源与原始事实（{group.sourceTitles.size} 份资料 / {group.items.length} 条证据）</summary>{group.items.map(({ evidenceId }) => { const fact = sourceFacts.get(evidenceId); return <div key={evidenceId}><b>{fact?.documentTitle || evidenceId}</b><span>{fact?.factExcerpt || '原始事实可在来源资料区查看'}</span></div> })}</details>
+        <div className="relation-decision-buttons"><button className="button primary" disabled={review.isPending} onClick={() => review.mutate({ items: group.items, action: '确认', reason: `研究员确认 AI 判断主题：${group.direction} / ${group.strength}强度，覆盖 ${group.sourceTitles.size} 份资料` })}>纳入该判断主题</button><button className="button secondary" disabled={review.isPending} onClick={() => setActiveDecision({ relationId: group.key, kind: 'reject' })}>不纳入该主题</button><button className="button secondary" disabled={review.isPending} onClick={() => setActiveDecision({ relationId: group.key, kind: 'observe' })}>加入观察清单</button></div>
+        {active === 'reject' && <div className="relation-decision-form"><label><span>不纳入原因（必填）</span><textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} placeholder="例如：关系不成立、信息重复、来源不足或与当前假设无关" /></label><div><button className="button danger-link" disabled={review.isPending || !decisionReason.trim()} onClick={() => review.mutate({ items: group.items, action: '驳回', reason: decisionReason.trim() })}>确认整包不纳入</button><button className="button ghost" onClick={() => setActiveDecision(null)}>取消</button></div></div>}
+        {active === 'observe' && <div className="relation-decision-form observation-form"><label><span>还缺少什么（必填）</span><textarea value={missingInformation} onChange={(event) => setMissingInformation(event.target.value)} placeholder="例如：缺少下一季度订单兑现或毛利率数据" /></label><label><span>重新验证条件</span><input value={validationTrigger} onChange={(event) => setValidationTrigger(event.target.value)} placeholder="例如：公司披露季报或指标越过阈值" /></label><label><span>复查日期（必填）</span><input type="date" value={reviewOn} onChange={(event) => setReviewOn(event.target.value)} /></label><div><button className="button primary" disabled={review.isPending || !missingInformation.trim() || !reviewOn} onClick={() => review.mutate({ items: group.items, action: '暂不判断', reason: observationReason })}>整包保存到观察清单</button><button className="button ghost" onClick={() => setActiveDecision(null)}>取消</button></div></div>}
+      </article>
+    })}</div>}
+    {observationGroups.length > 0 && <div className="observation-list"><header><strong>观察清单</strong><span>条件满足后重新进入判断</span></header>{observationGroups.map((group) => <article key={group.key}><div><b>{group.direction} · {group.strength}强度 · {group.sourceTitles.size} 份资料</b><p>{group.items[0].relation.reason.replace(observationPrefix, '').trim()}</p></div><button className="button secondary" disabled={review.isPending} onClick={() => review.mutate({ items: group.items, action: '暂不判断', reason: '观察条件已满足，重新进入待处理' })}>整包重新评估</button></article>)}</div>}
+    <InlineError error={review.error} />
+    {pendingRelations.length === 0 && <section className={`status-decision-stage ${hasSuggestion ? 'is-actionable' : ''}`}>
+      <header><div><span>第二步 · 主逻辑状态决策</span><strong>{hasSuggestion ? `${suggestion!.currentStatus} → ${suggestion!.suggestedStatus}` : `本轮无需调整主逻辑状态（当前：${currentThesisStatus}）`}</strong></div></header>
+      {hasSuggestion ? <><div className="hypothesis-suggestion-reasons"><b>触发依据</b><ul>{suggestion!.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div><label className="status-decision-reason"><span>研究员判断理由（必填）</span><textarea value={statusReason} onChange={(event) => setStatusReason(event.target.value)} placeholder="说明为什么接受建议、坚持原状态或调整为其他状态" /></label><div className="status-decision-actions"><button className="button primary" disabled={!statusReason.trim() || statusDecision.isPending} onClick={() => statusDecision.mutate('接受')}>接受状态建议</button><button className="button secondary" disabled={!statusReason.trim() || statusDecision.isPending} onClick={() => statusDecision.mutate('拒绝')}>保持当前状态</button><select aria-label="自定义目标状态" value={targetStatus} onChange={(event) => setTargetStatus(event.target.value)}><option>验证中</option><option>出现分歧</option><option>重大风险</option><option>已关闭</option></select><button className="button secondary" disabled={!statusReason.trim() || targetStatus === currentThesisStatus || statusDecision.isPending} onClick={() => statusDecision.mutate('修改')}>调整为所选状态</button></div><InlineError error={statusDecision.error} /></> : <p>证据关系已完成处置，但尚未达到正式状态变化阈值。系统已保留本轮证据决策与观察项，不再要求重复点击“维持不变”。</p>}
+    </section>}
+    <div className="hypothesis-review-complete"><span>所有操作都会写入关系记录和审计日志；AI 不会自动修改正式投资逻辑。</span><NavLink to={`/theses/${encodeURIComponent(thesisId)}`}>进入公司逻辑维护页 →</NavLink></div>
   </section>
 }
 
@@ -554,6 +680,51 @@ function LogicChangeSourceFact({ fact, hypothesisNames }: { fact: LogicChangeDig
   </article>
 }
 
+function BatchDecisionWorkspace({ item }: { item: LogicChangeDigestDetail }) {
+  const qc = useQueryClient()
+  const evidenceIds = [...new Set(item.hypothesisImpacts.flatMap((impact) => impact.evidenceIds))]
+  const relationQueries = useQueries({ queries: evidenceIds.map((evidenceId) => ({ queryKey: ['batch-review-relation', evidenceId], queryFn: () => getRelations(evidenceId) })) })
+  const previousBatch = useQuery({ queryKey: ['decision-batch', item.thesisId, item.digestId], queryFn: () => getLatestDecisionBatch(item.thesisId, item.digestId) })
+  const [decisions, setDecisions] = useState<Record<string, '确认' | '驳回' | '暂不判断'>>(() => Object.fromEntries(item.hypothesisImpacts.map((impact) => [impact.hypothesisId, impact.direction === '分歧' || impact.presentation === '双向分歧' ? '暂不判断' : '确认'])))
+  const [reasons, setReasons] = useState<Record<string, string>>({})
+  const [statusReason, setStatusReason] = useState('')
+  const [targetStatus, setTargetStatus] = useState('验证中')
+  const relations = evidenceIds.flatMap((evidenceId, index) => (relationQueries[index].data ?? []).filter((relation) => relation.thesisId === item.thesisId && relation.status === 'pending').map((relation) => ({ evidenceId, relation })))
+  const submit = useMutation({ mutationFn: () => batchReviewRelations(item.thesisId, item.digestId, relations.map(({ evidenceId, relation }) => ({ evidenceId, relationId: relation.relationId, action: decisions[relation.hypothesisId] ?? '暂不判断', reason: reasons[relation.hypothesisId] || (decisions[relation.hypothesisId] === '确认' ? '研究员接受本批 AI 判断' : undefined) }))), onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['logic-change-digest'] }), qc.invalidateQueries({ queryKey: ['research-updates'] }), qc.invalidateQueries({ queryKey: ['suggestions', item.thesisId] }), qc.invalidateQueries({ queryKey: ['audit', item.thesisId] }), qc.invalidateQueries({ queryKey: ['workbench'] })]) } })
+  const statusDecision = useMutation({
+    mutationFn: async (action: '接受' | '拒绝' | '修改') => {
+      const batch = submit.data ?? previousBatch.data
+      if (!batch) throw new Error('未找到可处置的研究决策批次')
+      await decideStatus(item.thesisId, { suggestionId: batch.suggestionId, action, reason: statusReason.trim(), targetStatus: action === '修改' ? targetStatus : undefined })
+      return action
+    },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['thesis', item.thesisId] }), qc.invalidateQueries({ queryKey: ['suggestions', item.thesisId] }), qc.invalidateQueries({ queryKey: ['audit', item.thesisId] }), qc.invalidateQueries({ queryKey: ['workbench'] })]) },
+  })
+  const needsReason = item.hypothesisImpacts.some((impact) => decisions[impact.hypothesisId] !== '确认' && !reasons[impact.hypothesisId]?.trim())
+  const counts = Object.values(decisions).reduce<Record<string, number>>((result, action) => ({ ...result, [action]: (result[action] ?? 0) + 1 }), {})
+  const savedBatch = submit.data ?? previousBatch.data
+  if (savedBatch) {
+    const result = savedBatch
+    const statusHandled = statusDecision.isSuccess || Boolean(result.statusDecisionAction)
+    return <section className="batch-decision-workspace batch-decision-result" aria-live="polite">
+      <span>{statusHandled ? '正式状态决策完成' : '本批处理完成'}</span>
+      <h2>{statusHandled ? '本轮研究处置已全部完成' : '研究决策已保存并可追溯'}</h2>
+      <p>关系决策、AI 原始判断和最终状态建议已作为同一批次写入操作记录。</p>
+      <div className="batch-result-counts"><article><b>{result.confirmedCount}</b><span>纳入</span></article><article><b>{result.pendingCount}</b><span>观察</span></article><article><b>{result.rejectedCount}</b><span>不纳入</span></article></div>
+      <div className={`batch-result-status ${result.requiresStatusDecision ? 'requires-decision' : 'stable'}`}><span>{result.requiresStatusDecision ? '需要负责人决策' : result.outputType}</span><strong>{result.currentStatus}{result.requiresStatusDecision ? ` → ${result.suggestedStatus}` : ''}</strong><small>{result.requiresStatusDecision ? '正式投资逻辑尚未变更' : result.outputType === '研究提醒' ? '已生成关注事项，正式状态不变' : `正式状态继续保持“${result.currentStatus}”，无需重复确认`}</small></div>
+      {result.researchAlerts.length > 0 && <p className="batch-reminder-note">已生成 {result.researchAlerts.length} 项研究提醒，详见左侧“研究处理结果”；提醒不会改变正式状态。</p>}
+      {result.requiresStatusDecision && !statusHandled && <section className="batch-status-decision"><h3>处理正式投资逻辑状态</h3>{result.suggestionReasons.length > 0 && <ul>{result.suggestionReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}<label><span>研究员判断理由（必填）</span><textarea value={statusReason} onChange={(event) => setStatusReason(event.target.value)} placeholder="说明为什么接受建议、保持当前状态或调整为其他状态" /></label><div className="batch-status-actions"><button className="button primary" disabled={!statusReason.trim() || statusDecision.isPending} onClick={() => statusDecision.mutate('接受')}>接受建议</button><button className="button secondary" disabled={!statusReason.trim() || statusDecision.isPending} onClick={() => statusDecision.mutate('拒绝')}>保持当前状态</button><select aria-label="调整后的正式状态" value={targetStatus} onChange={(event) => setTargetStatus(event.target.value)}><option>验证中</option><option>出现分歧</option><option>重大风险</option><option>已关闭</option></select><button className="button secondary" disabled={!statusReason.trim() || targetStatus === result.currentStatus || statusDecision.isPending} onClick={() => statusDecision.mutate('修改')}>调整为所选状态</button></div><InlineError error={statusDecision.error} /></section>}
+      {statusHandled && <p className="batch-success">✓ 已{(statusDecision.data ?? result.statusDecisionAction) === '拒绝' ? `保持“${result.currentStatus}”` : (statusDecision.data ?? result.statusDecisionAction) === '修改' ? `调整为“${targetStatus}”` : `更新为“${result.suggestedStatus}”`}，版本、审计和复盘时间线已同步记录。</p>}
+      <details className="batch-result-details"><summary>查看本次操作记录 <span>{result.batchId}</span></summary><div>{result.items.map((entry, index) => <article key={entry.relation_id ?? index}><strong>{entry.hypothesis_statement ?? `核心假设 ${index + 1}`}</strong><p><span>AI：{entry.ai_direction ?? '—'} · {entry.ai_strength ?? '—'}</span><b>{entry.human_action === '确认' ? '已纳入' : entry.human_action === '驳回' ? '不纳入' : '继续观察'}</b></p>{entry.human_reason && <small>{entry.human_reason}</small>}</article>)}</div></details>
+      <NavLink className="button secondary batch-followup" to={`/companies/${encodeURIComponent(item.securityId)}?thesisId=${encodeURIComponent(item.thesisId)}&tab=研究记录`}>查看投资逻辑与操作记录</NavLink>
+    </section>
+  }
+  if (!previousBatch.isLoading && !relationQueries.some((query) => query.isLoading) && relations.length === 0) {
+    return <section className="batch-decision-workspace batch-decision-empty"><span>无需重复处理</span><h2>本批没有待确认关系</h2><p>相关关系可能已由其他入口处理，或不再属于当前投资逻辑。页面不会提交空批次。</p><button className="button secondary" onClick={() => { previousBatch.refetch(); relationQueries.forEach((query) => query.refetch()) }}>重新检查处理状态</button><InlineError error={previousBatch.error ?? relationQueries.find((query) => query.error)?.error} /></section>
+  }
+  return <section className="batch-decision-workspace"><span>本批决策草稿</span><h2>在 AI 判断基础上统一确认</h2><p>左侧保留完整推理与来源；这里只汇总每项假设的最终处理方式。</p><div className="batch-decision-items">{item.hypothesisImpacts.map((impact, index) => <article key={impact.hypothesisId}><button className="batch-decision-anchor" onClick={() => document.getElementById(`impact-${impact.hypothesisId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span className="hypothesis-order"><small>核心假设</small><b>{String(index + 1).padStart(2, '0')}</b></span><span className="hypothesis-draft-title">{impact.statement}</span></button><div className="hypothesis-draft-meta"><span className={`direction-chip ${impactDirectionClass(impact.direction)}`}>{impact.direction}</span><span>{impact.strength}强度</span><span className={`decision-chip decision-${decisions[impact.hypothesisId]}`}>{decisions[impact.hypothesisId] === '确认' ? '拟纳入' : decisions[impact.hypothesisId] === '驳回' ? '拟排除' : '拟观察'}</span></div><select aria-label={`${impact.statement}的处理方式`} value={decisions[impact.hypothesisId]} onChange={(event) => setDecisions((current) => ({ ...current, [impact.hypothesisId]: event.target.value as '确认' | '驳回' | '暂不判断' }))}><option value="确认">纳入证据链</option><option value="暂不判断">加入观察清单</option><option value="驳回">不纳入</option></select>{decisions[impact.hypothesisId] !== '确认' && <textarea value={reasons[impact.hypothesisId] ?? ''} onChange={(event) => setReasons((current) => ({ ...current, [impact.hypothesisId]: event.target.value }))} placeholder={decisions[impact.hypothesisId] === '暂不判断' ? '填写缺失信息、验证条件和复查计划' : '填写不纳入原因'} />}</article>)}</div><div className="batch-decision-total"><span>纳入 {counts['确认'] ?? 0}</span><span>观察 {counts['暂不判断'] ?? 0}</span><span>不纳入 {counts['驳回'] ?? 0}</span><small>将处理 {relations.length} 条底层关系</small></div><button className="button primary batch-submit" disabled={relationQueries.some((query) => query.isLoading) || !relations.length || needsReason || submit.isPending} onClick={() => submit.mutate()}>{submit.isPending ? '正在提交整批决策…' : '确认本批处理结果'}</button><InlineError error={submit.error} /></section>
+}
+
 export function LogicChangeImpactPage() {
   const { securityId = '', thesisId = '' } = useParams()
   const [params] = useSearchParams()
@@ -565,6 +736,11 @@ export function LogicChangeImpactPage() {
     queryFn: () => getLogicChangeDigest(securityId, thesisId, businessDay),
     enabled: Boolean(securityId && thesisId),
   })
+  const decisionBatch = useQuery({
+    queryKey: ['decision-batch', thesisId, digest.data?.digestId],
+    queryFn: () => getLatestDecisionBatch(thesisId, digest.data!.digestId),
+    enabled: Boolean(thesisId && digest.data?.digestId),
+  })
   const trends = useQuery({
     queryKey: ['logic-change-trends', thesisId],
     queryFn: () => getTrends(thesisId),
@@ -573,8 +749,17 @@ export function LogicChangeImpactPage() {
   if (digest.isLoading || thesis.isLoading || suggestions.isLoading) return <LoadingState text="正在整理归并影响与来源材料…" />
   if (digest.error || thesis.error || suggestions.error || !digest.data || !thesis.data || !suggestions.data) return <ErrorState error={digest.error ?? thesis.error ?? suggestions.error} />
   const item = digest.data
-  const activeSuggestions = suggestions.data.filter((suggestion) => !suggestion.humanAction && suggestion.suggestedStatus !== suggestion.currentStatus)
+  const activeSuggestions = suggestions.data.filter((suggestion) => !suggestion.humanAction && suggestion.requiresHumanConfirmation)
   const hypothesisNames = new Map(item.hypothesisImpacts.map((impact) => [impact.hypothesisId, impact.statement]))
+  const latestOutput = decisionBatch.data ? {
+    outputType: decisionBatch.data.outputType,
+    currentStatus: decisionBatch.data.currentStatus,
+    suggestedStatus: decisionBatch.data.suggestedStatus,
+    requiresHumanConfirmation: decisionBatch.data.requiresHumanConfirmation,
+    reasons: decisionBatch.data.suggestionReasons,
+    researchAlerts: decisionBatch.data.researchAlerts,
+    hypothesisHealth: decisionBatch.data.hypothesisHealth,
+  } : suggestions.data.at(-1)
   const trendsByHypothesis = new Map((trends.data ?? []).map((trend) => [trend.hypothesisId, trend]))
   const sourceFacts = new Map<string, SourceFactWithDocument>(item.sourceDocuments.flatMap((source) => source.facts.map((fact) => [fact.evidenceId, { ...fact, documentTitle: source.title, documentType: source.docType }] as const)))
   const uniqueImpactEvidence = new Set(item.hypothesisImpacts.flatMap((impact) => impact.evidenceIds)).size
@@ -602,16 +787,13 @@ export function LogicChangeImpactPage() {
             <div><dt>状态建议</dt><dd>{activeSuggestions.length ? `${activeSuggestions.length} 项待处置` : '维持不变'}</dd></div>
           </dl>
         </section>
-        <section className={`logic-change-review-summary ${activeSuggestions.length ? 'has-suggestion' : ''}`}>
-          <div><span>研究员审阅</span><h2>{activeSuggestions.length ? `${activeSuggestions.length} 项状态建议需要处置` : '本次暂无状态变更建议'}</h2><p>{activeSuggestions.length ? '先处理对应假设的当日候选关系；系统只会生成建议，正式投资逻辑仍由研究员决定是否修改。' : `当前主投资逻辑维持“${thesis.data.status}”。确认资料前，AI 判断不会改变任何正式状态。`}</p></div>
-          <div className="logic-change-review-summary-stats"><b>{item.hypothesisImpacts.length}</b><span>项假设已纳入本次审阅</span></div>
-        </section>
+        <ResearchOutcomePanel output={latestOutput ?? undefined} hypothesisNames={hypothesisNames} />
         <section className="logic-change-hypotheses">
           <header><div><span>02 / 影响推理链</span><h2>AI 如何从资料关联到投资逻辑</h2></div><small>每一步均可回查</small></header>
-          <div>{item.hypothesisImpacts.map((impact) => { const suggestion = activeSuggestions.find((candidate) => candidate.triggeredHypotheses.includes(impact.hypothesisId)); return <article key={impact.hypothesisId} className={`logic-change-hypothesis ${impactDirectionClass(impact.direction)} impact-logic-card`}>
+          <div>{item.hypothesisImpacts.map((impact) => <article id={`impact-${impact.hypothesisId}`} key={impact.hypothesisId} className={`logic-change-hypothesis ${impactDirectionClass(impact.direction)} impact-logic-card`}>
             <header><div><span>受影响核心假设</span><h3>{impact.statement}</h3></div><div className="impact-direction-summary"><i /><span>{impact.direction}</span></div></header>
-            <div><ImpactReasoningChain impact={impact} sourceFacts={sourceFacts} /><HypothesisReviewCard impact={impact} thesisId={item.thesisId} currentThesisStatus={thesis.data.status} suggestion={suggestion} /><section className="impact-historical-verification"><header><span>历史表现与后续验证</span><small>已披露财务数据仅作为背景，不代表本次新闻造成的实际结果</small></header><ImpactMetricPanel trend={trendsByHypothesis.get(impact.hypothesisId)} /></section></div>
-          </article> })}</div>
+            <div><ImpactReasoningChain impact={impact} sourceFacts={sourceFacts} /><section className="impact-historical-verification"><header><span>历史表现与后续验证</span><small>已披露财务数据仅作为背景，不代表本次新闻造成的实际结果</small></header><ImpactMetricPanel trend={trendsByHypothesis.get(impact.hypothesisId)} /></section></div>
+          </article>)}</div>
         </section>
         <section className="logic-change-sources">
           <header><div><span>03 / 全部资料与原文回查</span><h2>补充核验时，再展开查看同日全部材料</h2></div><small>上方已列出 AI 实际引用的依据</small></header>
@@ -628,10 +810,7 @@ export function LogicChangeImpactPage() {
         </section>
       </div>
       <aside className="logic-change-detail-side">
-        <section><span>研究员处理</span><h2>先核验来源，再确认关系</h2><p>归并结论只是候选判断。原始候选、资料和原文段落均未被覆盖。</p><NavLink className="button primary" to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看主投资逻辑</NavLink></section>
-        <section className="logic-change-reading-guide"><span>如何阅读 AI 判断</span><ol><li><b>资料事实</b>只陈列可回查的原文依据。</li><li><b>经营含义</b>是模型基于资料做出的候选推断。</li><li><b>影响强度</b>说明证据的直接性、一致性和仍缺少的验证。</li></ol><p>强度不代表投资胜率，研究员仍需核验后确认。</p></section>
-        {item.openQuestions.length > 0 && <section className="logic-change-questions"><span>待确认问题</span><ul>{item.openQuestions.map((question) => <li key={question}>{question}</li>)}</ul></section>}
-        <section className="logic-change-trace"><span>可追溯性</span><dl><div><dt>归并模型</dt><dd>{item.modelVersion ?? '—'}</dd></div><div><dt>提示词版本</dt><dd>{item.promptVersion ?? '—'}</dd></div><div><dt>归并记录</dt><dd>{item.digestId}</dd></div></dl></section>
+        <BatchDecisionWorkspace item={item} />
       </aside>
     </main>
   </div>
@@ -910,14 +1089,17 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   const security = useQuery({ queryKey: ['security', securityId], queryFn: () => getSecurity(securityId), enabled: Boolean(securityId) && !isDemoGeely })
   const companyMetrics = useQuery({ queryKey: ['company-metric-center', securityId], queryFn: () => getCompanyMetricCenter(securityId), enabled: Boolean(securityId) && !isDemoGeely, refetchInterval: 60_000 })
   const maintainedTheses = useQuery({ queryKey: ['company-theses', securityId], queryFn: () => listTheses(securityId, false, true), enabled: Boolean(securityId) && !isDemoGeely })
-  const [activeThesis, setActiveThesis] = useState('product')
+  const requestedThesisId = companyParams.get('thesisId') || ''
+  const [activeThesis, setActiveThesis] = useState(requestedThesisId || 'product')
   const [activeHypothesis, setActiveHypothesis] = useState('H2')
   const [showEditDialog, setShowEditDialog] = useState(false)
   useEffect(() => {
     if (isDemoGeely) return
     const first = maintainedTheses.data?.[0]
-    if (first && !maintainedTheses.data?.some((item) => item.thesisId === activeThesis)) setActiveThesis(first.thesisId)
-  }, [activeThesis, isDemoGeely, maintainedTheses.data])
+    const requested = maintainedTheses.data?.find((item) => item.thesisId === requestedThesisId)
+    if (requested && requested.thesisId !== activeThesis) setActiveThesis(requested.thesisId)
+    else if (first && !maintainedTheses.data?.some((item) => item.thesisId === activeThesis)) setActiveThesis(first.thesisId)
+  }, [activeThesis, isDemoGeely, maintainedTheses.data, requestedThesisId])
   const activeRecord = maintainedTheses.data?.find((item) => item.thesisId === activeThesis) ?? maintainedTheses.data?.[0]
   useEffect(() => {
     const first = isDemoGeely ? 'H2' : activeRecord?.hypotheses[0]?.hypothesisId
@@ -926,6 +1108,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   }, [activeHypothesis, activeRecord, isDemoGeely])
   const trends = useQuery({ queryKey: ['company-thesis-trends', activeRecord?.thesisId], queryFn: () => getTrends(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
   const evidenceFeed = useQuery({ queryKey: ['company-thesis-evidence', activeRecord?.thesisId], queryFn: () => getThesisEvidenceFeed(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely })
+  const researchAudit = useQuery({ queryKey: ['audit', activeRecord?.thesisId], queryFn: () => getAudit(activeRecord!.thesisId), enabled: Boolean(activeRecord) && !isDemoGeely && companyTab === '研究记录' })
   const staticBaseResearch = activeThesis === 'product' ? thesisResearch.product : {
     hypotheses: activeThesis === 'overseas' ? [
       { id: 'H1', title: '重点海外市场渠道覆盖持续扩大', state: '支持', tone: 'support' },
@@ -951,7 +1134,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
   const selected = research?.hypotheses.find((item) => item.id === activeHypothesis) ?? research?.hypotheses[0]
   const metrics = selected ? research?.metrics[selected.id] ?? [] : []
   const evidence = selected ? research?.evidence[selected.id] ?? [] : []
-  const chooseThesis = (id: string) => { setActiveThesis(id); const target = availableTheses.find((item) => item.id === id); setActiveHypothesis(target?.record?.hypotheses[0]?.hypothesisId ?? 'H2') }
+  const chooseThesis = (id: string) => { setActiveThesis(id); setCompanyParams({ thesisId: id }); const target = availableTheses.find((item) => item.id === id); setActiveHypothesis(target?.record?.hypotheses[0]?.hypothesisId ?? 'H2') }
   const displaySecurity = security.data ?? (isDemoGeely ? { securityId: '00175', name: '吉利汽车', ticker: '0175.HK', industry: '汽车' } : undefined)
   const closeMetric = companyMetrics.data?.metrics.find((item) => item.metricId === 'MKT-CLOSE-D')
   const returnMetric = companyMetrics.data?.metrics.find((item) => item.metricId === 'MKT-CHANGE-PCT-D')
@@ -964,7 +1147,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
       <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => { if (activeRecord) { setCompanyTab('投资逻辑'); setCompanyParams({}); return } onCreate?.(displaySecurity) }}><span aria-hidden>＋</span>新建逻辑</button></div>
     </header>
     <nav className="company-tabs" aria-label="公司研究导航">{['总览', '投资逻辑', '事件与证据', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '投资逻辑' ? {} : { tab: item }) }}>{item}</button>)}</nav>
-    {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : <main className="company-canvas">
+    {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : companyTab === '研究记录' ? <main className="company-canvas company-research-history"><section className="research-history-header"><div><span>RESEARCH DECISION LOG</span><h2>研究决策与操作记录</h2><p>按时间还原证据处理、状态建议、正式状态变化与版本演进。</p></div><NavLink className="button primary" to={`/retrospective/new?thesisId=${encodeURIComponent(activeRecord?.thesisId ?? '')}`}>基于记录发起复盘</NavLink></section>{researchAudit.isLoading ? <LoadingState text="正在加载研究记录…" /> : researchAudit.error ? <ErrorState error={researchAudit.error} /> : <div className="research-history-list">{(researchAudit.data ?? []).filter((entry) => entry.action !== '查看').map((entry, index) => <article key={`${entry.action}-${entry.occurredAt}-${index}`}><i /><div><header><strong>{entry.action}</strong><time>{formatDate(entry.occurredAt)}</time></header><p>{entry.actor}</p>{entry.detail?.batch_id && <details><summary>查看批次明细 · {String(entry.detail.batch_id)}</summary><div className="research-history-batch"><span>纳入 {String(entry.detail.confirmed_count ?? 0)}</span><span>观察 {String(entry.detail.pending_count ?? 0)}</span><span>不纳入 {String(entry.detail.rejected_count ?? 0)}</span><span>状态建议 {String(entry.detail.suggested_thesis_status ?? '—')}</span></div></details>}</div></article>)}</div>}</main> : <main className="company-canvas">
       {!thesis || !research || !selected ? <EmptyState title="尚未建立投资逻辑" description="该证券已建档，但数据库中暂时没有可展示的投资逻辑。" /> : <>
       <section className="thesis-switcher" aria-label="投资逻辑选择">{availableTheses.map((item) => <button key={item.id} className={activeThesis === item.id ? 'active' : ''} onClick={() => chooseThesis(item.id)} aria-pressed={activeThesis === item.id}><strong>{item.title}</strong><span><i className={`dot ${item.health === '证据不足' ? 'warning' : ''}`} />{item.direction} · {item.health} · {item.confidence == null ? '待计算' : `${item.confidence}%`}</span></button>)}</section>
       <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><div className="confidence-block"><span>逻辑置信度 ⓘ</span><strong>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</strong><i><b style={{ width: `${thesis.confidence ?? 0}%` }} /></i></div><dl><div><dt>逻辑负责人</dt><dd>{thesis.record?.owner || '张明'}</dd></div><div><dt>最后更新</dt><dd>{thesis.record?.establishedOn || '2025-05-20'}</dd></div></dl><button className="edit-thesis" disabled={!activeRecord} onClick={() => setShowEditDialog(true)}>✎ 编辑逻辑</button></section>
@@ -1220,10 +1403,22 @@ export function ThesisListPage() {
   const query = useQuery({ queryKey: ['theses'], queryFn: () => listTheses() })
   if (query.isLoading) return <LoadingState />
   if (query.error || !query.data) return <ErrorState error={query.error} />
-  return <><PageTitle eyebrow="研究覆盖" title="投资逻辑" description="选择一条逻辑查看观点健康度、关键假设和证据变化。" /><div className="thesis-grid">{query.data.map((item) => <NavLink className="thesis-card" to={`/theses/${item.thesisId}`} key={item.thesisId}><div><span className="security-code">{item.securityId}</span><span className={`thesis-status thesis-${item.status}`}>{item.status}</span></div><h2>{item.title}</h2><p>{item.coreView}</p><footer><span>负责人：{item.owner}</span><span>查看逻辑 →</span></footer></NavLink>)}</div></>
+  return <><PageTitle eyebrow="研究覆盖" title="投资逻辑" description="选择一家公司进入统一的投资逻辑维护页面。" /><div className="thesis-grid">{query.data.map((item) => <NavLink className="thesis-card" to={`/companies/${encodeURIComponent(item.securityId)}?thesisId=${encodeURIComponent(item.thesisId)}`} key={item.thesisId}><div><span className="security-code">{item.securityId}</span><span className={`thesis-status thesis-${item.status}`}>{item.status}</span></div><h2>{item.title}</h2><p>{item.coreView}</p><footer><span>负责人：{item.owner}</span><span>进入公司逻辑维护 →</span></footer></NavLink>)}</div></>
+}
+
+export function ThesisCompanyRedirect() {
+  const { thesisId = '' } = useParams()
+  const thesis = useQuery({ queryKey: ['thesis', thesisId], queryFn: () => getThesis(thesisId), enabled: Boolean(thesisId) })
+  if (thesis.isLoading) return <LoadingState text="正在打开公司投资逻辑…" />
+  if (thesis.error || !thesis.data) return <ErrorState error={thesis.error} />
+  return <Navigate replace to={`/companies/${encodeURIComponent(thesis.data.securityId)}?thesisId=${encodeURIComponent(thesis.data.thesisId)}`} />
 }
 
 export function ThesisPage() {
+  return <ThesisCompanyRedirect />
+}
+
+export function LegacyThesisPage() {
   const { thesisId = '' } = useParams()
   const qc = useQueryClient()
   const thesis = useQuery({ queryKey: ['thesis', thesisId], queryFn: () => getThesis(thesisId) })
