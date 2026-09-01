@@ -1,19 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { NavLink, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, NavLink, useParams, useSearchParams } from 'react-router-dom'
 import {
   createRelation, createReviewDraft, deactivateRelation, decideAdjudication, decideStatus, getAudit,
-  getDocumentSegment, getEvidence, getEvidenceRetrievalTrace, getRadarEvidence, getRelations, getSuggestions,
-  getPublishReadiness, getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks, recheckThesisQuality,
-  listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listTheses,
+  getDocumentSegment, getEvidence, getEvidenceRetrievalTrace, getFullDocument, getInvestodayCollectionStatus, getRadarEvidence, getRelations, getResearchUpdates, getSuggestions, syncTodayResearch,
+  getLogicChangeDigest, getPublishReadiness, getThesis, getThesisEvidenceFeed, getTrends, getWorkbench, getWorkbenchTasks, recheckThesisQuality,
+  listAdjudications, listIngestionReviews, listMetrics, listProcessingJobs, listReviewTasks, listSecurities, listTheses,
   publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
   recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
   updateThesisMaintenance,
   getAssetInventory, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
   getGoldQuality, getQuantCatalog, listPortfolioBacktests, registerDefaultMarketDataset, runPortfolioBacktest,
-  runQuantBacktest,
   getCompanyMetricCenter, getSecurity, getMaintainedCoverage, getCoverageUniverse, refreshCompanyMetrics,
   createCoverageSector, createCoverageCompany, updateCoverageCompany, updateCoverageSector,
 } from './api'
@@ -23,7 +22,7 @@ import {
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
 } from './components'
 import { MetricEditorCard } from './metric-editor'
-import type { Adjudication, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, MetricDefinition, ProcessingJob, PortfolioBacktestRun, QuantBacktestRequest, QuantBacktestRun, QuantEquityPoint, Relation, ReviewTask, Security, ThesisDetail, ThesisRevision } from './types'
+import type { Adjudication, EvidenceFeedItem, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, InvestodayCollectionStatus, LogicChangeDigestDetail, MetricDefinition, ProcessingJob, PortfolioBacktestRun, Relation, ReviewTask, Security, Suggestion, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
 export function OperationalWorkbenchPage() {
@@ -48,7 +47,7 @@ export function OperationalWorkbenchPage() {
   </>
 }
 
-export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
+export function LegacyWorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   const [feedFilter, setFeedFilter] = useState('全部')
   const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set())
   const coverage = useQuery({ queryKey: ['maintained-coverage'], queryFn: getMaintainedCoverage, staleTime: 30_000 })
@@ -82,6 +81,82 @@ export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
   </div>
 }
 
+function ThemeImpactLines({ item }: { item: EvidenceFeedItem }) {
+  const impacts = item.themeImpacts.length ? item.themeImpacts : [{
+    hypothesisId: item.hypothesisId,
+    hypothesisStatement: item.hypothesisStatement,
+    direction: item.direction,
+    evidenceCount: item.atomicEvidenceCount,
+    hasConflictingEvidence: false,
+  }]
+  return <div className="theme-impact-lines">{impacts.slice(0, 3).map((impact) => <span key={impact.hypothesisId} className={impact.hasConflictingEvidence ? 'mixed' : impact.direction}><b>{impact.hasConflictingEvidence ? '分歧' : updateDirectionLabel(impact.direction)}</b><i>→</i>{impact.hypothesisStatement}<em>{impact.evidenceCount} 条证据</em></span>)}{impacts.length > 3 && <small>另有 {impacts.length - 3} 条假设影响</small>}</div>
+}
+
+export function WorkbenchPage({ onCreate }: { onCreate?: () => void } = {}) {
+  const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set())
+  // 当前覆盖的九家公司以季度观察逻辑入库（thesis_kind=observation）。
+  // 工作台需要把它们与 canonical 主逻辑一起读取，仍由后端保证每家公司只返回现行版本。
+  const theses = useQuery({ queryKey: ['theses', 'current-coverage'], queryFn: () => listTheses(undefined, false, true) })
+  const securities = useQuery({ queryKey: ['securities'], queryFn: listSecurities })
+  // 自动采集和模型归并在页面打开后仍可能完成；保持轻量轮询，让新主题无需
+  // 研究员手动刷新页面才出现。
+  const updates = useQuery({ queryKey: ['research-updates', 'today'], queryFn: () => getResearchUpdates({ todayOnly: true }), refetchInterval: 20_000 })
+  const collection = useQuery({ queryKey: ['investoday-collection-status'], queryFn: getInvestodayCollectionStatus, refetchInterval: 15_000 })
+  if (theses.isLoading || securities.isLoading || updates.isLoading) return <LoadingState text="正在加载实际研究覆盖…" />
+  if (theses.error || securities.error || updates.error || !theses.data || !securities.data || !updates.data) return <ErrorState error={theses.error ?? securities.error ?? updates.error} />
+
+  const current = theses.data.filter((item) => item.securityId !== '300274')
+  const securityById = new Map(securities.data.map((item) => [item.securityId, item]))
+  const grouped = current.reduce<Record<string, ThesisDetail[]>>((result, item) => {
+    const industry = securityById.get(item.securityId)?.industry || '其他覆盖'
+    ;(result[industry] ||= []).push(item)
+    return result
+  }, {})
+  const evidenceByThesis = new Map<string, EvidenceFeedItem[]>()
+  for (const item of updates.data.items) {
+    const items = evidenceByThesis.get(item.thesisId) || []
+    items.push(item)
+    evidenceByThesis.set(item.thesisId, items)
+  }
+  const toggle = (industry: string) => setExpandedIndustries((before) => {
+    const next = new Set(before)
+    if (next.has(industry)) next.delete(industry); else next.add(industry)
+    return next
+  })
+  const todayThemeItems = updates.data.items.filter((item) => item.securityId !== '300274')
+  const themesByCompany = new Map<string, EvidenceFeedItem[]>()
+  for (const item of todayThemeItems) themesByCompany.set(item.securityId, [...(themesByCompany.get(item.securityId) ?? []), item])
+  const companyThemeBundles = [...themesByCompany.values()].map((themes) => {
+    const primary = themes[0]
+    const hypothesisCount = new Set(themes.flatMap((item) => item.themeImpacts.length ? item.themeImpacts.map((impact) => impact.hypothesisStatement) : [item.hypothesisStatement, ...item.secondaryHypotheses])).size
+    return {
+      securityId: primary.securityId,
+      securityName: primary.securityName,
+      date: primary.ingestedAt,
+      themes,
+      sourceCount: themes.reduce((count, item) => count + item.sourceDocumentCount, 0),
+      hypothesisCount,
+      pending: themes.some((item) => item.confirmationStatus === 'pending'),
+      supportThemes: themes.filter((item) => (item.themeDirection ?? item.direction) === 'support').length,
+      conflictThemes: themes.filter((item) => (item.themeDirection ?? item.direction) === 'conflict').length,
+      mixedThemes: themes.filter((item) => (item.themeDirection ?? item.direction) === 'mixed').length,
+      divergentThemes: themes.filter((item) => item.themeDirection === 'divergent').length,
+    }
+  }).sort((left, right) => right.date.localeCompare(left.date))
+  const compactDate = (value: string) => {
+    const match = formatDate(value).match(/^\d{4}-(\d{2})-(\d{2})$/u)
+    return match ? `${Number(match[1])}月${Number(match[2])}日` : formatDate(value)
+  }
+  const collectionStatus = collectionStatusPresentation(collection.data)
+
+  return <div className="dashboard-page">
+    <aside className="coverage-panel" aria-label="我的覆盖"><div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>{Object.entries(grouped).map(([industry, rows]) => <section className="coverage-group" key={industry}><button className="coverage-industry" aria-expanded={expandedIndustries.has(industry)} onClick={() => toggle(industry)}><span>{expandedIndustries.has(industry) ? '⌄' : '›'} ▥ {industry}</span><b>{rows.length}</b></button>{expandedIndustries.has(industry) && <div className="coverage-companies">{rows.map((thesis) => <NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`} key={thesis.thesisId}><span>▥ {securityById.get(thesis.securityId)?.name || thesis.securityId}</span><b>{evidenceByThesis.get(thesis.thesisId)?.length || 0}</b></NavLink>)}</div>}</section>)}<nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink><NavLink to="/updates">♧ 最新动态</NavLink></nav><button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button></aside>
+    <main className="dashboard-main"><section className="dashboard-card research-feed company-theme-feed" aria-labelledby="research-feed-title"><header className="dashboard-card-header"><div><h2 id="research-feed-title">今日公司变化</h2><span>AI 已将当日资料映射到核心假设，并按主投资逻辑汇总</span></div><NavLink to="/updates">全部逻辑变化 ›</NavLink></header><div className={`dashboard-collection-state ${collectionStatus.tone}`}><i /><div><strong>{collectionStatus.title}</strong><small>{collectionStatus.detail}</small></div><NavLink to="/updates">查看采集状态 ›</NavLink></div><div className="company-theme-bundles">{companyThemeBundles.slice(0, 4).map((bundle) => <article className="company-theme-bundle" key={bundle.securityId}><header><div><div className="company-theme-company"><strong>{bundle.securityName}</strong><time>今日 · {compactDate(bundle.date)}</time></div><span>今日 {bundle.sourceCount} 份资料 · 1 条主投资逻辑变化 · 涉及 {bundle.hypothesisCount} 项核心假设</span></div>{bundle.pending && <b className="ai-label">待确认</b>}</header><div className="company-theme-list">{bundle.themes.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <section className="company-theme-row logic-change-row" key={item.thesisId}><i className={themeDirection === 'conflict' ? 'conflict' : themeDirection === 'mixed' ? 'mixed' : ''} /><div><div className="company-theme-meta"><span>主投资逻辑变化</span><strong className={themeDirection}>{updateThemeDirectionLabel(themeDirection)}</strong></div><h3>{item.thesisCoreView}</h3><p className="logic-change-summary">{item.aggregationSummary}</p><ThemeImpactLines item={item} /></div><div className="company-theme-actions"><NavLink to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink><NavLink to={impactHref}>查看影响</NavLink></div></section> })}</div></article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的主投资逻辑变化。资料可能仍在分析，或尚未触发任何现行假设；可查看采集状态了解详情。</div>}</div><NavLink className="dashboard-more" to="/updates">查看全部公司变化 ⌄</NavLink></section>
+    <section className="dashboard-card logic-status" aria-labelledby="logic-title"><header className="dashboard-card-header"><h2 id="logic-title">现行主投资逻辑</h2><span>{current.length} 家公司</span></header><div className="logic-table" role="table"><div className="logic-table-head" role="row"><span>公司</span><span>当前主投资逻辑</span><span>状态</span><span>核心假设 / 指标</span><span>操作</span></div>{current.map((thesis) => <div className="logic-table-row" role="row" key={thesis.thesisId}><strong>{securityById.get(thesis.securityId)?.name || thesis.securityId}</strong><span>{thesis.title}</span><b className={`logic-state state-${thesis.status}`}>{thesis.status}</b><span>{thesis.hypotheses.filter((item) => item.importance === '核心').length} 项核心假设 · {thesis.hypotheses.reduce((count, item) => count + item.mappings.length, 0)} 个指标</span><NavLink to={`/theses/${encodeURIComponent(thesis.thesisId)}`}>查看逻辑</NavLink></div>)}</div><NavLink className="dashboard-more" to="/theses">查看全部公司逻辑 ›</NavLink></section></main>
+    <aside className="dashboard-right"><section className="dashboard-card attention-card"><header className="dashboard-card-header"><h2>研究覆盖状态</h2></header><div className="attention-row attention-0"><i>▥</i><strong>{current.length} 家公司维护现行主逻辑</strong></div><div className="attention-row attention-1"><i>◈</i><strong>{current.reduce((total, item) => total + item.hypotheses.length, 0)} 条假设已纳入维护</strong></div><div className="attention-row attention-2"><i>⌁</i><strong>{updates.data.total} 张影响聚合卡可复核</strong></div></section><section className="dashboard-card todo-card"><header className="dashboard-card-header"><h2>待确认影响</h2><NavLink to="/updates">更多 ›</NavLink></header>{updates.data.items.filter((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending').slice(0, 5).map((item) => <article className="todo-row" key={item.relationId}><span className="todo-level level-中">待确认</span><strong>{item.securityName}：{item.hypothesisStatement}</strong><small>{item.sourceDocumentTitle}</small><NavLink to={`/updates/${encodeURIComponent(item.evidenceId)}?relationId=${encodeURIComponent(item.relationId)}`}>去复核</NavLink></article>)}{!updates.data.items.some((item) => item.securityId !== '300274' && item.confirmationStatus === 'pending') && <p className="muted">暂无待确认影响。</p>}</section></aside>
+  </div>
+}
+
 const researchUpdates = [
   { id:'1', time:'今天 09:42', company:'比亚迪', source:'公司公告', type:'公司', title:'2024年一季度业绩预告：归母净利润同比增长 86.04%–118.88%', thesis:'销量增长驱动盈利提升', hypothesis:'H1 规模效应持续改善毛利率', metric:'归母净利润', direction:'支持', importance:'高', status:'待确认', confidence:92 },
   { id:'2', time:'今天 09:15', company:'中芯国际', source:'行业资讯 · 芯思想', type:'行业', title:'Q1产能利用率提升至92.1%，价格年内趋稳', thesis:'成熟制程需求回暖', hypothesis:'H2 产能利用率提升驱动盈利改善', metric:'产能利用率', direction:'支持', importance:'高', status:'待确认', confidence:87 },
@@ -93,18 +168,531 @@ const researchUpdates = [
   { id:'8', time:'昨天 11:25', company:'创新医药行业', source:'国家药监局', type:'政策', title:'创新药临床试验审评审批机制进一步优化', thesis:'创新药行业配置', hypothesis:'政策环境支持研发兑现', metric:'审批周期', direction:'支持', importance:'中', status:'已确认', confidence:90 },
 ] as const
 
-export function ResearchUpdatesPage() {
+export function LegacyResearchUpdatesPage() {
   const [filter, setFilter] = useState('全部')
   const [query, setQuery] = useState('')
   const visible = researchUpdates.filter((item) => (filter === '全部' || filter === item.type || filter === item.status) && `${item.company}${item.title}${item.source}`.includes(query))
   return <div className="updates-page"><header className="updates-page-header"><div><NavLink to="/workbench">← 返回工作台</NavLink><span>RESEARCH UPDATE STREAM</span><h1>全部研究动态</h1><p>集中查看系统实时检索到的公告、新闻、研报和行业数据，以及它们与现有投资逻辑的候选影响关系。</p></div><div className="updates-summary"><article><strong>{researchUpdates.length}</strong><span>最新动态</span></article><article><strong>{researchUpdates.filter((item) => item.status === '待确认').length}</strong><span>待确认</span></article><article><strong>{researchUpdates.filter((item) => item.direction === '冲突').length}</strong><span>冲突影响</span></article></div></header><main className="updates-layout"><aside className="updates-filter-panel"><h2>动态范围</h2>{['全部','公司','行业','政策','研报','调研','待确认','已确认'].map((item) => <button key={item} className={filter === item ? 'active' : ''} onClick={() => setFilter(item)}><span>{item}</span><b>{item === '全部' ? researchUpdates.length : researchUpdates.filter((update) => update.type === item || update.status === item).length}</b></button>)}<div><span>检索处理状态</span><strong><i /> 实时运行中</strong><small>最近更新：刚刚</small></div></aside><section className="updates-list-panel"><header><label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索公司、事件或信息来源" /></label><button>时间范围：近7天⌄</button><button>重要性⌄</button></header><div className="updates-list-head"><span>时间</span><span>最新动态与候选影响</span><span>重要性</span><span>方向</span><span>状态</span><span>操作</span></div>{visible.map((item) => <article className="update-list-row" key={item.id}><time>{item.time}</time><div><div><strong>{item.company}</strong><span>{item.source}</span></div><h2>{item.title}</h2><p>候选关联：{item.thesis} / {item.hypothesis}</p></div><b className={`update-priority priority-${item.importance}`}>{item.importance}</b><em className={item.direction === '冲突' ? 'conflict' : 'support'}>{item.direction}</em><span className={`update-status status-${item.status}`}>{item.status}</span><NavLink to={`/updates/${item.id}`}>查看影响 →</NavLink></article>)}{!visible.length && <div className="updates-empty">没有符合当前条件的动态</div>}<footer><span>共 {visible.length} 条动态</span><div><button disabled>‹</button><b>1</b><button disabled>›</button></div></footer></section></main></div>
 }
 
-export function ResearchImpactDetailPage() {
+export function LegacyResearchImpactDetailPage() {
   const { updateId = '1' } = useParams()
   const item = researchUpdates.find((update) => update.id === updateId) ?? researchUpdates[0]
   const [decision, setDecision] = useState('')
   return <div className="impact-page"><header className="impact-page-header"><div><NavLink to="/updates">← 返回全部动态</NavLink><span>IMPACT REVIEW / {item.id.padStart(4,'0')}</span><h1>具体影响分析</h1></div><div><span className={`update-status status-${item.status}`}>{item.status}</span><small>AI关系置信度</small><strong>{item.confidence}%</strong></div></header><main className="impact-page-layout"><div className="impact-main-column"><section className="impact-fact-card"><header><div><span>01 / 原始事实</span><h2>{item.title}</h2></div><button>打开原文 ↗</button></header><p>系统从公开来源中识别出该事件。下面展示的是原始信息及可追溯定位，AI候选关系不会在研究员确认前修改任何投资逻辑。</p><dl><div><dt>公司／行业</dt><dd>{item.company}</dd></div><div><dt>来源</dt><dd>{item.source}</dd></div><div><dt>发布时间</dt><dd>{item.time}</dd></div><div><dt>信息类型</dt><dd>{item.type}</dd></div></dl><blockquote>“{item.title}”。该信息已完成来源、发布时间和研究对象识别，等待研究员判断其研究影响。</blockquote><footer>来源定位：公开信息正文第1段 <button>查看上下文</button></footer></section><section className="impact-relation-card"><header><div><span>02 / AI候选关系</span><h2>事件如何影响现有投资逻辑</h2></div><button>✎ 编辑路径</button></header><div className="impact-relation-flow"><article><span>事件事实</span><strong>{item.title}</strong></article><i>→</i><article><span>验证指标</span><strong>{item.metric}</strong><small>识别到指标变化</small></article><i>→</i><article><span>核心假设</span><strong>{item.hypothesis}</strong></article><i>→</i><article><span>投资逻辑</span><strong>{item.thesis}</strong><small>{item.company}</small></article></div><div className="impact-assessment-grid"><article><span>影响方向</span><strong className={item.direction === '冲突' ? 'conflict' : 'support'}>{item.direction}</strong></article><article><span>影响强度</span><strong>{item.importance}</strong></article><article><span>关系置信度</span><strong>{item.confidence}%</strong></article><article><span>逻辑状态建议</span><strong>{item.direction === '冲突' ? '逻辑承压' : '证据增强'}</strong></article></div><div className="impact-reason"><strong>AI判断理由</strong><p>该事件直接涉及“{item.metric}”，能够用于验证“{item.hypothesis}”，因此建议作为{item.direction}证据关联到“{item.thesis}”。</p></div></section></div><aside className="impact-review-panel"><section><span>03 / 研究员确认</span><h2>这条影响是否成立？</h2><p>确认后，系统才会将信息加入证据、刷新假设状态并生成复盘记录。</p><label>关联投资逻辑<select defaultValue={item.thesis}><option>{item.thesis}</option><option>选择其他逻辑</option></select></label><label>影响方向<select defaultValue={item.direction}><option>支持</option><option>冲突</option><option>中性</option></select></label><label>影响强度<select defaultValue={item.importance}><option>高</option><option>中</option><option>低</option></select></label><label>研究员备注<textarea placeholder="填写判断依据或修改原因" /></label><div className="impact-review-actions"><button onClick={() => setDecision('暂不判断')}>暂不判断</button><button onClick={() => setDecision('已驳回')}>驳回</button><button onClick={() => setDecision('已确认')} className="primary">确认影响</button></div>{decision && <div className="impact-decision-result" role="status"><strong>✓ {decision}</strong><span>已生成研究处理记录；当前为静态演示。</span></div>}</section><section className="impact-after-confirm"><h2>确认后将发生</h2><ol><li><b>1</b><span>证据写入对应核心假设</span></li><li><b>2</b><span>指标和逻辑状态重新计算</span></li><li><b>3</b><span>自动生成研究变更记录</span></li><li><b>4</b><span>进入后续复盘时间线</span></li></ol></section></aside></main></div>
+}
+
+function updateStatusLabel(status: EvidenceFeedItem['confirmationStatus']) {
+  return status === 'confirmed' ? '已确认' : status === 'rejected' ? '已驳回' : status === 'deactivated' ? '已解除' : '待确认'
+}
+
+function updateDirectionLabel(direction: EvidenceFeedItem['direction']) {
+  return direction === 'support' ? '支持' : direction === 'conflict' ? '冲突' : '中性'
+}
+
+function updateThemeDirectionLabel(direction: EvidenceFeedItem['themeDirection']) {
+  return direction === 'divergent' ? '证据分歧' : direction === 'mixed' ? '混合影响' : direction === 'neutral' ? '待判断' : updateDirectionLabel(direction ?? 'neutral')
+}
+
+function updatePriorityLabel(priority: EvidenceFeedItem['priority']) {
+  return priority === 'high' ? '高' : priority === 'medium' ? '中' : '低'
+}
+
+function collectionStatusPresentation(status?: InvestodayCollectionStatus) {
+  if (!status) return { tone: 'pending', title: '正在读取今日自动采集状态', detail: '工作台会持续检查新闻与研报是否已进入分析队列。' }
+  if (status.news.status === 'disabled' && status.reports.status === 'disabled') return { tone: 'pending', title: '今日自动采集尚未启用', detail: '请配置资讯源后，系统将在工作日自动执行。' }
+  if (status.overallStatus === 'completed') {
+    const queued = (status.news.queuedToday ?? status.news.queued ?? 0) + (status.reports.queuedToday ?? status.reports.queued ?? 0)
+    const previouslyProcessed = (status.news.skippedSeen ?? 0) + (status.reports.skippedSeen ?? 0)
+    return queued > 0
+      ? { tone: 'ready', title: `今日已采集，${queued} 份新资料正在进行 AI 分析`, detail: '分析完成后会自动归并到对应公司的主投资逻辑。' }
+      : previouslyProcessed > 0
+        ? { tone: 'ready', title: '今日已完成检索，覆盖资料已在此前入库或分析', detail: '本轮查询仅命中已处理的资料，因此没有重复入库；后续盘中与盘后会继续补采集。' }
+        : { tone: 'ready', title: '今日已完成检索，暂未发现新的覆盖资料', detail: '系统已按覆盖公司查询新闻和研报；后续盘中与盘后会继续补采集。' }
+  }
+  if (status.overallStatus === 'running') return { tone: 'running', title: '正在自动采集今日新闻与研报', detail: '资料入库后会自动解析、关联假设并生成影响候选。' }
+  if (status.overallStatus === 'failed') return { tone: 'failed', title: '今日自动采集未完成', detail: '可点击“立即补跑”重新发起采集；原有资料不会丢失。' }
+  if (status.overallStatus === 'unavailable' || !status.workerReady) return { tone: 'failed', title: '自动采集任务暂不可用', detail: 'Worker 或队列未就绪，恢复后会在启动时自动补跑。' }
+  return { tone: 'pending', title: '今日采集尚未开始', detail: '系统会在工作日 07:05 自动预采集；也可立即补跑。' }
+}
+
+/** 全部动态：真实证据流，不再依赖页面内置案例。 */
+export function ResearchUpdatesPage() {
+  const [params] = useSearchParams()
+  const [filter, setFilter] = useState('全部')
+  const [query, setQuery] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
+  const [syncMessage, setSyncMessage] = useState('')
+  const [syncRefreshUntil, setSyncRefreshUntil] = useState(0)
+  const qc = useQueryClient()
+  const collection = useQuery({
+    queryKey: ['investoday-collection-status'],
+    queryFn: getInvestodayCollectionStatus,
+    refetchInterval: 15_000,
+  })
+  const requestedBusinessDay = params.get('business_day')
+  const businessDay = requestedBusinessDay && /^\d{4}-\d{2}-\d{2}$/.test(requestedBusinessDay) ? requestedBusinessDay : undefined
+  const filters = { ...(filter === '待确认' ? { status: 'pending' } : filter === '已确认' ? { status: 'confirmed' } : filter === '支持' ? { direction: 'support' } : filter === '冲突' ? { direction: 'conflict' } : filter === '高重要性' ? { priority: 'high' } : {}), ...(businessDay ? { businessDay } : showHistory ? {} : { todayOnly: true }) }
+  const updates = useQuery({
+    queryKey: ['research-updates', filters],
+    queryFn: () => getResearchUpdates(filters),
+    refetchInterval: syncRefreshUntil > Date.now() ? 10_000 : false,
+  })
+  const sync = useMutation({
+    mutationFn: syncTodayResearch,
+    onSuccess: () => {
+      setSyncMessage('已启动采集，系统将在最多 3 分钟内每 10 秒自动刷新主题影响。')
+      setSyncRefreshUntil(Date.now() + 180_000)
+      void qc.invalidateQueries({ queryKey: ['research-updates'] })
+      void qc.invalidateQueries({ queryKey: ['investoday-collection-status'] })
+      window.setTimeout(() => setSyncRefreshUntil(0), 180_000)
+    },
+  })
+  if (updates.isLoading) return <LoadingState text="正在读取研究动态…" />
+  if (updates.error || !updates.data) return <ErrorState error={updates.error} />
+  const items = updates.data.items.filter((item) => `${item.securityName}${item.sourceDocumentTitle}${item.factExcerpt}${item.thesisTitle}${item.hypothesisStatement}`.includes(query.trim()))
+  const all = updates.data.items
+  const options = ['全部', '待确认', '已确认', '支持', '冲突', '高重要性']
+  const collectionStatus = collectionStatusPresentation(collection.data)
+  return <div className="updates-page"><header className="updates-page-header"><div><NavLink to="/workbench">← 返回工作台</NavLink><span>RESEARCH UPDATE STREAM</span><h1>全部研究动态</h1><p>默认展示本业务日新入库资料形成的主题影响；历史模式仅用于回溯。</p><div className={`collection-run-status ${collectionStatus.tone}`}><i /><div><strong>{collectionStatus.title}</strong><small>{collectionStatus.detail}</small></div></div><div className="updates-sync-actions"><button className="primary" onClick={() => sync.mutate()} disabled={sync.isPending}>{sync.isPending ? '正在启动采集…' : '立即补跑'}</button><button onClick={() => void updates.refetch()} disabled={updates.isFetching}>刷新动态</button><button onClick={() => setShowHistory((value) => !value)}>{showHistory ? '切回今日动态' : '查看全部历史'}</button></div>{syncMessage && <p className="muted" role="status">{syncMessage}</p>}<InlineError error={sync.error ?? collection.error} /></div><div className="updates-summary"><article><strong>{updates.data.total}</strong><span>{showHistory ? '历史主题' : '今日主题'}</span></article><article><strong>{all.filter((item) => item.confirmationStatus === 'pending').length}</strong><span>待确认</span></article><article><strong>{all.filter((item) => item.direction === 'conflict').length}</strong><span>冲突影响</span></article></div></header><main className="updates-layout"><aside className="updates-filter-panel"><h2>动态范围</h2>{options.map((option) => <button key={option} className={filter === option ? 'active' : ''} onClick={() => setFilter(option)}><span>{option}</span><b>{option === '全部' ? updates.data.total : option === '待确认' ? all.filter((item) => item.confirmationStatus === 'pending').length : option === '已确认' ? all.filter((item) => item.confirmationStatus === 'confirmed').length : option === '支持' ? all.filter((item) => item.direction === 'support').length : option === '冲突' ? all.filter((item) => item.direction === 'conflict').length : all.filter((item) => item.priority === 'high').length}</b></button>)}<div><span>数据处理状态</span><strong><i /> 已同步证据库</strong><small>仅展示有权限访问的研究对象</small></div></aside><section className="updates-list-panel"><header><label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索公司、事实、来源或投资逻辑" /></label><span className="muted">{showHistory ? '按优先级与披露时间排序' : '按入库时间排序；原始披露时间在卡片内保留'}</span></header><div className="updates-list-head"><span>{showHistory ? '披露时间' : '入库时间'}</span><span>最新动态与候选影响</span><span>重要性</span><span>方向</span><span>状态</span><span>操作</span></div>{items.map((item) => { const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <article className="update-list-row" key={item.relationId}><time>{formatDate(showHistory ? item.disclosedAt : item.ingestedAt)}</time><div><div><strong>{item.securityName}</strong><span>{item.sourceDocumentTitle}{!showHistory ? ` · 原始披露 ${formatDate(item.disclosedAt)}` : ''}</span></div><h2>{item.aggregationSummary ?? item.factExcerpt}</h2><p>主关联：{item.hypothesisStatement} · {item.sourceDocumentCount} 个来源 / {item.atomicEvidenceCount} 条证据</p></div><b className={`update-priority priority-${updatePriorityLabel(item.priority)}`}>{updatePriorityLabel(item.priority)}</b><em className={item.direction === 'conflict' ? 'conflict' : 'support'}>{updateDirectionLabel(item.direction)}</em><span className={`update-status status-${updateStatusLabel(item.confirmationStatus)}`}>{updateStatusLabel(item.confirmationStatus)}</span><NavLink to={impactHref}>查看主题 →</NavLink></article> })}{!items.length && <div className="updates-empty">没有符合当前条件的真实动态</div>}<footer><span>当前显示 {items.length} / {updates.data.total} 条</span></footer></section></main></div>
+}
+
+/** 影响详情：保留新界面布局，但全部字段、确认与审计均来自后端。 */
+function readableEvidenceText(value: string) {
+  return value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/\*\*/g, '')
+    .replace(/`/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function evidenceHighlights(value: string) {
+  const cleaned = readableEvidenceText(value)
+  const lines = cleaned
+    .split(/\n+|(?=\s+-\s+)/u)
+    .map((line) => line.replace(/^\s*[-•]\s*/u, '').replace(/^(风险提示|关键点|摘要)\s*[:：]\s*/u, '').trim())
+    .filter((line) => line.length > 0)
+  return lines.length ? lines.slice(0, 3) : ['资料事实待补充']
+}
+
+function readableSourceTitle(value: string) {
+  return value.replace(/^\s*标题\s*[:：]\s*/u, '').trim()
+}
+
+function readableSourceLocator(value?: string) {
+  const paragraph = value?.match(/#paragraph-(\d+)$/u)?.[1]
+  return paragraph ? `本条资料的第 ${paragraph} 段` : '本条资料已入库的原文段落'
+}
+
+function logicDirectionLabel(direction: LogicChangeDigestDetail['overallDirection']) {
+  return direction === 'support' ? '支持' : direction === 'conflict' ? '冲突' : direction === 'mixed' ? '混合影响' : '待观察'
+}
+
+function impactDirectionClass(direction: string) {
+  return direction === '支持' ? 'support' : direction === '冲突' ? 'conflict' : direction === '分歧' ? 'mixed' : 'neutral'
+}
+
+function impactPresentationGuide(presentation: LogicChangeDigestDetail['hypothesisImpacts'][number]['presentation']) {
+  if (presentation === '双向分歧') return { title: '研究员应核验分歧来源', text: '支持与冲突路径同时存在；先判断哪条路径更接近实际经营，再决定是否调整假设。' }
+  if (presentation === '背景信号') return { title: '作为背景观察，不直接改写经营判断', text: '该信号反映市场、行业、政策或宏观环境；除非补充公司层面的传导证据，否则仅保留为观察。' }
+  if (presentation === '证据不足') return { title: '暂不建立经营传导', text: '资料与假设之间尚缺少可验证的中间环节；优先补充订单、价格、产能或财务等直接证据。' }
+  return { title: '沿此路径核验候选影响', text: '资料已形成一条候选传导，但仍需以原文和后续可观察指标确认是否成立。' }
+}
+
+function pathEffectCopy(direction: string, statement: string, effect?: string) {
+  const action = direction === '支持' ? '可能强化' : direction === '冲突' ? '可能削弱' : effect === '暂不影响假设' ? '暂不改变' : '暂不确认对'
+  const suffix = action === '暂不确认对' ? '的方向性影响' : ''
+  return `${action}“${statement}”${suffix}`
+}
+
+function metricValue(value: string, unit: string) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return value
+  return `${number.toFixed(Math.abs(number) >= 100 ? 1 : 2)}${unit}`
+}
+
+function metricChange(points: Trend['points'], unit: string) {
+  if (points.length < 2) return '历史样本不足，暂不计算变化'
+  const current = Number(points.at(-1)?.value)
+  const previous = Number(points.at(-2)?.value)
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) return '指标值待核验'
+  const delta = current - previous
+  const sign = delta > 0 ? '+' : ''
+  return unit === '%' ? `较上期 ${sign}${delta.toFixed(2)} 个百分点` : `较上期 ${sign}${delta.toFixed(2)}${unit}`
+}
+
+function MetricLineChart({ points, unit, expectedValue, invalidationThreshold }: { points: Trend['points']; unit: string; expectedValue?: string; invalidationThreshold?: string }) {
+  const data = points.map((point) => ({ ...point, numeric: Number(point.value) })).filter((point) => Number.isFinite(point.numeric))
+  if (data.length < 2) return <div className="metric-chart-empty">历史数据不足，暂不能绘制趋势图。</div>
+  const finiteNumber = (value?: string) => {
+    const numeric = Number(value)
+    return Number.isFinite(numeric) ? numeric : undefined
+  }
+  const expected = finiteNumber(expectedValue)
+  const threshold = finiteNumber(invalidationThreshold)
+  const scaleValues = [...data.map((point) => point.numeric), ...(expected === undefined ? [] : [expected]), ...(threshold === undefined ? [] : [threshold])]
+  const rawMin = Math.min(...scaleValues)
+  const rawMax = Math.max(...scaleValues)
+  const niceStep = (range: number) => {
+    const magnitude = 10 ** Math.floor(Math.log10(Math.max(range / 4, 1)))
+    const fraction = range / 4 / magnitude
+    const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10
+    return niceFraction * magnitude
+  }
+  const step = niceStep(rawMax - rawMin)
+  const tickMinimum = Math.floor(rawMin / step) * step
+  const tickMaximum = Math.ceil(rawMax / step) * step || step
+  const minimum = tickMinimum - step * .16
+  const maximum = tickMaximum + step * .16
+  const width = 760
+  const height = 246
+  const left = 64
+  const right = 72
+  const top = 22
+  const bottom = 44
+  const chartWidth = width - left - right
+  const chartHeight = height - top - bottom
+  const x = (index: number) => left + (index / Math.max(data.length - 1, 1)) * chartWidth
+  const y = (value: number) => top + ((maximum - value) / (maximum - minimum || 1)) * chartHeight
+  const actualPath = data.map((point, index) => `${x(index)},${y(point.numeric)}`).join(' ')
+  const firstValidation = data.findIndex((point) => point.isValidationWindow !== false)
+  const validationPath = firstValidation >= 0 ? data.slice(firstValidation).map((point, index) => `${x(firstValidation + index)},${y(point.numeric)}`).join(' ') : ''
+  const tickCount = Math.round((tickMaximum - tickMinimum) / step)
+  const ticks = Array.from({ length: tickCount + 1 }, (_, index) => tickMaximum - index * step)
+  const label = (value: number) => `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}${unit}`
+  const expectedY = expected === undefined ? undefined : y(expected)
+  const thresholdY = threshold === undefined ? undefined : y(threshold)
+  const labelsTooClose = expectedY !== undefined && thresholdY !== undefined && Math.abs(expectedY - thresholdY) < 18
+  const current = data.at(-1)!
+  const currentY = y(current.numeric)
+  return <figure className="metric-line-chart">
+    <figcaption><span><i className="actual" />实际值</span>{expected !== undefined && <span><i className="expected" />预期线 {label(expected)}</span>}{threshold !== undefined && <span><i className="threshold" />失效警示线 {label(threshold)}</span>}</figcaption>
+    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="指标历史趋势图，包含预期线与失效警示线">
+      {thresholdY !== undefined && <rect x={left} y={thresholdY} width={chartWidth} height={height - bottom - thresholdY} className="metric-warning-zone" />}
+      {ticks.map((tick) => <g key={tick}><line x1={left} x2={width - right} y1={y(tick)} y2={y(tick)} className="metric-grid-line" /><text x={left - 10} y={y(tick) + 4} textAnchor="end" className="metric-y-label">{label(tick)}</text></g>)}
+      {expected !== undefined && expectedY !== undefined && <g><line x1={left} x2={width - right} y1={expectedY} y2={expectedY} className="metric-expected-line" /><text x={width - right + 7} y={expectedY + (labelsTooClose ? -5 : 4)} className="metric-expected-label">预期 {label(expected)}</text></g>}
+      {threshold !== undefined && thresholdY !== undefined && <g><line x1={left} x2={width - right} y1={thresholdY} y2={thresholdY} className="metric-threshold-line" /><text x={width - right + 7} y={thresholdY + (labelsTooClose ? 12 : 4)} className="metric-threshold-label">警示 {label(threshold)}</text></g>}
+      <line x1={left} x2={left} y1={top} y2={height - bottom} className="metric-axis" /><line x1={left} x2={width - right} y1={height - bottom} y2={height - bottom} className="metric-axis" />
+      <polyline points={actualPath} className="metric-history-line" />
+      {validationPath && <polyline points={validationPath} className="metric-validation-line" />}
+      {data.map((point, index) => <g key={point.period}><circle cx={x(index)} cy={y(point.numeric)} r={index === data.length - 1 ? 5 : 3.3} className={`${index === data.length - 1 ? 'metric-current-point' : point.isValidationWindow === false ? 'metric-reference-point' : 'metric-validation-point'}`}><title>{`${point.period}：${label(point.numeric)}${point.isValidationWindow === false ? '（历史参考）' : '（验证期）'}`}</title></circle><text x={x(index)} y={height - bottom + 18} textAnchor="middle" className="metric-x-label">{point.period}</text></g>)}
+      <g><rect x={x(data.length - 1) - 23} y={Math.max(top + 2, currentY - 25)} width="46" height="16" rx="3" className="metric-current-label-bg" /><text x={x(data.length - 1)} y={Math.max(top + 13, currentY - 14)} textAnchor="middle" className="metric-current-value-label">{label(current.numeric)}</text></g>
+    </svg>
+  </figure>
+}
+
+function ImpactMetricPanel({ trend }: { trend?: Trend }) {
+  if (!trend || !trend.metricId) return <div className="impact-metric-empty"><strong>量化指标尚未接入</strong><span>这条假设目前仅保留定性观察，需由研究员结合资料判断。</span></div>
+  const latest = trend.points.at(-1)
+  const previous = trend.points.at(-2)
+  const change = metricChange(trend.points, trend.unit)
+  const changeIsNegative = Number(latest?.value) < Number(previous?.value)
+  return <div className="impact-metric-panel">
+    <div className="impact-metric-heading"><span>关联指标</span><strong>{trend.metricName || trend.metricId}</strong><small>{trend.unit || '单位待补'} · 最近 {trend.points.length} 期历史</small></div>
+    <div className="impact-metric-current"><span>最新已入库期</span><b>{latest ? metricValue(latest.value, trend.unit) : '—'}</b><small>{latest?.period ?? '尚无披露期'}</small></div>
+    <div className={`impact-metric-change ${changeIsNegative ? 'down' : 'up'}`}><span>已披露期变化</span><strong>{change}</strong><small>对比 {previous?.period ?? '上一已入库期'}</small></div>
+    <MetricLineChart points={trend.points} unit={trend.unit} expectedValue={trend.expectedValue} invalidationThreshold={trend.invalidationThreshold} />
+    <div className="impact-metric-rules"><span>预期值 <b>{trend.expectedValue == null ? '待维护' : metricValue(trend.expectedValue, trend.unit)}</b></span><span>失效线 <b>{trend.invalidationThreshold == null ? '待维护' : metricValue(trend.invalidationThreshold, trend.unit)}</b></span><details><summary>查看监测口径</summary><p>{trend.invalidationRule || '尚未维护具体失效规则，请在主投资逻辑中补充。'}</p></details></div>
+  </div>
+}
+
+type SourceFactWithDocument = LogicChangeDigestDetail['sourceDocuments'][number]['facts'][number] & {
+  documentTitle: string
+  documentType?: string
+}
+
+function ImpactEvidenceDrawer({ evidenceIds, sourceFacts }: { evidenceIds: string[]; sourceFacts: Map<string, SourceFactWithDocument> }) {
+  const facts = evidenceIds.map((id) => sourceFacts.get(id)).filter((item): item is SourceFactWithDocument => Boolean(item))
+  if (!facts.length) return <span className="hypothesis-evidence-unavailable">关联证据正在整理，暂不可直接回查</span>
+  const previews = facts.slice(0, 2)
+  return <details className="impact-evidence-preview impact-evidence-inline">
+    <summary className="impact-evidence-preview-heading"><span>本路径依据</span><strong>查看 {facts.length} 条依据 <i>⌄</i></strong></summary>
+    <div className="impact-evidence-preview-compact">
+      <div className="impact-evidence-preview-list">
+        {previews.map((fact) => <article key={fact.evidenceId}><header><span className="source-doc-type">{fact.documentType || '公开资料'}</span><small>资料事实</small></header><ul>{evidenceHighlights(fact.factExcerpt).map((highlight, index) => <li key={`${fact.evidenceId}-${index}`}>{highlight}</li>)}</ul><footer>来源：{readableSourceTitle(fact.documentTitle)}</footer></article>)}
+      </div>
+      {facts.length > previews.length && <div className="impact-evidence-inline-list">{facts.slice(previews.length).map((fact, index) => <article key={fact.evidenceId}><span>{String(index + previews.length + 1).padStart(2, '0')}</span><div><strong>{readableEvidenceText(fact.factExcerpt)}</strong><small>{readableSourceTitle(fact.documentTitle)}</small></div><div className="hypothesis-evidence-actions"><NavLink to={`/updates/${encodeURIComponent(fact.evidenceId)}`}>关联原文</NavLink><NavLink to={`/documents/${encodeURIComponent(fact.evidenceLocator.split('#')[0])}`}>阅读全文</NavLink></div></article>)}</div>}
+      <div className="impact-evidence-inline-actions"><span>共 {facts.length} 条，均可回查入库原文</span><NavLink to={`/documents/${encodeURIComponent(facts[0].evidenceLocator.split('#')[0])}`}>打开完整资料 →</NavLink></div>
+    </div>
+  </details>
+}
+
+function ImpactReasoningChain({
+  impact,
+  sourceFacts,
+}: {
+  impact: LogicChangeDigestDetail['hypothesisImpacts'][number]
+  sourceFacts: Map<string, SourceFactWithDocument>
+}) {
+  const strength = impact.strength ?? '待复核'
+  const relatedMetrics = impact.relatedMetrics.length ? impact.relatedMetrics.join('、') : '尚未映射量化指标'
+  const fallbackDirection = impact.direction === '支持' || impact.direction === '冲突' || impact.direction === '中性' ? impact.direction : '中性'
+  const fallbackMechanism = impact.businessImpact && !impact.businessImpact.startsWith('尚不能确认')
+    ? `${impact.rationale} 经营含义：${impact.businessImpact}`
+    : `${impact.rationale} 当前尚缺少可确认的经营传导，需补充直接证据。`
+  const hasLegacyPlaceholder = impact.paths.some((path) => /待核验.*候选关系|待研究员核验/u.test(path.label))
+  const paths = impact.paths.length && !hasLegacyPlaceholder ? impact.paths : [{
+    direction: fallbackDirection,
+    label: 'AI 候选传导',
+    mechanism: fallbackMechanism,
+    evidenceIds: impact.evidenceIds,
+  }]
+  const hasSupport = paths.some((path) => path.direction === '支持')
+  const hasConflict = paths.some((path) => path.direction === '冲突')
+  const isDivergent = impact.presentation === '双向分歧' || impact.direction === '分歧' || (hasSupport && hasConflict)
+  const presentation = impact.presentation ?? (isDivergent ? '双向分歧' : '单一路径')
+  const causalLabel = isDivergent ? '正反证据如何汇合到同一假设' : 'AI 从资料到假设的候选传导'
+  const guide = impactPresentationGuide(presentation)
+  return <div className="impact-reasoning-chain">
+    <div className="impact-reasoning-verdict">
+      <div><span>AI 判断</span><p>{impact.rationale}</p><div className="impact-classification"><b>{presentation}</b><span>影响层级：{impact.impactLayer ?? '待判定'}</span><span>证据性质：{impact.directness ?? '待复核'}</span><span>传导状态：{impact.transmissionStatus ?? '尚待验证'}</span></div></div>
+      <div className={`impact-strength-badge strength-${strength}`}><span>影响强度</span><strong>{strength}</strong><small>{impact.strengthReason ?? '待结合证据直接性与缺失信息复核。'}</small></div>
+    </div>
+    <section className={`impact-causal-map ${isDivergent ? 'is-divergent' : 'is-single'}`}>
+      <header><div><span>传导路径</span><h4>{causalLabel}</h4></div><small>每条路径均可直接查看它实际引用的资料</small></header>
+      <div className="impact-scenario-guidance"><strong>{guide.title}</strong><span>{guide.text}</span></div>
+      <div className="impact-causal-paths">
+        {paths.map((path, index) => <article key={`${path.label}-${index}`} className={`impact-causal-path ${impactDirectionClass(path.direction)}`}>
+          <header><span>路径 {String(index + 1).padStart(2, '0')}</span><b>{path.direction}</b></header>
+          <h5>{path.label}</h5>
+          <p>{path.mechanism}</p>
+          <div className="impact-path-effect"><span>落到当前假设</span><strong>{pathEffectCopy(path.direction, impact.statement, impact.hypothesisEffect)}</strong><small>{impact.hypothesisEffect ? `整体候选作用：${impact.hypothesisEffect}` : '候选作用待研究员确认'}</small></div>
+          <ImpactEvidenceDrawer evidenceIds={path.evidenceIds} sourceFacts={sourceFacts} />
+        </article>)}
+      </div>
+      {isDivergent && <div className="impact-path-convergence"><span>路径汇合</span><strong>{impact.hypothesisEffect ?? '增加不确定性'}</strong><p>{impact.businessImpact ?? '支持与冲突信号并存，尚不能据此确认公司经营事实。'}</p></div>}
+    </section>
+    <section className="impact-validation-row">
+      <div><span>对该假设的候选作用</span><strong>{impact.hypothesisEffect ?? '待研究员判断'}</strong><p>{impact.businessImpact ?? '尚不能确认具体经营含义。'}</p></div>
+      <div><span>后续验证</span><p>{impact.indicatorOutlook ?? '需结合后续可观察指标验证。'}</p><em>关联指标：{relatedMetrics}</em></div>
+    </section>
+  </div>
+}
+
+function HypothesisReviewCard({
+  impact,
+  thesisId,
+  currentThesisStatus,
+  suggestion,
+}: {
+  impact: LogicChangeDigestDetail['hypothesisImpacts'][number]
+  thesisId: string
+  currentThesisStatus: string
+  suggestion?: Suggestion
+}) {
+  const qc = useQueryClient()
+  const [note, setNote] = useState('')
+  const relations = useQuery({
+    queryKey: ['logic-change-impact-relations', thesisId, impact.hypothesisId, impact.evidenceIds],
+    queryFn: async () => {
+      const results = await Promise.all(impact.evidenceIds.map(async (evidenceId) => ({ evidenceId, items: await getRelations(evidenceId) })))
+      return results.flatMap(({ evidenceId, items }) => items
+        .filter((relation) => relation.thesisId === thesisId && relation.hypothesisId === impact.hypothesisId && relation.status !== 'deactivated')
+        .map((relation) => ({ evidenceId, relation })))
+    },
+    enabled: impact.evidenceIds.length > 0,
+  })
+  const pendingRelations = (relations.data ?? []).filter((item) => item.relation.status === 'pending')
+  const reviewedRelations = (relations.data ?? []).filter((item) => item.relation.status !== 'pending')
+  const review = useMutation({
+    mutationFn: (action: '确认' | '暂不判断') => Promise.all(pendingRelations.map(({ evidenceId, relation }) => reviewRelation(evidenceId, relation.relationId, action, note || undefined))),
+    onSuccess: async () => {
+      setNote('')
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['logic-change-impact-relations', thesisId, impact.hypothesisId] }),
+        qc.invalidateQueries({ queryKey: ['suggestions', thesisId] }),
+        qc.invalidateQueries({ queryKey: ['logic-change-digest'] }),
+        qc.invalidateQueries({ queryKey: ['research-updates'] }),
+        qc.invalidateQueries({ queryKey: ['workbench'] }),
+      ])
+    },
+  })
+  const hasSuggestion = Boolean(suggestion && !suggestion.humanAction && suggestion.suggestedStatus !== suggestion.currentStatus)
+  return <section className={`hypothesis-review-card ${hasSuggestion ? 'has-suggestion' : 'stable'}`}>
+    <header>
+      <div><span>研究员处置与状态建议</span><strong>{hasSuggestion ? `建议：${suggestion!.suggestedStatus}` : `维持当前主逻辑状态：${currentThesisStatus}`}</strong></div>
+      <small>{pendingRelations.length ? `${pendingRelations.length} 条当日候选关系待处理` : reviewedRelations.length ? `已处理 ${reviewedRelations.length} 条当日关系` : '本路径暂无可处置关系'}</small>
+    </header>
+    {hasSuggestion ? <div className="hypothesis-suggestion-reasons"><b>为什么触发</b><ul>{suggestion!.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div> : <p className="hypothesis-stable-copy">本次资料尚未满足状态变更条件；即使 AI 给出了候选方向，也不会自动改变正式投资逻辑。</p>}
+    {pendingRelations.length > 0 ? <div className="hypothesis-review-actions">
+      <label><span>研究员备注（可选）</span><input value={note} onChange={(event) => setNote(event.target.value)} placeholder="说明采纳或暂不判断的依据" /></label>
+      <div><button className="button primary" disabled={review.isPending} onClick={() => review.mutate('确认')}>{review.isPending ? '处理中…' : '采纳本次关系'}</button><button className="button secondary" disabled={review.isPending} onClick={() => review.mutate('暂不判断')}>维持原状态</button><NavLink className="button secondary" to={`/theses/${encodeURIComponent(thesisId)}`}>补充验证</NavLink></div>
+      <InlineError error={review.error} />
+    </div> : <div className="hypothesis-review-complete"><span>{reviewedRelations.some((item) => item.relation.status === 'confirmed') ? '本路径已纳入已确认关系，规则引擎已重新计算状态建议。' : '本路径暂不纳入正式证据链，保留候选推理与资料回查。'}</span><NavLink to={`/theses/${encodeURIComponent(thesisId)}`}>前往逻辑页继续验证 →</NavLink></div>}
+  </section>
+}
+
+function LogicChangeSourceFact({ fact, hypothesisNames }: { fact: LogicChangeDigestDetail['sourceDocuments'][number]['facts'][number]; hypothesisNames: Map<string, string> }) {
+  const [expanded, setExpanded] = useState(false)
+  const source = useQuery({
+    queryKey: ['logic-change-source-segment', fact.evidenceLocator],
+    queryFn: () => getDocumentSegment(fact.evidenceLocator),
+    enabled: expanded,
+  })
+  const affectedHypotheses = fact.hypothesisIds.map((id) => hypothesisNames.get(id) ?? id)
+  return <article className="logic-change-source-fact">
+    <header>
+      <div className="logic-change-fact-tags">
+        {fact.isKeyCitation && <span className="citation-tag">AI 关键依据</span>}
+        {fact.directions.map((direction) => <span key={direction} className={`direction-chip ${impactDirectionClass(direction)}`}>{direction}</span>)}
+      </div>
+      <span className="mono">{fact.evidenceId}</span>
+    </header>
+    <p>{fact.factExcerpt}</p>
+    <footer>
+      <span>关联：{affectedHypotheses.join('；') || '待确认'}</span>
+      <button type="button" className="text-action" onClick={() => setExpanded((value) => !value)}>{expanded ? '收起入库原文' : '查看入库原文'} <i>{expanded ? '⌃' : '⌄'}</i></button>
+    </footer>
+    {expanded && <div className="logic-change-original">
+      {source.isLoading ? <span className="muted">正在定位原文段落…</span> : <>
+        <blockquote>{source.data?.content ?? fact.factExcerpt}</blockquote>
+        <small>{readableSourceLocator(source.data?.locator ?? fact.evidenceLocator)}{source.data?.page ? ` · 第 ${source.data.page} 页` : ''}</small>
+        {source.error && <p className="inline-error">原文段落暂不可用，当前展示事实摘录。</p>}
+      </>}
+    </div>}
+  </article>
+}
+
+export function LogicChangeImpactPage() {
+  const { securityId = '', thesisId = '' } = useParams()
+  const [params] = useSearchParams()
+  const businessDay = params.get('business_day') ?? undefined
+  const thesis = useQuery({ queryKey: ['thesis', thesisId], queryFn: () => getThesis(thesisId), enabled: Boolean(thesisId) })
+  const suggestions = useQuery({ queryKey: ['suggestions', thesisId], queryFn: () => getSuggestions(thesisId), enabled: Boolean(thesisId) })
+  const digest = useQuery({
+    queryKey: ['logic-change-digest', securityId, thesisId, businessDay],
+    queryFn: () => getLogicChangeDigest(securityId, thesisId, businessDay),
+    enabled: Boolean(securityId && thesisId),
+  })
+  const trends = useQuery({
+    queryKey: ['logic-change-trends', thesisId],
+    queryFn: () => getTrends(thesisId),
+    enabled: Boolean(thesisId),
+  })
+  if (digest.isLoading || thesis.isLoading || suggestions.isLoading) return <LoadingState text="正在整理归并影响与来源材料…" />
+  if (digest.error || thesis.error || suggestions.error || !digest.data || !thesis.data || !suggestions.data) return <ErrorState error={digest.error ?? thesis.error ?? suggestions.error} />
+  const item = digest.data
+  const activeSuggestions = suggestions.data.filter((suggestion) => !suggestion.humanAction && suggestion.suggestedStatus !== suggestion.currentStatus)
+  const hypothesisNames = new Map(item.hypothesisImpacts.map((impact) => [impact.hypothesisId, impact.statement]))
+  const trendsByHypothesis = new Map((trends.data ?? []).map((trend) => [trend.hypothesisId, trend]))
+  const sourceFacts = new Map<string, SourceFactWithDocument>(item.sourceDocuments.flatMap((source) => source.facts.map((fact) => [fact.evidenceId, { ...fact, documentTitle: source.title, documentType: source.docType }] as const)))
+  const uniqueImpactEvidence = new Set(item.hypothesisImpacts.flatMap((impact) => impact.evidenceIds)).size
+  return <div className="logic-change-detail-page">
+    <header className="logic-change-detail-header">
+      <div>
+        <NavLink to="/updates">← 返回全部逻辑变化</NavLink>
+        <span className="eyebrow">LOGIC CHANGE / {item.businessDate}</span>
+        <h1>{item.securityName} · 主投资逻辑影响</h1>
+        <p>{item.thesisCoreView}</p>
+      </div>
+      <div className={`logic-change-direction-card ${item.overallDirection}`}>
+        <span>AI 初判</span><strong>{logicDirectionLabel(item.overallDirection)}</strong><small>待研究员确认</small>
+      </div>
+    </header>
+    <main className="logic-change-detail-layout">
+      <div className="logic-change-detail-main">
+        <section className="logic-change-conclusion-card">
+          <header><span>01 / AI 对主投资逻辑的判断</span><small>基于当日已入库资料归并；不改变正式投资逻辑</small></header>
+          <p>{item.summary}</p>
+          <dl>
+            <div><dt>当日来源</dt><dd>{item.sourceDocumentCount} 份</dd></div>
+            <div><dt>关联证据</dt><dd>{uniqueImpactEvidence} 条</dd></div>
+            <div><dt>影响假设</dt><dd>{item.hypothesisImpacts.length} 条</dd></div>
+            <div><dt>状态建议</dt><dd>{activeSuggestions.length ? `${activeSuggestions.length} 项待处置` : '维持不变'}</dd></div>
+          </dl>
+        </section>
+        <section className={`logic-change-review-summary ${activeSuggestions.length ? 'has-suggestion' : ''}`}>
+          <div><span>研究员审阅</span><h2>{activeSuggestions.length ? `${activeSuggestions.length} 项状态建议需要处置` : '本次暂无状态变更建议'}</h2><p>{activeSuggestions.length ? '先处理对应假设的当日候选关系；系统只会生成建议，正式投资逻辑仍由研究员决定是否修改。' : `当前主投资逻辑维持“${thesis.data.status}”。确认资料前，AI 判断不会改变任何正式状态。`}</p></div>
+          <div className="logic-change-review-summary-stats"><b>{item.hypothesisImpacts.length}</b><span>项假设已纳入本次审阅</span></div>
+        </section>
+        <section className="logic-change-hypotheses">
+          <header><div><span>02 / 影响推理链</span><h2>AI 如何从资料关联到投资逻辑</h2></div><small>每一步均可回查</small></header>
+          <div>{item.hypothesisImpacts.map((impact) => { const suggestion = activeSuggestions.find((candidate) => candidate.triggeredHypotheses.includes(impact.hypothesisId)); return <article key={impact.hypothesisId} className={`logic-change-hypothesis ${impactDirectionClass(impact.direction)} impact-logic-card`}>
+            <header><div><span>受影响核心假设</span><h3>{impact.statement}</h3></div><div className="impact-direction-summary"><i /><span>{impact.direction}</span></div></header>
+            <div><ImpactReasoningChain impact={impact} sourceFacts={sourceFacts} /><HypothesisReviewCard impact={impact} thesisId={item.thesisId} currentThesisStatus={thesis.data.status} suggestion={suggestion} /><section className="impact-historical-verification"><header><span>历史表现与后续验证</span><small>已披露财务数据仅作为背景，不代表本次新闻造成的实际结果</small></header><ImpactMetricPanel trend={trendsByHypothesis.get(impact.hypothesisId)} /></section></div>
+          </article> })}</div>
+        </section>
+        <section className="logic-change-sources">
+          <header><div><span>03 / 全部资料与原文回查</span><h2>补充核验时，再展开查看同日全部材料</h2></div><small>上方已列出 AI 实际引用的依据</small></header>
+          <div className="logic-change-source-list">{item.sourceDocuments.map((source) => <details className="logic-change-source-document" key={source.documentId}>
+            <summary>
+              <div><span className="source-doc-type">{source.docType || '研究资料'}</span><strong>{readableSourceTitle(source.title)}</strong><small>{source.publishedAt ? `披露于 ${formatDate(source.publishedAt)}` : '披露时间待补'} · {source.facts.length} 条事实</small></div>
+              <div><span>{source.facts.some((fact) => fact.isKeyCitation) ? '含 AI 关键依据' : '候选来源'}</span><i>⌄</i></div>
+            </summary>
+            <div className="logic-change-source-body">
+              <div className="logic-change-source-tools"><span>每条事实均保留入库定位；展开后只读取对应原文段落。</span><SafeSourceLink url={source.sourceUrl ?? ''} /></div>
+              {source.facts.map((fact) => <LogicChangeSourceFact key={fact.evidenceId} fact={fact} hypothesisNames={hypothesisNames} />)}
+            </div>
+          </details>)}</div>
+        </section>
+      </div>
+      <aside className="logic-change-detail-side">
+        <section><span>研究员处理</span><h2>先核验来源，再确认关系</h2><p>归并结论只是候选判断。原始候选、资料和原文段落均未被覆盖。</p><NavLink className="button primary" to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看主投资逻辑</NavLink></section>
+        <section className="logic-change-reading-guide"><span>如何阅读 AI 判断</span><ol><li><b>资料事实</b>只陈列可回查的原文依据。</li><li><b>经营含义</b>是模型基于资料做出的候选推断。</li><li><b>影响强度</b>说明证据的直接性、一致性和仍缺少的验证。</li></ol><p>强度不代表投资胜率，研究员仍需核验后确认。</p></section>
+        {item.openQuestions.length > 0 && <section className="logic-change-questions"><span>待确认问题</span><ul>{item.openQuestions.map((question) => <li key={question}>{question}</li>)}</ul></section>}
+        <section className="logic-change-trace"><span>可追溯性</span><dl><div><dt>归并模型</dt><dd>{item.modelVersion ?? '—'}</dd></div><div><dt>提示词版本</dt><dd>{item.promptVersion ?? '—'}</dd></div><div><dt>归并记录</dt><dd>{item.digestId}</dd></div></dl></section>
+      </aside>
+    </main>
+  </div>
+}
+
+export function DocumentReaderPage() {
+  const { documentId = '' } = useParams()
+  const document = useQuery({ queryKey: ['full-document', documentId], queryFn: () => getFullDocument(documentId), enabled: Boolean(documentId) })
+  if (document.isLoading) return <LoadingState text="正在加载完整入库文档…" />
+  if (document.error || !document.data) return <ErrorState error={document.error} />
+  const item = document.data
+  return <div className="full-document-page">
+    <header className="full-document-header"><div><NavLink to="/updates">← 返回研究动态</NavLink><span>{item.docType || '公开资料'} · 完整入库文档</span><h1>{readableSourceTitle(item.title || item.documentId)}</h1><p>披露于 {formatDate(item.publishedAt)} · 共 {item.segmentCount} 个解析段落 · 解析器 {item.parserVersion}</p></div><a href={`#segment-${item.segments[0]?.ordinal ?? 1}`}>从正文开始 ↓</a></header>
+    <main className="full-document-layout">
+      <aside className="full-document-outline"><strong>文档目录</strong><small>完整解析正文</small><nav>{item.segments.map((segment) => <a key={segment.ordinal} href={`#segment-${segment.ordinal}`}>{segment.page ? `P.${segment.page}` : '正文'} · 第 {segment.ordinal} 段</a>)}</nav></aside>
+      <article className="full-document-body">{item.segments.map((segment) => <section id={`segment-${segment.ordinal}`} key={segment.ordinal}><header><span>{segment.page ? `第 ${segment.page} 页` : '正文'}</span><small>第 {segment.ordinal} 段 · {segment.contentKind === 'table_row' ? '表格内容' : '文本段落'}</small></header><p>{segment.content}</p></section>)}</article>
+    </main>
+  </div>
+}
+
+function SourceFactPanel({ item, sourceText, sourceLocator, sourceFailed, status }: { item: { factExcerpt: string; sourceDocumentTitle: string; sourceUrl: string; securityId: string; disclosedAt: string; evidenceLocator?: string }; sourceText?: string; sourceLocator?: string; sourceFailed: boolean; status: string }) {
+  const excerpt = readableEvidenceText(item.factExcerpt)
+  const original = readableEvidenceText(sourceText || item.factExcerpt)
+  const hasDistinctOriginal = original.replace(/\s+/g, ' ').trim() !== excerpt.replace(/\s+/g, ' ').trim()
+  const locator = sourceLocator ?? item.evidenceLocator
+  return <section className="impact-fact-card"><header><div><span>01 / 来源材料</span><small className="source-title-hint">来源标题 · 用于定位原始资料，不代表影响结论</small><h2>{readableSourceTitle(item.sourceDocumentTitle)}</h2></div><SafeSourceLink url={item.sourceUrl} /></header><div className="source-fact-summary"><span>本次材料要点</span><p>{excerpt}</p><small>系统从原文提炼，供研究员快速判断；尚未代表正式研究结论。</small></div><dl><div><dt>证券</dt><dd>{item.securityId}</dd></div><div><dt>来源类型</dt><dd>公开资料</dd></div><div><dt>发布时间</dt><dd>{formatDate(item.disclosedAt)}</dd></div><div><dt>证据状态</dt><dd>{status}</dd></div></dl><details className="source-original"><summary><span>查看入库原文</span><small>{readableSourceLocator(locator)}</small></summary><blockquote>{original}</blockquote>{!hasDistinctOriginal && <p>当前“材料要点”与这段入库原文内容一致。</p>}</details><footer><span>原文位置：{readableSourceLocator(locator)}</span>{sourceFailed && <span className="inline-error">原文段落暂不可用，当前展示证据摘录。</span>}</footer></section>
+}
+
+function ThemeImpactCandidates({ items, activeEvidenceId, activeRelationId }: { items: EvidenceFeedItem[]; activeEvidenceId: string; activeRelationId?: string }) {
+  const grouped = new Map<string, EvidenceFeedItem[]>()
+  for (const item of items) grouped.set(item.hypothesisId, [...(grouped.get(item.hypothesisId) ?? []), item])
+  if (!grouped.size) return null
+  return <section className="theme-impact-candidates"><header><div><span>03 / 本主题涉及的核心假设</span><h2>{grouped.size} 条假设等待复核</h2></div><small>{items.length} 条候选关联</small></header><div>{[...grouped.values()].map((group) => { const first = group[0]; const active = first.evidenceId === activeEvidenceId && first.relationId === activeRelationId; return <NavLink className={active ? 'active' : ''} key={first.hypothesisId} to={`/updates/${encodeURIComponent(first.evidenceId)}?relationId=${encodeURIComponent(first.relationId)}`}><i className={first.direction === 'conflict' ? 'conflict' : ''} /><section><strong>{first.hypothesisStatement}</strong><small>{group.length} 条候选关联 · {first.direction === 'conflict' ? '存在冲突影响' : first.direction === 'support' ? '存在支持影响' : '待判断'}</small></section><b>查看 →</b></NavLink> })}</div></section>
+}
+
+export function ResearchImpactDetailPage() {
+  const { updateId = '' } = useParams()
+  const isLegacyDemoId = /^\d+$/.test(updateId)
+  const [params] = useSearchParams()
+  const qc = useQueryClient()
+  const evidence = useQuery({ queryKey: ['evidence', updateId], queryFn: () => getEvidence(updateId), enabled: Boolean(updateId) && !isLegacyDemoId })
+  const relations = useQuery({ queryKey: ['relations', updateId], queryFn: () => getRelations(updateId), enabled: Boolean(updateId) && !isLegacyDemoId })
+  const source = useQuery({ queryKey: ['source-segment', evidence.data?.evidenceLocator], queryFn: () => getDocumentSegment(evidence.data!.evidenceLocator), enabled: Boolean(evidence.data?.evidenceLocator) })
+  const relationId = params.get('relationId')
+  const activeRelation = relations.data?.find((item) => item.relationId === relationId) ?? relations.data?.find((item) => item.status !== 'deactivated')
+  const thesis = useQuery({ queryKey: ['thesis', activeRelation?.thesisId], queryFn: () => getThesis(activeRelation!.thesisId), enabled: Boolean(activeRelation?.thesisId) })
+  const themeFeed = useQuery({ queryKey: ['theme-impact-feed', activeRelation?.thesisId], queryFn: () => getThesisEvidenceFeed(activeRelation!.thesisId), enabled: Boolean(activeRelation?.thesisId) })
+  const [note, setNote] = useState('')
+  const [result, setResult] = useState('')
+  const review = useMutation({ mutationFn: (action: '确认' | '驳回' | '暂不判断') => reviewRelation(updateId, activeRelation!.relationId, action, note || undefined), onSuccess: async (_value, action) => { setResult(action === '确认' ? '已确认影响并刷新相关逻辑状态建议。' : action === '驳回' ? '已驳回候选关联，处理记录已保留。' : '已标记为暂不判断，可稍后继续处理。'); await Promise.all([qc.invalidateQueries({ queryKey: ['research-updates'] }), qc.invalidateQueries({ queryKey: ['relations', updateId] }), qc.invalidateQueries({ queryKey: ['workbench'] }), qc.invalidateQueries({ queryKey: ['workbench-tasks'] })]) } })
+  if (isLegacyDemoId) return <Navigate to="/updates" replace />
+  if (evidence.isLoading || relations.isLoading || thesis.isLoading) return <LoadingState text="正在读取影响分析…" />
+  if (evidence.error || relations.error || thesis.error || !evidence.data || !relations.data) return <ErrorState error={evidence.error ?? relations.error ?? thesis.error} />
+  const item = evidence.data
+  const themeItems = (themeFeed.data?.items ?? []).filter((entry) => entry.ingestedAt.slice(0, 10) === item.ingestedAt.slice(0, 10))
+  const hypothesis = thesis.data?.hypotheses.find((entry) => entry.hypothesisId === activeRelation?.hypothesisId)
+  const metric = hypothesis?.mappings[0]?.metricName ?? hypothesis?.mappings[0]?.metricId ?? '暂未绑定验证指标'
+  const status = activeRelation ? updateStatusLabel(activeRelation.status) : '未关联'
+  const direction = activeRelation ? updateDirectionLabel(activeRelation.direction) : updateDirectionLabel(item.direction)
+  const strength = activeRelation?.strength ?? item.strength
+  return <div className="impact-page"><header className="impact-page-header"><div><NavLink to="/updates">← 返回全部动态</NavLink><span>IMPACT REVIEW / {item.evidenceId}</span><h1>具体影响分析</h1></div><div><span className={`update-status status-${status}`}>{status}</span><small>AI 关系置信度</small><strong>{Math.round(item.aiConfidence * 100)}%</strong></div></header><main className="impact-page-layout"><div className="impact-main-column"><SourceFactPanel item={item} sourceText={source.data?.content} sourceLocator={source.data?.locator} sourceFailed={Boolean(source.error)} status={status} /><section className="impact-relation-card"><header><div><span>02 / AI 候选关系</span><h2>事件如何影响现有投资逻辑</h2></div><NavLink to={`/radar/${encodeURIComponent(item.evidenceId)}${activeRelation ? `?relationId=${encodeURIComponent(activeRelation.relationId)}` : ''}`}>查看召回路径与编辑 ›</NavLink></header>{activeRelation && thesis.data && hypothesis ? <><div className="impact-relation-flow"><article><span>事件事实</span><strong>{item.factExcerpt}</strong></article><i>→</i><article><span>验证指标</span><strong>{metric}</strong><small>由假设映射维护</small></article><i>→</i><article><span>核心假设</span><strong>{hypothesis.statement}</strong></article><i>→</i><article><span>投资逻辑</span><strong>{thesis.data.title}</strong><small>{item.securityId}</small></article></div><div className="impact-assessment-grid"><article><span>影响方向</span><strong className={activeRelation.direction === 'conflict' ? 'conflict' : 'support'}>{direction}</strong></article><article><span>影响强度</span><strong>{strengthText[strength] ?? '待评估'}</strong></article><article><span>关系置信度</span><strong>{Math.round(item.aiConfidence * 100)}%</strong></article><article><span>确认状态</span><strong>{status}</strong></article></div><div className="impact-reason"><strong>候选关联理由</strong><p>{activeRelation.reason || '系统未提供文字理由，请通过原文和召回路径完成判断。'}</p></div></> : <div className="updates-empty">该证据尚未关联到可见投资逻辑。可前往证据页新增关联。</div>}</section><ThemeImpactCandidates items={themeItems} activeEvidenceId={item.evidenceId} activeRelationId={activeRelation?.relationId} /></div><aside className="impact-review-panel"><section><span>04 / 研究员确认</span><h2>这条影响是否成立？</h2><p>确认操作会写入审计记录，并重新计算受影响逻辑的状态建议。</p><label>当前投资逻辑<input value={thesis.data?.title ?? '暂无可见关联'} readOnly /></label><label>影响方向<input value={direction} readOnly /></label><label>影响强度<input value={strengthText[strength] ?? '待评估'} readOnly /></label><label>研究员备注<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="可选：补充判断依据或驳回原因" disabled={!activeRelation?.canManage || activeRelation.status === 'deactivated'} /></label>{activeRelation?.canManage && activeRelation.status !== 'deactivated' ? <div className="impact-review-actions"><button disabled={review.isPending} onClick={() => review.mutate('暂不判断')}>暂不判断</button><button disabled={review.isPending} onClick={() => review.mutate('驳回')}>驳回</button><button disabled={review.isPending} onClick={() => review.mutate('确认')} className="primary">确认影响</button></div> : <p className="muted">当前账户没有此关联的确认权限，或该关联已经解除。</p>}<InlineError error={review.error} />{result && <div className="impact-decision-result" role="status"><strong>✓ {result}</strong></div>}</section><section className="impact-after-confirm"><h2>确认后将发生</h2><ol><li><b>1</b><span>关系状态与审计记录更新</span></li><li><b>2</b><span>受影响逻辑重新计算状态建议</span></li><li><b>3</b><span>工作台待确认任务同步刷新</span></li><li><b>4</b><span>后续可进入复盘与版本演变</span></li></ol></section></aside></main></div>
 }
 
 export function MacroStrategyPage() {
@@ -1094,6 +1682,8 @@ export function QuantPage() {
 }
 
 function SafeSourceLink({ url }: { url: string }) {
-  const valid = (() => { try { return ['http:', 'https:'].includes(new URL(url).protocol) } catch { return false } })()
-  return valid ? <a className="source-link" href={url} target="_blank" rel="noopener noreferrer">查看公开原文 ↗</a> : <span className="muted">公开原文链接不可用</span>
+  const parsed = (() => { try { return new URL(url) } catch { return null } })()
+  const valid = parsed && ['http:', 'https:'].includes(parsed.protocol)
+  const isProviderApi = parsed?.hostname === 'data-api.investoday.net'
+  return valid && !isProviderApi ? <a className="source-link" href={url} target="_blank" rel="noopener noreferrer">打开外部原文 ↗</a> : <span className="source-link-unavailable">外部原文链接暂未提供</span>
 }

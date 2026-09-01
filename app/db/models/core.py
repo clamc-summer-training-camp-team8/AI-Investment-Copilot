@@ -470,6 +470,42 @@ class Evidence(Base):
     )
 
 
+class LogicChangeDigest(Base):
+    """一天内多份资料对一条主投资逻辑的归并候选，不替代原始候选证据。"""
+
+    __tablename__ = "logic_change_digest"
+
+    digest_id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    security_id: Mapped[str] = mapped_column(
+        ForeignKey("security.security_id", ondelete="CASCADE"), nullable=False
+    )
+    thesis_id: Mapped[str] = mapped_column(
+        ForeignKey("thesis.thesis_id", ondelete="CASCADE"), nullable=False
+    )
+    business_date: Mapped[date] = mapped_column(Date, nullable=False)
+    overall_direction: Mapped[str] = mapped_column(String(16), nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    hypothesis_impacts: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    open_questions: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    citations: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    source_document_ids: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    candidate_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    confidence: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
+    ai_status: Mapped[str] = mapped_column(String(16), nullable=False, default="候选")
+    confirmation_status: Mapped[str] = mapped_column(String(16), nullable=False, default="待确认")
+    model_version: Mapped[str | None] = mapped_column(String(128))
+    prompt_version: Mapped[str | None] = mapped_column(String(128))
+    generated_at: Mapped[datetime | None] = mapped_column()
+    created_at: Mapped[datetime] = created_at_column()
+    updated_at: Mapped[datetime] = updated_at_column()
+
+    __table_args__ = (
+        UniqueConstraint("security_id", "thesis_id", "business_date"),
+        Index("ix_logic_change_digest_security_date", "security_id", "business_date"),
+        Index("ix_logic_change_digest_thesis_date", "thesis_id", "business_date"),
+    )
+
+
 class EvidenceRelation(Base):
     """证据与逻辑假设的独立关联。
 

@@ -18,13 +18,25 @@ async def sync_eastmoney_daily_job(ctx: dict[str, Any]) -> dict[str, Any]:
     ``EASTMONEY_ENDPOINTS`` 为 JSON 对象，键可为 news/announcements/
     research_reports/post，值为包含 ``{security_id}`` 的 URL 模板。
     """
-    security_ids = [item.strip() for item in os.getenv("EASTMONEY_SECURITY_IDS", "").split(",") if item.strip()]
+    security_ids = [
+        item.strip() for item in os.getenv("EASTMONEY_SECURITY_IDS", "").split(",") if item.strip()
+    ]
     if not security_ids:
-        return {"ok": True, "stage": "skipped", "reason": "未配置 EASTMONEY_SECURITY_IDS", "queued": 0}
+        return {
+            "ok": True,
+            "stage": "skipped",
+            "reason": "未配置 EASTMONEY_SECURITY_IDS",
+            "queued": 0,
+        }
     try:
         endpoints = json.loads(os.getenv("EASTMONEY_ENDPOINTS", "{}"))
     except json.JSONDecodeError as exc:
-        return {"ok": False, "stage": "failed", "reason": f"EASTMONEY_ENDPOINTS 配置无效: {exc}", "queued": 0}
+        return {
+            "ok": False,
+            "stage": "failed",
+            "reason": f"EASTMONEY_ENDPOINTS 配置无效: {exc}",
+            "queued": 0,
+        }
 
     adapter = EastmoneyAdapter(endpoint_templates=endpoints)
     categories = ("news", "announcements", "research_reports", "post")
@@ -64,7 +76,9 @@ async def sync_eastmoney_daily_job(ctx: dict[str, Any]) -> dict[str, Any]:
                 "job_id": job_id,
                 "path": str(path),
                 "source_filename": f"{document.title}.txt",
-                "published_at": document.published_at.isoformat() if document.published_at else None,
+                "published_at": document.published_at.isoformat()
+                if document.published_at
+                else None,
                 "security_id": document.security_id,
                 "actor_id": "eastmoney-sync",
                 "source_url": document.source_url,

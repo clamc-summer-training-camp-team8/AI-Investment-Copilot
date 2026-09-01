@@ -461,7 +461,7 @@ def test_worker_analyzes_each_hypothesis_in_company_thesis() -> None:
     assert result.matched_theses == [thesis_id]
 
 
-def test_worker_analyzes_multiple_events_in_one_batch_per_thesis() -> None:
+def test_worker_analyzes_each_event_in_a_bounded_batch_per_thesis() -> None:
     uow = build_fake_uow()
     uow.securities.add(SecurityRecord(security_id="NEW001", name="新能源公司"))
     uow.thesis.add(
@@ -521,7 +521,7 @@ def test_worker_analyzes_multiple_events_in_one_batch_per_thesis() -> None:
         document_id="DOC-CONCURRENT",
     )
 
-    assert provider.batch_calls == 1
+    assert provider.batch_calls == 2
     assert provider.event_calls == 2  # local provider deterministically expands the batch
     assert len(result.candidates) == 2
 

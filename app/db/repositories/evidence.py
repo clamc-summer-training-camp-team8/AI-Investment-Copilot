@@ -146,22 +146,21 @@ class SqlEvidenceRepo:
             # 版本保存会冻结一批证据。一次性读取来源文档权限标签，避免远程库
             # 下按证据逐条查询造成明显的保存延迟。
             document_ids = {
-                evidence.evidence_locator.split("#", 1)[0]
-                for evidence, _relation in relation_rows
+                evidence.evidence_locator.split("#", 1)[0] for evidence, _relation in relation_rows
             }
-            labels = dict(
-                self._session.execute(
+            labels: dict[str, str] = {
+                str(document_id): str(visibility_label)
+                for document_id, visibility_label in self._session.execute(
                     select(Document.document_id, Document.visibility_label).where(
                         Document.document_id.in_(document_ids)
                     )
                 ).all()
-            )
+            }
             return [
                 replace(
                     _to_evidence(
                         evidence,
-                        label=labels.get(evidence.evidence_locator.split("#", 1)[0])
-                        or "机密",
+                        label=labels.get(evidence.evidence_locator.split("#", 1)[0]) or "机密",
                     ),
                     thesis_id=relation.thesis_id,
                     hypothesis_id=relation.hypothesis_id,
@@ -344,6 +343,7 @@ class SqlEvidenceFeedRepo:
                 security_name=security.name,
                 thesis_id=thesis.thesis_id,
                 thesis_title=thesis.title,
+                thesis_core_view=thesis.core_view,
                 thesis_owner=thesis.owner,
                 thesis_status=ThesisStatus(thesis.status),
                 thesis_established_on=thesis.established_on,
@@ -362,6 +362,7 @@ class SqlEvidenceFeedRepo:
                 ai_confidence=evidence.ai_confidence,
                 confirmation_status=ConfirmationStatus(relation.status),
                 priority=priority_labels[int(rank)],
+                ingested_at=evidence.created_at,
             )
             for evidence, relation, thesis, hypothesis, security, rank in rows
         ], int(total)
@@ -397,7 +398,7 @@ class SqlObservationRepo:
                 MetricObservation.data_version == data_version,
             )
         ).all()
-        return set(rows)
+        return {(str(metric_id), str(period)) for metric_id, period in rows}
 
     def add(self, record: ObservationRecord) -> None:
         row = MetricObservation(

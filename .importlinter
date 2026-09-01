@@ -16,7 +16,7 @@ layers =
     app.api
     app.workers
     app.services
-    app.ai | app.ingest | app.calc | app.ranking
+    app.ai | app.collection | app.ingest | app.calc | app.ranking
     app.db
     app.core
 

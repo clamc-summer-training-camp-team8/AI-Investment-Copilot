@@ -278,6 +278,7 @@ class EvidenceFeedRecord:
     security_name: str
     thesis_id: str
     thesis_title: str
+    thesis_core_view: str
     thesis_owner: str
     thesis_status: ThesisStatus
     thesis_established_on: date
@@ -296,6 +297,36 @@ class EvidenceFeedRecord:
     ai_confidence: Decimal | None
     confirmation_status: ConfirmationStatus
     priority: str
+    # 证据关联实际生成/入库的时间。它与来源的原始披露时间不同，供“今日动态”队列使用。
+    ingested_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class LogicChangeDigestRecord:
+    """公司主投资逻辑在一个业务日内的 AI 归并候选。
+
+    它不是正式逻辑或状态变更；研究员确认前只作为待复核的工作台提醒。
+    """
+
+    digest_id: str
+    security_id: str
+    thesis_id: str
+    business_date: date
+    overall_direction: str
+    summary: str
+    hypothesis_impacts: list[dict[str, object]] = field(default_factory=list)
+    open_questions: list[str] = field(default_factory=list)
+    citations: list[str] = field(default_factory=list)
+    source_document_ids: list[str] = field(default_factory=list)
+    candidate_count: int = 0
+    confidence: Decimal | None = None
+    ai_status: str = "候选"
+    confirmation_status: ConfirmationStatus = ConfirmationStatus.PENDING
+    model_version: str | None = None
+    prompt_version: str | None = None
+    generated_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
@@ -1067,6 +1098,17 @@ class EvidenceFeedRepo(Protocol):
     ) -> tuple[list[EvidenceFeedRecord], int]: ...
 
 
+class LogicChangeDigestRepo(Protocol):
+    def get_for_scope(
+        self, *, security_id: str, thesis_id: str, business_date: date
+    ) -> LogicChangeDigestRecord | None: ...
+    def upsert(self, record: LogicChangeDigestRecord) -> LogicChangeDigestRecord: ...
+    def list_for_security(
+        self, *, security_id: str, limit: int = 30
+    ) -> list[LogicChangeDigestRecord]: ...
+    def list_for_business_day(self, *, business_date: date) -> list[LogicChangeDigestRecord]: ...
+
+
 class ObservationRepo(Protocol):
     def list_for_security(self, security_id: str) -> list[ObservationRecord]: ...
     def list_for_metric(self, security_id: str, metric_id: str) -> list[ObservationRecord]: ...
@@ -1173,6 +1215,7 @@ class DocumentRepo(Protocol):
     def update_visibility(self, document_id: str, visibility_label: str) -> None: ...
     def mark_deleted(self, document_id: str, deleted_at: datetime) -> None: ...
     def restore(self, document_id: str, visibility_label: str) -> None: ...
+    def list_recent(self, *, ingested_from: datetime, limit: int = 200) -> list[DocumentRecord]: ...
     def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]: ...
     def list_facts(self, document_id: str) -> list[DocumentFactRecord]: ...
 
@@ -1259,6 +1302,7 @@ class UnitOfWork:
     evidence: EvidenceRepo
     relations: EvidenceRelationRepo
     feed: EvidenceFeedRepo
+    logic_change_digests: LogicChangeDigestRepo
     observations: ObservationRepo
     suggestions: SuggestionRepo
     versions: VersionRepo

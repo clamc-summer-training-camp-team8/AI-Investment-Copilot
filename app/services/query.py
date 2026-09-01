@@ -118,6 +118,7 @@ class HypothesisTrend:
     expected_upper: Decimal | None = None
     invalidation_threshold: Decimal | None = None
     invalidation_consecutive_periods: int | None = None
+    invalidation_rule: str | None = None
     note: str = ""
     source_rows: tuple[ObservationRecord, ...] = ()
 
@@ -154,6 +155,7 @@ def hypothesis_trends(
                     metric_version="",
                     data_version=None,
                     result=None,
+                    invalidation_rule=hypothesis.invalidation_rule,
                     note="该假设无量化指标映射，只能人工判断",
                 )
             )
@@ -255,6 +257,7 @@ def _trend_for(
         expected_upper=mapping.expected_upper,
         invalidation_threshold=mapping.invalidation_threshold,
         invalidation_consecutive_periods=mapping.invalidation_consecutive_periods,
+        invalidation_rule=hypothesis.invalidation_rule,
         unit=display_latest.unit if display_latest else "",
         period_type=display_latest.period_type if display_latest else "单季度",
         metric_version=mapping.metric_version,

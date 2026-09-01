@@ -63,7 +63,9 @@ def add_sector(payload: CoverageSectorIn, actor: ActorDep, uow: UowDep) -> Cover
             actor=actor,
         )
     except ValidationFailed as exc:
-        raise HTTPException(status_code=409 if "已存在" in str(exc) else 400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=409 if "已存在" in str(exc) else 400, detail=str(exc)
+        ) from exc
     return CoverageSectorOut(
         sector_id=record.sector_id,
         name=record.name,
@@ -144,5 +146,7 @@ def edit_company(
             actor=actor,
         )
     except ValidationFailed as exc:
-        raise HTTPException(status_code=404 if "不存在" in str(exc) else 400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=404 if "不存在" in str(exc) else 400, detail=str(exc)
+        ) from exc
     return _company_out(record)

@@ -62,8 +62,9 @@ const validationItems: EvidenceFeedItem['validationItems'] = [
 
 export const demoEvidenceFeed: EvidenceFeedItem = {
   ...demoEvidence, relationId: 'REL-SG-001', securityName: '阳光电源', thesisId: demoThesis.thesisId,
-  thesisTitle: demoThesis.title, hypothesisId: 'HYP-SG-001', hypothesisStatement: hypotheses[0].statement,
-  priority: 'high', canManage: true, validationItems,
+  thesisTitle: demoThesis.title, thesisCoreView: demoThesis.coreView, hypothesisId: 'HYP-SG-001', hypothesisStatement: hypotheses[0].statement,
+  priority: 'high', canManage: true, validationItems, atomicEvidenceCount: 1, sourceDocumentCount: 1,
+  supportEvidenceCount: 0, conflictEvidenceCount: 1, affectedHypothesisCount: 1, secondaryHypotheses: [], themeImpacts: [],
 }
 
 export const demoEvidenceFeeds: EvidenceFeedItem[] = [

@@ -22,6 +22,7 @@ _SKILL_KEYS = frozenset(
         "retrospective-draft",
         "hypothesis-quality",
         "knowledge-answer",
+        "logic-change-consolidation",
     }
 )
 

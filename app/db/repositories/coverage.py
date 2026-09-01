@@ -51,7 +51,9 @@ class SqlCoverageRepo:
         elif bind:
             try:
                 inspector = inspect(bind)
-                self.available = inspector.has_table("coverage_sector") and inspector.has_table("coverage_company")
+                self.available = inspector.has_table("coverage_sector") and inspector.has_table(
+                    "coverage_company"
+                )
                 _availability_cache[id(bind)] = self.available
             except SQLAlchemyError:
                 self.available = False
@@ -91,7 +93,9 @@ class SqlCoverageRepo:
         self._session.flush()
 
     def list_companies(self, sector_id: str | None = None) -> list[CoverageCompanyRecord]:
-        statement = select(CoverageCompany).order_by(CoverageCompany.name, CoverageCompany.security_id)
+        statement = select(CoverageCompany).order_by(
+            CoverageCompany.name, CoverageCompany.security_id
+        )
         if sector_id:
             statement = statement.where(CoverageCompany.sector_id == sector_id)
         return [_company(row) for row in self._session.scalars(statement).all()]

@@ -76,7 +76,9 @@ class ThesisMaintenanceMappingIn(Base):
     mapping_id: str | None = Field(default=None, max_length=64)
     metric_id: Annotated[str, Field(min_length=1, max_length=64)]
     metric_version: Annotated[str, Field(min_length=1, max_length=16)] = "v1.0"
-    expected_direction: Annotated[str, Field(pattern="^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$")]
+    expected_direction: Annotated[
+        str, Field(pattern="^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$")
+    ]
     expected_value: Decimal | None = None
     expected_lower: Decimal | None = None
     expected_upper: Decimal | None = None
@@ -103,7 +105,9 @@ class MetricMappingIn(Base):
     mapping_id: str | None = Field(default=None, max_length=64)
     metric_id: Annotated[str, Field(min_length=1, max_length=64)]
     metric_version: Annotated[str, Field(min_length=1, max_length=16)] = "v1.0"
-    expected_direction: Annotated[str, Field(pattern="^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$")]
+    expected_direction: Annotated[
+        str, Field(pattern="^(上升|下降|波动|越高越好|越低越好|不低于阈值|不高于阈值)$")
+    ]
     expected_value: Decimal | None = None
     expected_lower: Decimal | None = None
     expected_upper: Decimal | None = None
@@ -148,7 +152,9 @@ class MetricMappingOut(Base):
     expectation_source: str
     confirmation_status: str
 
-    @field_serializer("expected_value", "expected_lower", "expected_upper", "invalidation_threshold")
+    @field_serializer(
+        "expected_value", "expected_lower", "expected_upper", "invalidation_threshold"
+    )
     def _decimal_as_str(self, value: Decimal | None) -> str | None:
         return None if value is None else str(value)
 
@@ -391,6 +397,16 @@ class ValidationItemOut(Base):
     message: str
 
 
+class ThemeImpactOut(Base):
+    """一条资料主题内部，对某条核心假设的可复核影响路径。"""
+
+    hypothesis_id: str
+    hypothesis_statement: str
+    direction: Annotated[str, Field(pattern="^(支持|冲突|中性)$")]
+    evidence_count: int = Field(default=1, ge=1)
+    has_conflicting_evidence: bool = False
+
+
 class EvidenceFeedItemOut(Base):
     """研究员可直接阅读的证据摘要，内部 ID 只承担跳转与追溯。"""
 
@@ -400,11 +416,14 @@ class EvidenceFeedItemOut(Base):
     security_name: str
     thesis_id: str
     thesis_title: str
+    thesis_core_view: str
+    source_document_id: str = ""
     hypothesis_id: str
     hypothesis_statement: str
     source_document_title: str
     fact_excerpt: str
     disclosed_at: datetime
+    ingested_at: datetime | None = None
     occurred_at: date | None = None
     source_url: str
     direction: str
@@ -414,6 +433,19 @@ class EvidenceFeedItemOut(Base):
     priority: Annotated[str, Field(pattern="^(high|medium|low)$")]
     can_manage: bool
     validation_items: list[ValidationItemOut]
+    aggregation_summary: str | None = None
+    atomic_evidence_count: int = Field(default=1, ge=1)
+    source_document_count: int = Field(default=1, ge=1)
+    support_evidence_count: int = Field(default=0, ge=0)
+    conflict_evidence_count: int = Field(default=0, ge=0)
+    affected_hypothesis_count: int = Field(default=1, ge=0)
+    secondary_hypotheses: list[str] = Field(default_factory=list)
+    theme_impacts: list[ThemeImpactOut] = Field(default_factory=list)
+    # 聚合主题的方向可能是「分歧」：同一核心假设同时有支持与冲突证据。
+    # 该字段不覆盖单条 evidence relation 的 direction，避免丢失原子判断。
+    theme_direction: Annotated[
+        str | None, Field(pattern="^(support|conflict|neutral|mixed|divergent)$")
+    ] = None
 
     @field_serializer("ai_confidence")
     def _confidence_as_str(self, value: Decimal | None) -> str | None:
@@ -423,6 +455,90 @@ class EvidenceFeedItemOut(Base):
 class EvidenceFeedPage(Base):
     items: list[EvidenceFeedItemOut]
     page: PageMeta
+
+
+class LogicChangeCausalPathOut(Base):
+    direction: str
+    label: str
+    mechanism: str
+    evidence_ids: list[str] = Field(default_factory=list)
+
+
+class LogicChangeHypothesisImpactOut(Base):
+    hypothesis_id: str
+    statement: str
+    direction: str
+    strength: str | None = None
+    strength_reason: str | None = None
+    rationale: str
+    business_impact: str | None = None
+    indicator_outlook: str | None = None
+    impact_layer: str | None = None
+    directness: str | None = None
+    transmission_status: str | None = None
+    hypothesis_effect: str | None = None
+    presentation: str | None = None
+    paths: list[LogicChangeCausalPathOut] = Field(default_factory=list)
+    related_metrics: list[str] = Field(default_factory=list)
+    evidence_ids: list[str]
+
+
+class LogicChangeSourceFactOut(Base):
+    evidence_id: str
+    fact_excerpt: str
+    evidence_locator: str
+    hypothesis_ids: list[str]
+    directions: list[str]
+    is_key_citation: bool = False
+
+
+class LogicChangeSourceDocumentOut(Base):
+    document_id: str
+    title: str
+    doc_type: str | None = None
+    published_at: datetime | None = None
+    source_url: str | None = None
+    facts: list[LogicChangeSourceFactOut]
+
+
+class LogicChangeDigestDetailOut(Base):
+    digest_id: str
+    security_id: str
+    security_name: str
+    thesis_id: str
+    thesis_title: str
+    thesis_core_view: str
+    business_date: date
+    overall_direction: str
+    summary: str
+    confirmation_status: str
+    candidate_count: int
+    source_document_count: int
+    confidence: Decimal | None = None
+    open_questions: list[str]
+    model_version: str | None = None
+    prompt_version: str | None = None
+    hypothesis_impacts: list[LogicChangeHypothesisImpactOut]
+    source_documents: list[LogicChangeSourceDocumentOut]
+
+    @field_serializer("confidence")
+    def _confidence_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+
+class TodayCompanyUpdateOut(Base):
+    """按公司合并的当天新入库原始资料，不等同于已确认投资影响。"""
+
+    security_id: str
+    security_name: str
+    document_count: int
+    latest_ingested_at: datetime
+    titles: list[str]
+
+
+class TodayCompanyUpdatePage(Base):
+    items: list[TodayCompanyUpdateOut]
+    as_of: datetime
 
 
 class ThesisPage(Base):
@@ -457,6 +573,7 @@ class TrendPointOut(Base):
     acquired_at: datetime | None = None
     source_document_id: str | None = None
     data_version: str | None = None
+    is_validation_window: bool = True
 
     @field_serializer("value")
     def _value_as_str(self, value: Decimal) -> str:
@@ -486,6 +603,7 @@ class HypothesisTrendOut(Base):
     period_type: str
     metric_version: str
     data_version: str | None = None
+    invalidation_rule: str | None = None
     direction: str
     slope: Decimal | None = None
     consecutive_decline: int = 0
@@ -496,6 +614,12 @@ class HypothesisTrendOut(Base):
 
     @field_serializer("slope")
     def _slope_as_str(self, value: Decimal | None) -> str | None:
+        return None if value is None else str(value)
+
+    @field_serializer(
+        "expected_value", "expected_lower", "expected_upper", "invalidation_threshold"
+    )
+    def _threshold_as_str(self, value: Decimal | None) -> str | None:
         return None if value is None else str(value)
 
 

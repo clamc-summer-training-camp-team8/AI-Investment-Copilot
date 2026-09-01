@@ -138,7 +138,9 @@ def _normalize_rows(
         if not title:
             continue
         source_url = urljoin(base_url, str(row.get("url") or row.get("link") or ""))
-        published_at = _parse_datetime(row.get("publish_time") or row.get("published_at") or row.get("date"))
+        published_at = _parse_datetime(
+            row.get("publish_time") or row.get("published_at") or row.get("date")
+        )
         body = str(row.get("body") or row.get("content") or row.get("abstract") or "").strip()
         document = EastmoneyDocument(
             security_id=security_id,
@@ -157,7 +159,8 @@ def _normalize_rows(
                 key: int(row.get(key) or 0)
                 for key in ("view_count", "comment_count", "like_count")
                 if row.get(key) is not None
-            } or None,
+            }
+            or None,
         )
         if document.content_hash not in seen:
             seen.add(document.content_hash)
@@ -172,20 +175,34 @@ def _normalize_html_listing(
     source = html.unescape(source)
     result: list[EastmoneyDocument] = []
     seen: set[str] = set()
-    pattern = re.compile(
-        r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', re.I | re.S
-    )
+    pattern = re.compile(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', re.I | re.S)
     for match in pattern.finditer(source):
         href, raw_title = match.groups()
         title = _html_text(raw_title)
-        if len(title) < 4 or title in {"公告", "研报", "资讯", "更多", "公告列表", "个股研报", "行业列表", "首页", "行情中心"}:
+        if len(title) < 4 or title in {
+            "公告",
+            "研报",
+            "资讯",
+            "更多",
+            "公告列表",
+            "个股研报",
+            "行业列表",
+            "首页",
+            "行情中心",
+        }:
             continue
         if not any(token in href.lower() for token in ("notice", "report", "news", "pdf", "info")):
             continue
         source_url = urljoin(base_url, href)
         context = source[max(0, match.start() - 180) : match.end() + 180]
         date_match = re.search(r"20\d{2}[-年/]\d{1,2}[-月/]\d{1,2}", context)
-        published_at = _parse_datetime(date_match.group(0).replace("年", "-").replace("月", "-").replace("日", "")) if date_match else None
+        published_at = (
+            _parse_datetime(
+                date_match.group(0).replace("年", "-").replace("月", "-").replace("日", "")
+            )
+            if date_match
+            else None
+        )
         document = EastmoneyDocument(
             security_id=security_id,
             category=category,
@@ -219,6 +236,8 @@ def _parse_datetime(value: Any) -> datetime | None:
 
 def _html_text(value: str) -> str:
     value = html.unescape(value)
-    value = re.sub(r"<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>", " ", value, flags=re.I | re.S)
+    value = re.sub(
+        r"<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>", " ", value, flags=re.I | re.S
+    )
     value = re.sub(r"<[^>]+>", " ", value)
     return re.sub(r"\s+", " ", value).strip()

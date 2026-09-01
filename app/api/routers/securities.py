@@ -57,7 +57,10 @@ def resolve_security(
     del actor
     market = uow.securities.search_market(query, limit=8)
     if market:
-        return [SecurityLookupOut(**_out(record).model_dump(), source="market_database") for record in market]
+        return [
+            SecurityLookupOut(**_out(record).model_dump(), source="market_database")
+            for record in market
+        ]
     resolved = [
         SecurityLookupOut(
             security_id=item.security_id,
@@ -100,11 +103,15 @@ def get_metric_center(security_id: str, actor: ActorDep, uow: UowDep) -> Company
         raise HTTPException(status_code=404, detail="证券不存在")
     metrics = metric_center(uow, record.security_id)
     updated_at = max((item["latest_date"] for item in metrics), default=None)
-    return CompanyMetricCenterOut(security_id=record.security_id, updated_at=updated_at, metrics=metrics)
+    return CompanyMetricCenterOut(
+        security_id=record.security_id, updated_at=updated_at, metrics=metrics
+    )
 
 
 @router.post("/{security_id}/metric-center/refresh", response_model=CompanyMetricRefreshOut)
-def refresh_metric_center(security_id: str, actor: ActorDep, uow: UowDep) -> CompanyMetricRefreshOut:
+def refresh_metric_center(
+    security_id: str, actor: ActorDep, uow: UowDep
+) -> CompanyMetricRefreshOut:
     _require_local_admin(actor)
     try:
         return CompanyMetricRefreshOut(**refresh_security_metrics(uow, security_id.strip().upper()))

@@ -43,7 +43,10 @@ def fetch_periodic_metrics(
         item
         for item in announcements
         if item.get("security_id") == security_id
-        and any(token in str(item.get("title", "")) for token in ("产销快报", "销量公告", "销量", "月报表"))
+        and any(
+            token in str(item.get("title", ""))
+            for token in ("产销快报", "销量公告", "销量", "月报表")
+        )
     ]
     rows.sort(key=lambda item: str(item.get("disclosure_time", "")), reverse=True)
     fetcher = NoticeFetcher(cache_dir)

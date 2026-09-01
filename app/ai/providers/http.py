@@ -21,6 +21,7 @@ from app.ai.prompts.templates import (
     EVENT_IMPACT,
     HYPOTHESIS_QUALITY,
     KNOWLEDGE_ANSWER,
+    LOGIC_CHANGE_CONSOLIDATION,
     METRIC_EXPLAIN,
     METRIC_RECOMMEND,
     RETROSPECTIVE_DRAFT,
@@ -168,12 +169,7 @@ class HttpProvider:
         repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """把同一资料的多个事件放进一次模型请求。"""
-        prompt = (
-            "请批量判断以下事件分别与其候选假设的关系。每个输入事件必须返回且仅返回一次，"
-            "results 顺序必须与输入一致；analysis 必须完整满足 event_impact 契约，"
-            "不得把不同事件的事实、引用或结论混合。\n"
-            + json.dumps(events, ensure_ascii=False, sort_keys=True)
-        )
+        prompt = _batch_event_impact_prompt(events)
         payload = self._complete(
             system=EVENT_IMPACT.system,
             prompt=prompt,
@@ -193,12 +189,7 @@ class HttpProvider:
         repair_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """异步批量分析；取消协程时同时取消底层 HTTP 请求。"""
-        prompt = (
-            "请批量判断以下事件分别与其候选假设的关系。每个输入事件必须返回且仅返回一次，"
-            "results 顺序必须与输入一致；analysis 必须完整满足 event_impact 契约，"
-            "不得把不同事件的事实、引用或结论混合。\n"
-            + json.dumps(events, ensure_ascii=False, sort_keys=True)
-        )
+        prompt = _batch_event_impact_prompt(events)
         payload = await self._acomplete(
             system=EVENT_IMPACT.system,
             prompt=prompt,
@@ -587,6 +578,74 @@ class HttpProvider:
         payload.setdefault("requires_human_review", True)
         return self._metadata(payload, prompt_version=KNOWLEDGE_ANSWER.version)
 
+    def consolidate_logic_change(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        business_date: str,
+        thesis_core_view: str,
+        hypotheses: list[dict[str, Any]],
+        candidate_evidence: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        prompt = LOGIC_CHANGE_CONSOLIDATION.render(
+            business_date=business_date,
+            security_id=security_id,
+            thesis_id=thesis_id,
+            thesis_core_view=thesis_core_view,
+            hypotheses=json.dumps(hypotheses, ensure_ascii=False, sort_keys=True),
+            candidate_evidence=json.dumps(candidate_evidence, ensure_ascii=False, sort_keys=True),
+        )
+        payload = self._complete(
+            system=LOGIC_CHANGE_CONSOLIDATION.system,
+            prompt=prompt,
+            schema_name="logic_change_consolidation",
+            repair_errors=repair_errors,
+        )
+        for key, value in (
+            ("security_id", security_id),
+            ("thesis_id", thesis_id),
+            ("business_date", business_date),
+        ):
+            payload.setdefault(key, value)
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=LOGIC_CHANGE_CONSOLIDATION.version)
+
+    async def consolidate_logic_change_async(
+        self,
+        *,
+        security_id: str,
+        thesis_id: str,
+        business_date: str,
+        thesis_core_view: str,
+        hypotheses: list[dict[str, Any]],
+        candidate_evidence: list[dict[str, Any]],
+        repair_errors: list[str] | None = None,
+    ) -> dict[str, Any]:
+        prompt = LOGIC_CHANGE_CONSOLIDATION.render(
+            business_date=business_date,
+            security_id=security_id,
+            thesis_id=thesis_id,
+            thesis_core_view=thesis_core_view,
+            hypotheses=json.dumps(hypotheses, ensure_ascii=False, sort_keys=True),
+            candidate_evidence=json.dumps(candidate_evidence, ensure_ascii=False, sort_keys=True),
+        )
+        payload = await self._acomplete(
+            system=LOGIC_CHANGE_CONSOLIDATION.system,
+            prompt=prompt,
+            schema_name="logic_change_consolidation",
+            repair_errors=repair_errors,
+        )
+        for key, value in (
+            ("security_id", security_id),
+            ("thesis_id", thesis_id),
+            ("business_date", business_date),
+        ):
+            payload.setdefault(key, value)
+        payload.setdefault("requires_human_review", True)
+        return self._metadata(payload, prompt_version=LOGIC_CHANGE_CONSOLIDATION.version)
+
     def _complete(
         self,
         *,
@@ -721,11 +780,47 @@ class HttpProvider:
 
     def _metadata(self, payload: dict[str, Any], *, prompt_version: str) -> dict[str, Any]:
         result = dict(payload)
-        result.setdefault("model_version", self.model_version)
-        result.setdefault("prompt_version", prompt_version)
-        result.setdefault("generated_at", datetime.now(UTC).isoformat())
-        result.setdefault("ai_status", AiStatus.CANDIDATE.value)
+        # 版本和生成时间是网关的审计字段，不接受模型在正文 JSON 中的自报值，
+        # 否则模型幻觉的 "1.0.0" 会污染可追溯性和后续评测分桶。
+        result["model_version"] = self.model_version
+        result["prompt_version"] = prompt_version
+        result["generated_at"] = datetime.now(UTC).isoformat()
+        # 解析成功与否由网关的契约校验决定，不能接受模型在正文里自报“解析失败”。
+        result["ai_status"] = AiStatus.CANDIDATE.value
         return result
+
+
+def _batch_event_impact_prompt(events: list[dict[str, Any]]) -> str:
+    """Tell compatible models about both layers of the batch JSON structure.
+
+    The outer schema intentionally keeps ``analysis`` open-ended so the server
+    can decorate it with stable IDs.  Without this concrete nested example,
+    some providers flatten signal fields into ``analysis`` and the following
+    per-event ``event_impact`` validation correctly rejects the response.
+    """
+
+    return (
+        "请批量判断以下事件分别与其候选假设的关系。每个输入事件必须返回且仅返回一次，"
+        "results 顺序必须与输入一致；不得把不同事件的事实、引用或结论混合。\n\n"
+        "只输出一个 JSON 对象，顶层只能包含 results。严格使用以下嵌套：\n"
+        '{"results":[{"event_id":"输入 event_id","analysis":{'
+        '"event":{"event_type":"订单|政策|管理层表述|业绩|其他",'
+        '"disclosure_time":"输入时间","fact":"仅输入事实",'
+        '"evidence_locator":"输入 locator"},'
+        '"impacts":[{"thesis_id":"输入 thesis_id","hypothesis_id":"输入 hypothesis_id",'
+        '"relevance":"相关|不相关|待定","inference":"简洁推断",'
+        '"citations":["输入 locator"],"unsupported_claims":[],"'
+        '"signal":{"direction":"正向|负向|中性|不确定",'
+        '"impact_direction":"支持|冲突|中性|无关","strength":0.0,"confidence":0.0,'
+        '"horizon":"短期|中期|长期|null","rationale":"依据",'
+        '"transmission_path":"事实 → 变量 → 假设",'
+        '"suggested_tracking":[],"requires_human_review":true}}]}}]}'
+        "\n\n特别禁止：不得把 relevance、citations、direction、impact_direction、"
+        "strength、confidence、rationale、transmission_path 或 requires_human_review "
+        "直接放在 analysis 顶层；它们必须位于 analysis.impacts[i] 中，"
+        "其中方向、强度、置信度等字段必须位于 analysis.impacts[i].signal 中。\n\n"
+        "输入事件：\n" + json.dumps(events, ensure_ascii=False, sort_keys=True)
+    )
 
 
 def _normalize_thesis_references(payload: dict[str, Any]) -> None:

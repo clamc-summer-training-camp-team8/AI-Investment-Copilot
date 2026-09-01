@@ -189,7 +189,9 @@ def test_coverage_counts_current_observation_snapshot_as_maintained_logic() -> N
     application.dependency_overrides[get_uow] = lambda: uow
 
     with TestClient(application) as client:
-        company = client.get("/api/coverage", headers={"X-User-Id": "analyst-mvp"}).json()[0]["companies"][0]
+        company = client.get("/api/coverage", headers={"X-User-Id": "analyst-mvp"}).json()[0][
+            "companies"
+        ][0]
         assert company["thesis_count"] == 1
         assert company["status"] == "正常覆盖"
         assert company["thesis_id"] == "THS-000538-OBS"

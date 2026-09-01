@@ -1666,6 +1666,46 @@ components:
       - next_url
       title: DemoUploadOut
       type: object
+    DocumentFullOut:
+      description: 完整入库文档阅读视图；正文由已解析段落构成，便于精确回查。
+      properties:
+        doc_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Doc Type
+        document_id:
+          title: Document Id
+          type: string
+        parser_version:
+          title: Parser Version
+          type: string
+        published_at:
+          format: date-time
+          title: Published At
+          type: string
+        segment_count:
+          title: Segment Count
+          type: integer
+        segments:
+          items:
+            $ref: '#/components/schemas/DocumentSegmentOut'
+          title: Segments
+          type: array
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+      required:
+      - document_id
+      - title
+      - published_at
+      - parser_version
+      - segment_count
+      - segments
+      title: DocumentFullOut
+      type: object
     DocumentSegmentOut:
       properties:
         cell_range:
@@ -1994,17 +2034,37 @@ components:
     EvidenceFeedItemOut:
       description: 研究员可直接阅读的证据摘要，内部 ID 只承担跳转与追溯。
       properties:
+        affected_hypothesis_count:
+          default: 1
+          minimum: 0.0
+          title: Affected Hypothesis Count
+          type: integer
+        aggregation_summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aggregation Summary
         ai_confidence:
           anyOf:
           - type: string
           - type: 'null'
           title: Ai Confidence
+        atomic_evidence_count:
+          default: 1
+          minimum: 1.0
+          title: Atomic Evidence Count
+          type: integer
         can_manage:
           title: Can Manage
           type: boolean
         confirmation_status:
           title: Confirmation Status
           type: string
+        conflict_evidence_count:
+          default: 0
+          minimum: 0.0
+          title: Conflict Evidence Count
+          type: integer
         direction:
           title: Direction
           type: string
@@ -2024,6 +2084,12 @@ components:
         hypothesis_statement:
           title: Hypothesis Statement
           type: string
+        ingested_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Ingested At
         occurred_at:
           anyOf:
           - format: date
@@ -2037,11 +2103,25 @@ components:
         relation_id:
           title: Relation Id
           type: string
+        secondary_hypotheses:
+          items:
+            type: string
+          title: Secondary Hypotheses
+          type: array
         security_id:
           title: Security Id
           type: string
         security_name:
           title: Security Name
+          type: string
+        source_document_count:
+          default: 1
+          minimum: 1.0
+          title: Source Document Count
+          type: integer
+        source_document_id:
+          default: ''
+          title: Source Document Id
           type: string
         source_document_title:
           title: Source Document Title
@@ -2054,6 +2134,25 @@ components:
           - type: string
           - type: 'null'
           title: Strength
+        support_evidence_count:
+          default: 0
+          minimum: 0.0
+          title: Support Evidence Count
+          type: integer
+        theme_direction:
+          anyOf:
+          - pattern: ^(support|conflict|neutral|mixed|divergent)$
+            type: string
+          - type: 'null'
+          title: Theme Direction
+        theme_impacts:
+          items:
+            $ref: '#/components/schemas/ThemeImpactOut'
+          title: Theme Impacts
+          type: array
+        thesis_core_view:
+          title: Thesis Core View
+          type: string
         thesis_id:
           title: Thesis Id
           type: string
@@ -2072,6 +2171,7 @@ components:
       - security_name
       - thesis_id
       - thesis_title
+      - thesis_core_view
       - hypothesis_id
       - hypothesis_statement
       - source_document_title
@@ -3083,6 +3183,11 @@ components:
           - type: integer
           - type: 'null'
           title: Invalidation Consecutive Periods
+        invalidation_rule:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Invalidation Rule
         invalidation_threshold:
           anyOf:
           - type: string
@@ -3388,6 +3493,265 @@ components:
       - generated_at
       - request_id
       title: KnowledgeAnswerOut
+      type: object
+    LogicChangeCausalPathOut:
+      properties:
+        direction:
+          title: Direction
+          type: string
+        evidence_ids:
+          items:
+            type: string
+          title: Evidence Ids
+          type: array
+        label:
+          title: Label
+          type: string
+        mechanism:
+          title: Mechanism
+          type: string
+      required:
+      - direction
+      - label
+      - mechanism
+      title: LogicChangeCausalPathOut
+      type: object
+    LogicChangeDigestDetailOut:
+      properties:
+        business_date:
+          format: date
+          title: Business Date
+          type: string
+        candidate_count:
+          title: Candidate Count
+          type: integer
+        confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confidence
+        confirmation_status:
+          title: Confirmation Status
+          type: string
+        digest_id:
+          title: Digest Id
+          type: string
+        hypothesis_impacts:
+          items:
+            $ref: '#/components/schemas/LogicChangeHypothesisImpactOut'
+          title: Hypothesis Impacts
+          type: array
+        model_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Version
+        open_questions:
+          items:
+            type: string
+          title: Open Questions
+          type: array
+        overall_direction:
+          title: Overall Direction
+          type: string
+        prompt_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prompt Version
+        security_id:
+          title: Security Id
+          type: string
+        security_name:
+          title: Security Name
+          type: string
+        source_document_count:
+          title: Source Document Count
+          type: integer
+        source_documents:
+          items:
+            $ref: '#/components/schemas/LogicChangeSourceDocumentOut'
+          title: Source Documents
+          type: array
+        summary:
+          title: Summary
+          type: string
+        thesis_core_view:
+          title: Thesis Core View
+          type: string
+        thesis_id:
+          title: Thesis Id
+          type: string
+        thesis_title:
+          title: Thesis Title
+          type: string
+      required:
+      - digest_id
+      - security_id
+      - security_name
+      - thesis_id
+      - thesis_title
+      - thesis_core_view
+      - business_date
+      - overall_direction
+      - summary
+      - confirmation_status
+      - candidate_count
+      - source_document_count
+      - open_questions
+      - hypothesis_impacts
+      - source_documents
+      title: LogicChangeDigestDetailOut
+      type: object
+    LogicChangeHypothesisImpactOut:
+      properties:
+        business_impact:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Business Impact
+        direction:
+          title: Direction
+          type: string
+        directness:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Directness
+        evidence_ids:
+          items:
+            type: string
+          title: Evidence Ids
+          type: array
+        hypothesis_effect:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Hypothesis Effect
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        impact_layer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Impact Layer
+        indicator_outlook:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Indicator Outlook
+        paths:
+          items:
+            $ref: '#/components/schemas/LogicChangeCausalPathOut'
+          title: Paths
+          type: array
+        presentation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Presentation
+        rationale:
+          title: Rationale
+          type: string
+        related_metrics:
+          items:
+            type: string
+          title: Related Metrics
+          type: array
+        statement:
+          title: Statement
+          type: string
+        strength:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength
+        strength_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Strength Reason
+        transmission_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Transmission Status
+      required:
+      - hypothesis_id
+      - statement
+      - direction
+      - rationale
+      - evidence_ids
+      title: LogicChangeHypothesisImpactOut
+      type: object
+    LogicChangeSourceDocumentOut:
+      properties:
+        doc_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Doc Type
+        document_id:
+          title: Document Id
+          type: string
+        facts:
+          items:
+            $ref: '#/components/schemas/LogicChangeSourceFactOut'
+          title: Facts
+          type: array
+        published_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Published At
+        source_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Url
+        title:
+          title: Title
+          type: string
+      required:
+      - document_id
+      - title
+      - facts
+      title: LogicChangeSourceDocumentOut
+      type: object
+    LogicChangeSourceFactOut:
+      properties:
+        directions:
+          items:
+            type: string
+          title: Directions
+          type: array
+        evidence_id:
+          title: Evidence Id
+          type: string
+        evidence_locator:
+          title: Evidence Locator
+          type: string
+        fact_excerpt:
+          title: Fact Excerpt
+          type: string
+        hypothesis_ids:
+          items:
+            type: string
+          title: Hypothesis Ids
+          type: array
+        is_key_citation:
+          default: false
+          title: Is Key Citation
+          type: boolean
+      required:
+      - evidence_id
+      - fact_excerpt
+      - evidence_locator
+      - hypothesis_ids
+      - directions
+      title: LogicChangeSourceFactOut
       type: object
     LoginIn:
       properties:
@@ -5826,6 +6190,34 @@ components:
       - rule_version
       title: SuggestionOut
       type: object
+    ThemeImpactOut:
+      description: 一条资料主题内部，对某条核心假设的可复核影响路径。
+      properties:
+        direction:
+          pattern: ^(支持|冲突|中性)$
+          title: Direction
+          type: string
+        evidence_count:
+          default: 1
+          minimum: 1.0
+          title: Evidence Count
+          type: integer
+        has_conflicting_evidence:
+          default: false
+          title: Has Conflicting Evidence
+          type: boolean
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        hypothesis_statement:
+          title: Hypothesis Statement
+          type: string
+      required:
+      - hypothesis_id
+      - hypothesis_statement
+      - direction
+      title: ThemeImpactOut
+      type: object
     ThesisDraftIn:
       description: 建卡入参。文件上传走单独的接口，这里只接手工观点。
       properties:
@@ -6507,6 +6899,51 @@ components:
       - offset
       title: TimelinePageOut
       type: object
+    TodayCompanyUpdateOut:
+      description: 按公司合并的当天新入库原始资料，不等同于已确认投资影响。
+      properties:
+        document_count:
+          title: Document Count
+          type: integer
+        latest_ingested_at:
+          format: date-time
+          title: Latest Ingested At
+          type: string
+        security_id:
+          title: Security Id
+          type: string
+        security_name:
+          title: Security Name
+          type: string
+        titles:
+          items:
+            type: string
+          title: Titles
+          type: array
+      required:
+      - security_id
+      - security_name
+      - document_count
+      - latest_ingested_at
+      - titles
+      title: TodayCompanyUpdateOut
+      type: object
+    TodayCompanyUpdatePage:
+      properties:
+        as_of:
+          format: date-time
+          title: As Of
+          type: string
+        items:
+          items:
+            $ref: '#/components/schemas/TodayCompanyUpdateOut'
+          title: Items
+          type: array
+      required:
+      - items
+      - as_of
+      title: TodayCompanyUpdatePage
+      type: object
     TopicContextIn:
       properties:
         as_of:
@@ -6605,6 +7042,10 @@ components:
           - type: string
           - type: 'null'
           title: Data Version
+        is_validation_window:
+          default: true
+          title: Is Validation Window
+          type: boolean
         period:
           title: Period
           type: string
@@ -8396,6 +8837,158 @@ paths:
       summary: Current User
       tags:
       - authentication
+  /api/collection/investoday/news/sync:
+    post:
+      description: 'Queue one manually requested, bounded collection run.
+
+
+        It intentionally does not return provider data, so neither raw content nor
+
+        credentials can leak through the control-plane endpoint.'
+      operationId: sync_investoday_news_api_collection_investoday_news_sync_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                title: Response Sync Investoday News Api Collection Investoday News Sync Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Sync Investoday News
+      tags:
+      - collection
+  /api/collection/investoday/reports/sync:
+    post:
+      description: Queue one bounded, stock-code-targeted research-report collection run.
+      operationId: sync_investoday_reports_api_collection_investoday_reports_sync_post
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                title: Response Sync Investoday Reports Api Collection Investoday Reports Sync Post
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Sync Investoday Reports
+      tags:
+      - collection
+  /api/collection/investoday/status:
+    get:
+      description: 'Current business-day acquisition status for the research workbench.
+
+
+        This only exposes operational counters. Source bodies and provider errors
+
+        remain inside the protected ingestion pipeline.'
+      operationId: investoday_collection_status_api_collection_investoday_status_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                title: Response Investoday Collection Status Api Collection Investoday Status Get
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Investoday Collection Status
+      tags:
+      - collection
   /api/coverage:
     get:
       operationId: list_coverage_api_coverage_get
@@ -8725,6 +9318,57 @@ paths:
       summary: Upload Fixed Demo Material
       tags:
       - demo
+  /api/documents/{document_id}:
+    get:
+      description: 读取完整解析正文，供研报、财报、公告等材料的全文核验。
+      operationId: get_full_document_api_documents__document_id__get
+      parameters:
+      - in: path
+        name: document_id
+        required: true
+        schema:
+          title: Document Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentFullOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Full Document
+      tags:
+      - documents
   /api/documents/{document_id}/citation:
     get:
       operationId: get_document_citation_api_documents__document_id__citation_get
@@ -13493,6 +14137,244 @@ paths:
       summary: List Trends
       tags:
       - thesis
+  /api/updates:
+    get:
+      description: 返回跨公司、按优先级和披露时间排序的可读动态。
+      operationId: list_research_updates_api_updates_get
+      parameters:
+      - in: query
+        name: status
+        required: false
+        schema:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Status
+      - in: query
+        name: direction
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Direction
+      - in: query
+        name: priority
+        required: false
+        schema:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Priority
+      - description: 仅展示最近 N 天的实时主题；省略时查询全部历史
+        in: query
+        name: recent_days
+        required: false
+        schema:
+          anyOf:
+          - maximum: 90
+            minimum: 1
+            type: integer
+          - type: 'null'
+          description: 仅展示最近 N 天的实时主题；省略时查询全部历史
+          title: Recent Days
+      - description: 按指定业务日读取已归并的历史逻辑变化，仅用于回溯展示
+        in: query
+        name: business_day
+        required: false
+        schema:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          description: 按指定业务日读取已归并的历史逻辑变化，仅用于回溯展示
+          title: Business Day
+      - description: 仅展示本业务日新入库资料形成的主题影响
+        in: query
+        name: today_only
+        required: false
+        schema:
+          default: false
+          description: 仅展示本业务日新入库资料形成的主题影响
+          title: Today Only
+          type: boolean
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceFeedPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Research Updates
+      tags:
+      - updates
+  /api/updates/logic-changes/{security_id}/{thesis_id}:
+    get:
+      description: 读取一条日归并变化及其可回查的资料—事实—假设链路。
+      operationId: get_logic_change_detail_api_updates_logic_changes__security_id___thesis_id__get
+      parameters:
+      - in: path
+        name: security_id
+        required: true
+        schema:
+          title: Security Id
+          type: string
+      - in: path
+        name: thesis_id
+        required: true
+        schema:
+          title: Thesis Id
+          type: string
+      - in: query
+        name: business_day
+        required: false
+        schema:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Business Day
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogicChangeDigestDetailOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Logic Change Detail
+      tags:
+      - updates
+  /api/updates/today:
+    get:
+      description: 'Show today''s newly ingested, company-relevant source material by company.
+
+
+        This intentionally precedes evidence mapping: researchers should see new
+
+        source material immediately, while the RAG relation is still being formed.'
+      operationId: list_today_company_updates_api_updates_today_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodayCompanyUpdatePage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: List Today Company Updates
+      tags:
+      - updates
   /api/workbench:
     get:
       description: 工作台聚合。每类待办各取前 limit 条。

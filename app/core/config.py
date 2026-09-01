@@ -85,6 +85,21 @@ class Settings(BaseSettings):
     # ``localhost`` is unreliable on machines where it resolves to ``::1``
     # first while the published port only listens on IPv4.
     redis_url: str = "redis://127.0.0.1:6379/0"
+    # 采集任务和“今日”看板都按同一业务时区判断日期。部署容器也应设置 TZ，
+    # Worker 会在启动时以此值校准 ARQ 的 cron 时钟。
+    app_timezone: str = "Asia/Shanghai"
+    # 外部资讯源。密钥仅通过环境变量/密钥管理系统注入，绝不进入源码或审计日志。
+    investoday_api_key: SecretStr | None = None
+    investoday_news_enabled: bool = False
+    investoday_news_base_url: str = "https://data-api.investoday.net/data"
+    investoday_news_page_size: int = Field(default=100, ge=1, le=100)
+    investoday_news_max_items_per_run: int = Field(default=20, ge=1, le=100)
+    investoday_reports_enabled: bool = True
+    investoday_reports_page_size: int = Field(default=10, ge=1, le=100)
+    investoday_reports_max_items_per_run: int = Field(default=30, ge=1, le=100)
+    # 仅影响自动采集，不删除历史逻辑或资料。逗号分隔的证券代码可用于将
+    # 暂停覆盖的公司从外部资料拉取范围中移除。
+    investoday_excluded_security_ids: str = ""
     upload_max_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
     upload_retention_days: int = Field(default=30, ge=1, le=3650)
     failed_upload_retention_days: int = Field(default=90, ge=1, le=3650)

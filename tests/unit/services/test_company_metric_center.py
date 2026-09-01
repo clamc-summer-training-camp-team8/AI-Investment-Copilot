@@ -39,8 +39,22 @@ def test_fetch_market_falls_back_to_sina_daily_prices() -> None:
         json=lambda: {
             "result": {
                 "data": [
-                    {"day": "2026-08-28", "open": "97", "high": "99", "low": "96", "close": "98", "volume": "10000"},
-                    {"day": "2026-08-31", "open": "97", "high": "98", "low": "89", "close": "91", "volume": "20000"},
+                    {
+                        "day": "2026-08-28",
+                        "open": "97",
+                        "high": "99",
+                        "low": "96",
+                        "close": "98",
+                        "volume": "10000",
+                    },
+                    {
+                        "day": "2026-08-31",
+                        "open": "97",
+                        "high": "98",
+                        "low": "89",
+                        "close": "91",
+                        "volume": "20000",
+                    },
                 ]
             }
         },
@@ -129,14 +143,16 @@ def test_metric_center_merges_database_catalog_with_observations() -> None:
         source_id="financial-api",
         status="已确认",
     )
-    uow.observations.add(ObservationRecord(
-        security_id="002594",
-        metric_id="MET-001",
-        period="2026Q1",
-        observation_date=date(2026, 4, 30),
-        unit="%",
-        actual_value=Decimal("12.34"),
-    ))
+    uow.observations.add(
+        ObservationRecord(
+            security_id="002594",
+            metric_id="MET-001",
+            period="2026Q1",
+            observation_date=date(2026, 4, 30),
+            unit="%",
+            actual_value=Decimal("12.34"),
+        )
+    )
 
     result = metric_center.metric_center(uow, "002594")
 

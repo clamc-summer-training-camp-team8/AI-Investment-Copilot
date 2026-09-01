@@ -38,61 +38,454 @@ class RawObservation:
 
 
 METRICS: tuple[CenterMetric, ...] = (
-    CenterMetric("MKT-OPEN-D", "开盘价", "价格与成交量", "交易币种", "交易日", "当日开盘成交价格。"),
-    CenterMetric("MKT-HIGH-D", "最高价", "价格与成交量", "交易币种", "交易日", "当日最高成交价格。"),
+    CenterMetric(
+        "MKT-OPEN-D", "开盘价", "价格与成交量", "交易币种", "交易日", "当日开盘成交价格。"
+    ),
+    CenterMetric(
+        "MKT-HIGH-D", "最高价", "价格与成交量", "交易币种", "交易日", "当日最高成交价格。"
+    ),
     CenterMetric("MKT-LOW-D", "最低价", "价格与成交量", "交易币种", "交易日", "当日最低成交价格。"),
-    CenterMetric("MKT-CLOSE-D", "前复权收盘价", "价格与成交量", "交易币种", "交易日", "交易日收盘后的前复权价格。"),
-    CenterMetric("MKT-CHANGE-D", "涨跌额", "价格与成交量", "交易币种", "交易日", "收盘价相对上一交易日的变动金额。"),
-    CenterMetric("MKT-AMPLITUDE-D", "振幅", "价格与成交量", "%", "交易日", "当日最高价与最低价相对前收盘价的波动幅度。"),
+    CenterMetric(
+        "MKT-CLOSE-D",
+        "前复权收盘价",
+        "价格与成交量",
+        "交易币种",
+        "交易日",
+        "交易日收盘后的前复权价格。",
+    ),
+    CenterMetric(
+        "MKT-CHANGE-D",
+        "涨跌额",
+        "价格与成交量",
+        "交易币种",
+        "交易日",
+        "收盘价相对上一交易日的变动金额。",
+    ),
+    CenterMetric(
+        "MKT-AMPLITUDE-D",
+        "振幅",
+        "价格与成交量",
+        "%",
+        "交易日",
+        "当日最高价与最低价相对前收盘价的波动幅度。",
+    ),
     CenterMetric("MKT-VOLUME-D", "成交量", "价格与成交量", "手", "交易日", "当日成交量。"),
-    CenterMetric("MKT-AMOUNT-D", "成交额", "价格与成交量", "交易币种", "交易日", "当日成交金额，按证券交易市场本币计价。"),
-    CenterMetric("MKT-TURNOVER-D", "换手率", "价格与成交量", "%", "交易日", "当日成交量占可流通股份的比例。"),
-    CenterMetric("MKT-CHANGE-PCT-D", "涨跌幅", "价格与成交量", "%", "交易日", "收盘价相对上一交易日的变化率。"),
-    CenterMetric("TECH-MA5-D", "5日移动平均", "技术指标", "交易币种", "交易日", "最近5个交易日收盘价算术平均值。"),
-    CenterMetric("TECH-MA20-D", "20日移动平均", "技术指标", "交易币种", "交易日", "最近20个交易日收盘价算术平均值。"),
-    CenterMetric("TECH-MA60-D", "60日移动平均", "技术指标", "交易币种", "交易日", "最近60个交易日收盘价算术平均值。"),
-    CenterMetric("TECH-AVG-VOLUME20-D", "20日平均成交量", "技术指标", "手", "交易日", "最近20个交易日成交量的算术平均值。"),
-    CenterMetric("TECH-VOLUME-RATIO-D", "成交量相对20日均值", "技术指标", "倍", "交易日", "当日成交量相对20日平均成交量的倍数。"),
-    CenterMetric("TECH-MOMENTUM20-D", "20日价格变动", "技术指标", "%", "交易日", "收盘价相对20个交易日前收盘价的变化率。"),
-    CenterMetric("TECH-RSI14-D", "RSI（14日）", "技术指标", "", "交易日", "基于最近14期上涨与下跌幅度计算的相对强弱指标。"),
-    CenterMetric("TECH-VOL20-D", "20日年化波动率", "技术指标", "%", "交易日", "最近20个交易日日收益率标准差按252日年化。"),
-    CenterMetric("VAL-PE-TTM-D", "市盈率（TTM）", "估值指标", "倍", "交易日", "总市值除以最近十二个月归母净利润。"),
-    CenterMetric("VAL-PB-MRQ-D", "市净率（MRQ）", "估值指标", "倍", "交易日", "总市值除以最近一期归母净资产。"),
-    CenterMetric("VAL-PS-TTM-D", "市销率（TTM）", "估值指标", "倍", "交易日", "总市值除以最近十二个月营业收入。"),
-    CenterMetric("VAL-MARKET-CAP-D", "总市值", "估值指标", "交易币种", "交易日", "证券全部已发行股份对应的市场价值，按证券交易市场本币计价。"),
-    CenterMetric("FIN-REVENUE-CUM", "营业总收入", "财务与运营", "报告币种", "随财报", "报告期累计营业总收入。", "累计"),
-    CenterMetric("FIN-REVENUE-YOY", "营业收入同比", "财务与运营", "%", "随财报", "报告期累计营业收入相对上年同期的变化率。", "累计"),
-    CenterMetric("FIN-NET-PROFIT-CUM", "归母净利润", "财务与运营", "报告币种", "随财报", "报告期累计归属于母公司股东的净利润。", "累计"),
-    CenterMetric("FIN-NET-PROFIT-YOY", "归母净利润同比", "财务与运营", "%", "随财报", "报告期累计归母净利润相对上年同期的变化率。", "累计"),
-    CenterMetric("FIN-DEDUCTED-NP-CUM", "扣非归母净利润", "财务与运营", "报告币种", "随财报", "报告期累计扣除非经常性损益后的归母净利润。", "累计"),
-    CenterMetric("FIN-EPS", "基本每股收益", "财务与运营", "报告币种/股", "随财报", "报告期基本每股收益。", "累计"),
-    CenterMetric("FIN-BPS", "每股净资产", "财务与运营", "报告币种/股", "随财报", "报告期末归属于普通股股东的每股净资产。", "期末"),
-    CenterMetric("FIN-GROSS-MARGIN", "销售毛利率", "财务与运营", "%", "随财报", "营业收入扣除营业成本后的利润率。", "累计"),
-    CenterMetric("FIN-ROE", "净资产收益率", "财务与运营", "%", "随财报", "归母净利润相对加权平均净资产的收益率。", "累计"),
-    CenterMetric("FIN-ROIC", "投入资本回报率", "财务与运营", "%", "随财报", "企业税后经营利润相对投入资本的回报率。", "累计"),
-    CenterMetric("FIN-DEBT-RATIO", "资产负债率", "财务与运营", "%", "随财报", "负债总额占资产总额的比例。", "期末"),
-    CenterMetric("FIN-OPERATING-CASHFLOW", "经营活动现金流净额", "财务与运营", "报告币种", "随财报", "报告期经营活动产生的现金流量净额。", "累计"),
-    CenterMetric("FIN-TOTAL-ASSETS", "资产总额", "财务与运营", "报告币种", "随财报", "报告期末资产总额。", "期末"),
-    CenterMetric("FIN-TOTAL-EQUITY", "所有者权益合计", "财务与运营", "报告币种", "随财报", "报告期末所有者权益合计。", "期末"),
-    CenterMetric("FIN-OCF-PER-SHARE", "每股经营现金流", "财务与运营", "报告币种/股", "随财报", "经营活动现金流净额折算到每股。", "累计"),
-    CenterMetric("FIN-CURRENT-RATIO", "流动比率", "财务与运营", "倍", "随财报", "流动资产相对流动负债的覆盖倍数。", "期末"),
-    CenterMetric("FIN-QUICK-RATIO", "速动比率", "财务与运营", "倍", "随财报", "速动资产相对流动负债的覆盖倍数。", "期末"),
-    CenterMetric("FIN-CASH-RATIO", "现金比率", "财务与运营", "倍", "随财报", "现金及现金等价物相对流动负债的覆盖倍数。", "期末"),
-    CenterMetric("FIN-INVENTORY-TURNOVER", "存货周转率", "财务与运营", "次", "随财报", "报告期存货周转效率。", "累计"),
-    CenterMetric("FIN-OPERATING-CYCLE", "营业周期", "财务与运营", "天", "随财报", "存货周转天数与应收账款周转天数之和。", "累计"),
-    CenterMetric("FIN-INTEREST-COVERAGE", "利息保障倍数", "财务与运营", "倍", "随财报", "经营业绩对利息费用的覆盖倍数。", "累计"),
-    CenterMetric("FIN-TAX-RATE", "实际税率", "财务与运营", "%", "随财报", "报告期所得税费用相对利润总额的比例。", "累计"),
-    CenterMetric("FIN-RD-EXPENSE-CUM", "研发费用", "财务与运营", "报告币种", "随财报", "报告期累计研发费用。", "累计", "sina-finance-api"),
-    CenterMetric("FIN-RD-RATIO", "研发费用率", "财务与运营", "%", "随财报", "报告期累计研发费用占营业收入的比例。", "累计", "sina-finance-api"),
-    CenterMetric("FIN-INVENTORY-END", "期末存货", "财务与运营", "报告币种", "随财报", "报告期末存货账面余额。", "期末", "sina-finance-api"),
-    CenterMetric("FIN-RECEIVABLE-END", "期末应收账款", "财务与运营", "报告币种", "随财报", "报告期末应收账款账面余额。", "期末", "sina-finance-api"),
-    CenterMetric("FIN-CASH-END", "期末货币资金", "财务与运营", "报告币种", "随财报", "报告期末货币资金及现金等价物余额。", "期末", "sina-finance-api"),
-    CenterMetric("FIN-TOTAL-LIABILITIES", "负债合计", "财务与运营", "报告币种", "随财报", "报告期末负债合计。", "期末", "sina-finance-api"),
-    CenterMetric("INDUSTRY-CLOSE-D", "所属行业指数", "宏观及行业", "点", "交易日", "公司所属东方财富行业板块的收盘点位。"),
-    CenterMetric("INDUSTRY-CHANGE-PCT-D", "所属行业指数涨跌幅", "宏观及行业", "%", "交易日", "所属行业板块指数相对上一交易日的变化率。"),
-    CenterMetric("MACRO-CPI-YOY-M", "居民消费价格同比", "宏观及行业", "%", "月度", "全国居民消费价格指数相对上年同月的变化率。", "月值"),
-    CenterMetric("MACRO-PPI-YOY-M", "工业生产者出厂价格同比", "宏观及行业", "%", "月度", "全国工业生产者出厂价格指数相对上年同月的变化率。", "月值"),
-    CenterMetric("MACRO-PMI-M", "制造业采购经理指数", "宏观及行业", "点", "月度", "反映制造业景气水平的采购经理指数。", "月值"),
+    CenterMetric(
+        "MKT-AMOUNT-D",
+        "成交额",
+        "价格与成交量",
+        "交易币种",
+        "交易日",
+        "当日成交金额，按证券交易市场本币计价。",
+    ),
+    CenterMetric(
+        "MKT-TURNOVER-D", "换手率", "价格与成交量", "%", "交易日", "当日成交量占可流通股份的比例。"
+    ),
+    CenterMetric(
+        "MKT-CHANGE-PCT-D",
+        "涨跌幅",
+        "价格与成交量",
+        "%",
+        "交易日",
+        "收盘价相对上一交易日的变化率。",
+    ),
+    CenterMetric(
+        "TECH-MA5-D",
+        "5日移动平均",
+        "技术指标",
+        "交易币种",
+        "交易日",
+        "最近5个交易日收盘价算术平均值。",
+    ),
+    CenterMetric(
+        "TECH-MA20-D",
+        "20日移动平均",
+        "技术指标",
+        "交易币种",
+        "交易日",
+        "最近20个交易日收盘价算术平均值。",
+    ),
+    CenterMetric(
+        "TECH-MA60-D",
+        "60日移动平均",
+        "技术指标",
+        "交易币种",
+        "交易日",
+        "最近60个交易日收盘价算术平均值。",
+    ),
+    CenterMetric(
+        "TECH-AVG-VOLUME20-D",
+        "20日平均成交量",
+        "技术指标",
+        "手",
+        "交易日",
+        "最近20个交易日成交量的算术平均值。",
+    ),
+    CenterMetric(
+        "TECH-VOLUME-RATIO-D",
+        "成交量相对20日均值",
+        "技术指标",
+        "倍",
+        "交易日",
+        "当日成交量相对20日平均成交量的倍数。",
+    ),
+    CenterMetric(
+        "TECH-MOMENTUM20-D",
+        "20日价格变动",
+        "技术指标",
+        "%",
+        "交易日",
+        "收盘价相对20个交易日前收盘价的变化率。",
+    ),
+    CenterMetric(
+        "TECH-RSI14-D",
+        "RSI（14日）",
+        "技术指标",
+        "",
+        "交易日",
+        "基于最近14期上涨与下跌幅度计算的相对强弱指标。",
+    ),
+    CenterMetric(
+        "TECH-VOL20-D",
+        "20日年化波动率",
+        "技术指标",
+        "%",
+        "交易日",
+        "最近20个交易日日收益率标准差按252日年化。",
+    ),
+    CenterMetric(
+        "VAL-PE-TTM-D",
+        "市盈率（TTM）",
+        "估值指标",
+        "倍",
+        "交易日",
+        "总市值除以最近十二个月归母净利润。",
+    ),
+    CenterMetric(
+        "VAL-PB-MRQ-D",
+        "市净率（MRQ）",
+        "估值指标",
+        "倍",
+        "交易日",
+        "总市值除以最近一期归母净资产。",
+    ),
+    CenterMetric(
+        "VAL-PS-TTM-D",
+        "市销率（TTM）",
+        "估值指标",
+        "倍",
+        "交易日",
+        "总市值除以最近十二个月营业收入。",
+    ),
+    CenterMetric(
+        "VAL-MARKET-CAP-D",
+        "总市值",
+        "估值指标",
+        "交易币种",
+        "交易日",
+        "证券全部已发行股份对应的市场价值，按证券交易市场本币计价。",
+    ),
+    CenterMetric(
+        "FIN-REVENUE-CUM",
+        "营业总收入",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期累计营业总收入。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-REVENUE-YOY",
+        "营业收入同比",
+        "财务与运营",
+        "%",
+        "随财报",
+        "报告期累计营业收入相对上年同期的变化率。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-NET-PROFIT-CUM",
+        "归母净利润",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期累计归属于母公司股东的净利润。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-NET-PROFIT-YOY",
+        "归母净利润同比",
+        "财务与运营",
+        "%",
+        "随财报",
+        "报告期累计归母净利润相对上年同期的变化率。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-DEDUCTED-NP-CUM",
+        "扣非归母净利润",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期累计扣除非经常性损益后的归母净利润。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-EPS",
+        "基本每股收益",
+        "财务与运营",
+        "报告币种/股",
+        "随财报",
+        "报告期基本每股收益。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-BPS",
+        "每股净资产",
+        "财务与运营",
+        "报告币种/股",
+        "随财报",
+        "报告期末归属于普通股股东的每股净资产。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-GROSS-MARGIN",
+        "销售毛利率",
+        "财务与运营",
+        "%",
+        "随财报",
+        "营业收入扣除营业成本后的利润率。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-ROE",
+        "净资产收益率",
+        "财务与运营",
+        "%",
+        "随财报",
+        "归母净利润相对加权平均净资产的收益率。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-ROIC",
+        "投入资本回报率",
+        "财务与运营",
+        "%",
+        "随财报",
+        "企业税后经营利润相对投入资本的回报率。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-DEBT-RATIO",
+        "资产负债率",
+        "财务与运营",
+        "%",
+        "随财报",
+        "负债总额占资产总额的比例。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-OPERATING-CASHFLOW",
+        "经营活动现金流净额",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期经营活动产生的现金流量净额。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-TOTAL-ASSETS",
+        "资产总额",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期末资产总额。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-TOTAL-EQUITY",
+        "所有者权益合计",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期末所有者权益合计。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-OCF-PER-SHARE",
+        "每股经营现金流",
+        "财务与运营",
+        "报告币种/股",
+        "随财报",
+        "经营活动现金流净额折算到每股。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-CURRENT-RATIO",
+        "流动比率",
+        "财务与运营",
+        "倍",
+        "随财报",
+        "流动资产相对流动负债的覆盖倍数。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-QUICK-RATIO",
+        "速动比率",
+        "财务与运营",
+        "倍",
+        "随财报",
+        "速动资产相对流动负债的覆盖倍数。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-CASH-RATIO",
+        "现金比率",
+        "财务与运营",
+        "倍",
+        "随财报",
+        "现金及现金等价物相对流动负债的覆盖倍数。",
+        "期末",
+    ),
+    CenterMetric(
+        "FIN-INVENTORY-TURNOVER",
+        "存货周转率",
+        "财务与运营",
+        "次",
+        "随财报",
+        "报告期存货周转效率。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-OPERATING-CYCLE",
+        "营业周期",
+        "财务与运营",
+        "天",
+        "随财报",
+        "存货周转天数与应收账款周转天数之和。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-INTEREST-COVERAGE",
+        "利息保障倍数",
+        "财务与运营",
+        "倍",
+        "随财报",
+        "经营业绩对利息费用的覆盖倍数。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-TAX-RATE",
+        "实际税率",
+        "财务与运营",
+        "%",
+        "随财报",
+        "报告期所得税费用相对利润总额的比例。",
+        "累计",
+    ),
+    CenterMetric(
+        "FIN-RD-EXPENSE-CUM",
+        "研发费用",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期累计研发费用。",
+        "累计",
+        "sina-finance-api",
+    ),
+    CenterMetric(
+        "FIN-RD-RATIO",
+        "研发费用率",
+        "财务与运营",
+        "%",
+        "随财报",
+        "报告期累计研发费用占营业收入的比例。",
+        "累计",
+        "sina-finance-api",
+    ),
+    CenterMetric(
+        "FIN-INVENTORY-END",
+        "期末存货",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期末存货账面余额。",
+        "期末",
+        "sina-finance-api",
+    ),
+    CenterMetric(
+        "FIN-RECEIVABLE-END",
+        "期末应收账款",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期末应收账款账面余额。",
+        "期末",
+        "sina-finance-api",
+    ),
+    CenterMetric(
+        "FIN-CASH-END",
+        "期末货币资金",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期末货币资金及现金等价物余额。",
+        "期末",
+        "sina-finance-api",
+    ),
+    CenterMetric(
+        "FIN-TOTAL-LIABILITIES",
+        "负债合计",
+        "财务与运营",
+        "报告币种",
+        "随财报",
+        "报告期末负债合计。",
+        "期末",
+        "sina-finance-api",
+    ),
+    CenterMetric(
+        "INDUSTRY-CLOSE-D",
+        "所属行业指数",
+        "宏观及行业",
+        "点",
+        "交易日",
+        "公司所属东方财富行业板块的收盘点位。",
+    ),
+    CenterMetric(
+        "INDUSTRY-CHANGE-PCT-D",
+        "所属行业指数涨跌幅",
+        "宏观及行业",
+        "%",
+        "交易日",
+        "所属行业板块指数相对上一交易日的变化率。",
+    ),
+    CenterMetric(
+        "MACRO-CPI-YOY-M",
+        "居民消费价格同比",
+        "宏观及行业",
+        "%",
+        "月度",
+        "全国居民消费价格指数相对上年同月的变化率。",
+        "月值",
+    ),
+    CenterMetric(
+        "MACRO-PPI-YOY-M",
+        "工业生产者出厂价格同比",
+        "宏观及行业",
+        "%",
+        "月度",
+        "全国工业生产者出厂价格指数相对上年同月的变化率。",
+        "月值",
+    ),
+    CenterMetric(
+        "MACRO-PMI-M",
+        "制造业采购经理指数",
+        "宏观及行业",
+        "点",
+        "月度",
+        "反映制造业景气水平的采购经理指数。",
+        "月值",
+    ),
 )
 
 METRIC_BY_ID = {item.metric_id: item for item in METRICS}
@@ -232,7 +625,12 @@ def refresh_security_metrics(uow: UnitOfWork, security_id: str) -> dict[str, Any
     if not any(row.metric_id == "MKT-CLOSE-D" for row in observations):
         observations.extend(_derive_market_metrics(uow, security.security_id, ticker))
     inserted = _store(uow, security.security_id, observations)
-    return {"security_id": security.security_id, "fetched": len(observations), "inserted": inserted, "errors": errors}
+    return {
+        "security_id": security.security_id,
+        "fetched": len(observations),
+        "inserted": inserted,
+        "errors": errors,
+    }
 
 
 def metric_center(uow: UnitOfWork, security_id: str, *, periods: int = 60) -> list[dict[str, Any]]:
@@ -256,22 +654,35 @@ def metric_center(uow: UnitOfWork, security_id: str, *, periods: int = 60) -> li
         previous = rows[-2] if len(rows) > 1 else None
         previous_value = previous.actual_value if previous else None
         unit = _display_unit(definition, latest.unit, currency)
-        result.append({
-            "metric_id": definition.metric_id,
-            "name": definition.name,
-            "category": definition.category,
-            "unit": unit,
-            "frequency": definition.frequency,
-            "definition": definition.definition,
-            "source_id": definition.source_id,
-            "latest_value": _display_value(definition.metric_id, latest_value),
-            "latest_period": latest.period,
-            "latest_date": latest.observation_date.isoformat(),
-            "previous_value": _display_value(definition.metric_id, previous_value),
-            "change_value": _display_value(definition.metric_id, latest_value - previous_value) if previous_value is not None else None,
-            "change_rate": str((latest_value - previous_value) / abs(previous_value) * 100) if previous_value else None,
-            "observations": [{"period": row.period, "date": row.observation_date.isoformat(), "value": str(row.actual_value)} for row in rows],
-        })
+        result.append(
+            {
+                "metric_id": definition.metric_id,
+                "name": definition.name,
+                "category": definition.category,
+                "unit": unit,
+                "frequency": definition.frequency,
+                "definition": definition.definition,
+                "source_id": definition.source_id,
+                "latest_value": _display_value(definition.metric_id, latest_value),
+                "latest_period": latest.period,
+                "latest_date": latest.observation_date.isoformat(),
+                "previous_value": _display_value(definition.metric_id, previous_value),
+                "change_value": _display_value(definition.metric_id, latest_value - previous_value)
+                if previous_value is not None
+                else None,
+                "change_rate": str((latest_value - previous_value) / abs(previous_value) * 100)
+                if previous_value
+                else None,
+                "observations": [
+                    {
+                        "period": row.period,
+                        "date": row.observation_date.isoformat(),
+                        "value": str(row.actual_value),
+                    }
+                    for row in rows
+                ],
+            }
+        )
     return result
 
 
@@ -286,7 +697,9 @@ def _fetch_market(client: httpx.Client, security_id: str, ticker: str) -> list[R
     returns: list[float] = []
     currency = _currency_for_security(security_id, ticker)
     for row in rows:
-        day, open_, close, high, low, volume, amount, _amplitude, change_pct, _change, turnover = row
+        day, open_, close, high, low, volume, amount, _amplitude, change_pct, _change, turnover = (
+            row
+        )
         change = row[9]
         amplitude = row[7]
         try:
@@ -294,11 +707,16 @@ def _fetch_market(client: httpx.Client, security_id: str, ticker: str) -> list[R
         except ValueError:
             continue
         values = {
-            "MKT-OPEN-D": (_decimal_or_none(open_), currency), "MKT-HIGH-D": (_decimal_or_none(high), currency),
-            "MKT-LOW-D": (_decimal_or_none(low), currency), "MKT-CLOSE-D": (_decimal_or_none(close), currency),
-            "MKT-CHANGE-D": (_decimal_or_none(change), currency), "MKT-AMPLITUDE-D": (_decimal_or_none(amplitude), "%"),
-            "MKT-VOLUME-D": (_decimal_or_none(volume), "手"), "MKT-AMOUNT-D": (_decimal_or_none(amount), currency),
-            "MKT-TURNOVER-D": (_decimal_or_none(turnover), "%"), "MKT-CHANGE-PCT-D": (_decimal_or_none(change_pct), "%"),
+            "MKT-OPEN-D": (_decimal_or_none(open_), currency),
+            "MKT-HIGH-D": (_decimal_or_none(high), currency),
+            "MKT-LOW-D": (_decimal_or_none(low), currency),
+            "MKT-CLOSE-D": (_decimal_or_none(close), currency),
+            "MKT-CHANGE-D": (_decimal_or_none(change), currency),
+            "MKT-AMPLITUDE-D": (_decimal_or_none(amplitude), "%"),
+            "MKT-VOLUME-D": (_decimal_or_none(volume), "手"),
+            "MKT-AMOUNT-D": (_decimal_or_none(amount), currency),
+            "MKT-TURNOVER-D": (_decimal_or_none(turnover), "%"),
+            "MKT-CHANGE-PCT-D": (_decimal_or_none(change_pct), "%"),
         }
         for metric_id, (value, unit) in values.items():
             if value is not None:
@@ -314,14 +732,43 @@ def _fetch_market(client: httpx.Client, security_id: str, ticker: str) -> list[R
             returns.append(float(closes[-1] / closes[-2] - 1))
         for window, metric_id in ((5, "TECH-MA5-D"), (20, "TECH-MA20-D"), (60, "TECH-MA60-D")):
             if len(closes) >= window:
-                output.append(RawObservation(metric_id, day, observed, sum(closes[-window:], Decimal(0)) / Decimal(window), currency, "滚动"))
+                output.append(
+                    RawObservation(
+                        metric_id,
+                        day,
+                        observed,
+                        sum(closes[-window:], Decimal(0)) / Decimal(window),
+                        currency,
+                        "滚动",
+                    )
+                )
         if len(volumes) >= 20:
             average_volume = sum(volumes[-20:], Decimal(0)) / Decimal(20)
-            output.append(RawObservation("TECH-AVG-VOLUME20-D", day, observed, average_volume, "手", "滚动"))
+            output.append(
+                RawObservation("TECH-AVG-VOLUME20-D", day, observed, average_volume, "手", "滚动")
+            )
             if average_volume:
-                output.append(RawObservation("TECH-VOLUME-RATIO-D", day, observed, volumes[-1] / average_volume, "倍", "滚动"))
+                output.append(
+                    RawObservation(
+                        "TECH-VOLUME-RATIO-D",
+                        day,
+                        observed,
+                        volumes[-1] / average_volume,
+                        "倍",
+                        "滚动",
+                    )
+                )
         if len(closes) >= 21 and closes[-21] != 0:
-            output.append(RawObservation("TECH-MOMENTUM20-D", day, observed, (closes[-1] / closes[-21] - 1) * 100, "%", "滚动"))
+            output.append(
+                RawObservation(
+                    "TECH-MOMENTUM20-D",
+                    day,
+                    observed,
+                    (closes[-1] / closes[-21] - 1) * 100,
+                    "%",
+                    "滚动",
+                )
+            )
         if len(returns) >= 20:
             volatility = Decimal(str(pstdev(returns[-20:]) * math.sqrt(252) * 100))
             output.append(RawObservation("TECH-VOL20-D", day, observed, volatility, "%", "滚动"))
@@ -329,7 +776,11 @@ def _fetch_market(client: httpx.Client, security_id: str, ticker: str) -> list[R
             changes = [closes[i] - closes[i - 1] for i in range(len(closes) - 14, len(closes))]
             gains = sum((max(change, Decimal(0)) for change in changes), Decimal(0)) / Decimal(14)
             losses = sum((max(-change, Decimal(0)) for change in changes), Decimal(0)) / Decimal(14)
-            rsi = Decimal(100) if losses == 0 else Decimal(100) - Decimal(100) / (Decimal(1) + gains / losses)
+            rsi = (
+                Decimal(100)
+                if losses == 0
+                else Decimal(100) - Decimal(100) / (Decimal(1) + gains / losses)
+            )
             output.append(RawObservation("TECH-RSI14-D", day, observed, rsi, "", "滚动"))
     return output
 
@@ -337,14 +788,24 @@ def _fetch_market(client: httpx.Client, security_id: str, ticker: str) -> list[R
 def _derive_market_metrics(uow: UnitOfWork, security_id: str, ticker: str) -> list[RawObservation]:
     """用已有真实行情观测补齐派生指标，作为行情刷新失败时的降级路径。"""
     close_rows = sorted(
-        (row for row in uow.observations.list_for_metric(security_id, "MKT-CLOSE-D") if row.actual_value is not None),
+        (
+            row
+            for row in uow.observations.list_for_metric(security_id, "MKT-CLOSE-D")
+            if row.actual_value is not None
+        ),
         key=lambda row: row.observation_date,
     )
     if not close_rows:
         return []
-    high_by_period = {row.period: row for row in uow.observations.list_for_metric(security_id, "MKT-HIGH-D")}
-    low_by_period = {row.period: row for row in uow.observations.list_for_metric(security_id, "MKT-LOW-D")}
-    volume_rows = {row.period: row for row in uow.observations.list_for_metric(security_id, "MKT-VOLUME-D")}
+    high_by_period = {
+        row.period: row for row in uow.observations.list_for_metric(security_id, "MKT-HIGH-D")
+    }
+    low_by_period = {
+        row.period: row for row in uow.observations.list_for_metric(security_id, "MKT-LOW-D")
+    }
+    volume_rows = {
+        row.period: row for row in uow.observations.list_for_metric(security_id, "MKT-VOLUME-D")
+    }
     currency = _currency_for_security(security_id, ticker)
     output: list[RawObservation] = []
     closes: list[Decimal] = []
@@ -360,26 +821,68 @@ def _derive_market_metrics(uow: UnitOfWork, security_id: str, ticker: str) -> li
         if volume_row and volume_row.actual_value is not None:
             volumes.append(volume_row.actual_value)
         if index > 0 and closes[-2] != 0:
-            output.append(RawObservation("MKT-CHANGE-D", period, day, close - closes[-2], currency, "日值"))
+            output.append(
+                RawObservation("MKT-CHANGE-D", period, day, close - closes[-2], currency, "日值")
+            )
             high = high_by_period.get(period)
             low = low_by_period.get(period)
             if high and low and high.actual_value is not None and low.actual_value is not None:
-                output.append(RawObservation("MKT-AMPLITUDE-D", period, day, (high.actual_value - low.actual_value) / closes[-2] * 100, "%", "日值"))
+                output.append(
+                    RawObservation(
+                        "MKT-AMPLITUDE-D",
+                        period,
+                        day,
+                        (high.actual_value - low.actual_value) / closes[-2] * 100,
+                        "%",
+                        "日值",
+                    )
+                )
         for window, metric_id in ((5, "TECH-MA5-D"), (20, "TECH-MA20-D"), (60, "TECH-MA60-D")):
             if len(closes) >= window:
-                output.append(RawObservation(metric_id, period, day, sum(closes[-window:], Decimal(0)) / Decimal(window), currency, "滚动"))
+                output.append(
+                    RawObservation(
+                        metric_id,
+                        period,
+                        day,
+                        sum(closes[-window:], Decimal(0)) / Decimal(window),
+                        currency,
+                        "滚动",
+                    )
+                )
         if len(volumes) >= 20:
             average_volume = sum(volumes[-20:], Decimal(0)) / Decimal(20)
-            output.append(RawObservation("TECH-AVG-VOLUME20-D", period, day, average_volume, "手", "滚动"))
+            output.append(
+                RawObservation("TECH-AVG-VOLUME20-D", period, day, average_volume, "手", "滚动")
+            )
             if average_volume:
-                output.append(RawObservation("TECH-VOLUME-RATIO-D", period, day, volumes[-1] / average_volume, "倍", "滚动"))
+                output.append(
+                    RawObservation(
+                        "TECH-VOLUME-RATIO-D",
+                        period,
+                        day,
+                        volumes[-1] / average_volume,
+                        "倍",
+                        "滚动",
+                    )
+                )
         if len(closes) >= 21 and closes[-21] != 0:
-            output.append(RawObservation("TECH-MOMENTUM20-D", period, day, (close / closes[-21] - 1) * 100, "%", "滚动"))
+            output.append(
+                RawObservation(
+                    "TECH-MOMENTUM20-D", period, day, (close / closes[-21] - 1) * 100, "%", "滚动"
+                )
+            )
     return output
 
 
 def _fetch_valuation(client: httpx.Client, security_id: str, ticker: str) -> list[RawObservation]:
-    query = _data_center(client, "RPT_VALUEANALYSIS_DET", f'(SECURITY_CODE="{security_id}")', "TRADE_DATE", 60, web=True)
+    query = _data_center(
+        client,
+        "RPT_VALUEANALYSIS_DET",
+        f'(SECURITY_CODE="{security_id}")',
+        "TRADE_DATE",
+        60,
+        web=True,
+    )
     output: list[RawObservation] = []
     currency = _currency_for_security(security_id, ticker)
     for row in reversed(query):
@@ -389,8 +892,10 @@ def _fetch_valuation(client: httpx.Client, security_id: str, ticker: str) -> lis
         except ValueError:
             continue
         for metric_id, field, unit in (
-            ("VAL-PE-TTM-D", "PE_TTM", "倍"), ("VAL-PB-MRQ-D", "PB_MRQ", "倍"),
-            ("VAL-PS-TTM-D", "PS_TTM", "倍"), ("VAL-MARKET-CAP-D", "TOTAL_MARKET_CAP", currency),
+            ("VAL-PE-TTM-D", "PE_TTM", "倍"),
+            ("VAL-PB-MRQ-D", "PB_MRQ", "倍"),
+            ("VAL-PS-TTM-D", "PS_TTM", "倍"),
+            ("VAL-MARKET-CAP-D", "TOTAL_MARKET_CAP", currency),
         ):
             value = _decimal_or_none(row.get(field))
             if value is not None:
@@ -400,7 +905,14 @@ def _fetch_valuation(client: httpx.Client, security_id: str, ticker: str) -> lis
 
 def _fetch_industry(client: httpx.Client, security_id: str, ticker: str) -> list[RawObservation]:
     del ticker
-    query = _data_center(client, "RPT_VALUEANALYSIS_DET", f'(SECURITY_CODE="{security_id}")', "TRADE_DATE", 1, web=True)
+    query = _data_center(
+        client,
+        "RPT_VALUEANALYSIS_DET",
+        f'(SECURITY_CODE="{security_id}")',
+        "TRADE_DATE",
+        1,
+        web=True,
+    )
     board_code = str(query[0].get("BOARD_CODE") or "") if query else ""
     if not board_code:
         return []
@@ -409,7 +921,19 @@ def _fetch_industry(client: httpx.Client, security_id: str, ticker: str) -> list
     if not rows:
         raise ValueError("行业板块行情为空")
     for row in rows:
-        day, _open, close, _high, _low, _volume, _amount, _amplitude, change_pct, _change, _turnover = row
+        (
+            day,
+            _open,
+            close,
+            _high,
+            _low,
+            _volume,
+            _amount,
+            _amplitude,
+            change_pct,
+            _change,
+            _turnover,
+        ) = row
         try:
             observed = date.fromisoformat(day)
         except ValueError:
@@ -417,9 +941,13 @@ def _fetch_industry(client: httpx.Client, security_id: str, ticker: str) -> list
         close_value = _decimal_or_none(close)
         change_value = _decimal_or_none(change_pct)
         if close_value is not None:
-            output.append(RawObservation("INDUSTRY-CLOSE-D", day, observed, close_value, "点", "日值"))
+            output.append(
+                RawObservation("INDUSTRY-CLOSE-D", day, observed, close_value, "点", "日值")
+            )
         if change_value is not None:
-            output.append(RawObservation("INDUSTRY-CHANGE-PCT-D", day, observed, change_value, "%", "日值"))
+            output.append(
+                RawObservation("INDUSTRY-CHANGE-PCT-D", day, observed, change_value, "%", "日值")
+            )
     return output
 
 
@@ -428,7 +956,9 @@ def _fetch_financials(client: httpx.Client, security_id: str, ticker: str) -> li
     if "." not in secu_code:
         suffix = "SH" if security_id.startswith(("5", "6", "9")) else "SZ"
         secu_code = f"{security_id}.{suffix}"
-    rows = _data_center(client, "RPT_F10_FINANCE_MAINFINADATA", f'(SECUCODE="{secu_code}")', "REPORT_DATE", 16)
+    rows = _data_center(
+        client, "RPT_F10_FINANCE_MAINFINADATA", f'(SECUCODE="{secu_code}")', "REPORT_DATE", 16
+    )
     output: list[RawObservation] = []
     for row in reversed(rows):
         day = str(row.get("NOTICE_DATE") or row["REPORT_DATE"])[:10]
@@ -468,7 +998,9 @@ def _fetch_financials(client: httpx.Client, security_id: str, ticker: str) -> li
     return output
 
 
-def _fetch_financials_sina(client: httpx.Client, security_id: str, ticker: str) -> list[RawObservation]:
+def _fetch_financials_sina(
+    client: httpx.Client, security_id: str, ticker: str
+) -> list[RawObservation]:
     """从新浪财经公开财报接口补齐三表和财务指标。
 
     该接口是 AKShare 所使用的 HTTP 接口，但这里直接用 httpx 调用，避免把
@@ -499,12 +1031,24 @@ def _fetch_financials_sina(client: httpx.Client, security_id: str, ticker: str) 
                 definition = METRIC_BY_ID.get(metric_id)
                 if definition is None:
                     continue
-                metric_unit = unit if definition.unit == "报告币种" else definition.unit.replace("报告币种", unit)
-                output.append(RawObservation(metric_id, period, observed_on, value, metric_unit, definition.period_type))
+                metric_unit = (
+                    unit
+                    if definition.unit == "报告币种"
+                    else definition.unit.replace("报告币种", unit)
+                )
+                output.append(
+                    RawObservation(
+                        metric_id, period, observed_on, value, metric_unit, definition.period_type
+                    )
+                )
             revenue = values.get("FIN-REVENUE-CUM")
             rd_expense = values.get("FIN-RD-EXPENSE-CUM")
             if revenue and rd_expense is not None and revenue != 0:
-                output.append(RawObservation("FIN-RD-RATIO", period, observed_on, rd_expense / revenue * 100, "%", "累计"))
+                output.append(
+                    RawObservation(
+                        "FIN-RD-RATIO", period, observed_on, rd_expense / revenue * 100, "%", "累计"
+                    )
+                )
     return output
 
 
@@ -573,9 +1117,13 @@ def _parse_date(value: Any) -> date | None:
 
 
 def _sina_metric_id(label: str) -> str | None:
-    if "营业收入" in label and any(keyword in label for keyword in ("同比", "增长", "增幅", "增长率")):
+    if "营业收入" in label and any(
+        keyword in label for keyword in ("同比", "增长", "增幅", "增长率")
+    ):
         return "FIN-REVENUE-YOY"
-    if "净利润" in label and any(keyword in label for keyword in ("同比", "增长", "增幅", "增长率")):
+    if "净利润" in label and any(
+        keyword in label for keyword in ("同比", "增长", "增幅", "增长率")
+    ):
         return "FIN-NET-PROFIT-YOY"
     # “营业收入同比/增长率”等派生字段不能误当成收入金额。
     if any(keyword in label for keyword in ("营业总收入", "营业收入")) and not any(
@@ -583,7 +1131,15 @@ def _sina_metric_id(label: str) -> str | None:
     ):
         return "FIN-REVENUE-CUM"
     mappings = (
-        (("归属于母公司股东的净利润", "归属母公司股东的净利润", "归属于上市公司股东的净利润", "归母净利润"), "FIN-NET-PROFIT-CUM"),
+        (
+            (
+                "归属于母公司股东的净利润",
+                "归属母公司股东的净利润",
+                "归属于上市公司股东的净利润",
+                "归母净利润",
+            ),
+            "FIN-NET-PROFIT-CUM",
+        ),
         (("扣除非经常性损益后的净利润", "扣非归母净利润", "扣非净利润"), "FIN-DEDUCTED-NP-CUM"),
         (("基本每股收益",), "FIN-EPS"),
         (("每股净资产",), "FIN-BPS"),
@@ -646,22 +1202,47 @@ def _fetch_macro(client: httpx.Client, security_id: str, ticker: str) -> list[Ra
     return output
 
 
-def _data_center(client: httpx.Client, report: str, filter_: str, sort: str, size: int, *, web: bool = False) -> list[dict[str, Any]]:
-    base = "https://datacenter-web.eastmoney.com/api/data/v1/get" if web else "https://datacenter.eastmoney.com/securities/api/data/v1/get"
-    response = client.get(base, params={"reportName": report, "columns": "ALL", "filter": filter_, "pageNumber": "1", "pageSize": str(size), "sortTypes": "-1", "sortColumns": sort})
+def _data_center(
+    client: httpx.Client, report: str, filter_: str, sort: str, size: int, *, web: bool = False
+) -> list[dict[str, Any]]:
+    base = (
+        "https://datacenter-web.eastmoney.com/api/data/v1/get"
+        if web
+        else "https://datacenter.eastmoney.com/securities/api/data/v1/get"
+    )
+    response = client.get(
+        base,
+        params={
+            "reportName": report,
+            "columns": "ALL",
+            "filter": filter_,
+            "pageNumber": "1",
+            "pageSize": str(size),
+            "sortTypes": "-1",
+            "sortColumns": sort,
+        },
+    )
     response.raise_for_status()
     return list(((response.json() or {}).get("result") or {}).get("data") or [])
 
 
 def _klines(client: httpx.Client, secid: str, *, limit: int) -> list[list[str]]:
-    params = {"secid": secid, "klt": "101", "fqt": "1", "lmt": str(limit), "end": "20500101", "fields1": "f1,f2,f3,f4,f5,f6", "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"}
+    params = {
+        "secid": secid,
+        "klt": "101",
+        "fqt": "1",
+        "lmt": str(limit),
+        "end": "20500101",
+        "fields1": "f1,f2,f3,f4,f5,f6",
+        "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+    }
     headers = {"Referer": "https://quote.eastmoney.com/"}
     last_error: Exception | None = None
     for endpoint in ("https://push2his.eastmoney.com/api/qt/stock/kline/get",):
         try:
             response = client.get(endpoint, params=params, headers=headers)
             response.raise_for_status()
-            values = (((response.json() or {}).get("data") or {}).get("klines") or [])
+            values = ((response.json() or {}).get("data") or {}).get("klines") or []
             return [str(item).split(",") for item in values if len(str(item).split(",")) >= 11]
         except (httpx.HTTPError, ValueError) as exc:
             last_error = exc
@@ -691,7 +1272,9 @@ def _sina_klines(
         low = _decimal_or_none(row.get("low"))
         volume = _decimal_or_none(row.get("volume"))
         change = close - previous_close if close is not None and previous_close else None
-        change_pct = change / previous_close * 100 if change is not None and previous_close else None
+        change_pct = (
+            change / previous_close * 100 if change is not None and previous_close else None
+        )
         amplitude = (
             (high - low) / previous_close * 100
             if high is not None and low is not None and previous_close
@@ -722,7 +1305,13 @@ def _secid(security_id: str, ticker: str) -> str:
     market = {"SZ": "0", "SH": "1", "HK": "116"}.get(suffix)
     if market is None:
         # 港股主数据有时只保存五位代码，没有交易所后缀。
-        market = "116" if len(security_id) == 5 and security_id.isdigit() else "1" if security_id.startswith(("5", "6", "9")) else "0"
+        market = (
+            "116"
+            if len(security_id) == 5 and security_id.isdigit()
+            else "1"
+            if security_id.startswith(("5", "6", "9"))
+            else "0"
+        )
     return f"{market}.{security_id}"
 
 

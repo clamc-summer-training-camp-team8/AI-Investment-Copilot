@@ -225,7 +225,9 @@ class SqlThesisRepo:
         self._session.flush()
 
     def remove_mapping(self, mapping_id: str) -> None:
-        self._session.execute(delete(HypothesisMetricMap).where(HypothesisMetricMap.mapping_id == mapping_id))
+        self._session.execute(
+            delete(HypothesisMetricMap).where(HypothesisMetricMap.mapping_id == mapping_id)
+        )
         self._session.flush()
 
     def get_by_security(self, security_id: str) -> ThesisRecord | None:
@@ -258,23 +260,31 @@ class SqlThesisRepo:
     def counts_for_theses(self, thesis_ids: tuple[str, ...]) -> dict[str, tuple[int, int]]:
         if not thesis_ids:
             return {}
-        hypothesis_counts = dict(
-            self._session.execute(
+        hypothesis_counts: dict[str, int] = {
+            str(thesis_id): int(count)
+            for thesis_id, count in self._session.execute(
                 select(Hypothesis.thesis_id, func.count(Hypothesis.hypothesis_id))
                 .where(Hypothesis.thesis_id.in_(thesis_ids))
                 .group_by(Hypothesis.thesis_id)
             ).all()
-        )
-        mapping_counts = dict(
-            self._session.execute(
+        }
+        mapping_counts: dict[str, int] = {
+            str(thesis_id): int(count)
+            for thesis_id, count in self._session.execute(
                 select(Hypothesis.thesis_id, func.count(HypothesisMetricMap.mapping_id))
-                .join(HypothesisMetricMap, HypothesisMetricMap.hypothesis_id == Hypothesis.hypothesis_id)
+                .join(
+                    HypothesisMetricMap,
+                    HypothesisMetricMap.hypothesis_id == Hypothesis.hypothesis_id,
+                )
                 .where(Hypothesis.thesis_id.in_(thesis_ids))
                 .group_by(Hypothesis.thesis_id)
             ).all()
-        )
+        }
         return {
-            thesis_id: (int(hypothesis_counts.get(thesis_id, 0)), int(mapping_counts.get(thesis_id, 0)))
+            thesis_id: (
+                int(hypothesis_counts.get(thesis_id, 0)),
+                int(mapping_counts.get(thesis_id, 0)),
+            )
             for thesis_id in thesis_ids
         }
 

@@ -129,7 +129,9 @@ class SqlSecurityRepo:
                     "name": statement.excluded.name,
                     "ticker": statement.excluded.ticker,
                     "industry": statement.excluded.industry,
-                    "market_sector_id": func.coalesce(statement.excluded.market_sector_id, MarketSecurity.market_sector_id),
+                    "market_sector_id": func.coalesce(
+                        statement.excluded.market_sector_id, MarketSecurity.market_sector_id
+                    ),
                     "aliases": statement.excluded.aliases,
                     "source": statement.excluded.source,
                 },

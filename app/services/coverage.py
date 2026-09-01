@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from typing import cast
 from uuid import uuid4
 
 from app.core.domain import CoverageCompanyRecord, CoverageSectorRecord, ThesisRecord, UnitOfWork
@@ -136,16 +137,14 @@ def list_overview(uow: UnitOfWork, *, query: str | None = None) -> list[dict[str
     theses_by_security = _maintained_theses_by_security(
         uow, tuple(item.security_id for item in companies)
     )
-    counts = uow.thesis.counts_for_theses(tuple(item.thesis_id for item in theses_by_security.values()))
+    counts = uow.thesis.counts_for_theses(
+        tuple(item.thesis_id for item in theses_by_security.values())
+    )
     by_sector: dict[str, list[dict[str, object]]] = {sector.sector_id: [] for sector in sectors}
     for company in companies:
         thesis = theses_by_security.get(company.security_id)
         hypothesis_count, mapping_count = counts.get(thesis.thesis_id, (0, 0)) if thesis else (0, 0)
-        status = (
-            "暂停覆盖"
-            if company.status == "暂停覆盖"
-            else "正常覆盖" if thesis else "待建档"
-        )
+        status = "暂停覆盖" if company.status == "暂停覆盖" else "正常覆盖" if thesis else "待建档"
         by_sector.setdefault(company.sector_id, []).append(
             {
                 "coverage_company_id": company.coverage_company_id,
@@ -186,16 +185,16 @@ def list_overview(uow: UnitOfWork, *, query: str | None = None) -> list[dict[str
     ]
 
 
-def _read_only_overview(
-    uow: UnitOfWork, *, query: str | None = None
-) -> list[dict[str, object]]:
+def _read_only_overview(uow: UnitOfWork, *, query: str | None = None) -> list[dict[str, object]]:
     """覆盖目录表不可用时，从证券主数据和 Thesis 组装只读视图。"""
     groups: dict[str, dict[str, object]] = {}
     securities = uow.securities.search(limit=5000)
     theses_by_security = _maintained_theses_by_security(
         uow, tuple(item.security_id for item in securities)
     )
-    counts = uow.thesis.counts_for_theses(tuple(item.thesis_id for item in theses_by_security.values()))
+    counts = uow.thesis.counts_for_theses(
+        tuple(item.thesis_id for item in theses_by_security.values())
+    )
     for security in securities:
         sector_name = research_sector(security.industry)
         sector = groups.setdefault(
@@ -211,7 +210,8 @@ def _read_only_overview(
         )
         thesis = theses_by_security.get(security.security_id)
         hypothesis_count, mapping_count = counts.get(thesis.thesis_id, (0, 0)) if thesis else (0, 0)
-        sector["companies"].append(
+        companies = cast(list[dict[str, object]], sector["companies"])
+        companies.append(
             {
                 "coverage_company_id": f"MSEC-COMP-{hashlib.md5(security.security_id.encode('utf-8')).hexdigest()}",
                 "sector_id": sector["sector_id"],
@@ -233,12 +233,22 @@ def _read_only_overview(
         )
     normalized_query = (query or "").strip().casefold()
     return [
-        {**sector, "companies": sorted(sector["companies"], key=lambda item: (item["name"], item["security_id"]))}
-        for sector in sorted(groups.values(), key=lambda item: item["name"])
+        {
+            **sector,
+            "companies": sorted(
+                cast(list[dict[str, object]], sector["companies"]),
+                key=lambda item: (str(item["name"]), str(item["security_id"])),
+            ),
+        }
+        for sector in sorted(groups.values(), key=lambda item: str(item["name"]))
         if not normalized_query
         or normalized_query
         in " ".join(
-            (str(sector["name"]), str(sector.get("code") or ""), str(sector.get("description") or ""))
+            (
+                str(sector["name"]),
+                str(sector.get("code") or ""),
+                str(sector.get("description") or ""),
+            )
         ).casefold()
     ]
 
@@ -265,7 +275,14 @@ def create_sector(
         sort_order=len(repo.list_sectors()),
     )
     repo.add_sector(record)
-    audit.record(uow.audit, actor=actor.user_id, action="创建研究板块", object_type="coverage_sector", object_id=record.sector_id, detail={"name": record.name})
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="创建研究板块",
+        object_type="coverage_sector",
+        object_id=record.sector_id,
+        detail={"name": record.name},
+    )
     return record
 
 
@@ -284,8 +301,7 @@ def update_sector(
     if not normalized_name:
         raise ValidationFailed("板块名称不能为空")
     if any(
-        item.sector_id != sector_id and item.name == normalized_name
-        for item in repo.list_sectors()
+        item.sector_id != sector_id and item.name == normalized_name for item in repo.list_sectors()
     ):
         raise ValidationFailed(f"板块 {normalized_name} 已存在")
     old_name = record.name
@@ -320,7 +336,9 @@ def create_company(
     normalized_id = (security_id or "").strip().upper()
     canonical = uow.securities.get(normalized_id) if normalized_id else None
     if canonical is None:
-        market_matches = uow.securities.search_market(normalized_id, limit=1) if normalized_id else []
+        market_matches = (
+            uow.securities.search_market(normalized_id, limit=1) if normalized_id else []
+        )
         if not market_matches and name:
             market_matches = uow.securities.search_market(name.strip(), limit=1)
         source = market_matches[0] if market_matches else None
@@ -353,7 +371,14 @@ def create_company(
         status="待建档",
     )
     repo.add_company(record)
-    audit.record(uow.audit, actor=actor.user_id, action="添加覆盖公司", object_type="coverage_company", object_id=record.coverage_company_id, detail={"security_id": record.security_id, "sector_id": sector_id})
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="添加覆盖公司",
+        object_type="coverage_company",
+        object_id=record.coverage_company_id,
+        detail={"security_id": record.security_id, "sector_id": sector_id},
+    )
     return record
 
 
@@ -376,5 +401,12 @@ def update_company(
     if owner is not None:
         record.owner = owner.strip() or "待分配"
     repo.update_company(record)
-    audit.record(uow.audit, actor=actor.user_id, action="更新覆盖公司", object_type="coverage_company", object_id=record.coverage_company_id, detail={"status": record.status, "owner": record.owner})
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="更新覆盖公司",
+        object_type="coverage_company",
+        object_id=record.coverage_company_id,
+        detail={"status": record.status, "owner": record.owner},
+    )
     return record

@@ -37,7 +37,7 @@ def lookup(query: str, *, client: httpx.Client | None = None) -> list[MarketSecu
         )
         response.raise_for_status()
         payload = response.json()
-        rows = ((payload.get("QuotationCodeTable") or {}).get("Data") or [])
+        rows = (payload.get("QuotationCodeTable") or {}).get("Data") or []
         results: list[MarketSecurity] = []
         for row in rows:
             code = str(row.get("Code") or row.get("UnifiedCode") or "").strip().upper()

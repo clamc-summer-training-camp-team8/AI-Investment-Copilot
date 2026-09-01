@@ -4,7 +4,7 @@ import {
   demoSuggestions, demoTheses, demoThesis, demoTrends, demoWorkbench,
 } from './mocks'
 import type {
-  AuditItem, ConfirmationState, Direction, EvidenceDetail, EvidenceFeedItem, EvidenceRetrievalTrace,
+  AuditItem, ConfirmationState, Direction, EvidenceDetail, EvidenceFeedItem, EvidenceRetrievalTrace, FullDocument, LogicChangeDigestDetail,
   Adjudication, DocumentSegment, IngestionReview, JobAccepted, JobStatus, PageResult, ProcessingJob, Relation,
   ReviewTask, ReviewDraftCandidate, Security, Strength, Suggestion, ThesisDetail, Trend, ValidationItem, WorkbenchData,
   MetricDefinition, MetricMapping, PublishReadiness, ThesisSummary,
@@ -21,6 +21,7 @@ import type {
   CoverageUniverseCompany,
   CoverageUniverseIndustry,
   MaintainedCoverageIndustry,
+  InvestodayCollectionRun, InvestodayCollectionStatus,
 } from './types'
 
 export const useMock = import.meta.env.VITE_USE_MOCK === 'true'
@@ -68,6 +69,10 @@ const mockReplayedJobs = new Set<string>()
 
 function toDirection(value: unknown): Direction {
   return value === '支持' ? 'support' : value === '冲突' ? 'conflict' : 'neutral'
+}
+
+function toThemeDirection(value: unknown): EvidenceFeedItem['themeDirection'] {
+  return value === 'divergent' || value === 'mixed' ? value : value === 'support' || value === 'conflict' || value === 'neutral' ? value : undefined
 }
 
 function toStrength(value: unknown): Strength {
@@ -315,16 +320,32 @@ function toFeedItem(item: Record<string, unknown>): EvidenceFeedItem {
   return {
     evidenceId: String(item.evidence_id), relationId: String(item.relation_id),
     securityId: String(item.security_id), securityName: String(item.security_name),
-    thesisId: String(item.thesis_id), thesisTitle: String(item.thesis_title),
+    thesisId: String(item.thesis_id), thesisTitle: String(item.thesis_title), thesisCoreView: String(item.thesis_core_view ?? item.thesis_title),
     hypothesisId: String(item.hypothesis_id), hypothesisStatement: String(item.hypothesis_statement),
     sourceDocumentTitle: String(item.source_document_title), factExcerpt: String(item.fact_excerpt),
-    disclosedAt: String(item.disclosed_at), occurredAt: item.occurred_at ? String(item.occurred_at) : undefined,
+    disclosedAt: String(item.disclosed_at), ingestedAt: String(item.ingested_at ?? item.disclosed_at), occurredAt: item.occurred_at ? String(item.occurred_at) : undefined,
     sourceUrl: String(item.source_url), direction: toDirection(item.direction),
     strength: toStrength(item.strength), aiConfidence: Number(item.ai_confidence ?? 0),
     confirmationStatus: toStatus(item.confirmation_status), priority: item.priority as EvidenceFeedItem['priority'],
     canManage: Boolean(item.can_manage), validationItems: (item.validation_items as Array<Record<string, unknown>>).map((v) => ({
       code: String(v.code), label: String(v.label), status: v.status as ValidationItem['status'], message: String(v.message),
     })),
+    aggregationSummary: item.aggregation_summary ? String(item.aggregation_summary) : undefined,
+    atomicEvidenceCount: Number(item.atomic_evidence_count ?? 1),
+    sourceDocumentCount: Number(item.source_document_count ?? 1),
+    supportEvidenceCount: Number(item.support_evidence_count ?? 0),
+    conflictEvidenceCount: Number(item.conflict_evidence_count ?? 0),
+    affectedHypothesisCount: Number(item.affected_hypothesis_count ?? 1),
+    secondaryHypotheses: Array.isArray(item.secondary_hypotheses) ? item.secondary_hypotheses.map(String) : [],
+    themeImpacts: Array.isArray(item.theme_impacts) ? item.theme_impacts.map((impact) => {
+      const value = impact as Record<string, unknown>
+      return {
+        hypothesisId: String(value.hypothesis_id), hypothesisStatement: String(value.hypothesis_statement),
+        direction: toDirection(value.direction), evidenceCount: Number(value.evidence_count ?? 1),
+        hasConflictingEvidence: Boolean(value.has_conflicting_evidence),
+      }
+    }) : [],
+    themeDirection: toThemeDirection(item.theme_direction),
   }
 }
 
@@ -345,6 +366,55 @@ export async function getEvidence(evidenceId: string): Promise<EvidenceDetail> {
     modelVersion: String(item.model_version ?? '-'), promptVersion: String(item.prompt_version ?? '-'),
     confirmationStatus: toStatus(item.confirmation_status), sourceDocumentId: String(item.source_document_id),
     evidenceLocator: String(item.evidence_locator),
+  }
+}
+
+export async function getLogicChangeDigest(securityId: string, thesisId: string, businessDate?: string): Promise<LogicChangeDigestDetail> {
+  const query = businessDate ? `?business_day=${encodeURIComponent(businessDate)}` : ''
+  const item = await request<Record<string, unknown>>(`/api/updates/logic-changes/${encodeURIComponent(securityId)}/${encodeURIComponent(thesisId)}${query}`)
+  const direction = item.overall_direction === '支持' ? 'support' : item.overall_direction === '冲突' ? 'conflict' : item.overall_direction === '混合' ? 'mixed' : 'neutral'
+  return {
+    digestId: String(item.digest_id), securityId: String(item.security_id), securityName: String(item.security_name),
+    thesisId: String(item.thesis_id), thesisTitle: String(item.thesis_title), thesisCoreView: String(item.thesis_core_view),
+    businessDate: String(item.business_date), overallDirection: direction, summary: String(item.summary),
+    confirmationStatus: toStatus(item.confirmation_status), candidateCount: Number(item.candidate_count),
+    sourceDocumentCount: Number(item.source_document_count), confidence: item.confidence == null ? undefined : Number(item.confidence),
+    openQuestions: Array.isArray(item.open_questions) ? item.open_questions.map(String) : [],
+    modelVersion: item.model_version ? String(item.model_version) : undefined,
+    promptVersion: item.prompt_version ? String(item.prompt_version) : undefined,
+    hypothesisImpacts: Array.isArray(item.hypothesis_impacts) ? item.hypothesis_impacts.map((raw) => {
+      const value = raw as Record<string, unknown>
+      return {
+        hypothesisId: String(value.hypothesis_id), statement: String(value.statement), direction: String(value.direction),
+        strength: value.strength === '弱' || value.strength === '中' || value.strength === '强' ? value.strength : undefined,
+        strengthReason: value.strength_reason ? String(value.strength_reason) : undefined,
+        rationale: String(value.rationale), businessImpact: value.business_impact ? String(value.business_impact) : undefined,
+        indicatorOutlook: value.indicator_outlook ? String(value.indicator_outlook) : undefined,
+        impactLayer: value.impact_layer ? String(value.impact_layer) : undefined,
+        directness: value.directness ? String(value.directness) : undefined,
+        transmissionStatus: value.transmission_status ? String(value.transmission_status) : undefined,
+        hypothesisEffect: value.hypothesis_effect ? String(value.hypothesis_effect) : undefined,
+        presentation: value.presentation === '单一路径' || value.presentation === '双向分歧' || value.presentation === '背景信号' || value.presentation === '证据不足' ? value.presentation : undefined,
+        paths: Array.isArray(value.paths) ? value.paths.filter((path): path is Record<string, unknown> => Boolean(path) && typeof path === 'object').map((path) => ({
+          direction: String(path.direction ?? '中性'), label: String(path.label ?? '待核验传导路径'),
+          mechanism: String(path.mechanism ?? '尚未形成可解释传导。'),
+          evidenceIds: Array.isArray(path.evidence_ids) ? path.evidence_ids.map(String) : [],
+        })) : [],
+        relatedMetrics: Array.isArray(value.related_metrics) ? value.related_metrics.map(String) : [],
+        evidenceIds: Array.isArray(value.evidence_ids) ? value.evidence_ids.map(String) : [],
+      }
+    }) : [],
+    sourceDocuments: Array.isArray(item.source_documents) ? item.source_documents.map((raw) => {
+      const value = raw as Record<string, unknown>
+      return {
+        documentId: String(value.document_id), title: String(value.title), docType: value.doc_type ? String(value.doc_type) : undefined,
+        publishedAt: value.published_at ? String(value.published_at) : undefined, sourceUrl: value.source_url ? String(value.source_url) : undefined,
+        facts: Array.isArray(value.facts) ? value.facts.map((factRaw) => {
+          const fact = factRaw as Record<string, unknown>
+          return { evidenceId: String(fact.evidence_id), factExcerpt: String(fact.fact_excerpt), evidenceLocator: String(fact.evidence_locator), hypothesisIds: Array.isArray(fact.hypothesis_ids) ? fact.hypothesis_ids.map(String) : [], directions: Array.isArray(fact.directions) ? fact.directions.map(String) : [], isKeyCitation: Boolean(fact.is_key_citation) }
+        }) : [],
+      }
+    }) : [],
   }
 }
 
@@ -660,6 +730,88 @@ export function getWorkbenchTasks(limit = 20): Promise<PageResult<EvidenceFeedIt
   return getFeed(`/api/workbench/tasks?limit=${limit}`)
 }
 
+export function getResearchUpdates(filters: { status?: string; direction?: string; priority?: string; recentDays?: number; todayOnly?: boolean; businessDay?: string } = {}): Promise<PageResult<EvidenceFeedItem>> {
+  if (useMock) {
+    const items = demoEvidenceFeeds.filter((item) =>
+      (!filters.status || item.confirmationStatus === filters.status)
+      && (!filters.direction || item.direction === filters.direction)
+      && (!filters.priority || item.priority === filters.priority),
+    )
+    return Promise.resolve({ items, total: items.length, limit: 50, offset: 0 })
+  }
+  const params = new URLSearchParams({ limit: '50' })
+  if (filters.status) params.append('status', filters.status)
+  if (filters.direction) params.set('direction', filters.direction)
+  if (filters.priority) params.append('priority', filters.priority)
+  if (filters.recentDays) params.set('recent_days', String(filters.recentDays))
+  if (filters.businessDay) params.set('business_day', filters.businessDay)
+  if (filters.todayOnly) params.set('today_only', 'true')
+  return getFeed(`/api/updates?${params}`)
+}
+
+export type TodayCompanyUpdate = {
+  securityId: string
+  securityName: string
+  documentCount: number
+  latestIngestedAt: string
+  titles: string[]
+}
+
+export async function getTodayCompanyUpdates(): Promise<TodayCompanyUpdate[]> {
+  if (useMock) return []
+  const response = await request<{ items: Array<Record<string, unknown>> }>('/api/updates/today')
+  return response.items.map((item) => ({
+    securityId: String(item.security_id), securityName: String(item.security_name),
+    documentCount: Number(item.document_count), latestIngestedAt: String(item.latest_ingested_at),
+    titles: Array.isArray(item.titles) ? item.titles.map(String) : [],
+  }))
+}
+
+/** Queues the two bounded provider jobs; results arrive through the normal evidence pipeline. */
+export async function syncTodayResearch(): Promise<{ newsJobId: string; reportJobId: string }> {
+  if (useMock) return { newsJobId: 'collect-demo-news', reportJobId: 'collect-demo-reports' }
+  const [news, reports] = await Promise.all([
+    request<Record<string, unknown>>('/api/collection/investoday/news/sync', { method: 'POST' }),
+    request<Record<string, unknown>>('/api/collection/investoday/reports/sync', { method: 'POST' }),
+  ])
+  return { newsJobId: String(news.job_id), reportJobId: String(reports.job_id) }
+}
+
+function toCollectionRun(item: Record<string, unknown>): InvestodayCollectionRun {
+  const statuses: InvestodayCollectionRun['status'][] = ['not_started', 'running', 'completed', 'failed', 'disabled', 'unavailable']
+  const status = statuses.includes(item.status as InvestodayCollectionRun['status']) ? item.status as InvestodayCollectionRun['status'] : 'not_started'
+  return {
+    kind: item.kind === 'report' ? 'report' : 'news',
+    status,
+    businessDate: String(item.business_date ?? ''),
+    isCurrent: Boolean(item.is_current),
+    updatedAt: item.updated_at ? String(item.updated_at) : undefined,
+    fetched: item.fetched == null ? undefined : Number(item.fetched),
+    queued: item.queued == null ? undefined : Number(item.queued),
+    queuedToday: item.queued_today == null ? undefined : Number(item.queued_today),
+    skippedSeen: item.skipped_seen == null ? undefined : Number(item.skipped_seen),
+  }
+}
+
+/** Today's automatic source-collection checkpoint; document analysis continues in the normal worker pipeline. */
+export async function getInvestodayCollectionStatus(): Promise<InvestodayCollectionStatus> {
+  if (useMock) {
+    return {
+      businessDate: new Date().toISOString().slice(0, 10), workerReady: true, overallStatus: 'completed',
+      news: { kind: 'news', status: 'completed', businessDate: new Date().toISOString().slice(0, 10), isCurrent: true, fetched: 8, queued: 2 },
+      reports: { kind: 'report', status: 'completed', businessDate: new Date().toISOString().slice(0, 10), isCurrent: true, fetched: 2, queued: 1 },
+    }
+  }
+  const item = await request<Record<string, unknown>>('/api/collection/investoday/status')
+  return {
+    businessDate: String(item.business_date ?? ''),
+    workerReady: Boolean(item.worker_ready),
+    overallStatus: String(item.overall_status ?? 'not_started') as InvestodayCollectionRun['status'],
+    news: toCollectionRun((item.news ?? {}) as Record<string, unknown>),
+    reports: toCollectionRun((item.reports ?? {}) as Record<string, unknown>),
+  }
+}
+
 export function getRadarEvidence(thesisId: string, filters: { status?: string; direction?: string } = {}): Promise<PageResult<EvidenceFeedItem>> {
   if (useMock) {
     const items = demoEvidenceFeeds.filter((item) => (!filters.status || item.confirmationStatus === filters.status) && (!filters.direction || item.direction === filters.direction))
@@ -686,7 +838,7 @@ export async function getTrends(thesisId: string): Promise<Trend[]> {
   if (useMock) return demoTrends
   const items = await request<Array<Record<string, unknown>>>(`/api/theses/${thesisId}/trends`)
   const names: Record<string, string> = { 'AUTO-SALES-M': '月度汽车销量', 'AUTO-EXPORT-SALES-M': '月度海外销量/出口量', 'AUTO-BATTERY-INSTALL-M': '月度动力电池装机量', 'FIN-REVENUE-Q': '单季度营业收入', 'FIN-REVENUE-YOY-Q': '单季度营业收入同比', 'FIN-GROSS-MARGIN-Q': '单季度毛利率' }
-  return items.map((item) => ({ hypothesisId: String(item.hypothesis_id), statement: String(item.statement), metricId: String(item.metric_id), metricName: item.metric_name ? String(item.metric_name) : names[String(item.metric_id)] ?? String(item.metric_id), unit: String(item.unit), direction: String(item.direction), expectedValue: item.expected_value != null ? String(item.expected_value) : undefined, expectedLower: item.expected_lower != null ? String(item.expected_lower) : undefined, expectedUpper: item.expected_upper != null ? String(item.expected_upper) : undefined, invalidationThreshold: item.invalidation_threshold != null ? String(item.invalidation_threshold) : undefined, invalidationConsecutivePeriods: item.invalidation_consecutive_periods != null ? Number(item.invalidation_consecutive_periods) : undefined, slope: item.slope != null ? String(item.slope) : undefined, verdict: item.verdict ? String(item.verdict) : undefined, note: item.note ? String(item.note) : undefined, points: (item.points as Array<Record<string, unknown>>).map((p) => ({ period: String(p.period), value: String(p.value), publishedOn: String(p.published_on), acquiredAt: p.acquired_at ? String(p.acquired_at) : undefined, sourceDocumentId: p.source_document_id ? String(p.source_document_id) : undefined, dataVersion: p.data_version ? String(p.data_version) : undefined })) }))
+  return items.map((item) => ({ hypothesisId: String(item.hypothesis_id), statement: String(item.statement), metricId: String(item.metric_id), metricName: item.metric_name ? String(item.metric_name) : names[String(item.metric_id)] ?? String(item.metric_id), unit: String(item.unit), direction: String(item.direction), expectedValue: item.expected_value != null ? String(item.expected_value) : undefined, expectedLower: item.expected_lower != null ? String(item.expected_lower) : undefined, expectedUpper: item.expected_upper != null ? String(item.expected_upper) : undefined, invalidationThreshold: item.invalidation_threshold != null ? String(item.invalidation_threshold) : undefined, invalidationConsecutivePeriods: item.invalidation_consecutive_periods != null ? Number(item.invalidation_consecutive_periods) : undefined, invalidationRule: item.invalidation_rule ? String(item.invalidation_rule) : undefined, slope: item.slope != null ? String(item.slope) : undefined, verdict: item.verdict ? String(item.verdict) : undefined, note: item.note ? String(item.note) : undefined, points: (item.points as Array<Record<string, unknown>>).map((p) => ({ period: String(p.period), value: String(p.value), publishedOn: String(p.published_on), acquiredAt: p.acquired_at ? String(p.acquired_at) : undefined, sourceDocumentId: p.source_document_id ? String(p.source_document_id) : undefined, dataVersion: p.data_version ? String(p.data_version) : undefined, isValidationWindow: p.is_validation_window == null ? true : Boolean(p.is_validation_window) })) }))
 }
 
 export async function recheckThesisQuality(thesisId: string): Promise<ThesisDetail> {
@@ -931,6 +1083,30 @@ export async function getDocumentSegment(locator: string): Promise<DocumentSegme
   if (useMock) return { documentId: matched[1], title: demoEvidence.sourceDocumentTitle, locator, ordinal: Number(matched[2]), page: 34, content: demoEvidence.factExcerpt, contentKind: 'table_row', extractionMethod: 'native', tableIndex: 8, rowIndex: 12, cellRange: 'B12:D12', confidence: .99 }
   const item = await request<Record<string, unknown>>(`/api/documents/${encodeURIComponent(matched[1])}/segments/${matched[2]}`)
   return { documentId: String(item.document_id), title: item.title ? String(item.title) : undefined, locator: String(item.locator), ordinal: Number(item.ordinal), page: item.page == null ? undefined : Number(item.page), content: String(item.content), contentKind: String(item.content_kind ?? 'paragraph'), extractionMethod: String(item.extraction_method ?? 'native'), tableIndex: item.table_index == null ? undefined : Number(item.table_index), rowIndex: item.row_index == null ? undefined : Number(item.row_index), cellRange: item.cell_range ? String(item.cell_range) : undefined, confidence: item.confidence == null ? undefined : Number(item.confidence), previousLocator: item.previous_locator ? String(item.previous_locator) : undefined, nextLocator: item.next_locator ? String(item.next_locator) : undefined }
+}
+
+export async function getFullDocument(documentId: string): Promise<FullDocument> {
+  if (useMock) return {
+    documentId, title: demoEvidence.sourceDocumentTitle, docType: '研究资料', publishedAt: demoEvidence.disclosedAt,
+    parserVersion: 'demo-v1', segmentCount: 2,
+    segments: [
+      { locator: `${documentId}#paragraph-1`, ordinal: 1, content: demoEvidence.factExcerpt, contentKind: 'paragraph', extractionMethod: 'native' },
+      { locator: `${documentId}#paragraph-2`, ordinal: 2, content: '演示环境仅提供示例正文。', contentKind: 'paragraph', extractionMethod: 'native' },
+    ],
+  }
+  const item = await request<Record<string, unknown>>(`/api/documents/${encodeURIComponent(documentId)}`)
+  return {
+    documentId: String(item.document_id), title: item.title ? String(item.title) : undefined,
+    docType: item.doc_type ? String(item.doc_type) : undefined, publishedAt: String(item.published_at),
+    parserVersion: String(item.parser_version), segmentCount: Number(item.segment_count),
+    segments: Array.isArray(item.segments) ? item.segments.map((raw) => {
+      const segment = raw as Record<string, unknown>
+      return {
+        locator: String(segment.locator), ordinal: Number(segment.ordinal), page: segment.page == null ? undefined : Number(segment.page),
+        content: String(segment.content), contentKind: String(segment.content_kind ?? 'paragraph'), extractionMethod: String(segment.extraction_method ?? 'native'),
+      }
+    }) : [],
+  }
 }
 
 export async function getAssetInventory(): Promise<AssetInventory> {

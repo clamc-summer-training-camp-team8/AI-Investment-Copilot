@@ -162,15 +162,17 @@ def compute_suggestion(
                 )
             else:
                 assert threshold is not None
-                checks.append(check_invalidation(
-                    hypothesis.hypothesis_id,
-                    observations,
-                    thesis_established_on=thesis.established_on,
-                    threshold=threshold,
-                    direction=mapping.expected_direction,
-                    thresholds=thresholds,
-                    required_consecutive=mapping.invalidation_consecutive_periods,
-                ))
+                checks.append(
+                    check_invalidation(
+                        hypothesis.hypothesis_id,
+                        observations,
+                        thesis_established_on=thesis.established_on,
+                        threshold=threshold,
+                        direction=mapping.expected_direction,
+                        thresholds=thresholds,
+                        required_consecutive=mapping.invalidation_consecutive_periods,
+                    )
+                )
 
     composite = evaluate_thesis_invalidation(
         thesis.thesis_id,

@@ -138,6 +138,15 @@ class SqlDocumentRepo:
         row.visibility_label = visibility_label
         self._session.flush()
 
+    def list_recent(self, *, ingested_from: datetime, limit: int = 200) -> list[DocumentRecord]:
+        rows = self._session.scalars(
+            select(Document)
+            .where(Document.ingested_at >= ingested_from, Document.deleted_at.is_(None))
+            .order_by(Document.ingested_at.desc(), Document.document_id)
+            .limit(limit)
+        ).all()
+        return [_document(row) for row in rows]
+
     def list_segments(self, document_id: str) -> list[DocumentSegmentRecord]:
         rows = self._session.scalars(
             select(DocumentSegment)

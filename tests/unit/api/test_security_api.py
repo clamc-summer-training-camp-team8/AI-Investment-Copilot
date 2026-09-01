@@ -54,8 +54,12 @@ def test_security_resolve_writes_market_master_and_reuses_it(monkeypatch) -> Non
     uow = build_fake_uow()
     application.dependency_overrides[get_uow] = lambda: uow
     with TestClient(application) as client:
-        first = client.get("/api/securities/resolve?query=601799", headers={"X-User-Id": "analyst-mvp"})
-        second = client.get("/api/securities/resolve?query=星宇", headers={"X-User-Id": "analyst-mvp"})
+        first = client.get(
+            "/api/securities/resolve?query=601799", headers={"X-User-Id": "analyst-mvp"}
+        )
+        second = client.get(
+            "/api/securities/resolve?query=星宇", headers={"X-User-Id": "analyst-mvp"}
+        )
 
     assert first.status_code == 200
     assert second.status_code == 200
@@ -159,7 +163,9 @@ def test_company_metric_center_returns_latest_change_and_history() -> None:
     application.dependency_overrides[get_uow] = lambda: uow
 
     with TestClient(application) as client:
-        response = client.get("/api/securities/002594/metric-center", headers={"X-User-Id": "analyst-mvp"})
+        response = client.get(
+            "/api/securities/002594/metric-center", headers={"X-User-Id": "analyst-mvp"}
+        )
 
     assert response.status_code == 200
     payload = response.json()

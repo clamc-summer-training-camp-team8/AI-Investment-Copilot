@@ -187,9 +187,15 @@ def check_invalidation_range(
 ) -> InvalidationCheck:
     """按允许区间判断越界，只生成需要人工确认的复核信号。"""
     in_window = [item for item in observations if item.observation_date >= thesis_established_on]
-    excluded = [item.period for item in observations if item.observation_date < thesis_established_on]
+    excluded = [
+        item.period for item in observations if item.observation_date < thesis_established_on
+    ]
     ordered = sorted(in_window, key=lambda item: item.observation_date)
-    required = thresholds.consecutive_breach_periods if required_consecutive is None else max(1, required_consecutive)
+    required = (
+        thresholds.consecutive_breach_periods
+        if required_consecutive is None
+        else max(1, required_consecutive)
+    )
     consecutive = 0
     near = False
     for observation in ordered:

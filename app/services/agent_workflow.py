@@ -99,7 +99,9 @@ def build_database_metric_catalog(uow: UnitOfWork, security_id: str) -> MetricCa
                     definition=definition.definition,
                     category=category,
                 ),
-                "relation_type": "直接指标" if category in {"财务与运营", "经营", "盈利"} else "代理指标",
+                "relation_type": "直接指标"
+                if category in {"财务与运营", "经营", "盈利"}
+                else "代理指标",
                 "threshold_policy": "已有历史观测，可由研究员确认后设置区间；不自动写入正式规则",
             }
         )
@@ -592,9 +594,7 @@ def _recommendation_with_threshold(
             "source_ids": [],
             "confidence": 0.0,
             "warnings": [
-                "请研究员确认上限或下限。"
-                if direction == "波动"
-                else "请研究员先确认预期方向。"
+                "请研究员确认上限或下限。" if direction == "波动" else "请研究员先确认预期方向。"
             ],
             "requires_human_review": True,
         }

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { askKnowledge, getDocumentSegment, globalSearch, submitAnswerFeedback } from './api'
-import type { DocumentSegment, GlobalSearchItem, KnowledgeAnswer, ThesisDetail } from './types'
+import type { DocumentSegment, GlobalSearchItem, KnowledgeAnswer, ThesisSummary } from './types'
 
 const groupLabels = {
   security: '公司 / 证券', industry: '行业', thesis: '投资逻辑', event: '事件', document: '知识资料',
@@ -112,7 +112,7 @@ export function KnowledgeAssistant({
   currentThesisId, theses, prefill, onOpenSource,
 }: {
   currentThesisId?: string
-  theses: ThesisDetail[]
+  theses: ThesisSummary[]
   prefill?: { text: string; nonce: number }
   onOpenSource: (locator: string) => void
 }) {

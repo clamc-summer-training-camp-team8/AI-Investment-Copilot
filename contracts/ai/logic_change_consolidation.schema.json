@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-investment-copilot/contracts/ai/logic_change_consolidation.schema.json",
+  "title": "LogicChangeConsolidation",
+  "type": "object",
+  "required": ["security_id", "thesis_id", "business_date", "overall_direction", "summary", "hypothesis_impacts", "open_questions", "citations", "requires_human_review", "confidence", "model_version", "prompt_version", "generated_at", "ai_status"],
+  "additionalProperties": false,
+  "properties": {
+    "security_id": {"type": "string", "minLength": 1},
+    "thesis_id": {"type": "string", "minLength": 1},
+    "business_date": {"type": "string", "format": "date"},
+    "overall_direction": {"type": "string", "enum": ["支持", "冲突", "混合", "待观察"]},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "hypothesis_impacts": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["hypothesis_id", "direction", "strength", "strength_reason", "rationale", "business_impact", "indicator_outlook", "impact_layer", "directness", "transmission_status", "hypothesis_effect", "presentation", "paths", "related_metric_ids", "evidence_ids"],
+        "properties": {
+          "hypothesis_id": {"type": "string", "minLength": 1},
+          "direction": {"type": "string", "enum": ["支持", "冲突", "中性", "分歧", "待观察"]},
+          "strength": {"type": "string", "enum": ["弱", "中", "强"]},
+          "strength_reason": {"type": "string", "minLength": 1, "maxLength": 400},
+          "rationale": {"type": "string", "minLength": 1, "maxLength": 600},
+          "business_impact": {"type": "string", "minLength": 1, "maxLength": 400},
+          "indicator_outlook": {"type": "string", "minLength": 1, "maxLength": 400},
+          "impact_layer": {"type": "string", "enum": ["经营基本面", "行业景气", "市场预期", "政策环境", "宏观环境"]},
+          "directness": {"type": "string", "enum": ["直接证据", "行业代理", "合理推测", "证据不足"]},
+          "transmission_status": {"type": "string", "enum": ["已验证传导", "合理推测", "尚待验证", "无法建立"]},
+          "hypothesis_effect": {"type": "string", "enum": ["强化假设", "削弱假设", "增加不确定性", "暂不影响假设"]},
+          "presentation": {"type": "string", "enum": ["单一路径", "双向分歧", "背景信号", "证据不足"]},
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["direction", "label", "mechanism", "evidence_ids"],
+              "properties": {
+                "direction": {"type": "string", "enum": ["支持", "冲突", "中性"]},
+                "label": {"type": "string", "minLength": 1, "maxLength": 120},
+                "mechanism": {"type": "string", "minLength": 1, "maxLength": 500},
+                "evidence_ids": {"type": "array", "minItems": 1, "maxItems": 12, "items": {"type": "string", "minLength": 1}}
+              }
+            }
+          },
+          "related_metric_ids": {"type": "array", "maxItems": 6, "items": {"type": "string", "minLength": 1}},
+          "evidence_ids": {"type": "array", "maxItems": 12, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "open_questions": {"type": "array", "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 400}},
+    "citations": {"type": "array", "maxItems": 12, "items": {"type": "string", "minLength": 1}},
+    "requires_human_review": {"type": "boolean", "const": true},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "model_version": {"type": "string", "minLength": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "ai_status": {"type": "string", "enum": ["候选", "低置信", "解析失败"]}
+  }
+}

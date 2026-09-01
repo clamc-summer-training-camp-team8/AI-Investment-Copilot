@@ -33,9 +33,9 @@ def test_所有卡片路由都过可见性校验() -> None:
         # 列表接口不校验单张卡片，而是在服务层按可见性过滤整页
         # （app/services/query.py 的 list_theses）。它的守卫是下面那条
         # test_列表接口按可见性过滤，不是 _require_visible。
-            "list_theses",
-            "list_thesis_summaries",
-        }
+        "list_theses",
+        "list_thesis_summaries",
+    }
     checked = 0
 
     for name, func in vars(router_module).items():

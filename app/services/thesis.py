@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import uuid4
 
@@ -36,6 +37,24 @@ from app.services.ports import (
 
 TITLE_MAX = 40
 CORE_VIEW_MAX = 200
+
+
+def _optional_decimal(value: object, *, field: str) -> Decimal | None:
+    if value is None or value == "":
+        return None
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError) as exc:
+        raise ValidationFailed(f"{field} 必须是有效数值") from exc
+
+
+def _optional_int(value: object, *, field: str) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(str(value))
+    except ValueError as exc:
+        raise ValidationFailed(f"{field} 必须是整数") from exc
 
 
 def _ensure_current(record: ThesisRecord) -> None:
@@ -275,7 +294,9 @@ def update_maintenance(
     if normalized_rating and len(normalized_rating) > 32:
         raise ValidationFailed("投资评级不能超过 32 个字符")
 
-    current_hypotheses = {item.hypothesis_id: item for item in uow.thesis.list_hypotheses(thesis_id)}
+    current_hypotheses = {
+        item.hypothesis_id: item for item in uow.thesis.list_hypotheses(thesis_id)
+    }
     if {str(item.get("hypothesis_id")) for item in hypotheses} != set(current_hypotheses):
         raise ValidationFailed("维护提交必须保留全部既有假设")
     updated_hypotheses: list[HypothesisRecord] = []
@@ -293,7 +314,8 @@ def update_maintenance(
             replace(
                 current,
                 statement=statement,
-                hypothesis_type=str(raw.get("hypothesis_type", current.hypothesis_type)).strip() or "其他",
+                hypothesis_type=str(raw.get("hypothesis_type", current.hypothesis_type)).strip()
+                or "其他",
                 importance=importance,
                 observation_window=(str(raw.get("observation_window", "")).strip() or None),
                 invalidation_rule=(str(raw.get("invalidation_rule", "")).strip() or None),
@@ -335,11 +357,19 @@ def update_maintenance(
                     metric_id=str(raw.get("metric_id")),
                     metric_version=str(raw.get("metric_version") or "v1.0"),
                     expected_direction=expected_direction,
-                    expected_value=raw.get("expected_value"),
-                    expected_lower=raw.get("expected_lower"),
-                    expected_upper=raw.get("expected_upper"),
-                    invalidation_threshold=raw.get("invalidation_threshold"),
-                    invalidation_consecutive_periods=raw.get("invalidation_consecutive_periods"),
+                    expected_value=_optional_decimal(raw.get("expected_value"), field="指标预期值"),
+                    expected_lower=_optional_decimal(
+                        raw.get("expected_lower"), field="指标预期下限"
+                    ),
+                    expected_upper=_optional_decimal(
+                        raw.get("expected_upper"), field="指标预期上限"
+                    ),
+                    invalidation_threshold=_optional_decimal(
+                        raw.get("invalidation_threshold"), field="失效阈值"
+                    ),
+                    invalidation_consecutive_periods=_optional_int(
+                        raw.get("invalidation_consecutive_periods"), field="连续触发期数"
+                    ),
                     expectation_source=str(raw.get("expectation_source") or "").strip(),
                     confirmation_status=ConfirmationStatus.CONFIRMED,
                 ),
@@ -390,7 +420,16 @@ def update_maintenance(
         triggered_by=version.TRIGGER_FIELD_EDIT,
         created_by=actor.user_id,
         change_reason=reason.strip() or "研究员维护逻辑",
-        changed_fields=["title", "core_view", "direction", "investment_rating", "target_price", "observation_period", "hypotheses", "metric_mappings"],
+        changed_fields=[
+            "title",
+            "core_view",
+            "direction",
+            "investment_rating",
+            "target_price",
+            "observation_period",
+            "hypotheses",
+            "metric_mappings",
+        ],
     )
     audit.record(
         uow.audit,
@@ -400,7 +439,16 @@ def update_maintenance(
         object_id=thesis_id,
         detail={
             "reason": reason.strip() or "研究员维护逻辑",
-            "changed_fields": ["title", "core_view", "direction", "investment_rating", "target_price", "observation_period", "hypotheses", "metric_mappings"],
+            "changed_fields": [
+                "title",
+                "core_view",
+                "direction",
+                "investment_rating",
+                "target_price",
+                "observation_period",
+                "hypotheses",
+                "metric_mappings",
+            ],
             "version": next_version,
         },
     )
@@ -430,9 +478,15 @@ def set_expectations(
     if range_direction:
         if mapping.expected_lower is None and mapping.expected_upper is None:
             raise ValidationFailed("上限和下限必须至少填写一项")
-        if mapping.expected_direction is ExpectationDirection.RISING and mapping.expected_lower is None:
+        if (
+            mapping.expected_direction is ExpectationDirection.RISING
+            and mapping.expected_lower is None
+        ):
             raise ValidationFailed("上升方向需要填写下限")
-        if mapping.expected_direction is ExpectationDirection.FALLING and mapping.expected_upper is None:
+        if (
+            mapping.expected_direction is ExpectationDirection.FALLING
+            and mapping.expected_upper is None
+        ):
             raise ValidationFailed("下降方向需要填写上限")
         if (
             mapping.expected_lower is not None
