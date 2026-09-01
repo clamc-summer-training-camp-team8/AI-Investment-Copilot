@@ -142,7 +142,8 @@ function ProductApp({ user, onLogout, features }: { user: AuthUser; onLogout?: (
   const isRetrospective = location.pathname.startsWith('/retrospective')
   const isLogicChange = location.pathname.startsWith('/logic-changes/')
   const isDocumentReader = location.pathname.startsWith('/documents/')
-  return <div className={`app-shell ${isWorkbench ? 'workbench-shell' : ''} ${isCompanyResearch ? 'company-shell' : ''} ${isCoverageManagement ? 'coverage-shell' : ''} ${isMacroStrategy ? 'macro-shell' : ''} ${isResearchUpdates ? 'updates-shell' : ''} ${isRetrospective ? 'retrospective-shell' : ''} ${isLogicChange ? 'logic-change-shell' : ''} ${isDocumentReader ? 'document-reader-shell' : ''}`}>
+  const isEvidenceDetail = /^\/radar\/[^/]+$/u.test(location.pathname)
+  return <div className={`app-shell ${isWorkbench ? 'workbench-shell' : ''} ${isCompanyResearch ? 'company-shell' : ''} ${isCoverageManagement ? 'coverage-shell' : ''} ${isMacroStrategy ? 'macro-shell' : ''} ${isResearchUpdates ? 'updates-shell' : ''} ${isRetrospective ? 'retrospective-shell' : ''} ${isLogicChange ? 'logic-change-shell' : ''} ${isDocumentReader ? 'document-reader-shell' : ''} ${isEvidenceDetail ? 'evidence-detail-shell' : ''}`}>
     <a className="skip-link" href="#main-content">跳到主要内容</a>
     <header className="global-topbar dashboard-topbar">
       <NavLink to="/workbench" className="brand dashboard-brand" aria-label="返回工作台"><span className="brand-mark"><Icon name="graph" size={20} /></span><span className="brand-copy"><strong>投研引擎工作台</strong><small>AI INVESTMENT COPILOT</small></span></NavLink>

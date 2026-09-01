@@ -149,7 +149,7 @@ class ThesisRecord:
     # 样例案例的失效条件只写了收入与毛利率两条，没提行业装机。把不在条件里的
     # 假设也算进 AND，会让一条长期达标的假设永久压住失效判定。
     invalidation_hypotheses: list[str] = field(default_factory=list)
-    # AI 生成的指标、风险与失效建议只作为待采用候选保存，不能直接改变正式配置。
+    # AI 生成的指标、风险与失效建议只作为待采用候选保存；company context 仅用于公司页展示。
     draft_suggestions: dict[str, object] = field(default_factory=dict)
     thesis_kind: str = "canonical"
     thesis_series_id: str | None = None

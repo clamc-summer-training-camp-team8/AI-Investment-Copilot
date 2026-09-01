@@ -21,6 +21,7 @@ export interface EvidenceFeedItem {
   thesisCoreView: string
   hypothesisId: string
   hypothesisStatement: string
+  sourceDocumentId: string
   sourceDocumentTitle: string
   factExcerpt: string
   disclosedAt: string
@@ -299,6 +300,7 @@ export interface ThesisDetail extends ThesisSummary {
   targetPrice?: string
   observationPeriod?: string
   hypotheses: Hypothesis[]
+  catalystSuggestions: Array<Record<string, unknown>>
   riskSuggestions: Array<Record<string, unknown>>
   invalidationSuggestions: Array<Record<string, unknown>>
 }
