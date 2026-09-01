@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import asdict, replace
 from datetime import date
 from typing import Annotated, TypeVar
 from uuid import uuid4
@@ -26,6 +26,7 @@ from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.api.feed_presenter import to_feed_item
 from app.core.domain import (
     EvidenceRecord,
+    HypothesisRecord,
     MetricMappingRecord,
     ThesisQuery,
     ThesisRecord,
@@ -42,18 +43,21 @@ from app.core.timeutil import now
 from app.schemas.thesis import (
     AuditOut,
     AuditPage,
+    DecisionBatchCreateIn,
+    DecisionBatchOut,
     EvidenceActionIn,
     EvidenceDetailOut,
     EvidenceFeedPage,
     EvidenceOut,
+    EvidenceRelationBatchReviewIn,
     EvidenceRelationDeactivateIn,
     EvidenceRelationIn,
     EvidenceRelationMutationOut,
     EvidenceRelationOut,
     EvidenceRelationReviewIn,
     EvidenceRetrievalTraceOut,
-    HypothesisOut,
     HypothesisCreateIn,
+    HypothesisOut,
     HypothesisTrendOut,
     HypothesisUpdateIn,
     MetricMappingIn,
@@ -164,6 +168,11 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
                 hypothesis_type=h.hypothesis_type,
                 importance=h.importance.value,
                 status=h.status,
+                health_state=h.health_state,
+                health_reason=h.health_reason,
+                health_support_count=h.health_support_count,
+                health_conflict_count=h.health_conflict_count,
+                health_updated_at=h.health_updated_at,
                 observation_window=h.observation_window,
                 invalidation_rule=h.invalidation_rule,
                 causal_level=(
@@ -213,6 +222,75 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
             else []
         ),
     )
+
+
+def _coarse_hypothesis_status(health_state: str) -> str:
+    """Map detailed health states back to the legacy compact hypothesis status."""
+    if health_state == "强化":
+        return "支持"
+    if health_state == "分歧":
+        return "分歧"
+    if health_state == "失效条件命中":
+        return "风险"
+    return "待验证"
+
+
+def _sync_hypothesis_health(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    hypotheses: dict[str, HypothesisRecord],
+    health_items: list[object],
+    actor: str,
+    batch_id: str,
+) -> list[dict[str, object]]:
+    changes: list[dict[str, object]] = []
+    updated_at = now()
+    for item in health_items:
+        hypothesis_id = item.hypothesis_id
+        hypothesis = hypotheses.get(hypothesis_id)
+        if hypothesis is None:
+            continue
+        health_state = str(item.state)
+        after_status = _coarse_hypothesis_status(health_state)
+        before = {
+            "status": hypothesis.status,
+            "health_state": hypothesis.health_state,
+            "health_reason": hypothesis.health_reason,
+            "support_count": hypothesis.health_support_count,
+            "conflict_count": hypothesis.health_conflict_count,
+        }
+        after = {
+            "status": after_status,
+            "health_state": health_state,
+            "health_reason": str(item.reason),
+            "support_count": int(item.support_count),
+            "conflict_count": int(item.conflict_count),
+        }
+        if before == after:
+            continue
+        updated = replace(
+            hypothesis,
+            status=after_status,
+            health_state=after["health_state"],
+            health_reason=after["health_reason"],
+            health_support_count=after["support_count"],
+            health_conflict_count=after["conflict_count"],
+            health_updated_at=updated_at,
+        )
+        uow.thesis.update_hypothesis(updated)
+        hypotheses[hypothesis_id] = updated
+        changes.append({"hypothesis_id": hypothesis_id, "before": before, "after": after})
+    if changes:
+        audit.record(
+            uow.audit,
+            actor=actor,
+            action="更新假设健康状态",
+            object_type="thesis",
+            object_id=thesis_id,
+            detail={"batch_id": batch_id, "changes": changes},
+        )
+    return changes
 
 
 def _mapping_out(record: MetricMappingRecord, *, metric_name: str = "") -> MetricMappingOut:
@@ -1109,12 +1187,229 @@ def review_relation(
             reason=payload.reason,
             actor=actor,
             thresholds=conf.rules,
+            record_status_suggestion=False,
         )
+        thesis = _require_visible(uow, actor, relation.thesis_id)
+        hypotheses = {item.hypothesis_id: item for item in uow.thesis.list_hypotheses(thesis.thesis_id)}
+        computed = status_service.compute_suggestion(
+            uow, thesis=thesis, hypotheses=list(hypotheses.values()), thresholds=conf.rules
+        )
+        _sync_hypothesis_health(
+            uow,
+            thesis_id=thesis.thesis_id,
+            hypotheses=hypotheses,
+            health_items=list(computed.hypothesis_health),
+            actor=actor.user_id,
+            batch_id=f"single-review:{relation_id}",
+        )
+        status_service.record_suggestion(uow, thesis=thesis, suggestion=computed, actor=actor.user_id)
     except HumanGateRequired as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _relation_mutation(updated, actor, uow)
+
+
+@router.post("/evidence-relations/batch-review", response_model=list[EvidenceRelationMutationOut])
+def batch_review_relations(
+    payload: EvidenceRelationBatchReviewIn,
+    actor: ActorDep,
+    uow: UowDep,
+    conf: SettingsDep,
+) -> list[EvidenceRelationMutationOut]:
+    """在同一 UnitOfWork 中提交整批研究决策，任一失败即整批回滚。"""
+    results: list[EvidenceRelationMutationOut] = []
+    seen: set[str] = set()
+    for item in payload.items:
+        if item.relation_id in seen:
+            raise HTTPException(status_code=400, detail="批次中存在重复关系")
+        seen.add(item.relation_id)
+        relation = uow.relations.get(item.relation_id)
+        if relation is None or relation.evidence_id != item.evidence_id:
+            raise HTTPException(status_code=404, detail="证据关联不存在或无访问权限")
+        _require_visible(uow, actor, relation.thesis_id)
+        try:
+            updated, _ = relation_service.review(uow, relation_id=item.relation_id, action=item.action, reason=item.reason, actor=actor, thresholds=conf.rules)
+        except HumanGateRequired as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except ValidationFailed as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        results.append(_relation_mutation(updated, actor, uow))
+    return results
+
+
+@router.post("/theses/{thesis_id}/decision-batches", response_model=DecisionBatchOut)
+def create_decision_batch(
+    thesis_id: str,
+    payload: DecisionBatchCreateIn,
+    actor: ActorDep,
+    uow: UowDep,
+    conf: SettingsDep,
+) -> DecisionBatchOut:
+    """原子提交研究决策批次，并冻结 AI 判断、人工决定和处理后状态建议。"""
+    thesis = _require_visible(uow, actor, thesis_id)
+    if thesis.owner != actor.user_id:
+        raise HTTPException(status_code=403, detail="只有负责人可以提交研究决策批次")
+    batch_id = f"RDB-{uuid4().hex}"
+    seen: set[str] = set()
+    details: list[dict[str, object]] = []
+    counts = {"确认": 0, "暂不判断": 0, "驳回": 0}
+    hypotheses = {item.hypothesis_id: item for item in uow.thesis.list_hypotheses(thesis_id)}
+    for item in payload.items:
+        if item.relation_id in seen:
+            raise HTTPException(status_code=400, detail="批次中存在重复关系")
+        seen.add(item.relation_id)
+        relation = uow.relations.get(item.relation_id)
+        if relation is None or relation.evidence_id != item.evidence_id or relation.thesis_id != thesis_id:
+            raise HTTPException(status_code=404, detail="证据关联不存在或不属于当前投资逻辑")
+        before_status = relation.status.value
+        try:
+            updated, _ = relation_service.review(
+                uow, relation_id=item.relation_id, action=item.action,
+                reason=item.reason, actor=actor, thresholds=conf.rules,
+                record_status_suggestion=False,
+            )
+        except HumanGateRequired as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except ValidationFailed as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        counts[item.action] += 1
+        details.append({
+            "relation_id": relation.relation_id,
+            "evidence_id": relation.evidence_id,
+            "hypothesis_id": relation.hypothesis_id,
+            "hypothesis_statement": hypotheses.get(relation.hypothesis_id).statement if hypotheses.get(relation.hypothesis_id) else relation.hypothesis_id,
+            "ai_direction": relation.direction.value,
+            "ai_strength": relation.strength,
+            "ai_reason": relation.reason,
+            "human_action": item.action,
+            "human_reason": item.reason,
+            "before_status": before_status,
+            "after_status": updated.status.value,
+        })
+    computed = status_service.compute_suggestion(
+        uow, thesis=thesis, hypotheses=list(hypotheses.values()), thresholds=conf.rules
+    )
+    hypothesis_health_changes = _sync_hypothesis_health(
+        uow,
+        thesis_id=thesis_id,
+        hypotheses=hypotheses,
+        health_items=list(computed.hypothesis_health),
+        actor=actor.user_id,
+        batch_id=batch_id,
+    )
+    final_suggestion = status_service.record_suggestion(
+        uow, thesis=thesis, suggestion=computed, actor=actor.user_id
+    )
+    detail: dict[str, object] = {
+        "batch_id": batch_id,
+        "thesis_id": thesis_id,
+        "digest_id": payload.digest_id,
+        "note": payload.note,
+        "confirmed_count": counts["确认"],
+        "pending_count": counts["暂不判断"],
+        "rejected_count": counts["驳回"],
+        "relation_count": len(details),
+        "previous_thesis_status": thesis.status.value,
+        "suggested_thesis_status": computed.suggested_status.value,
+        "suggestion_id": final_suggestion.suggestion_id,
+        "output_type": computed.output_type,
+        "requires_human_confirmation": computed.requires_human_confirmation,
+        "research_alerts": [asdict(item) for item in computed.research_alerts],
+        "hypothesis_health": [asdict(item) for item in computed.hypothesis_health],
+        "hypothesis_health_changes": hypothesis_health_changes,
+        "suggestion_reasons": list(computed.reasons),
+        "requires_status_decision": computed.requires_human_confirmation,
+        "items": details,
+    }
+    audit.record(uow.audit, actor=actor.user_id, action="提交研究决策批次", object_type="research_decision_batch", object_id=batch_id, detail=detail)
+    audit.record(uow.audit, actor=actor.user_id, action="提交研究决策批次", object_type="thesis", object_id=thesis_id, detail=detail)
+    return DecisionBatchOut(
+        batch_id=batch_id, thesis_id=thesis_id, actor=actor.user_id, digest_id=payload.digest_id,
+        note=payload.note, confirmed_count=counts["确认"], pending_count=counts["暂不判断"],
+        rejected_count=counts["驳回"], relation_count=len(details),
+        suggestion_id=final_suggestion.suggestion_id, current_status=thesis.status.value,
+        suggested_status=computed.suggested_status.value,
+        requires_status_decision=computed.requires_human_confirmation,
+        output_type=computed.output_type,
+        requires_human_confirmation=computed.requires_human_confirmation,
+        research_alerts=[asdict(item) for item in computed.research_alerts],
+        hypothesis_health=[asdict(item) for item in computed.hypothesis_health],
+        suggestion_reasons=list(computed.reasons), items=details,
+    )
+
+
+@router.get("/theses/{thesis_id}/decision-batches", response_model=DecisionBatchOut | None)
+def get_latest_decision_batch(
+    thesis_id: str,
+    actor: ActorDep,
+    uow: UowDep,
+    digest_id: str | None = None,
+) -> DecisionBatchOut | None:
+    """恢复某次归并最近提交的批次，避免刷新后重新显示不可提交的空草稿。"""
+    _require_visible(uow, actor, thesis_id)
+    for record in reversed(uow.audit.list_for_object("thesis", thesis_id)):
+        detail = record.detail or {}
+        batch_id = detail.get("batch_id")
+        if record.action != "提交研究决策批次" or not batch_id:
+            continue
+        if digest_id and detail.get("digest_id") != digest_id:
+            continue
+        suggestion_id = int(detail.get("suggestion_id") or 0)
+        suggestion = uow.suggestions.get(suggestion_id) if suggestion_id else None
+        decision_action = suggestion.human_action if suggestion else None
+        return DecisionBatchOut(
+            batch_id=str(batch_id), thesis_id=thesis_id, actor=record.actor,
+            submitted_at=record.occurred_at,
+            digest_id=str(detail["digest_id"]) if detail.get("digest_id") else None,
+            note=str(detail["note"]) if detail.get("note") else None,
+            confirmed_count=int(detail.get("confirmed_count") or 0),
+            pending_count=int(detail.get("pending_count") or 0),
+            rejected_count=int(detail.get("rejected_count") or 0),
+            relation_count=int(detail.get("relation_count") or 0),
+            suggestion_id=suggestion_id,
+            current_status=str(detail.get("previous_thesis_status") or ""),
+            suggested_status=str(detail.get("suggested_thesis_status") or ""),
+            requires_status_decision=bool(detail.get("requires_status_decision")) and decision_action is None,
+            output_type=str(detail.get("output_type") or "信息沉淀"),
+            requires_human_confirmation=bool(detail.get("requires_human_confirmation")),
+            research_alerts=list(detail.get("research_alerts") or []),
+            hypothesis_health=list(detail.get("hypothesis_health") or []),
+            status_decision_action=decision_action,
+            suggestion_reasons=[str(item) for item in list(detail.get("suggestion_reasons") or [])],
+            items=list(detail.get("items") or []),
+        )
+    return None
+
+
+@router.get("/decision-batches/{batch_id}", response_model=DecisionBatchOut)
+def get_decision_batch(batch_id: str, actor: ActorDep, uow: UowDep) -> DecisionBatchOut:
+    records = uow.audit.list_for_object("research_decision_batch", batch_id)
+    if not records or not records[-1].detail:
+        raise HTTPException(status_code=404, detail="研究决策批次不存在或无访问权限")
+    record = records[-1]
+    detail = record.detail
+    thesis_id = str(detail.get("thesis_id") or "")
+    _require_visible(uow, actor, thesis_id)
+    suggestion_id = int(detail.get("suggestion_id") or 0)
+    suggestion = uow.suggestions.get(suggestion_id) if suggestion_id else None
+    decision_action = suggestion.human_action if suggestion else None
+    return DecisionBatchOut(
+        batch_id=batch_id, thesis_id=thesis_id, actor=record.actor, submitted_at=record.occurred_at,
+        digest_id=str(detail["digest_id"]) if detail.get("digest_id") else None,
+        note=str(detail["note"]) if detail.get("note") else None,
+        confirmed_count=int(detail.get("confirmed_count") or 0),
+        pending_count=int(detail.get("pending_count") or 0),
+        rejected_count=int(detail.get("rejected_count") or 0),
+        relation_count=int(detail.get("relation_count") or 0),
+        suggestion_id=suggestion_id,
+        current_status=str(detail.get("previous_thesis_status") or ""),
+        suggested_status=str(detail.get("suggested_thesis_status") or ""),
+        requires_status_decision=bool(detail.get("requires_status_decision")) and decision_action is None,
+        status_decision_action=decision_action,
+        suggestion_reasons=[str(item) for item in list(detail.get("suggestion_reasons") or [])],
+        items=list(detail.get("items") or []),
+    )
 
 
 @router.post("/evidence/{evidence_id}/actions", response_model=list[SuggestionOut])
@@ -1397,6 +1692,10 @@ def _suggestions(uow: UnitOfWork, thesis_id: str) -> list[SuggestionOut]:
             reasons=s.reasons,
             triggered_hypotheses=s.triggered_hypotheses,
             rule_version=s.rule_version,
+            output_type=s.output_type,
+            requires_human_confirmation=s.requires_human_confirmation,
+            research_alerts=s.research_alerts,
+            hypothesis_health=s.hypothesis_health,
             human_action=s.human_action,
             human_reason=s.human_reason,
             acted_by=s.acted_by,

@@ -67,7 +67,7 @@ try {
     Write-Host "Checking SSH access to $SshTarget ..."
     Invoke-Native ssh @SshCommon $SshTarget 'true'
 
-    $HostState = ((& ssh @SshCommon $SshTarget "test -s /opt/ai-investment-copilot/.bootstrap-v1 && command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 && echo ready || echo bootstrap") | Select-Object -Last 1).Trim()
+    $HostState = ((& ssh @SshCommon $SshTarget "sudo test -s /opt/ai-investment-copilot/.bootstrap-v1 && command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 && echo ready || echo bootstrap") | Select-Object -Last 1).Trim()
     if ($LASTEXITCODE -ne 0) {
         throw 'Unable to inspect Docker on the remote host.'
     }

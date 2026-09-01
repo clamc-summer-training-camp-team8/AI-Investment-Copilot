@@ -337,7 +337,9 @@ def workbench(
                     )
                 )
         for sug in uow.suggestions.list_for_thesis(record.thesis_id):
-            if sug.human_action is None:
+            # 研究提醒、支持证据沉淀不应被伪装成「状态建议待处置」。
+            # 只有确实需要负责人决定正式状态的输出才进入这条队列。
+            if sug.human_action is None and sug.requires_human_confirmation:
                 suggestion_items.append(
                     PendingItem(
                         kind="状态建议待处置",

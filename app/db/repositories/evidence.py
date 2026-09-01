@@ -519,6 +519,10 @@ class SqlSuggestionRepo:
             reasons=list(record.reasons),
             triggered_hypotheses=list(record.triggered_hypotheses),
             rule_version=record.rule_version,
+            output_type=record.output_type,
+            requires_human_confirmation=record.requires_human_confirmation,
+            research_alerts=list(record.research_alerts),
+            hypothesis_health=list(record.hypothesis_health),
         )
         self._session.add(row)
         self._session.flush()
@@ -536,6 +540,10 @@ class SqlSuggestionRepo:
             reasons=list(row.reasons or []),
             rule_version=row.rule_version,
             triggered_hypotheses=list(row.triggered_hypotheses or []),
+            output_type=row.output_type,
+            requires_human_confirmation=row.requires_human_confirmation,
+            research_alerts=list(row.research_alerts or []),
+            hypothesis_health=list(row.hypothesis_health or []),
             human_action=row.human_action,
             human_reason=row.human_reason,
             acted_by=row.acted_by,

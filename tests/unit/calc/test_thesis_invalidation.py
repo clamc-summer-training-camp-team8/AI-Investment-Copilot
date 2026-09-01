@@ -93,7 +93,8 @@ def test_组合条件未成立时不建议重大风险(thresholds: RuleThreshold
     assert suggestion.suggested_status is ThesisStatus.VALIDATING
     assert "HYP-DEMO-003" in suggestion.triggered_hypotheses
     assert any("不判定失效" in r for r in suggestion.reasons)
-    assert suggestion.requires_human_confirmation is True
+    assert suggestion.output_type == "研究提醒"
+    assert suggestion.requires_human_confirmation is False
 
 
 def test_全部条件成立才建议重大风险(thresholds: RuleThresholds) -> None:

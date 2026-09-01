@@ -172,6 +172,11 @@ class HypothesisRecord:
     expected_direction: ExpectationDirection | None = None
     invalidation_rule: str | None = None
     status: str = "待验证"
+    health_state: str | None = None
+    health_reason: str | None = None
+    health_support_count: int = 0
+    health_conflict_count: int = 0
+    health_updated_at: datetime | None = None
 
 
 @dataclass
@@ -354,6 +359,12 @@ class SuggestionRecord:
     reasons: list[str]
     rule_version: str
     triggered_hypotheses: list[str] = field(default_factory=list)
+    # 一次批次输出有三类：状态变更建议 / 研究提醒 / 信息沉淀。
+    # 只有第一类允许进入正式状态处置流程。
+    output_type: str = "信息沉淀"
+    requires_human_confirmation: bool = False
+    research_alerts: list[dict[str, object]] = field(default_factory=list)
+    hypothesis_health: list[dict[str, object]] = field(default_factory=list)
     human_action: str | None = None
     human_reason: str | None = None
     acted_by: str | None = None

@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import asdict, replace
 from datetime import date, timedelta
 
 from app.calc.deterministic import Observation
@@ -212,6 +212,10 @@ def record_suggestion(
             reasons=list(suggestion.reasons),
             rule_version=suggestion.rule_version,
             triggered_hypotheses=list(suggestion.triggered_hypotheses),
+            output_type=suggestion.output_type,
+            requires_human_confirmation=suggestion.requires_human_confirmation,
+            research_alerts=[asdict(item) for item in suggestion.research_alerts],
+            hypothesis_health=[asdict(item) for item in suggestion.hypothesis_health],
         )
     )
     audit.record(
@@ -222,6 +226,7 @@ def record_suggestion(
         object_id=thesis.thesis_id,
         detail={
             "suggested_status": suggestion.suggested_status.value,
+            "output_type": suggestion.output_type,
             "rule_version": suggestion.rule_version,
             "reasons": list(suggestion.reasons),
         },
@@ -235,14 +240,19 @@ def record_suggestion(
         event_type="status_suggestion_created",
         actor_type="system",
         summary=(
-            f"规则引擎建议逻辑状态由「{thesis.status.value}」"
-            f"调整为「{suggestion.suggested_status.value}」"
+            f"规则引擎生成「{suggestion.output_type}」："
+            + (
+                f"建议逻辑状态由「{thesis.status.value}」调整为「{suggestion.suggested_status.value}」"
+                if suggestion.requires_human_confirmation
+                else "正式逻辑状态保持不变"
+            )
         ),
         related_object_type="status_suggestion",
         related_object_id=str(saved.suggestion_id),
         after={
             "current_status": thesis.status.value,
             "suggested_status": suggestion.suggested_status.value,
+            "output_type": suggestion.output_type,
         },
         reason="；".join(suggestion.reasons),
         detail_url=f"/theses/{thesis.thesis_id}/decision",
@@ -280,6 +290,8 @@ def apply_decision(
         raise ValidationFailed(f"状态建议 {suggestion_id} 不存在")
     if record.human_action is not None:
         raise ValidationFailed("该建议已被处置，不允许重复处置")
+    if not record.requires_human_confirmation:
+        raise ValidationFailed("该记录属于研究提醒或信息沉淀，不进入正式状态处置")
 
     uow.suggestions.update(
         replace(

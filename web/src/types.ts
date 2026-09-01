@@ -327,6 +327,11 @@ export interface Hypothesis {
   hypothesisType: string
   importance: string
   status: string
+  healthState?: string
+  healthReason?: string
+  healthSupportCount?: number
+  healthConflictCount?: number
+  healthUpdatedAt?: string
   observationWindow?: string
   invalidationRule?: string
   metricSuggestions: Array<Record<string, unknown>>
@@ -391,7 +396,27 @@ export interface Suggestion {
   reasons: string[]
   triggeredHypotheses: string[]
   ruleVersion: string
+  outputType: '状态变更建议' | '研究提醒' | '信息沉淀'
+  requiresHumanConfirmation: boolean
+  researchAlerts: ResearchAlert[]
+  hypothesisHealth: HypothesisHealth[]
   humanAction?: string
+}
+
+export interface ResearchAlert {
+  category: string
+  level: string
+  title: string
+  detail: string
+  hypothesisIds: string[]
+}
+
+export interface HypothesisHealth {
+  hypothesisId: string
+  state: string
+  reason: string
+  supportCount: number
+  conflictCount: number
 }
 
 export interface Trend {
@@ -420,7 +445,13 @@ export interface AuditItem {
   objectId?: string
   modelVersion?: string
   occurredAt?: string
-  detail?: Record<string, unknown>
+  detail?: Record<string, unknown> & {
+    batch_id?: string
+    confirmed_count?: number
+    pending_count?: number
+    rejected_count?: number
+    suggested_thesis_status?: string
+  }
 }
 
 export interface JobAccepted {

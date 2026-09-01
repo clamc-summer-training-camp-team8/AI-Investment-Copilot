@@ -173,6 +173,11 @@ class HypothesisOut(Base):
     hypothesis_type: str
     importance: str
     status: str
+    health_state: str | None = None
+    health_reason: str | None = None
+    health_support_count: int = 0
+    health_conflict_count: int = 0
+    health_updated_at: datetime | None = None
     observation_window: str | None = None
     invalidation_rule: str | None = None
     causal_level: str | None = None
@@ -362,6 +367,46 @@ class EvidenceRelationReviewIn(Base):
     reason: str | None = Field(default=None, max_length=1000)
 
 
+class EvidenceRelationBatchReviewItemIn(Base):
+    evidence_id: Annotated[str, Field(min_length=1)]
+    relation_id: Annotated[str, Field(min_length=1)]
+    action: Annotated[str, Field(pattern="^(确认|驳回|暂不判断)$")]
+    reason: str | None = Field(default=None, max_length=1000)
+
+
+class EvidenceRelationBatchReviewIn(Base):
+    items: Annotated[list[EvidenceRelationBatchReviewItemIn], Field(min_length=1, max_length=200)]
+
+
+class DecisionBatchCreateIn(EvidenceRelationBatchReviewIn):
+    digest_id: str | None = Field(default=None, max_length=100)
+    note: str | None = Field(default=None, max_length=1000)
+
+
+class DecisionBatchOut(Base):
+    batch_id: str
+    thesis_id: str
+    actor: str
+    submitted_at: datetime | None = None
+    digest_id: str | None = None
+    note: str | None = None
+    confirmed_count: int
+    pending_count: int
+    rejected_count: int
+    relation_count: int
+    suggestion_id: int
+    current_status: str
+    suggested_status: str
+    requires_status_decision: bool
+    output_type: str = "信息沉淀"
+    requires_human_confirmation: bool = False
+    research_alerts: list[dict[str, object]] = Field(default_factory=list)
+    hypothesis_health: list[dict[str, object]] = Field(default_factory=list)
+    status_decision_action: str | None = None
+    suggestion_reasons: list[str] = Field(default_factory=list)
+    items: list[dict[str, object]] = Field(default_factory=list)
+
+
 class EvidenceRelationDeactivateIn(Base):
     """解除关系只需记录原因，不混用审核动作字段。"""
 
@@ -374,10 +419,7 @@ class EvidenceRelationMutationOut(Base):
 
 
 class SuggestionOut(Base):
-    """状态建议。
-
-    `requires_human_confirmation` 恒为真（除已关闭），界面据此渲染确认入口。
-    """
+    """一次规则输出；只有「状态变更建议」允许正式状态处置。"""
 
     suggestion_id: int
     thesis_id: str
@@ -386,6 +428,10 @@ class SuggestionOut(Base):
     reasons: list[str]
     triggered_hypotheses: list[str] = Field(default_factory=list)
     rule_version: str
+    output_type: str = "信息沉淀"
+    requires_human_confirmation: bool = False
+    research_alerts: list[dict[str, object]] = Field(default_factory=list)
+    hypothesis_health: list[dict[str, object]] = Field(default_factory=list)
     human_action: str | None = None
     human_reason: str | None = None
     acted_by: str | None = None

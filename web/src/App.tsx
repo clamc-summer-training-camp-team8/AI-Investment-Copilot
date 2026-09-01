@@ -7,7 +7,7 @@ import type { AuthConfig, AuthUser } from './api'
 import { Icon, InlineError, LoadingState, ResearchContextPicker } from './components'
 import { MetricEditorCard } from './metric-editor'
 import type { CompanyMetric, JobAccepted, Security, ThesisDetail, ThesisSummary } from './types'
-import { CompanyResearchPage, CoverageManagementPage, DocumentReaderPage, EvidencePage, LogicChangeImpactPage, MacroStrategyPage, NotFoundPage, OperationalWorkbenchPage, QualityPage, RadarPage, ResearchImpactDetailPage, ResearchUpdatesPage, ReviewsPage, ThesisListPage, ThesisPage, WorkbenchPage } from './pages'
+import { CompanyResearchPage, CoverageManagementPage, DocumentReaderPage, EvidencePage, LogicChangeImpactPage, MacroStrategyPage, NotFoundPage, OperationalWorkbenchPage, QualityPage, RadarPage, ResearchImpactDetailPage, ResearchUpdatesPage, ReviewsPage, StatusInteractionSimulatorPage, ThesisListPage, ThesisPage, WorkbenchPage } from './pages'
 import { GlobalSearch, KnowledgeAssistant, SourceDrawer } from './research-assistant'
 import { RetrospectiveCenterPage, RetrospectiveCreatePage, RetrospectiveDetailPage, RetrospectiveEditorPage } from './retrospective'
 
@@ -168,6 +168,7 @@ function ProductApp({ user, onLogout, features }: { user: AuthUser; onLogout?: (
           <Routes>
             <Route path="/" element={<Navigate to="/workbench" replace />} />
             <Route path="/workbench" element={<WorkbenchPage onCreate={() => openCreate()} retrospectiveEnabled={features.retrospectiveCenterEnabled} quantEnabled={features.quantResearchEnabled} />} />
+            <Route path="/status-simulator" element={<StatusInteractionSimulatorPage />} />
             <Route path="/operations" element={<OperationalWorkbenchPage />} />
             <Route path="/coverage" element={<CoverageManagementPage onCreate={openCreate} />} />
             <Route path="/macro-strategy" element={<MacroStrategyPage />} />
@@ -431,7 +432,7 @@ function CreateDraftDialogV2({ theses, initialSecurity, onClose }: { theses: The
       // 否则新草稿落库后可能被误判成“已有逻辑”而跳回旧页面。
       if (reusedExisting) {
         onClose()
-        navigate(`/theses/${thesis.thesisId}`)
+        navigate(`/companies/${encodeURIComponent(thesis.securityId)}?thesisId=${encodeURIComponent(thesis.thesisId)}`)
         return
       }
       const generatedThesis = thesis as ThesisDetail

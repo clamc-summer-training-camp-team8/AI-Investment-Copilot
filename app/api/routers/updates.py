@@ -301,10 +301,28 @@ def list_research_updates(
             is not None
         }
         cards = apply_daily_logic_digests(cards, digests)
+        # “今日研究”只承载待处理工作。某次日归并已经提交过研究决策批次后，
+        # 永久从今日待处理列表移除；历史仍可从研究记录和复盘中心查询。
+        cards = [
+            card
+            for card in cards
+            if not (
+                (digest := digests.get((card.security_id, card.thesis_id)))
+                and _has_completed_decision_batch(uow, card.thesis_id, digest.digest_id)
+            )
+        ]
     total = len(cards)
     return EvidenceFeedPage(
         items=cards[offset : offset + limit],
         page=PageMeta(total=total, limit=limit, offset=offset),
+    )
+
+
+def _has_completed_decision_batch(uow, thesis_id: str, digest_id: str) -> bool:
+    return any(
+        record.action == "提交研究决策批次"
+        and (record.detail or {}).get("digest_id") == digest_id
+        for record in uow.audit.list_for_object("thesis", thesis_id)
     )
 
 
