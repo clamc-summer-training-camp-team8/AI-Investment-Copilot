@@ -1,0 +1,86 @@
+{
+  "schema_version": "quant-research-universe-v1",
+  "universe_id": "QRU-a-share-30-20260901-v1",
+  "status": "prospective_candidate",
+  "as_of": "2026-09-01T00:00:00+08:00",
+  "effective_from": "2026-09-01",
+  "market": "A股",
+  "currency": "CNY",
+  "selection_policy": {
+    "method": "产品研究范围内的分行业目的抽样",
+    "industry_quota": 10,
+    "industries": [
+      "芯片半导体",
+      "医药",
+      "新能源汽车"
+    ],
+    "representativeness": "不代表全 A 股，也不作为统计充分性声明",
+    "anti_backdating": "成员资格自 2026-09-01 起生效，不回填为历史时点成分"
+  },
+  "sample_gate": {
+    "minimum_unique_nonzero_signal_securities": 20,
+    "minimum_independent_events": 100,
+    "minimum_active_trading_days": 60
+  },
+  "benchmarks": {
+    "芯片半导体": {
+      "security_id": "000688",
+      "name": "科创50",
+      "secid": "1.000688"
+    },
+    "医药": {
+      "security_id": "000913",
+      "name": "中证医药",
+      "secid": "1.000913"
+    },
+    "新能源汽车": {
+      "security_id": "399976",
+      "name": "中证新能源汽车",
+      "secid": "0.399976"
+    }
+  },
+  "members": [
+    {"security_id": "688981", "name": "中芯国际", "industry": "芯片半导体", "role": "晶圆代工", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "603986", "name": "兆易创新", "industry": "芯片半导体", "role": "存储与 MCU 设计", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "002371", "name": "北方华创", "industry": "芯片半导体", "role": "半导体设备", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "603501", "name": "豪威集团", "industry": "芯片半导体", "role": "图像传感器与芯片设计", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "600584", "name": "长电科技", "industry": "芯片半导体", "role": "封装测试", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "688012", "name": "中微公司", "industry": "芯片半导体", "role": "半导体设备", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "688008", "name": "澜起科技", "industry": "芯片半导体", "role": "互连芯片设计", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "002049", "name": "紫光国微", "industry": "芯片半导体", "role": "特种集成电路", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "300782", "name": "卓胜微", "industry": "芯片半导体", "role": "射频芯片设计", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "688041", "name": "海光信息", "industry": "芯片半导体", "role": "高端处理器", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+
+    {"security_id": "600276", "name": "恒瑞医药", "industry": "医药", "role": "创新药", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "603259", "name": "药明康德", "industry": "医药", "role": "医药研发外包", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "000538", "name": "云南白药", "industry": "医药", "role": "中药与健康消费", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "300760", "name": "迈瑞医疗", "industry": "医药", "role": "医疗器械", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "600436", "name": "片仔癀", "industry": "医药", "role": "中药品牌", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "000963", "name": "华东医药", "industry": "医药", "role": "医药工业与商业", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "300122", "name": "智飞生物", "industry": "医药", "role": "疫苗", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "600196", "name": "复星医药", "industry": "医药", "role": "综合制药", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "600085", "name": "同仁堂", "industry": "医药", "role": "中药品牌", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "002252", "name": "上海莱士", "industry": "医药", "role": "血液制品", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+
+    {"security_id": "002594", "name": "比亚迪", "industry": "新能源汽车", "role": "整车与动力电池", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "300750", "name": "宁德时代", "industry": "新能源汽车", "role": "动力电池", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "601633", "name": "长城汽车", "industry": "新能源汽车", "role": "整车", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "601238", "name": "广汽集团", "industry": "新能源汽车", "role": "整车", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "600104", "name": "上汽集团", "industry": "新能源汽车", "role": "整车", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "000625", "name": "长安汽车", "industry": "新能源汽车", "role": "整车", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "601127", "name": "赛力斯", "industry": "新能源汽车", "role": "智能电动车", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "002920", "name": "德赛西威", "industry": "新能源汽车", "role": "智能座舱与驾驶", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "002050", "name": "三花智控", "industry": "新能源汽车", "role": "热管理零部件", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true},
+    {"security_id": "603596", "name": "伯特利", "industry": "新能源汽车", "role": "制动与底盘系统", "membership_start": "2026-09-01", "membership_end": null, "listing_status": "active", "signal_eligible": true}
+  ],
+  "historical_controls": {
+    "status": "shadow_only",
+    "purpose": "建立退市样本的数据契约，不进入当前信号池或收益宣称",
+    "source": "AKShare stock_info_sh_delist；名称因上游编码异常不作为冻结字段",
+    "members": [
+      {"security_id": "600193", "exchange": "SSE", "listed_from": "1999-05-27", "listed_to": "2026-07-06", "signal_eligible": false},
+      {"security_id": "600200", "exchange": "SSE", "listed_from": "1999-04-01", "listed_to": "2025-12-31", "signal_eligible": false},
+      {"security_id": "600190", "exchange": "SSE", "listed_from": "1998-05-19", "listed_to": "2025-07-28", "signal_eligible": false}
+    ]
+  }
+}

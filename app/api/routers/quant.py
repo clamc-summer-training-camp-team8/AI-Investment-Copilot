@@ -1,8 +1,8 @@
 """量化实验室接口。只执行研究回测，不生成交易或调仓指令。"""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import ActorDep, UowDep
+from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.calc.backtest import BacktestConfig, BacktestInputError
 from app.calc.portfolio import PortfolioConfig, PortfolioInputError
 from app.schemas.quant import (
@@ -12,8 +12,11 @@ from app.schemas.quant import (
     QuantBacktestIn,
     QuantBacktestOut,
     QuantCatalogOut,
+    QuantFactorDefinitionOut,
     QuantMarketDatasetDetailOut,
     QuantMarketDatasetOut,
+    QuantModelTemplateOut,
+    QuantSignalSetDetailOut,
     QuantSignalSetOut,
 )
 from app.services.market_data import MarketDataError
@@ -24,12 +27,25 @@ from app.services.quant import (
     configured_default_market_dataset_id,
     freeze_signal_set,
     market_dataset_detail,
+    quant_factor_catalog,
+    quant_model_templates,
     register_default_market_dataset,
     run_quant_backtest,
     run_versioned_portfolio_backtest,
+    signal_set_detail,
 )
 
-router = APIRouter(prefix="/quant", tags=["quant"])
+
+def require_quant_enabled(settings: SettingsDep) -> None:
+    if not settings.quant_research_enabled:
+        raise HTTPException(status_code=404, detail="模型与因子模块未启用")
+
+
+router = APIRouter(
+    prefix="/quant",
+    tags=["quant"],
+    dependencies=[Depends(require_quant_enabled)],
+)
 
 
 @router.post("/backtests", response_model=QuantBacktestOut)
@@ -72,7 +88,18 @@ def create_backtest(payload: QuantBacktestIn, actor: ActorDep) -> QuantBacktestO
 
 
 @router.post("/market-datasets/register-default", response_model=QuantMarketDatasetOut)
-def register_market_dataset(uow: UowDep, actor: ActorDep) -> QuantMarketDatasetOut:
+def register_market_dataset(
+    uow: UowDep,
+    actor: ActorDep,
+    settings: SettingsDep,
+) -> QuantMarketDatasetOut:
+    governance_teams = {
+        item.strip() for item in settings.quant_governance_teams.split(",") if item.strip()
+    }
+    if not settings.quant_dataset_api_registration_enabled or (
+        not actor.is_admin and actor.teams.isdisjoint(governance_teams)
+    ):
+        raise HTTPException(status_code=403, detail="冻结行情登记仅限受控数据治理流程")
     try:
         record = register_default_market_dataset(uow, frozen_by=actor.user_id)
     except MarketDataError as exc:
@@ -92,6 +119,18 @@ def get_catalog(uow: UowDep, actor: ActorDep) -> QuantCatalogOut:
             QuantSignalSetOut.model_validate(item) for item in uow.quant.list_signal_sets()
         ],
     )
+
+
+@router.get("/factors", response_model=list[QuantFactorDefinitionOut])
+def get_factors(actor: ActorDep) -> list[QuantFactorDefinitionOut]:
+    del actor
+    return [QuantFactorDefinitionOut.model_validate(item) for item in quant_factor_catalog()]
+
+
+@router.get("/model-templates", response_model=list[QuantModelTemplateOut])
+def get_model_templates(actor: ActorDep) -> list[QuantModelTemplateOut]:
+    del actor
+    return [QuantModelTemplateOut.model_validate(item) for item in quant_model_templates()]
 
 
 @router.get("/market-datasets/{dataset_id}", response_model=QuantMarketDatasetDetailOut)
@@ -139,6 +178,22 @@ def create_signal_set(
     return QuantSignalSetOut.model_validate(record)
 
 
+@router.get("/signal-sets/{signal_set_id}", response_model=QuantSignalSetDetailOut)
+def get_signal_set_detail(
+    signal_set_id: str,
+    uow: UowDep,
+    actor: ActorDep,
+) -> QuantSignalSetDetailOut:
+    try:
+        result = signal_set_detail(uow, signal_set_id=signal_set_id, actor=actor)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    record = QuantSignalSetOut.model_validate(result["record"])
+    return QuantSignalSetDetailOut(
+        **record.model_dump(), **{k: v for k, v in result.items() if k != "record"}
+    )
+
+
 @router.post("/portfolio-backtests", response_model=PortfolioBacktestOut)
 def create_portfolio_backtest(
     payload: PortfolioBacktestIn, uow: UowDep, actor: ActorDep
@@ -155,6 +210,7 @@ def create_portfolio_backtest(
             end=payload.end,
             config=config,
             requested_by=actor.user_id,
+            model_template_id=payload.model_template_id,
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

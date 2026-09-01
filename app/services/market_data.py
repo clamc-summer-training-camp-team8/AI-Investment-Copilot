@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Protocol, cast
 
 from app.calc.portfolio import PortfolioBar
-from app.core.config import settings
 
 
 class MarketDataError(ValueError):
@@ -77,7 +76,13 @@ class FrozenJsonMarketData:
     """读取冻结副本；任何文件哈希漂移都拒绝回测。"""
 
     def __init__(self, manifest_path: Path | None = None) -> None:
-        self._manifest_path = manifest_path or settings.quant_default_market_manifest
+        if manifest_path is None:
+            # 离线行情采集环境只安装 market-data 依赖；仅在调用默认在线配置时
+            # 才加载 pydantic-settings，显式清单读取保持最小依赖。
+            from app.core.config import settings
+
+            manifest_path = settings.quant_default_market_manifest
+        self._manifest_path = manifest_path
         try:
             self._manifest = cast(
                 dict[str, object], json.loads(self._manifest_path.read_text(encoding="utf-8"))
@@ -194,6 +199,42 @@ class FrozenJsonMarketData:
         if not selected:
             raise MarketDataError("所选证券和区间没有冻结行情")
         return selected
+
+    def security_metadata(self) -> list[dict[str, object]]:
+        """汇总冻结行情中的证券口径，供产品选择器和能力门禁展示。"""
+
+        payload = json.loads(self._asset("bars").read_text(encoding="utf-8"))
+        rows = cast(list[dict[str, object]], payload["rows"])
+        grouped: dict[str, dict[str, object]] = {}
+        for row in rows:
+            security_id = str(row["security_id"])
+            trading_date = str(row["trading_date"])
+            item = grouped.setdefault(
+                security_id,
+                {
+                    "security_id": security_id,
+                    "market": str(row.get("market") or "未知"),
+                    "currency": str(row.get("currency") or "未知"),
+                    "industry": str(row.get("industry") or "未分类"),
+                    "benchmark_id": str(row.get("benchmark_id") or ""),
+                    "coverage_start": trading_date,
+                    "coverage_end": trading_date,
+                    "row_count": 0,
+                    "market_cap_count": 0,
+                },
+            )
+            item["coverage_start"] = min(str(item["coverage_start"]), trading_date)
+            item["coverage_end"] = max(str(item["coverage_end"]), trading_date)
+            item["row_count"] = cast(int, item["row_count"]) + 1
+            if row.get("market_cap") is not None:
+                item["market_cap_count"] = cast(int, item["market_cap_count"]) + 1
+        return [
+            {
+                **item,
+                "market_cap_complete": item["market_cap_count"] == item["row_count"],
+            }
+            for _, item in sorted(grouped.items())
+        ]
 
     def trading_days(self, market: str, *, start: date, end: date) -> tuple[date, ...]:
         payload = json.loads(self._asset("calendar").read_text(encoding="utf-8"))

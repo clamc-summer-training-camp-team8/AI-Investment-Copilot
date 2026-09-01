@@ -72,6 +72,7 @@ def auth_config(settings: SettingsDep) -> AuthConfigOut:
         knowledge_qa_enabled=settings.knowledge_qa_enabled,
         retrospective_center_enabled=settings.retrospective_center_enabled,
         retrospective_ai_draft_enabled=settings.retrospective_ai_draft_enabled,
+        quant_research_enabled=settings.quant_research_enabled,
     )
 
 

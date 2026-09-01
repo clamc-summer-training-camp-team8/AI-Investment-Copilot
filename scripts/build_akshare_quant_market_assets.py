@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from collections import Counter
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -14,6 +15,9 @@ from pathlib import Path
 from typing import cast
 from zoneinfo import ZoneInfo
 
+from analytics.pipelines.quant_price_limit_derivations import (
+    QuantPriceLimitDerivationSet,
+)
 from analytics.pipelines.universe import BENCHMARKS, COMPANIES, Company
 from app.ingest.market_reference_cache import (
     MarketCapCacheLoad,
@@ -184,6 +188,90 @@ def _cross_source_quality(
     )
 
 
+def _apply_price_limit_derivations(
+    derivation_set: QuantPriceLimitDerivationSet | None,
+    *,
+    companies: tuple[Company, ...],
+    start: date,
+    end: date,
+    cross_source_snapshot: list[dict[str, object]],
+    observed_price_limits: PriceLimitCacheLoad,
+    supplements: dict[str, dict[date, PointInTimeSupplement]],
+) -> int:
+    if derivation_set is None:
+        return 0
+    company_ids = {company.security_id for company in companies if not company.is_hk}
+    snapshots = {
+        (str(row["security_id"]), cast(date, row["trading_date"])): row
+        for row in cross_source_snapshot
+    }
+    by_security: dict[str, list[dict[str, object]]] = {}
+    for row in cross_source_snapshot:
+        by_security.setdefault(str(row["security_id"]), []).append(row)
+    for rows in by_security.values():
+        rows.sort(key=lambda row: cast(date, row["trading_date"]))
+
+    for item in derivation_set.rows:
+        if item.security_id not in company_ids:
+            raise MarketSourceError(f"涨跌停推导证券不在当前研究池: {item.security_id}")
+        if item.trading_date < start or item.trading_date > end:
+            raise MarketSourceError(
+                f"涨跌停推导日不在构建区间: {item.security_id} {item.trading_date}"
+            )
+        if item.trading_date in observed_price_limits.by_security.get(item.security_id, {}):
+            raise MarketSourceError(
+                f"涨跌停直接观测已存在，禁止规则推导覆盖: "
+                f"{item.security_id} {item.trading_date}"
+            )
+        snapshot = snapshots.get((item.security_id, item.trading_date))
+        if snapshot is None:
+            raise MarketSourceError(
+                f"涨跌停推导缺少当日双源行情: {item.security_id} {item.trading_date}"
+            )
+        akshare_close = Decimal(str(snapshot.get("akshare_raw_close")))
+        tushare_close = Decimal(str(snapshot.get("tushare_raw_close")))
+        akshare_notional = Decimal(str(snapshot.get("akshare_traded_notional")))
+        tushare_notional = Decimal(str(snapshot.get("tushare_traded_notional")))
+        if akshare_close != item.close or tushare_close != item.close:
+            raise MarketSourceError(f"涨跌停推导收盘价与双源快照不一致: {item.security_id}")
+        akshare_notional_error = _relative_error(akshare_notional, item.traded_notional)
+        tushare_notional_error = _relative_error(tushare_notional, item.traded_notional)
+        if (
+            akshare_notional_error is None
+            or tushare_notional_error is None
+            or akshare_notional_error > QUALITY_THRESHOLDS["notional_relative_error"]
+            or tushare_notional_error > QUALITY_THRESHOLDS["notional_relative_error"]
+        ):
+            raise MarketSourceError(f"涨跌停推导成交额与双源快照不一致: {item.security_id}")
+        previous_rows = [
+            row
+            for row in by_security.get(item.security_id, [])
+            if cast(date, row["trading_date"]) < item.trading_date
+        ]
+        if not previous_rows:
+            raise MarketSourceError(f"涨跌停推导缺少前一交易日: {item.security_id}")
+        previous = previous_rows[-1]
+        if (
+            Decimal(str(previous.get("akshare_raw_close"))) != item.pre_close
+            or Decimal(str(previous.get("tushare_raw_close"))) != item.pre_close
+        ):
+            raise MarketSourceError(f"涨跌停推导前收盘与双源快照不一致: {item.security_id}")
+        company_supplements = supplements.setdefault(item.security_id, {})
+        cached = company_supplements.get(item.trading_date, PointInTimeSupplement())
+        if cached.price_limit_observed:
+            raise MarketSourceError(f"涨跌停直接观测已加载，禁止推导覆盖: {item.security_id}")
+        company_supplements[item.trading_date] = PointInTimeSupplement(
+            market_cap=cached.market_cap,
+            tradable=cached.tradable,
+            limit_up=item.limit_up,
+            limit_down=item.limit_down,
+            market_cap_observed=cached.market_cap_observed,
+            price_limit_observed=False,
+            price_limit_derived=True,
+        )
+    return len(derivation_set.rows)
+
+
 def load_tushare_permission_profile(
     path: Path,
 ) -> tuple[frozenset[str], dict[str, object]]:
@@ -254,7 +342,33 @@ def run(
     reference_cache_root: Path | None = None,
     max_attempts: int = 3,
     retry_delay_seconds: float = 1.0,
+    companies: tuple[Company, ...] = COMPANIES,
+    benchmarks_by_industry: dict[str, Company] | None = None,
+    fetch_structured_actions: bool = False,
+    governance_assets: dict[str, dict[str, object]] | None = None,
+    historical_controls: tuple[dict[str, object], ...] = (),
+    price_limit_derivation_set: QuantPriceLimitDerivationSet | None = None,
 ) -> Path:
+    selected_benchmarks = BENCHMARKS if benchmarks_by_industry is None else benchmarks_by_industry
+    if not companies:
+        raise MarketSourceError("冻结行情至少需要一只证券")
+    if len({company.security_id for company in companies}) != len(companies):
+        raise MarketSourceError("冻结行情证券代码重复")
+    missing_benchmarks = sorted(
+        {company.industry for company in companies} - set(selected_benchmarks)
+    )
+    if missing_benchmarks:
+        raise MarketSourceError(f"研究行业缺少事前基准: {', '.join(missing_benchmarks)}")
+    invalid_governance_assets = sorted(
+        key
+        for key in (governance_assets or {})
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", key)
+    )
+    if invalid_governance_assets:
+        raise MarketSourceError(
+            "治理资产名称只能使用小写字母、数字和下划线: "
+            + ", ".join(invalid_governance_assets)
+        )
     destination = PROJECT_ROOT / "real_data" / "quant" / version
     if destination.exists():
         raise FileExistsError(
@@ -327,8 +441,9 @@ def run(
     cross_source_snapshot: list[dict[str, object]] = []
     fallback_reasons: dict[str, str] = {}
     fallback_count = 0
+    source_counts: Counter[str] = Counter()
 
-    for company in COMPANIES:
+    for company in companies:
         rows, used_fallback, reason = _fetch_equity(
             primary,
             supplement,
@@ -357,17 +472,27 @@ def run(
             company_supplements = supplements.setdefault(company.security_id, {})
             for trading_date, observed in batch.by_date.items():
                 cached = company_supplements.get(trading_date, PointInTimeSupplement())
+                use_observed_price_limit = observed.price_limit_observed
                 company_supplements[trading_date] = PointInTimeSupplement(
                     market_cap=(
                         cached.market_cap if cached.market_cap_observed else observed.market_cap
                     ),
                     tradable=observed.tradable,
-                    limit_up=observed.limit_up,
-                    limit_down=observed.limit_down,
+                    limit_up=(
+                        observed.limit_up if use_observed_price_limit else cached.limit_up
+                    ),
+                    limit_down=(
+                        observed.limit_down if use_observed_price_limit else cached.limit_down
+                    ),
                     market_cap_observed=(
                         cached.market_cap_observed or observed.market_cap_observed
                     ),
-                    price_limit_observed=observed.price_limit_observed,
+                    price_limit_observed=(
+                        cached.price_limit_observed or observed.price_limit_observed
+                    ),
+                    price_limit_derived=(
+                        False if use_observed_price_limit else cached.price_limit_derived
+                    ),
                 )
             if batch.errors:
                 supplement_errors[company.security_id] = list(batch.errors)
@@ -397,7 +522,75 @@ def run(
                 quality_by_security.append(quality)
                 cross_source_snapshot.extend(snapshot)
 
-    for industry, benchmark in BENCHMARKS.items():
+    derived_price_limit_count = _apply_price_limit_derivations(
+        price_limit_derivation_set,
+        companies=companies,
+        start=start,
+        end=end,
+        cross_source_snapshot=cross_source_snapshot,
+        observed_price_limits=price_limit_cache,
+        supplements=supplements,
+    )
+
+    historical_control_rows: list[dict[str, object]] = []
+    historical_control_coverage: list[dict[str, object]] = []
+    for item in historical_controls:
+        security_id = str(item["security_id"])
+        listed_from = date.fromisoformat(str(item["listed_from"]))
+        listed_to = date.fromisoformat(str(item["listed_to"]))
+        control_start = max(start, listed_from)
+        control_end = min(end, listed_to)
+        if control_start > control_end:
+            raise MarketSourceError(f"退市对照样本与构建区间无交集: {security_id}")
+        control = Company(
+            security_id=security_id,
+            name=security_id,
+            org_id="",
+            secid=f"{'1' if security_id.startswith('6') else '0'}.{security_id}",
+            industry="历史退市对照",
+            role="退市生存者偏差对照",
+        )
+        rows, used_fallback, reason = _fetch_equity(
+            primary,
+            supplement,
+            control,
+            start=control_start,
+            end=control_end,
+            fallback_enabled="pro_bar" in tushare_endpoints,
+            max_attempts=max_attempts,
+            retry_delay_seconds=retry_delay_seconds,
+            retry_events=retry_events,
+            secrets=secrets,
+        )
+        if used_fallback:
+            fallback_count += 1
+            fallback_reasons[security_id] = reason or "AKShare 主源不可用"
+        historical_control_rows.extend(
+            {
+                **_raw_row(control, quote, role="historical_control"),
+                "listed_from": listed_from,
+                "listed_to": listed_to,
+                "signal_eligible": False,
+            }
+            for quote in rows
+        )
+        source_counts.update(quote.source_interface for quote in rows)
+        historical_control_coverage.append(
+            {
+                "security_id": security_id,
+                "listed_from": listed_from,
+                "listed_to": listed_to,
+                "first_observation": rows[0].trading_date,
+                "last_observation": rows[-1].trading_date,
+                "row_count": len(rows),
+                "signal_eligible": False,
+            }
+        )
+    historical_control_rows.sort(
+        key=lambda row: (str(row["trading_date"]), str(row["security_id"]))
+    )
+
+    for industry, benchmark in selected_benchmarks.items():
         rows = call_market_source(
             f"akshare.benchmark.{benchmark.security_id}",
             partial(primary.benchmark_quotes, benchmark, start=start, end=end),
@@ -415,8 +608,7 @@ def run(
     }
     bars: list[dict[str, object]] = []
     raw_rows: list[dict[str, object]] = []
-    source_counts: Counter[str] = Counter()
-    for company in COMPANIES:
+    for company in companies:
         currency = "HKD" if company.is_hk else "CNY"
         for quote in equity[company.security_id]:
             benchmark_close = benchmark_by_day[company.industry].get(quote.trading_date)
@@ -432,7 +624,7 @@ def run(
                     "industry": company.industry,
                     "market": company.market,
                     "currency": currency,
-                    "benchmark_id": BENCHMARKS[company.industry].security_id,
+                    "benchmark_id": selected_benchmarks[company.industry].security_id,
                     "benchmark_close": benchmark_close,
                     "adjusted_close": quote.adjusted_close,
                     "volume_shares": quote.volume_shares,
@@ -441,25 +633,44 @@ def run(
                     "tradable": extra.tradable,
                     "limit_up": extra.limit_up,
                     "limit_down": extra.limit_down,
+                    "price_limit_status_source": (
+                        "tushare.stk_limit"
+                        if extra.price_limit_observed
+                        else (
+                            "sse.exchange_rule_derived"
+                            if extra.price_limit_derived
+                            else "missing"
+                        )
+                    ),
                     "source_interface": quote.source_interface,
                 }
             )
             raw_rows.append(_raw_row(company, quote, role="security"))
             source_counts[quote.source_interface] += 1
     for industry, rows in benchmarks.items():
-        benchmark = BENCHMARKS[industry]
+        benchmark = selected_benchmarks[industry]
         for quote in rows:
             raw_rows.append(_raw_row(benchmark, quote, role="benchmark"))
             source_counts[quote.source_interface] += 1
     bars.sort(key=lambda row: (str(row["trading_date"]), str(row["security_id"])))
     raw_rows.sort(key=lambda row: (str(row["trading_date"]), str(row["security_id"])))
     if not bars:
-        raise MarketSourceError("九只证券与行业基准没有可冻结的行情交集")
+        raise MarketSourceError("研究证券与事前基准没有可冻结的行情交集")
 
     coverage_start = cast(date, bars[0]["trading_date"])
     coverage_end = cast(date, bars[-1]["trading_date"])
-    a_days = {item.trading_date.isoformat() for item in benchmarks["芯片半导体"]}
-    hk_days = {item.trading_date.isoformat() for item in equity["00175"]}
+    benchmark_day_sets = [
+        {item.trading_date.isoformat() for item in rows} for rows in benchmarks.values()
+    ]
+    a_days = set().union(*benchmark_day_sets)
+    if any(days != a_days for days in benchmark_day_sets):
+        raise MarketSourceError("事前绑定的 A 股基准交易日历不一致")
+    hk_days = {
+        item.trading_date.isoformat()
+        for company in companies
+        if company.is_hk
+        for item in equity[company.security_id]
+    }
     trade_cal_permission_verified = "trade_cal" in tushare_endpoints
     # 120 积分账号的 trade_cal 实测频控为每小时一次。行情构建不得消耗这条低频配额；
     # 当前只冻结单日权限探测事实，完整日历仍以 AKShare 指数观测生成。
@@ -510,33 +721,85 @@ def run(
             )
         )
         is not None
+        and (observed_status.price_limit_observed or observed_status.price_limit_derived)
+        for row in a_rows
+    )
+    all_a_limit_status_observed = bool(a_rows) and all(
+        (
+            observed_status := supplements.get(str(row["security_id"]), {}).get(
+                cast(date, row["trading_date"])
+            )
+        )
+        is not None
         and observed_status.price_limit_observed
         for row in a_rows
     )
+
+    corporate_action_rows: list[dict[str, object]] = []
+    if fetch_structured_actions:
+        if any(company.is_hk for company in companies):
+            raise MarketSourceError("结构化公司行动硬门禁当前只支持纯 A 股研究池")
+        for company in companies:
+            actions = call_market_source(
+                f"akshare.corporate_actions.{company.security_id}",
+                partial(
+                    primary.a_share_corporate_actions,
+                    company,
+                    start=start,
+                    end=end,
+                ),
+                max_attempts=max_attempts,
+                wait_seconds=retry_delay_seconds,
+                secrets=secrets,
+                events=retry_events,
+            )
+            for action in actions:
+                identity = (
+                    f"{action.security_id}:{action.ex_date}:{action.action_type}:"
+                    f"{action.ratio}:{action.cash_amount}"
+                )
+                corporate_action_rows.append(
+                    {
+                        "action_id": f"CA-{sha256(identity.encode()).hexdigest()[:20]}",
+                        "security_id": action.security_id,
+                        "announced_at": action.announced_at,
+                        "ex_date": action.ex_date,
+                        "action_type": action.action_type,
+                        "ratio": action.ratio,
+                        "cash_amount": action.cash_amount,
+                        "currency": action.currency,
+                        "source_locator": action.source_locator,
+                    }
+                )
+        corporate_action_rows.sort(
+            key=lambda item: (str(item["ex_date"]), str(item["security_id"]))
+        )
 
     bars_hash = _write(
         destination / "bars.json",
         {"schema_version": "portfolio-bars-v1", "data_version": version, "rows": bars},
     )
+    calendar_markets = {
+        "A股": _calendar(
+            a_days,
+            coverage_start,
+            coverage_end,
+            source="akshare.index_observation",
+        )
+    }
+    if hk_days:
+        calendar_markets["港股"] = _calendar(
+            hk_days,
+            coverage_start,
+            coverage_end,
+            source="akshare.hk_equity_observation",
+        )
     calendar_hash = _write(
         destination / "calendar.json",
         {
             "schema_version": "trading-calendar-v1",
             "data_version": f"{version}-calendar",
-            "markets": {
-                "A股": _calendar(
-                    a_days,
-                    coverage_start,
-                    coverage_end,
-                    source="akshare.index_observation",
-                ),
-                "港股": _calendar(
-                    hk_days,
-                    coverage_start,
-                    coverage_end,
-                    source="akshare.hk_equity_observation",
-                ),
-            },
+            "markets": calendar_markets,
         },
     )
     action_hash = _write(
@@ -545,10 +808,32 @@ def run(
             "schema_version": "corporate-action-ledger-v1",
             "data_version": f"{version}-corporate-actions",
             "adjustment_contract": "AKShare 前复权序列已反映除权除息；独立事件只审计，不重复调整",
-            "coverage_status": "adjustment_embedded; structured_event_feed_not_enabled",
-            "events": [],
+            "coverage_status": (
+                "structured_dividend_and_share_distribution_complete"
+                if fetch_structured_actions
+                else "adjustment_embedded; structured_event_feed_not_enabled"
+            ),
+            "events": corporate_action_rows,
         },
     )
+    historical_control_hash = (
+        _write(
+            destination / "historical_controls.json",
+            {
+                "schema_version": "historical-delisted-control-v1",
+                "data_version": f"{version}-historical-controls",
+                "purpose": "退市与幸存者偏差影子对照；不进入当前信号池或 Alpha 宣称",
+                "coverage": historical_control_coverage,
+                "rows": historical_control_rows,
+            },
+        )
+        if historical_controls
+        else None
+    )
+    governance_hashes = {
+        key: _write(destination / f"{key}.json", payload)
+        for key, payload in sorted((governance_assets or {}).items())
+    }
     raw_hash = _write(
         destination / "source_snapshot.json",
         {
@@ -589,10 +874,51 @@ def run(
             "endpoints": [],
         },
     )
+    price_limit_snapshot_rows: list[dict[str, object]] = [
+        {
+            "security_id": security_id,
+            "trading_date": trading_date,
+            "limit_up": observation.limit_up,
+            "limit_down": observation.limit_down,
+            "price_limit_observed": True,
+            "price_limit_derived": False,
+            "status_source": "tushare.stk_limit",
+        }
+        for security_id, observations in sorted(price_limit_cache.by_security.items())
+        for trading_date, observation in sorted(observations.items())
+    ]
+    if price_limit_derivation_set is not None:
+        price_limit_snapshot_rows.extend(
+            {
+                "security_id": item.security_id,
+                "trading_date": item.trading_date,
+                "pre_close": item.pre_close,
+                "close": item.close,
+                "limit_rate": item.limit_rate,
+                "upper_limit": item.upper_limit,
+                "lower_limit": item.lower_limit,
+                "limit_up": item.limit_up,
+                "limit_down": item.limit_down,
+                "price_limit_observed": False,
+                "price_limit_derived": True,
+                "status_source": "sse.exchange_rule_derived",
+                "derivation_set_id": price_limit_derivation_set.derivation_set_id,
+                "rule_id": price_limit_derivation_set.rule_id,
+                "rule_source_url": price_limit_derivation_set.source_url,
+            }
+            for item in price_limit_derivation_set.rows
+        )
+    price_limit_snapshot_rows.sort(
+        key=lambda row: (str(row["security_id"]), str(row["trading_date"]))
+    )
     reference_snapshot_hash = _write(
         destination / "tushare_reference_snapshot.json",
         {
-            "schema_version": "tushare-reference-snapshot-v1",
+            "schema_version": (
+                "tushare-reference-snapshot-v2"
+                if price_limit_derivation_set is not None
+                else "tushare-reference-snapshot-v1"
+            ),
             "data_version": version,
             "market_cap": {
                 "source": "tushare.daily_basic",
@@ -614,18 +940,15 @@ def run(
                 "open_days": sorted(trading_calendar_cache.open_days),
             },
             "price_limits": {
-                "source": "tushare.daily+tushare.stk_limit",
+                "source": (
+                    "tushare.daily+tushare.stk_limit+sse.exchange_rule_derived"
+                    if price_limit_derivation_set is not None
+                    else "tushare.daily+tushare.stk_limit"
+                ),
                 "source_files": price_limit_cache.files,
-                "rows": [
-                    {
-                        "security_id": security_id,
-                        "trading_date": trading_date,
-                        "limit_up": observation.limit_up,
-                        "limit_down": observation.limit_down,
-                    }
-                    for security_id, observations in sorted(price_limit_cache.by_security.items())
-                    for trading_date, observation in sorted(observations.items())
-                ],
+                "observed_row_count": price_limit_cache.row_count,
+                "derived_row_count": derived_price_limit_count,
+                "rows": price_limit_snapshot_rows,
             },
         },
     )
@@ -651,8 +974,9 @@ def run(
                 "library_version": primary.library_version,
                 "interfaces": [
                     "stock_zh_a_hist_tx",
-                    "stock_hk_daily",
+                    *(["stock_hk_daily"] if hk_days else []),
                     "stock_zh_index_daily_tx",
+                    *(["stock_history_dividend_detail"] if fetch_structured_actions else []),
                 ],
                 "upstream_providers": ["Tencent Finance", "Sina Finance"],
             },
@@ -675,7 +999,11 @@ def run(
             "reference_cache": {
                 "configured": reference_cache_root is not None,
                 "market_cap_rows": market_cap_cache.row_count,
-                "price_limit_rows": price_limit_cache.row_count,
+                "price_limit_observed_rows": price_limit_cache.row_count,
+                "price_limit_derived_rows": derived_price_limit_count,
+                "price_limit_effective_rows": (
+                    price_limit_cache.row_count + derived_price_limit_count
+                ),
                 "source_files": reference_source_files,
             },
             "row_source_counts": dict(sorted(source_counts.items())),
@@ -684,19 +1012,30 @@ def run(
     limitations = [
         "AKShare 是研究型聚合接口；上游网页或字段变化时构建必须失败并人工复核，禁止静默切源",
         "前复权值随锚点可能变化；本版本已固定抓取截止日和源快照，后续只能新增版本",
-        "结构化公司行动事件源未启用；前复权效果可使用，不能声称完成逐事件复权审计",
-        "港股为 HKD、行业基准为 CNY；未冻结 FX 时不得把混币种超额收益解释为 Alpha",
     ]
+    if fetch_structured_actions:
+        limitations.append("结构化公司行动当前覆盖分红送转；仍需独立来源复核合并、拆股等其他事件")
+    else:
+        limitations.append(
+            "结构化公司行动事件源未启用；前复权效果可使用，不能声称完成逐事件复权审计"
+        )
+    if historical_controls:
+        limitations.append(
+            "退市证券仅作为生存者偏差影子对照，不具备点时行业、基准或人工信号时不得进入收益评价"
+        )
+    if hk_days:
+        limitations.append(
+            "港股为 HKD、行业基准为 CNY；未冻结 FX 时不得把混币种超额收益解释为 Alpha"
+        )
     if not all_market_caps:
         limitations.append(
             "全市场点时市值未覆盖港股；包含港股的组合继续关闭市值中性"
-            if all_a_market_caps
+            if all_a_market_caps and hk_days
             else "点时市值未全量覆盖；市值中性开关保持硬门禁关闭"
         )
     if all_a_market_caps:
         limitations.append(
-            "A 股点时市值已与冻结行情全量对齐；市值中性仅可用于所选区间无缺口的纯 A 股组合，"
-            "港股仍未覆盖"
+            "A 股点时市值已与冻结行情全量对齐；市值中性仅可用于所选区间无缺口的纯 A 股组合"
         )
     elif market_cap_cache.row_count:
         limitations.append(
@@ -705,7 +1044,16 @@ def run(
         )
     if not all_a_limit_status:
         limitations.append("A 股涨跌停状态未全量覆盖；不得声称完成涨跌停可成交性模拟")
-    if price_limit_cache.row_count:
+    if derived_price_limit_count:
+        limitations.append(
+            f"涨跌停状态中 {derived_price_limit_count} 条为交易所规则确定性推导，"
+            "已保留前收盘、规则、比例、价格和来源谱系；不得冒充 Tushare 直接观测"
+        )
+        limitations.append(
+            "当前涨跌停状态只支持收盘是否封板的日频模拟；"
+            "未引入分钟或逐笔行情前，不得声称完成盘中可成交性模拟"
+        )
+    if price_limit_cache.row_count and not all_a_limit_status:
         limitations.append(
             f"Tushare 涨跌停历史缓存已提供 {price_limit_cache.row_count} 条证券日；"
             "只有与冻结行情全量对齐时能力才会开启"
@@ -741,9 +1089,13 @@ def run(
                 "scope": "仅限项目内部研究、交叉核验和字段补充；禁止对外再分发",
             },
         },
-        "source_priority": ["akshare", "tushare_optional"],
+        "source_priority": [
+            "akshare",
+            "tushare_optional",
+            *(["sse_exchange_rule_derived"] if derived_price_limit_count else []),
+        ],
         "coverage": {"start": coverage_start, "end": coverage_end},
-        "securities": [company.security_id for company in COMPANIES],
+        "securities": [company.security_id for company in companies],
         "assets": {
             "bars": {"path": "bars.json", "sha256": bars_hash},
             "calendar": {"path": "calendar.json", "sha256": calendar_hash},
@@ -751,6 +1103,16 @@ def run(
                 "path": "corporate_actions.json",
                 "sha256": action_hash,
             },
+            **(
+                {
+                    "historical_controls": {
+                        "path": "historical_controls.json",
+                        "sha256": historical_control_hash,
+                    }
+                }
+                if historical_control_hash is not None
+                else {}
+            ),
             "source_snapshot": {"path": "source_snapshot.json", "sha256": raw_hash},
             "cross_source_snapshot": {
                 "path": "cross_source_snapshot.json",
@@ -769,6 +1131,10 @@ def run(
                 "sha256": reference_snapshot_hash,
             },
             "provenance": {"path": "provenance.json", "sha256": provenance_hash},
+            **{
+                key: {"path": f"{key}.json", "sha256": digest}
+                for key, digest in governance_hashes.items()
+            },
         },
         "capabilities": {
             "adjusted_close": True,
@@ -779,7 +1145,10 @@ def run(
             "point_in_time_market_cap": all_market_caps,
             "a_share_point_in_time_market_cap": all_a_market_caps,
             "price_limit_status": all_a_limit_status,
-            "structured_corporate_action_events": False,
+            "price_limit_status_fully_observed": all_a_limit_status_observed,
+            "price_limit_status_rule_derived": derived_price_limit_count > 0,
+            "structured_corporate_action_events": fetch_structured_actions,
+            "historical_universe_and_delisted_samples": bool(historical_controls),
             "tushare_supplement_configured": supplement is not None,
             "tushare_daily_crosscheck": cross_source_passed,
             "tushare_trade_calendar_crosscheck": calendar_passed,

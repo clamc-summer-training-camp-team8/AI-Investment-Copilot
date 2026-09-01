@@ -157,12 +157,88 @@ class QuantSignalSetOut(_FromAttributes):
     frozen_at: datetime
 
 
+class QuantSignalDetailOut(BaseModel):
+    signal_id: str
+    security_id: str
+    disclosed_at: datetime
+    generated_at: datetime
+    direction: str
+    strength: str
+    confidence: Decimal
+    confirmation_status: str
+    source_evidence_id: str
+    source_relation_id: str
+    source_relation_status: str
+    thesis_id: str
+    hypothesis_id: str
+    source_locator: str
+    source_document_id: str | None = None
+    source_document_title: str | None = None
+    confidence_role: str = "ai_judgement_metadata_only"
+    confidence_used_for_alpha_weight: bool = False
+
+
+class QuantSignalSetDetailOut(QuantSignalSetOut):
+    visible_signal_count: int
+    signals: list[QuantSignalDetailOut]
+
+
+class QuantFactorDefinitionOut(_FromAttributes):
+    factor_id: str
+    name: str
+    category: str
+    description: str
+    formula: str
+    frequency: str
+    coverage_scope: str
+    input_fields: list[str]
+    status: str
+    version: str
+    methodology_version: str
+    owner: str
+    published_at: date
+    deprecated_at: date | None = None
+    enabled_by_default: bool
+    limitations: list[str]
+
+
+class QuantModelTemplateOut(_FromAttributes):
+    template_id: str
+    name: str
+    version: str
+    status: str
+    description: str
+    methodology_version: str
+    alpha_factor_ids: list[str]
+    control_factor_ids: list[str]
+    default_config: dict[str, Any]
+    required_config: dict[str, Any]
+    sample_gate: dict[str, int]
+    owner: str
+    published_at: date | None = None
+    deprecated_at: date | None = None
+    limitations: list[str]
+
+
 class QuantManifestAssetOut(BaseModel):
     name: str
     path: str
     sha256: str
     byte_size: int | None = None
     verified: bool
+
+
+class QuantSecurityMetadataOut(BaseModel):
+    security_id: str
+    market: str
+    currency: str
+    industry: str
+    benchmark_id: str
+    coverage_start: date
+    coverage_end: date
+    row_count: int
+    market_cap_count: int
+    market_cap_complete: bool
 
 
 class QuantMarketDatasetDetailOut(QuantMarketDatasetOut):
@@ -175,6 +251,7 @@ class QuantMarketDatasetDetailOut(QuantMarketDatasetOut):
     adjustment_anchor_date: date | None = None
     available_signal_sets: list[QuantSignalSetOut]
     backtest_count: int
+    security_metadata: list[QuantSecurityMetadataOut]
 
 
 class EvaluationSeparationOut(BaseModel):
@@ -201,7 +278,7 @@ class PortfolioConfigIn(BaseModel):
     max_security_weight: Annotated[Decimal, Field(gt=0, le=1)] = Decimal("0.20")
     max_industry_weight: Annotated[Decimal, Field(gt=0, le=1)] = Decimal("0.40")
     capacity_participation_rate: Annotated[Decimal, Field(gt=0, le=1)] = Decimal("0.10")
-    neutralize_industry: bool = True
+    neutralize_industry: bool = False
     neutralize_market_cap: bool = False
     enforce_capacity: bool = True
     allow_short: bool = True
@@ -211,6 +288,9 @@ class PortfolioBacktestIn(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=255)] = "组合事件信号研究"
     market_dataset_id: Annotated[str, Field(min_length=1, max_length=96)]
     signal_set_id: Annotated[str, Field(min_length=1, max_length=96)]
+    model_template_id: Annotated[str, Field(min_length=1, max_length=96)] = (
+        "confirmed-event-research-v3"
+    )
     security_ids: Annotated[list[str], Field(min_length=1, max_length=1000)]
     start: date | None = None
     end: date | None = None

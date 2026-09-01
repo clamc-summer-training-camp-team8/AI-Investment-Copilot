@@ -164,6 +164,11 @@ class Settings(BaseSettings):
         / "akshare-qfq-tushare120-20260830-v1"
         / "manifest.json"
     )
+    # 模型与因子模块可以独立灰度。数据集登记是治理动作，默认不通过产品 API
+    # 开放；离线发布脚本仍可在审批哈希校验后直接调用服务层。
+    quant_research_enabled: bool = True
+    quant_dataset_api_registration_enabled: bool = False
+    quant_governance_teams: str = "量化数据治理,quant-governance"
 
     # 本地开发可由受信任网关注入请求头；试点/生产必须使用带签名和过期时间的 JWT。
     auth_mode: str = Field(

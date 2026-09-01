@@ -83,35 +83,50 @@ export function RetrospectiveCenterPage() {
     ['记录完整度', percent(overview.data.average_completeness), '当前可见复盘平均值'],
     ['待完成复盘', overview.data.pending_reports, '草稿与待评审'],
   ] : []
-  return <section className="retrospective-center">
-    <PageTitle eyebrow="RESEARCH RETROSPECTIVE" title="复盘中心" description="按历史时点冻结可见来源，完成人工结论、发布、修订与回查。" actions={<NavLink className="button primary" to="/retrospective/new">创建复盘</NavLink>} />
-    {overview.isLoading && <LoadingState text="正在汇总可见复盘指标…" />}
-    {overview.error && <ErrorState error={overview.error} />}
-    {overview.data && <><div className="rt-as-of">统计时点 {dateTime(overview.data.as_of)}{overview.data.is_truncated ? ' · 大于 100 条，概览已标记截断' : ''}</div><section className="rt-metrics" aria-label="复盘概览">{metrics.map(([label, value, note]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}</section></>}
-    <section className="rt-panel rt-toolbar">
-      <form onSubmit={submit}><label className="rt-search"><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="搜索报告、投资逻辑或证券代码" /><button className="button primary">搜索</button></label></form>
-      <div className="rt-filters">
-        <label>状态<select value={params.get('state') ?? ''} onChange={(event) => setParams(setParam(params, 'state', event.target.value))}><option value="">全部</option>{['草稿', '待评审', '已发布', '已归档'].map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label>类型<select value={params.get('retrospective_type') ?? ''} onChange={(event) => setParams(setParam(params, 'retrospective_type', event.target.value))}><option value="">全部</option>{['周期', '结项', '专题', '人工'].map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label>负责人<input value={params.get('owner') ?? ''} onChange={(event) => setParams(setParam(params, 'owner', event.target.value.trim()))} placeholder="账号 ID" /></label>
-        <label>评审人<input value={params.get('reviewer') ?? ''} onChange={(event) => setParams(setParam(params, 'reviewer', event.target.value.trim()))} placeholder="账号 ID" /></label>
-        <label>证券<input value={params.get('security_id') ?? ''} onChange={(event) => setParams(setParam(params, 'security_id', event.target.value.trim()))} placeholder="证券代码" /></label>
-        <label>行业<input value={params.get('industry') ?? ''} onChange={(event) => setParams(setParam(params, 'industry', event.target.value.trim()))} placeholder="行业名称" /></label>
-        <label>假设结果<select value={params.get('hypothesis_result') ?? ''} onChange={(event) => setParams(setParam(params, 'hypothesis_result', event.target.value))}><option value="">全部</option>{['成立', '部分成立', '不成立', '证据不足', '尚未到期'].map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label>强反证<select value={params.get('has_strong_conflict') ?? ''} onChange={(event) => setParams(setParam(params, 'has_strong_conflict', event.target.value))}><option value="">全部</option><option value="true">存在</option><option value="false">不存在</option></select></label>
-        <label>完整度下限<select value={params.get('completeness_min') ?? ''} onChange={(event) => setParams(setParam(params, 'completeness_min', event.target.value))}><option value="">不限</option><option value="0.5">50%</option><option value="0.8">80%</option><option value="1">100%</option></select></label>
-        <label>复盘区间从<input type="date" value={params.get('period_start') ?? ''} onChange={(event) => setParams(setParam(params, 'period_start', event.target.value))} /></label>
-        <label>复盘区间至<input type="date" value={params.get('period_end') ?? ''} onChange={(event) => setParams(setParam(params, 'period_end', event.target.value))} /></label>
-        <label>发布日从<input type="date" value={params.get('published_start') ?? ''} onChange={(event) => setParams(setParam(params, 'published_start', event.target.value))} /></label>
-        <label>发布日至<input type="date" value={params.get('published_end') ?? ''} onChange={(event) => setParams(setParam(params, 'published_end', event.target.value))} /></label>
-        <label>排序<select value={params.get('sort') ?? 'updated_at'} onChange={(event) => setParams(setParam(params, 'sort', event.target.value))}><option value="updated_at">最近更新</option><option value="published_at">最近发布</option><option value="period_end">区间结束日</option><option value="completeness_score">记录完整度</option></select></label>
-      </div>
-      <footer><span>{list.data ? `共 ${list.data.total} 份可见复盘` : '正在读取复盘目录'}</span><button className="button secondary" onClick={() => { setSearchText(''); setParams({}) }}>清空筛选</button></footer>
-    </section>
-    {list.isLoading && <LoadingState text="正在加载复盘目录…" />}
-    {list.error && <ErrorState error={list.error} />}
-    {list.data && (list.data.items.length ? <section className="rt-panel rt-list"><div className="rt-row rt-head"><span>报告 / 投资逻辑</span><span>区间 / 截止时点</span><span>负责人</span><span>状态 / 版本</span><span>完整度</span><span /></div>{list.data.items.map((item) => <RetrospectiveRow key={item.retrospective_id} item={item} />)}<Pagination offset={offset} total={list.data.total} onChange={(value) => { const next = new URLSearchParams(params); next.set('offset', String(value)); setParams(next) }} /></section> : <EmptyState title="没有匹配的复盘" description="可调整筛选，或基于一条当前可见的投资逻辑创建首份复盘。" action={<NavLink className="button primary" to="/retrospective/new">创建复盘</NavLink>} />)}
-  </section>
+  const selectedState = params.get('state') ?? ''
+  return <div className="dashboard-page retrospective-center rt-dashboard-page">
+    <aside className="coverage-panel rt-workspace-nav" aria-label="复盘工作区">
+      <div className="dashboard-panel-title"><h1>复盘工作区</h1><NavLink to="/workbench" aria-label="返回工作台">↗</NavLink></div>
+      <section className="coverage-group rt-state-group"><span className="rt-nav-label">报告状态</span>{['', '草稿', '待评审', '已发布', '已归档'].map((state) => <NavLink className={selectedState === state ? 'active' : ''} key={state || '全部'} to={state ? `/retrospective?state=${encodeURIComponent(state)}` : '/retrospective'}><span>{state ? '◇' : '▥'} {state || '全部复盘'}</span><b>{state ? overview.data?.state_counts[state] ?? 0 : overview.data?.total ?? '—'}</b></NavLink>)}</section>
+      <nav className="coverage-links" aria-label="研究闭环导航"><NavLink to="/workbench">⌂ 返回工作台</NavLink><NavLink to="/reviews">✓ 复核任务</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink><NavLink to="/assets">▤ 数据中心</NavLink></nav>
+      <NavLink className="new-research-button" to="/retrospective/new">＋ 创建复盘</NavLink>
+    </aside>
+    <main className="dashboard-main rt-dashboard-main">
+      <section className="dashboard-card rt-dashboard-hero"><div><span className="eyebrow">RESEARCH RETROSPECTIVE</span><h1>复盘中心</h1><p>按历史时点冻结可见来源，完成人工结论、发布、修订与回查。</p></div><div><NavLink className="button secondary" to="/workbench">返回工作台</NavLink><NavLink className="button primary" to="/retrospective/new">创建复盘</NavLink></div></section>
+      {overview.isLoading && <LoadingState text="正在汇总可见复盘指标…" />}
+      {overview.error && <ErrorState error={overview.error} />}
+      {overview.data && <section className="dashboard-card rt-overview-card"><div className="rt-as-of">统计时点 {dateTime(overview.data.as_of)}{overview.data.is_truncated ? ' · 大于 100 条，概览已标记截断' : ''}</div><div className="rt-metrics" aria-label="复盘概览">{metrics.map(([label, value, note]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}</div></section>}
+      <section className="dashboard-card rt-toolbar">
+        <header className="dashboard-card-header"><div><h2>复盘目录</h2><span>{list.data ? `共 ${list.data.total} 份可见复盘` : '正在读取复盘目录'}</span></div></header>
+        <form onSubmit={submit}><label className="rt-search"><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="搜索报告、投资逻辑或证券代码" /><button className="button primary">搜索</button></label></form>
+        <div className="rt-filters">
+          <label>状态<select value={selectedState} onChange={(event) => setParams(setParam(params, 'state', event.target.value))}><option value="">全部</option>{['草稿', '待评审', '已发布', '已归档'].map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>类型<select value={params.get('retrospective_type') ?? ''} onChange={(event) => setParams(setParam(params, 'retrospective_type', event.target.value))}><option value="">全部</option>{['周期', '结项', '专题', '人工'].map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>负责人<input value={params.get('owner') ?? ''} onChange={(event) => setParams(setParam(params, 'owner', event.target.value.trim()))} placeholder="账号 ID" /></label>
+          <label>评审人<input value={params.get('reviewer') ?? ''} onChange={(event) => setParams(setParam(params, 'reviewer', event.target.value.trim()))} placeholder="账号 ID" /></label>
+          <label>证券<input value={params.get('security_id') ?? ''} onChange={(event) => setParams(setParam(params, 'security_id', event.target.value.trim()))} placeholder="证券代码" /></label>
+          <label>行业<input value={params.get('industry') ?? ''} onChange={(event) => setParams(setParam(params, 'industry', event.target.value.trim()))} placeholder="行业名称" /></label>
+          <label>假设结果<select value={params.get('hypothesis_result') ?? ''} onChange={(event) => setParams(setParam(params, 'hypothesis_result', event.target.value))}><option value="">全部</option>{['成立', '部分成立', '不成立', '证据不足', '尚未到期'].map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>强反证<select value={params.get('has_strong_conflict') ?? ''} onChange={(event) => setParams(setParam(params, 'has_strong_conflict', event.target.value))}><option value="">全部</option><option value="true">存在</option><option value="false">不存在</option></select></label>
+          <label>完整度下限<select value={params.get('completeness_min') ?? ''} onChange={(event) => setParams(setParam(params, 'completeness_min', event.target.value))}><option value="">不限</option><option value="0.5">50%</option><option value="0.8">80%</option><option value="1">100%</option></select></label>
+          <label>复盘区间从<input type="date" value={params.get('period_start') ?? ''} onChange={(event) => setParams(setParam(params, 'period_start', event.target.value))} /></label>
+          <label>复盘区间至<input type="date" value={params.get('period_end') ?? ''} onChange={(event) => setParams(setParam(params, 'period_end', event.target.value))} /></label>
+          <label>发布日从<input type="date" value={params.get('published_start') ?? ''} onChange={(event) => setParams(setParam(params, 'published_start', event.target.value))} /></label>
+          <label>发布日至<input type="date" value={params.get('published_end') ?? ''} onChange={(event) => setParams(setParam(params, 'published_end', event.target.value))} /></label>
+          <label>排序<select value={params.get('sort') ?? 'updated_at'} onChange={(event) => setParams(setParam(params, 'sort', event.target.value))}><option value="updated_at">最近更新</option><option value="published_at">最近发布</option><option value="period_end">区间结束日</option><option value="completeness_score">记录完整度</option></select></label>
+        </div>
+        <footer><span>筛选会同步到地址，可直接分享当前视图</span><button className="button secondary" onClick={() => { setSearchText(''); setParams({}) }}>清空筛选</button></footer>
+      </section>
+      {list.isLoading && <LoadingState text="正在加载复盘目录…" />}
+      {list.error && <ErrorState error={list.error} />}
+      {list.data && (list.data.items.length ? <section className="dashboard-card rt-list"><div className="rt-row rt-head"><span>报告 / 投资逻辑</span><span>区间 / 截止时点</span><span>负责人</span><span>状态 / 版本</span><span>完整度</span><span /></div>{list.data.items.map((item) => <RetrospectiveRow key={item.retrospective_id} item={item} />)}<Pagination offset={offset} total={list.data.total} onChange={(value) => { const next = new URLSearchParams(params); next.set('offset', String(value)); setParams(next) }} /></section> : <EmptyState title="没有匹配的复盘" description="可调整筛选，或基于一条当前可见的投资逻辑创建首份复盘。" action={<NavLink className="button primary" to="/retrospective/new">创建复盘</NavLink>} />)}
+    </main>
+    <aside className="dashboard-right rt-dashboard-right">
+      <section className="dashboard-card rt-progress-card"><header className="dashboard-card-header"><h2>流程状态</h2></header><div className="rt-progress-total"><strong>{overview.data?.pending_reports ?? '—'}</strong><span>待完成</span></div>{['草稿', '待评审', '已发布'].map((state) => <NavLink key={state} to={`/retrospective?state=${encodeURIComponent(state)}`}><span>{state}</span><strong>{overview.data ? overview.data.state_counts[state] ?? 0 : '—'}</strong></NavLink>)}</section>
+      <section className="dashboard-card rt-loop-card"><header className="dashboard-card-header"><h2>研究闭环</h2></header><p>从现行投资逻辑发起复盘，冻结当时可见来源；人工结论发布后可持续回查。</p><ol><li><NavLink to="/workbench">工作台定位现行逻辑</NavLink></li><li><NavLink to="/retrospective/new">冻结来源并创建草稿</NavLink></li><li><NavLink to="/reviews">提交评审与人工发布</NavLink></li><li><NavLink to="/assets">回查数据中心原文</NavLink></li></ol></section>
+      <section className="dashboard-card rt-governance-card"><header className="dashboard-card-header"><h2>复盘口径</h2></header><p>来源以复盘截止时点为准；AI 内容仅作为候选，正式结论、状态变化与发布动作均由研究员确认。</p></section>
+    </aside>
+  </div>
 }
 
 function RetrospectiveRow({ item }: { item: RetrospectiveRecord }) {
@@ -134,7 +149,7 @@ export function RetrospectiveCreatePage() {
   const previewMutation = useMutation({ mutationFn: () => previewRetrospectiveSources(input()), onSuccess: setPreview })
   const createMutation = useMutation({ mutationFn: () => createRetrospective({ ...input(), retrospective_type: form.retrospective_type, title: form.title, reviewer: form.reviewer || undefined }), onSuccess: (item) => navigate(`/retrospective/${item.retrospective_id}/edit`) })
   const change = (key: string, value: string) => { setForm((current) => ({ ...current, [key]: value })); setPreview(null) }
-  return <section className="retrospective-center">
+  return <section className="retrospective-center rt-page-canvas">
     <NavLink className="rt-back" to="/retrospective">‹ 返回复盘目录</NavLink>
     <PageTitle eyebrow="POINT-IN-TIME FREEZE" title="创建复盘" description="先预检来源、时点与缺口；确认后创建不可变来源白名单和人工草稿。" />
     <div className="rt-create-grid"><form className="rt-panel rt-create-form" onSubmit={(event) => { event.preventDefault(); previewMutation.mutate() }}>
@@ -168,7 +183,7 @@ export function RetrospectiveDetailPage() {
   if (query.isLoading) return <LoadingState text="正在加载复盘与冻结来源…" />
   if (query.error || !query.data) return <ErrorState error={query.error} />
   const detail = query.data; const record = detail.retrospective
-  return <section className="retrospective-center">
+  return <section className="retrospective-center rt-page-canvas">
     <NavLink className="rt-back" to="/retrospective">‹ 返回复盘目录</NavLink>
     <header className="rt-detail-hero"><div><span className="eyebrow">{record.retrospective_type} RETROSPECTIVE · {record.retrospective_id}</span><h1>{record.title}</h1><p>{record.security_id} · {record.thesis_title} · {record.period_start} 至 {record.period_end} · 截止 {dateTime(record.data_cutoff_at)}</p></div><div><Status value={record.state} />{detail.allowed_actions.includes('edit') && <NavLink className="button primary" to={`/retrospective/${record.retrospective_id}/edit`}>编辑草稿</NavLink>}{detail.allowed_actions.includes('revise') && <button className="button secondary" onClick={() => action.mutate('revise')}>创建修订</button>}{detail.allowed_actions.includes('return') && <button className="button secondary" onClick={() => action.mutate('return')}>退回修改</button>}{detail.allowed_actions.includes('archive') && <button className="button secondary" onClick={() => action.mutate('archive')}>归档</button>}</div></header>
     <InlineError error={action.error} />
@@ -232,7 +247,7 @@ function RetrospectiveEditor({ initial, aiEnabled }: { initial: RetrospectiveDet
   const assessments = Array.isArray(content.hypothesis_assessments) ? content.hypothesis_assessments : []
   const setAssessment = (index: number, patch: Partial<HypothesisAssessment>) => updateContent({ hypothesis_assessments: assessments.map((item, current) => current === index ? { ...item, ...patch } : item) })
   const applyCandidate = (key: keyof RetrospectiveContent) => { const value = candidate?.[key]; if (value !== undefined) updateContent({ [key]: value }) }
-  return <section className="retrospective-center rt-editor">
+  return <section className="retrospective-center rt-editor rt-page-canvas">
     <NavLink className="rt-back" to={`/retrospective/${id}`}>‹ 返回复盘详情</NavLink>
     <header className="rt-editor-header"><div><span className="eyebrow">HUMAN EDITOR · LOCK {lockVersion}</span><input value={title} onChange={(event) => { save.reset(); setTitle(event.target.value); setDirty(true) }} aria-label="复盘标题" /></div><div aria-live="polite"><span>{save.isPending ? '正在自动保存…' : save.error ? '保存失败，本地内容已保留' : dirty ? '有未保存修改' : savedAt ? `已保存 ${dateTime(savedAt)}` : '已加载服务端草稿'}</span><button className="button secondary" disabled={save.isPending || !dirty} onClick={() => save.mutate({ content, title, lock: lockVersion })}>保存草稿</button>{initial.allowed_actions.includes('ai_draft') && <button className="button secondary" disabled={!aiEnabled || ai.isPending || dirty} onClick={() => ai.mutate()}>{ai.isPending ? 'AI 整理中…' : aiEnabled ? '生成 AI 候选' : 'AI 候选未启用'}</button>}{initial.allowed_actions.includes('submit') && <button className="button secondary" disabled={lifecycle.isPending} onClick={() => lifecycle.mutate('submit')}>提交评审</button>}{initial.allowed_actions.includes('publish') && <button className="button primary" disabled={lifecycle.isPending} onClick={() => lifecycle.mutate('publish')}>人工发布</button>}</div></header>
     <InlineError error={save.error ?? ai.error ?? lifecycle.error} />

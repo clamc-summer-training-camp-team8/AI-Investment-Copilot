@@ -69,7 +69,7 @@ def test_组合引擎输出滚动窗口容量约束与风险归因() -> None:
         ),
     )
 
-    assert result.methodology_version == "portfolio-research-v2"
+    assert result.methodology_version == "portfolio-research-v3"
     assert result.metrics.rebalance_count > 0
     assert result.metrics.turnover > 0
     assert result.walk_forward
@@ -79,6 +79,10 @@ def test_组合引擎输出滚动窗口容量约束与风险归因() -> None:
     assert set(result.risk_attribution.industry) == {"半导体", "医药"}
     assert "market_beta" in result.risk_attribution.factor_exposure
     assert any("相互独立" in warning for warning in result.diagnostics.warnings)
+    assert result.validation_quality.status == "insufficient_sample"
+    assert result.validation_quality.alpha_claim_allowed is False
+    assert result.metrics.active_start_date is not None
+    assert result.metrics.active_end_date is not None
 
 
 def test_市值中性缺少点时市值时硬失败() -> None:
@@ -115,3 +119,55 @@ def test_未来数据泄漏信号只隔离不进入组合() -> None:
     )
     assert result.diagnostics.accepted_signal_count == 0
     assert "未来数据泄漏" in result.diagnostics.skipped_signals[0]
+    assert result.validation_quality.status == "engineering_test"
+
+
+def test_行业中性遇到单例行业时硬失败而不是把信号归零() -> None:
+    bars, signals = _fixture()
+    with pytest.raises(PortfolioInputError, match="单例行业: 半导体"):
+        run_portfolio_backtest(
+            bars,
+            [signals[0]],
+            PortfolioConfig(
+                rolling_window_days=2,
+                neutralize_industry=True,
+                neutralize_market_cap=False,
+                enforce_capacity=False,
+            ),
+        )
+
+
+def test_基准和超额只匹配组合实际暴露日并保留全区间对照() -> None:
+    start = date(2025, 1, 1)
+    benchmark = ("100", "200", "300", "400", "440", "484")
+    bars = [
+        PortfolioBar(
+            trading_date=start + timedelta(days=index),
+            security_id="A",
+            adjusted_close=Decimal(100 + index * 10),
+            benchmark_close=Decimal(benchmark[index]),
+            industry="半导体",
+            market_cap=None,
+            traded_notional=None,
+        )
+        for index in range(len(benchmark))
+    ]
+    generated = datetime(2025, 1, 3, 18, tzinfo=BUSINESS_TZ)
+    result = run_portfolio_backtest(
+        bars,
+        [PortfolioSignal("SIG-A", "A", generated, generated, Decimal(1))],
+        PortfolioConfig(
+            rolling_window_days=2,
+            rebalance_days=1,
+            neutralize_industry=False,
+            neutralize_market_cap=False,
+            enforce_capacity=False,
+        ),
+    )
+
+    assert result.metrics.active_start_date == date(2025, 1, 4)
+    assert result.metrics.active_end_date == date(2025, 1, 6)
+    assert result.metrics.active_trading_days == 3
+    assert result.metrics.benchmark_return == Decimal("0.21000000")
+    assert result.metrics.full_period_benchmark_return == Decimal("3.84000000")
+    assert result.metrics.excess_return != result.metrics.full_period_excess_return

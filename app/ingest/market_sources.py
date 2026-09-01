@@ -56,6 +56,7 @@ class PointInTimeSupplement:
     limit_down: bool = False
     market_cap_observed: bool = False
     price_limit_observed: bool = False
+    price_limit_derived: bool = False
 
 
 @dataclass(frozen=True)
@@ -98,6 +99,18 @@ class PriceLimitObservation:
 
 
 @dataclass(frozen=True)
+class SourceCorporateAction:
+    security_id: str
+    announced_at: date | None
+    ex_date: date
+    action_type: str
+    ratio: Decimal | None
+    cash_amount: Decimal | None
+    currency: str
+    source_locator: str
+
+
+@dataclass(frozen=True)
 class TradingCalendarSession:
     calendar_date: date
     is_open: bool
@@ -113,6 +126,12 @@ def _date(value: object) -> date:
     if len(text) == 8 and text.isdigit():
         return datetime.strptime(text, "%Y%m%d").date()
     return date.fromisoformat(text[:10])
+
+
+def _optional_date(value: object) -> date | None:
+    if value is None or str(value).strip() in {"", "NaT", "nan", "None"}:
+        return None
+    return _date(value)
 
 
 def _decimal(value: object, *, required: bool = True) -> Decimal | None:
@@ -307,6 +326,57 @@ class AksharePrimarySource:
                 upstream_provider="Tencent Finance",
             )
         )
+
+    def a_share_corporate_actions(
+        self, target: MarketTarget, *, start: date, end: date
+    ) -> tuple[SourceCorporateAction, ...]:
+        """读取 A 股分红送转事件；前复权仍是收益计算口径，事件仅用于审计。"""
+
+        if target.market != "A股":
+            raise MarketSourceError("AKShare 结构化公司行动当前只覆盖 A 股")
+        frame = self._module.stock_history_dividend_detail(symbol=target.security_id)
+        rows = _records(frame, label="akshare.stock_history_dividend_detail")
+        result: list[SourceCorporateAction] = []
+        for row in rows:
+            # Sina 分红页字段顺序稳定，但 AKShare 1.18.94 的中文列名在部分
+            # Windows 环境会乱码，因此按其公开适配器固定位置读取并在冻结资产中重命名。
+            values = list(row.values())
+            if len(values) < 8:
+                raise MarketSourceError("AKShare 分红事件字段数量不足")
+            ex_date = _optional_date(values[5])
+            if ex_date is None or ex_date < start or ex_date > end:
+                continue
+            announced_at = _optional_date(values[0])
+            bonus = _decimal(values[1], required=False) or Decimal(0)
+            transfer = _decimal(values[2], required=False) or Decimal(0)
+            cash = _decimal(values[3], required=False) or Decimal(0)
+            share_ratio = (bonus + transfer) / Decimal(10)
+            cash_per_share = cash / Decimal(10)
+            if share_ratio > 0 and cash_per_share > 0:
+                action_type = "cash_dividend_and_share_distribution"
+            elif share_ratio > 0:
+                action_type = "share_distribution"
+            elif cash_per_share > 0:
+                action_type = "cash_dividend"
+            else:
+                continue
+            result.append(
+                SourceCorporateAction(
+                    security_id=target.security_id,
+                    announced_at=announced_at,
+                    ex_date=ex_date,
+                    action_type=action_type,
+                    ratio=share_ratio if share_ratio > 0 else None,
+                    cash_amount=cash_per_share if cash_per_share > 0 else None,
+                    currency="CNY",
+                    source_locator=(
+                        "https://vip.stock.finance.sina.com.cn/corp/go.php/"
+                        f"vISSUE_ShareBonus/stockid/{target.security_id}.phtml"
+                    ),
+                )
+            )
+        result.sort(key=lambda item: (item.ex_date, item.action_type))
+        return tuple(result)
 
     def benchmark_quotes(
         self, target: MarketTarget, *, start: date, end: date

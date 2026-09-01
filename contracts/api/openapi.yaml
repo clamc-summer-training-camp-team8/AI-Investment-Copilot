@@ -1143,6 +1143,9 @@ components:
         password_change_supported:
           title: Password Change Supported
           type: boolean
+        quant_research_enabled:
+          title: Quant Research Enabled
+          type: boolean
         retrospective_ai_draft_enabled:
           title: Retrospective Ai Draft Enabled
           type: boolean
@@ -1156,6 +1159,7 @@ components:
       - knowledge_qa_enabled
       - retrospective_center_enabled
       - retrospective_ai_draft_enabled
+      - quant_research_enabled
       title: AuthConfigOut
       type: object
     AuthSessionOut:
@@ -4047,6 +4051,12 @@ components:
           minLength: 1
           title: Market Dataset Id
           type: string
+        model_template_id:
+          default: confirmed-event-research-v3
+          maxLength: 96
+          minLength: 1
+          title: Model Template Id
+          type: string
         name:
           default: 组合事件信号研究
           maxLength: 255
@@ -4165,7 +4175,7 @@ components:
           default: '0.20'
           title: Max Security Weight
         neutralize_industry:
-          default: true
+          default: false
           title: Neutralize Industry
           type: boolean
         neutralize_market_cap:
@@ -4546,6 +4556,82 @@ components:
       - position
       title: QuantEquityPointOut
       type: object
+    QuantFactorDefinitionOut:
+      properties:
+        category:
+          title: Category
+          type: string
+        coverage_scope:
+          title: Coverage Scope
+          type: string
+        deprecated_at:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Deprecated At
+        description:
+          title: Description
+          type: string
+        enabled_by_default:
+          title: Enabled By Default
+          type: boolean
+        factor_id:
+          title: Factor Id
+          type: string
+        formula:
+          title: Formula
+          type: string
+        frequency:
+          title: Frequency
+          type: string
+        input_fields:
+          items:
+            type: string
+          title: Input Fields
+          type: array
+        limitations:
+          items:
+            type: string
+          title: Limitations
+          type: array
+        methodology_version:
+          title: Methodology Version
+          type: string
+        name:
+          title: Name
+          type: string
+        owner:
+          title: Owner
+          type: string
+        published_at:
+          format: date
+          title: Published At
+          type: string
+        status:
+          title: Status
+          type: string
+        version:
+          title: Version
+          type: string
+      required:
+      - factor_id
+      - name
+      - category
+      - description
+      - formula
+      - frequency
+      - coverage_scope
+      - input_fields
+      - status
+      - version
+      - methodology_version
+      - owner
+      - published_at
+      - enabled_by_default
+      - limitations
+      title: QuantFactorDefinitionOut
+      type: object
     QuantManifestAssetOut:
       properties:
         byte_size:
@@ -4649,6 +4735,11 @@ components:
             type: string
           title: Securities
           type: array
+        security_metadata:
+          items:
+            $ref: '#/components/schemas/QuantSecurityMetadataOut'
+          title: Security Metadata
+          type: array
         source_policy_id:
           title: Source Policy Id
           type: string
@@ -4685,6 +4776,7 @@ components:
       - timezone
       - available_signal_sets
       - backtest_count
+      - security_metadata
       title: QuantMarketDatasetDetailOut
       type: object
     QuantMarketDatasetOut:
@@ -4818,6 +4910,83 @@ components:
       - average_exposure
       title: QuantMetricsOut
       type: object
+    QuantModelTemplateOut:
+      properties:
+        alpha_factor_ids:
+          items:
+            type: string
+          title: Alpha Factor Ids
+          type: array
+        control_factor_ids:
+          items:
+            type: string
+          title: Control Factor Ids
+          type: array
+        default_config:
+          title: Default Config
+          type: object
+        deprecated_at:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Deprecated At
+        description:
+          title: Description
+          type: string
+        limitations:
+          items:
+            type: string
+          title: Limitations
+          type: array
+        methodology_version:
+          title: Methodology Version
+          type: string
+        name:
+          title: Name
+          type: string
+        owner:
+          title: Owner
+          type: string
+        published_at:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Published At
+        required_config:
+          title: Required Config
+          type: object
+        sample_gate:
+          additionalProperties:
+            type: integer
+          title: Sample Gate
+          type: object
+        status:
+          title: Status
+          type: string
+        template_id:
+          title: Template Id
+          type: string
+        version:
+          title: Version
+          type: string
+      required:
+      - template_id
+      - name
+      - version
+      - status
+      - description
+      - methodology_version
+      - alpha_factor_ids
+      - control_factor_ids
+      - default_config
+      - required_config
+      - sample_gate
+      - owner
+      - limitations
+      title: QuantModelTemplateOut
+      type: object
     QuantResultOut:
       properties:
         diagnostics:
@@ -4844,6 +5013,134 @@ components:
       - diagnostics
       - methodology_version
       title: QuantResultOut
+      type: object
+    QuantSecurityMetadataOut:
+      properties:
+        benchmark_id:
+          title: Benchmark Id
+          type: string
+        coverage_end:
+          format: date
+          title: Coverage End
+          type: string
+        coverage_start:
+          format: date
+          title: Coverage Start
+          type: string
+        currency:
+          title: Currency
+          type: string
+        industry:
+          title: Industry
+          type: string
+        market:
+          title: Market
+          type: string
+        market_cap_complete:
+          title: Market Cap Complete
+          type: boolean
+        market_cap_count:
+          title: Market Cap Count
+          type: integer
+        row_count:
+          title: Row Count
+          type: integer
+        security_id:
+          title: Security Id
+          type: string
+      required:
+      - security_id
+      - market
+      - currency
+      - industry
+      - benchmark_id
+      - coverage_start
+      - coverage_end
+      - row_count
+      - market_cap_count
+      - market_cap_complete
+      title: QuantSecurityMetadataOut
+      type: object
+    QuantSignalDetailOut:
+      properties:
+        confidence:
+          title: Confidence
+          type: string
+        confidence_role:
+          default: ai_judgement_metadata_only
+          title: Confidence Role
+          type: string
+        confidence_used_for_alpha_weight:
+          default: false
+          title: Confidence Used For Alpha Weight
+          type: boolean
+        confirmation_status:
+          title: Confirmation Status
+          type: string
+        direction:
+          title: Direction
+          type: string
+        disclosed_at:
+          format: date-time
+          title: Disclosed At
+          type: string
+        generated_at:
+          format: date-time
+          title: Generated At
+          type: string
+        hypothesis_id:
+          title: Hypothesis Id
+          type: string
+        security_id:
+          title: Security Id
+          type: string
+        signal_id:
+          title: Signal Id
+          type: string
+        source_document_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Document Id
+        source_document_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Document Title
+        source_evidence_id:
+          title: Source Evidence Id
+          type: string
+        source_locator:
+          title: Source Locator
+          type: string
+        source_relation_id:
+          title: Source Relation Id
+          type: string
+        source_relation_status:
+          title: Source Relation Status
+          type: string
+        strength:
+          title: Strength
+          type: string
+        thesis_id:
+          title: Thesis Id
+          type: string
+      required:
+      - signal_id
+      - security_id
+      - disclosed_at
+      - generated_at
+      - direction
+      - strength
+      - confidence
+      - confirmation_status
+      - source_evidence_id
+      - source_relation_id
+      - source_relation_status
+      - thesis_id
+      - hypothesis_id
+      - source_locator
+      title: QuantSignalDetailOut
       type: object
     QuantSignalIn:
       properties:
@@ -4889,6 +5186,62 @@ components:
       - generated_at
       - direction
       title: QuantSignalIn
+      type: object
+    QuantSignalSetDetailOut:
+      properties:
+        content_sha256:
+          title: Content Sha256
+          type: string
+        evaluation_track:
+          title: Evaluation Track
+          type: string
+        frozen_at:
+          format: date-time
+          title: Frozen At
+          type: string
+        frozen_by:
+          title: Frozen By
+          type: string
+        human_confirmed_only:
+          title: Human Confirmed Only
+          type: boolean
+        name:
+          title: Name
+          type: string
+        signal_count:
+          title: Signal Count
+          type: integer
+        signal_set_id:
+          title: Signal Set Id
+          type: string
+        signals:
+          items:
+            $ref: '#/components/schemas/QuantSignalDetailOut'
+          title: Signals
+          type: array
+        status:
+          title: Status
+          type: string
+        version:
+          title: Version
+          type: string
+        visible_signal_count:
+          title: Visible Signal Count
+          type: integer
+      required:
+      - signal_set_id
+      - name
+      - version
+      - content_sha256
+      - signal_count
+      - human_confirmed_only
+      - evaluation_track
+      - status
+      - frozen_by
+      - frozen_at
+      - visible_signal_count
+      - signals
+      title: QuantSignalSetDetailOut
       type: object
     QuantSignalSetOut:
       properties:
@@ -10460,6 +10813,53 @@ paths:
       summary: Get Catalog
       tags:
       - quant
+  /api/quant/factors:
+    get:
+      operationId: get_factors_api_quant_factors_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/QuantFactorDefinitionOut'
+                title: Response Get Factors Api Quant Factors Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Factors
+      tags:
+      - quant
   /api/quant/market-datasets/register-default:
     post:
       operationId: register_market_dataset_api_quant_market_datasets_register_default_post
@@ -10552,6 +10952,53 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Get Market Dataset Detail
+      tags:
+      - quant
+  /api/quant/model-templates:
+    get:
+      operationId: get_model_templates_api_quant_model_templates_get
+      parameters:
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/QuantModelTemplateOut'
+                title: Response Get Model Templates Api Quant Model Templates Get
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Model Templates
       tags:
       - quant
   /api/quant/portfolio-backtests:
@@ -10748,6 +11195,56 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Create Signal Set
+      tags:
+      - quant
+  /api/quant/signal-sets/{signal_set_id}:
+    get:
+      operationId: get_signal_set_detail_api_quant_signal_sets__signal_set_id__get
+      parameters:
+      - in: path
+        name: signal_set_id
+        required: true
+        schema:
+          title: Signal Set Id
+          type: string
+      - in: header
+        name: Authorization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - in: header
+        name: X-User-Id
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Id
+      - in: header
+        name: X-User-Teams
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-User-Teams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuantSignalSetDetailOut'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Signal Set Detail
       tags:
       - quant
   /api/radar/evidence:

@@ -55,8 +55,8 @@ class PortfolioConfig:
     max_security_weight: Decimal = Decimal("0.20")
     max_industry_weight: Decimal = Decimal("0.40")
     capacity_participation_rate: Decimal = Decimal("0.10")
-    neutralize_industry: bool = True
-    neutralize_market_cap: bool = True
+    neutralize_industry: bool = False
+    neutralize_market_cap: bool = False
     enforce_capacity: bool = True
     allow_short: bool = True
 
@@ -93,6 +93,11 @@ class PortfolioMetrics:
     total_return: Decimal
     benchmark_return: Decimal
     excess_return: Decimal
+    full_period_benchmark_return: Decimal
+    full_period_excess_return: Decimal
+    active_start_date: date | None
+    active_end_date: date | None
+    active_trading_days: int
     annualized_return: Decimal
     annualized_volatility: Decimal
     tracking_error: Decimal
@@ -132,14 +137,27 @@ class PortfolioDiagnostics:
 
 
 @dataclass(frozen=True)
+class ValidationQuality:
+    status: str
+    label: str
+    alpha_claim_allowed: bool
+    reasons: tuple[str, ...]
+    unique_security_count: int
+    nonzero_signal_count: int
+    observation_count: int
+    active_trading_days: int
+
+
+@dataclass(frozen=True)
 class PortfolioResult:
     metrics: PortfolioMetrics
     equity_curve: tuple[PortfolioPoint, ...]
     walk_forward: tuple[WalkForwardWindow, ...]
     signal_research: SignalResearchMetrics
     risk_attribution: RiskAttribution
+    validation_quality: ValidationQuality
     diagnostics: PortfolioDiagnostics
-    methodology_version: str = "portfolio-research-v2"
+    methodology_version: str = "portfolio-research-v3"
 
 
 def _q(value: Decimal | int) -> Decimal:
@@ -266,11 +284,19 @@ def _neutral_scores(
     current: dict[str, PortfolioBar],
     config: PortfolioConfig,
 ) -> tuple[dict[str, Decimal], Decimal]:
-    scores = dict(raw)
+    scores = {security_id: score for security_id, score in raw.items() if score != 0}
     if config.neutralize_industry:
         by_industry: dict[str, list[str]] = {}
         for security_id in scores:
             by_industry.setdefault(current[security_id].industry, []).append(security_id)
+        singleton_industries = sorted(
+            industry for industry, members in by_industry.items() if len(members) < 2
+        )
+        if singleton_industries:
+            raise PortfolioInputError(
+                "行业中性要求每个有信号行业至少两只证券；单例行业: "
+                + ", ".join(singleton_industries)
+            )
         for members in by_industry.values():
             avg = _mean([scores[item] for item in members])
             for item in members:
@@ -397,6 +423,42 @@ def _window_results(
         )
         cursor += config.walk_forward_days
     return tuple(results)
+
+
+def _validation_quality(
+    scheduled: dict[date, list[PortfolioSignal]],
+    *,
+    observation_count: int,
+    active_trading_days: int,
+) -> ValidationQuality:
+    accepted = [signal for values in scheduled.values() for signal in values]
+    nonzero = [signal for signal in accepted if signal.score != 0]
+    unique_security_count = len({signal.security_id for signal in nonzero})
+    reasons: list[str] = []
+    if unique_security_count < 20:
+        reasons.append(f"有效信号仅覆盖 {unique_security_count} 只证券，研究候选门槛为 20 只")
+    if observation_count < 100:
+        reasons.append(f"前瞻收益观测仅 {observation_count} 个，研究候选门槛为 100 个")
+    if active_trading_days < 60:
+        reasons.append(f"有效暴露期仅 {active_trading_days} 个交易日，研究候选门槛为 60 日")
+
+    if not nonzero or active_trading_days == 0:
+        status, label = "engineering_test", "仅工程链路验证"
+    elif reasons:
+        status, label = "insufficient_sample", "样本不足"
+    else:
+        status, label = "research_candidate", "可提交研究评审"
+        reasons.append("达到自动样本门槛仍需独立研究评审，不得自动宣称存在 Alpha")
+    return ValidationQuality(
+        status=status,
+        label=label,
+        alpha_claim_allowed=False,
+        reasons=tuple(reasons),
+        unique_security_count=unique_security_count,
+        nonzero_signal_count=len(nonzero),
+        observation_count=observation_count,
+        active_trading_days=active_trading_days,
+    )
 
 
 def run_portfolio_backtest(
@@ -543,32 +605,67 @@ def run_portfolio_backtest(
 
     returns = [point.daily_return for point in points]
     benchmark_returns = [point.benchmark_return for point in points]
-    active_returns = [left - right for left, right in zip(returns, benchmark_returns, strict=True)]
-    total_return = equity / config.initial_capital - Decimal(1)
-    benchmark_total = benchmark_equity / config.initial_capital - Decimal(1)
-    periods = max(1, len(points) - 1)
-    annualized_return = Decimal((float(equity / config.initial_capital) ** (252 / periods)) - 1)
-    volatility = Decimal(sqrt(float(_variance(returns) * Decimal(252))))
-    tracking_error = Decimal(sqrt(float(_variance(active_returns) * Decimal(252))))
-    information_ratio = (
-        _mean(active_returns) * Decimal(252) / tracking_error if tracking_error else None
+    exposed_return_indices = [
+        index for index in range(1, len(points)) if points[index - 1].gross_exposure != 0
+    ]
+    active_session_indices = sorted(
+        {index for index, point in enumerate(points) if point.gross_exposure != 0}
+        | set(exposed_return_indices)
     )
-    benchmark_variance = _variance(benchmark_returns)
+    active_start_date = (
+        points[active_session_indices[0]].trading_date if active_session_indices else None
+    )
+    active_end_date = (
+        points[active_session_indices[-1]].trading_date if active_session_indices else None
+    )
+    active_trading_days = len(active_session_indices)
+    statistical_returns = [returns[index] for index in exposed_return_indices]
+    statistical_benchmark_returns = [benchmark_returns[index] for index in exposed_return_indices]
+    relative_returns = [
+        left - right
+        for left, right in zip(
+            statistical_returns,
+            statistical_benchmark_returns,
+            strict=True,
+        )
+    ]
+    total_return = equity / config.initial_capital - Decimal(1)
+    full_period_benchmark_total = benchmark_equity / config.initial_capital - Decimal(1)
+    active_benchmark_growth = Decimal(1)
+    for value in statistical_benchmark_returns:
+        active_benchmark_growth *= Decimal(1) + value
+    active_benchmark_total = active_benchmark_growth - Decimal(1)
+    periods = max(1, len(statistical_returns))
+    annualized_return = Decimal((float(equity / config.initial_capital) ** (252 / periods)) - 1)
+    volatility = Decimal(sqrt(float(_variance(statistical_returns) * Decimal(252))))
+    tracking_error = Decimal(sqrt(float(_variance(relative_returns) * Decimal(252))))
+    information_ratio = (
+        _mean(relative_returns) * Decimal(252) / tracking_error if tracking_error else None
+    )
+    benchmark_variance = _variance(statistical_benchmark_returns)
     beta = (
-        _covariance(returns, benchmark_returns) / benchmark_variance if benchmark_variance else None
+        _covariance(statistical_returns, statistical_benchmark_returns) / benchmark_variance
+        if benchmark_variance
+        else None
     )
 
     security_risk: dict[str, Decimal] = {}
-    variance = _variance(returns)
+    variance = _variance(statistical_returns)
     for security_id, components in component_returns.items():
+        active_components = [components[index] for index in exposed_return_indices]
         contribution = (
-            _covariance(components, returns) / variance * volatility if variance else Decimal(0)
+            _covariance(active_components, statistical_returns) / variance * volatility
+            if variance
+            else Decimal(0)
         )
         security_risk[security_id] = _q(contribution)
     industry_risk: dict[str, Decimal] = {}
     for industry, components in industry_components.items():
+        active_components = [components[index] for index in exposed_return_indices]
         contribution = (
-            _covariance(components, returns) / variance * volatility if variance else Decimal(0)
+            _covariance(active_components, statistical_returns) / variance * volatility
+            if variance
+            else Decimal(0)
         )
         industry_risk[industry] = _q(contribution)
     residual_risk = volatility - sum(security_risk.values(), Decimal(0))
@@ -591,13 +688,23 @@ def run_portfolio_backtest(
             if values:
                 quantiles[f"Q{bucket + 1}"] = _q(_mean(values))
 
+    validation_quality = _validation_quality(
+        scheduled,
+        observation_count=len(research_scores),
+        active_trading_days=active_trading_days,
+    )
     return PortfolioResult(
         metrics=PortfolioMetrics(
             initial_capital=_money(config.initial_capital),
             final_equity=_money(equity),
             total_return=_q(total_return),
-            benchmark_return=_q(benchmark_total),
-            excess_return=_q(total_return - benchmark_total),
+            benchmark_return=_q(active_benchmark_total),
+            excess_return=_q(total_return - active_benchmark_total),
+            full_period_benchmark_return=_q(full_period_benchmark_total),
+            full_period_excess_return=_q(total_return - full_period_benchmark_total),
+            active_start_date=active_start_date,
+            active_end_date=active_end_date,
+            active_trading_days=active_trading_days,
             annualized_return=_q(annualized_return),
             annualized_volatility=_q(volatility),
             tracking_error=_q(tracking_error),
@@ -628,6 +735,7 @@ def run_portfolio_backtest(
             },
             residual=_q(residual_risk),
         ),
+        validation_quality=validation_quality,
         diagnostics=PortfolioDiagnostics(
             input_signal_count=len(signals),
             accepted_signal_count=accepted,
@@ -636,6 +744,8 @@ def run_portfolio_backtest(
             warnings=(
                 "仅用于样本外研究验证，不生成订单、评级或调仓指令",
                 "语义/检索质量门禁与 Alpha 验证相互独立，回测收益不授予检索放量权限",
+                "组合权重仅使用人工确认的方向与强度；AI 判断置信度不参与 Alpha 权重",
+                f"样本质量: {validation_quality.label}；不得据此直接宣称存在稳定 Alpha",
             ),
         ),
     )

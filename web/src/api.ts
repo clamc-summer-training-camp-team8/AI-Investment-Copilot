@@ -13,8 +13,8 @@ import type {
   DataCenterRevision, DataCenterRun, DataCenterSource,
   ThesisRevision, ThesisRevisionDiff,
   QuantBacktestRequest, QuantBacktestRun,
-  PortfolioBacktestRequest, PortfolioBacktestRun, QuantCatalog, QuantMarketDataset, QuantMarketDatasetDetail,
-  QuantSignalSet,
+  PortfolioBacktestRequest, PortfolioBacktestRun, QuantCatalog, QuantFactorDefinition, QuantMarketDataset, QuantMarketDatasetDetail, QuantModelTemplate,
+  QuantSignalSet, QuantSignalSetDetail,
   CompanyMetricCenter,
   GoldQualityReport,
   GlobalSearchResult, KnowledgeAnswer, KnowledgeAnswerRequest,
@@ -45,6 +45,7 @@ export interface AuthConfig {
   knowledgeQaEnabled: boolean
   retrospectiveCenterEnabled: boolean
   retrospectiveAiDraftEnabled: boolean
+  quantResearchEnabled: boolean
 }
 
 const accessTokenKey = 'ai-investment-copilot.access-token'
@@ -224,8 +225,8 @@ function toAuthUser(value: { user_id: string; teams: string[]; must_change_passw
 }
 
 export async function getAuthConfig(): Promise<AuthConfig> {
-  if (useMock) return { loginRequired: false, passwordChangeSupported: false, globalSearchEnabled: true, knowledgeQaEnabled: true, retrospectiveCenterEnabled: true, retrospectiveAiDraftEnabled: false }
-  const value = await request<{ login_required: boolean; password_change_supported: boolean; global_search_enabled: boolean; knowledge_qa_enabled: boolean; retrospective_center_enabled: boolean; retrospective_ai_draft_enabled: boolean }>('/api/auth/config')
+  if (useMock) return { loginRequired: false, passwordChangeSupported: false, globalSearchEnabled: true, knowledgeQaEnabled: true, retrospectiveCenterEnabled: true, retrospectiveAiDraftEnabled: false, quantResearchEnabled: true }
+  const value = await request<{ login_required: boolean; password_change_supported: boolean; global_search_enabled: boolean; knowledge_qa_enabled: boolean; retrospective_center_enabled: boolean; retrospective_ai_draft_enabled: boolean; quant_research_enabled: boolean }>('/api/auth/config')
   return {
     loginRequired: value.login_required,
     passwordChangeSupported: value.password_change_supported,
@@ -233,6 +234,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
     knowledgeQaEnabled: value.knowledge_qa_enabled,
     retrospectiveCenterEnabled: value.retrospective_center_enabled,
     retrospectiveAiDraftEnabled: value.retrospective_ai_draft_enabled,
+    quantResearchEnabled: value.quant_research_enabled,
   }
 }
 
@@ -319,6 +321,7 @@ function toMapping(item: Record<string, unknown>): MetricMapping {
 function toFeedItem(item: Record<string, unknown>): EvidenceFeedItem {
   return {
     evidenceId: String(item.evidence_id), relationId: String(item.relation_id),
+    sourceDocumentId: String(item.source_document_id ?? ''),
     securityId: String(item.security_id), securityName: String(item.security_name),
     thesisId: String(item.thesis_id), thesisTitle: String(item.thesis_title), thesisCoreView: String(item.thesis_core_view ?? item.thesis_title),
     hypothesisId: String(item.hypothesis_id), hypothesisStatement: String(item.hypothesis_statement),
@@ -1233,19 +1236,22 @@ const mockMarketDataset: QuantMarketDataset = {
   dataVersion: 'akshare-qfq-tuaremax10000-20260831-v3',
   manifestSha256: '2d53632169f9fc7156feaaf91c002acea468217c9827917c48b30d0e9b2676db',
   authorizationStatus: '公开行情研究使用已核验', adjustment: '前复权',
-  coverageStart: '2024-01-02', coverageEnd: '2026-08-28',
-  securities: ['688981', '603986', '002371'],
+  coverageStart: '2023-12-01', coverageEnd: '2026-08-28',
+  securities: ['688981', '603986', '002371', '600276', '603259', '000538', '002594', '00175', '09868'],
   capabilities: {
-    adjusted_daily_bars: true, trading_calendar: true, point_in_time_tradability: true,
-    a_share_point_in_time_market_cap: true, survivorship_bias_free_universe: false,
+    adjusted_close: true, trading_calendar: true, capacity_constraint: true,
+    a_share_point_in_time_market_cap: true, point_in_time_market_cap: false,
+    price_limit_status: false, structured_corporate_action_events: false,
   },
-  limitations: ['仅用于研究回测，不构成交易或调仓指令。'], status: 'frozen',
+  limitations: ['港股点时市值未覆盖，市值中性仅限数据完整的纯 A 股组合。', 'A 股涨跌停参考仍缺 3 个证券日。', '未冻结 FX 时不得把 A/H 混币种超额解释为 Alpha。'], status: 'frozen',
+  frozenBy: 'phase3-local-release', frozenAt: '2026-08-31T09:00:00+08:00',
 }
 
 const mockQuantSignalSet: QuantSignalSet = {
   signalSetId: 'QSS-DEMO-CONFIRMED-V1', name: '人工确认事件方向', version: 'confirmed-v1',
   contentSha256: 'b'.repeat(64), signalCount: 3, humanConfirmedOnly: true,
   evaluationTrack: 'alpha_validation', status: 'frozen',
+  frozenBy: 'quant-reviewer', frozenAt: '2026-08-31T10:00:00+08:00',
 }
 
 export async function getDataCenterOverview(): Promise<DataCenterOverview> {
@@ -1523,6 +1529,18 @@ function toMarketDataset(item: Record<string, unknown>): QuantMarketDataset {
     coverageEnd: String(item.coverage_end), securities: (item.securities ?? []) as string[],
     capabilities: (item.capabilities ?? {}) as Record<string, boolean>,
     limitations: (item.limitations ?? []) as string[], status: String(item.status),
+    frozenBy: item.frozen_by ? String(item.frozen_by) : undefined,
+    frozenAt: item.frozen_at ? String(item.frozen_at) : undefined,
+  }
+}
+
+function toQuantSignalSet(item: Record<string, unknown>): QuantSignalSet {
+  return {
+    signalSetId: String(item.signal_set_id), name: String(item.name), version: String(item.version),
+    contentSha256: String(item.content_sha256), signalCount: Number(item.signal_count),
+    humanConfirmedOnly: Boolean(item.human_confirmed_only), evaluationTrack: String(item.evaluation_track),
+    status: String(item.status), frozenBy: item.frozen_by ? String(item.frozen_by) : undefined,
+    frozenAt: item.frozen_at ? String(item.frozen_at) : undefined,
   }
 }
 
@@ -1531,6 +1549,7 @@ function toPortfolioRun(item: Record<string, unknown>): PortfolioBacktestRun {
   const signalResearch = (raw.signal_research ?? {}) as Record<string, unknown>
   const risk = (raw.risk_attribution ?? {}) as Record<string, unknown>
   const diagnostics = (raw.diagnostics ?? {}) as Record<string, unknown>
+  const validationQuality = raw.validation_quality as Record<string, unknown> | undefined
   return {
     runId: String(item.run_id), name: String(item.name), marketDatasetId: String(item.market_dataset_id),
     signalSetId: String(item.signal_set_id), methodologyVersion: String(item.methodology_version),
@@ -1552,6 +1571,15 @@ function toPortfolioRun(item: Record<string, unknown>): PortfolioBacktestRun {
         factorExposure: (risk.factor_exposure ?? {}) as Record<string, number | string>,
         residual: (risk.residual ?? 0) as number | string,
       },
+      validationQuality: validationQuality ? {
+        status: String(validationQuality.status), label: String(validationQuality.label),
+        alphaClaimAllowed: Boolean(validationQuality.alpha_claim_allowed),
+        reasons: (validationQuality.reasons ?? []) as string[],
+        uniqueSecurityCount: Number(validationQuality.unique_security_count ?? 0),
+        nonzeroSignalCount: Number(validationQuality.nonzero_signal_count ?? 0),
+        observationCount: Number(validationQuality.observation_count ?? 0),
+        activeTradingDays: Number(validationQuality.active_trading_days ?? 0),
+      } : undefined,
       diagnostics: {
         acceptedSignalCount: Number(diagnostics.accepted_signal_count ?? 0),
         inputSignalCount: Number(diagnostics.input_signal_count ?? 0),
@@ -1577,18 +1605,114 @@ export async function getQuantCatalog(): Promise<QuantCatalog> {
   return {
     defaultMarketDatasetId: body.default_market_dataset_id == null ? null : String(body.default_market_dataset_id),
     marketDatasets: ((body.market_datasets ?? []) as Array<Record<string, unknown>>).map(toMarketDataset),
-    signalSets: ((body.signal_sets ?? []) as Array<Record<string, unknown>>).map((item) => ({
-      signalSetId: String(item.signal_set_id), name: String(item.name), version: String(item.version),
-      contentSha256: String(item.content_sha256), signalCount: Number(item.signal_count),
-      humanConfirmedOnly: Boolean(item.human_confirmed_only), evaluationTrack: String(item.evaluation_track),
-      status: String(item.status),
-    })),
+    signalSets: ((body.signal_sets ?? []) as Array<Record<string, unknown>>).map(toQuantSignalSet),
     evaluationSeparation: {
       semanticEvaluation: String(separation.semantic_evaluation),
       retrievalEvaluation: String(separation.retrieval_evaluation),
       alphaValidation: String(separation.alpha_validation), hardRule: String(separation.hard_rule),
     },
   }
+}
+
+export async function getQuantFactors(): Promise<QuantFactorDefinition[]> {
+  if (useMock) return [
+    {
+      factorId: 'confirmed_event_direction_strength', name: '人工确认事件方向与强度',
+      category: 'alpha_input', description: '将人工确认方向与强度映射为组合研究分数。',
+      formula: 'direction_sign × strength_weight', frequency: '事件驱动',
+      coverageScope: '已冻结且可追溯的人工确认信号', inputFields: ['direction', 'strength'],
+      status: 'active', version: '1.0.0', methodologyVersion: 'portfolio-research-v3', owner: 'quant-research',
+      publishedAt: '2026-09-01',
+      enabledByDefault: true, limitations: ['AI 判断置信度不参与 Alpha 权重'],
+    },
+    {
+      factorId: 'industry_neutralization', name: '行业中性约束', category: 'risk_control',
+      description: '在每个有信号行业内去均值。', formula: 'score - mean(score within industry)',
+      frequency: '每次再平衡', coverageScope: '所选证券的点时行业截面',
+      inputFields: ['industry', 'signal_score'], status: 'gated',
+      version: '1.0.0', methodologyVersion: 'portfolio-research-v3', owner: 'quant-research',
+      publishedAt: '2026-09-01', enabledByDefault: false,
+      limitations: ['每个有信号行业至少需要两只证券；单例行业将硬阻断'],
+    },
+    {
+      factorId: 'momentum_20_60_120', name: '20/60/120 日动量', category: 'alpha_candidate',
+      description: '检验事件信号与价格趋势的增量解释力。',
+      formula: 'adjusted_close[t] / adjusted_close[t-window] - 1', frequency: '日频',
+      coverageScope: '待扩大后的事前样本', inputFields: ['adjusted_close', 'trading_calendar'],
+      status: 'planned', version: '1.0.0', methodologyVersion: 'portfolio-research-v3', owner: 'quant-research',
+      publishedAt: '2026-09-01',
+      enabledByDefault: false, limitations: ['尚未进入当前组合权重或结果宣称'],
+    },
+  ]
+  const body = await request<Array<Record<string, unknown>>>('/api/quant/factors')
+  return body.map((item) => ({
+    factorId: String(item.factor_id), name: String(item.name), category: String(item.category),
+    description: String(item.description), formula: String(item.formula),
+    frequency: String(item.frequency), coverageScope: String(item.coverage_scope),
+    inputFields: (item.input_fields ?? []) as string[], status: String(item.status),
+    version: String(item.version), methodologyVersion: String(item.methodology_version), owner: String(item.owner),
+    publishedAt: String(item.published_at),
+    deprecatedAt: item.deprecated_at ? String(item.deprecated_at) : undefined,
+    enabledByDefault: Boolean(item.enabled_by_default), limitations: (item.limitations ?? []) as string[],
+  }))
+}
+
+function toPortfolioTemplateConfig(item: Record<string, unknown>): PortfolioBacktestRequest['config'] {
+  return {
+    initialCapital: Number(item.initial_capital), rollingWindowDays: Number(item.rolling_window_days),
+    walkForwardDays: Number(item.walk_forward_days), rebalanceDays: Number(item.rebalance_days),
+    transactionCostBps: Number(item.transaction_cost_bps), slippageBps: Number(item.slippage_bps),
+    maxSecurityWeight: Number(item.max_security_weight), maxIndustryWeight: Number(item.max_industry_weight),
+    capacityParticipationRate: Number(item.capacity_participation_rate),
+    neutralizeIndustry: Boolean(item.neutralize_industry), neutralizeMarketCap: Boolean(item.neutralize_market_cap),
+    enforceCapacity: Boolean(item.enforce_capacity), allowShort: Boolean(item.allow_short),
+  }
+}
+
+export async function getQuantModelTemplates(): Promise<QuantModelTemplate[]> {
+  if (useMock) return [
+    {
+      templateId: 'confirmed-event-research-v3', name: '人工确认事件研究', version: '3.0.0',
+      status: 'active', description: '以人工确认的事件方向与强度构建组合。',
+      methodologyVersion: 'portfolio-research-v3', alphaFactorIds: ['confirmed_event_direction_strength'],
+      controlFactorIds: ['adv20_capacity', 'industry_neutralization'],
+      defaultConfig: {
+        initialCapital: 1_000_000, rollingWindowDays: 60, walkForwardDays: 20, rebalanceDays: 5,
+        transactionCostBps: 10, slippageBps: 5, maxSecurityWeight: .2, maxIndustryWeight: .4,
+        capacityParticipationRate: .1, neutralizeIndustry: false, neutralizeMarketCap: false,
+        enforceCapacity: true, allowShort: true,
+      },
+      requiredConfig: {}, sampleGate: { minimumUniqueSecurities: 20, minimumObservations: 100, minimumActiveTradingDays: 60 },
+      owner: 'quant-research', publishedAt: '2026-09-01', limitations: ['达到样本门槛前只用于工程验证'],
+    },
+  ]
+  const body = await request<Array<Record<string, unknown>>>('/api/quant/model-templates')
+  return body.map((item) => {
+    const gate = item.sample_gate as Record<string, unknown>
+    const required = item.required_config as Record<string, unknown>
+    return {
+      templateId: String(item.template_id), name: String(item.name), version: String(item.version),
+      status: String(item.status), description: String(item.description),
+      methodologyVersion: String(item.methodology_version),
+      alphaFactorIds: (item.alpha_factor_ids ?? []) as string[],
+      controlFactorIds: (item.control_factor_ids ?? []) as string[],
+      defaultConfig: toPortfolioTemplateConfig(item.default_config as Record<string, unknown>),
+      requiredConfig: {
+        ...(required.neutralize_industry === undefined ? {} : { neutralizeIndustry: Boolean(required.neutralize_industry) }),
+        ...(required.neutralize_market_cap === undefined ? {} : { neutralizeMarketCap: Boolean(required.neutralize_market_cap) }),
+        ...(required.enforce_capacity === undefined ? {} : { enforceCapacity: Boolean(required.enforce_capacity) }),
+        ...(required.allow_short === undefined ? {} : { allowShort: Boolean(required.allow_short) }),
+      },
+      sampleGate: {
+        minimumUniqueSecurities: Number(gate.minimum_unique_securities),
+        minimumObservations: Number(gate.minimum_observations),
+        minimumActiveTradingDays: Number(gate.minimum_active_trading_days),
+      },
+      owner: String(item.owner), publishedAt: item.published_at ? String(item.published_at) : undefined,
+      deprecatedAt: item.deprecated_at ? String(item.deprecated_at) : undefined,
+      limitations: (item.limitations ?? []) as string[],
+    }
+  })
 }
 
 export async function getMarketDatasetDetail(datasetId: string): Promise<QuantMarketDatasetDetail> {
@@ -1604,6 +1728,16 @@ export async function getMarketDatasetDetail(datasetId: string): Promise<QuantMa
       sourcePriority: ['Tushare（点时市值）', 'AkShare（前复权行情）'],
       authorizationScope: '公开行情研究与内部量化验证', timezone: 'Asia/Shanghai',
       adjustmentAnchorDate: '2026-08-28', availableSignalSets: [mockQuantSignalSet], backtestCount: 2,
+      securityMetadata: mockMarketDataset.securities.map((securityId) => ({
+        securityId,
+        market: ['00175', '09868'].includes(securityId) ? '港股' : 'A股',
+        currency: ['00175', '09868'].includes(securityId) ? 'HKD' : 'CNY',
+        industry: ['688981', '603986', '002371'].includes(securityId) ? '芯片半导体' : ['600276', '603259', '000538'].includes(securityId) ? '医药' : '新能源汽车',
+        benchmarkId: '000001', coverageStart: mockMarketDataset.coverageStart,
+        coverageEnd: mockMarketDataset.coverageEnd, rowCount: 600,
+        marketCapCount: ['00175', '09868'].includes(securityId) ? 0 : 600,
+        marketCapComplete: !['00175', '09868'].includes(securityId),
+      })),
     }
   }
   const item = await request<Record<string, unknown>>(`/api/quant/market-datasets/${encodeURIComponent(datasetId)}`)
@@ -1618,13 +1752,52 @@ export async function getMarketDatasetDetail(datasetId: string): Promise<QuantMa
     authorizationScope: item.authorization_scope ? String(item.authorization_scope) : undefined,
     timezone: String(item.timezone),
     adjustmentAnchorDate: item.adjustment_anchor_date ? String(item.adjustment_anchor_date) : undefined,
-    availableSignalSets: ((item.available_signal_sets ?? []) as Array<Record<string, unknown>>).map((signal) => ({
-      signalSetId: String(signal.signal_set_id), name: String(signal.name), version: String(signal.version),
-      contentSha256: String(signal.content_sha256), signalCount: Number(signal.signal_count),
-      humanConfirmedOnly: Boolean(signal.human_confirmed_only), evaluationTrack: String(signal.evaluation_track),
-      status: String(signal.status),
-    })),
+    availableSignalSets: ((item.available_signal_sets ?? []) as Array<Record<string, unknown>>).map(toQuantSignalSet),
     backtestCount: Number(item.backtest_count),
+    securityMetadata: ((item.security_metadata ?? []) as Array<Record<string, unknown>>).map((security) => ({
+      securityId: String(security.security_id), market: String(security.market),
+      currency: String(security.currency), industry: String(security.industry),
+      benchmarkId: String(security.benchmark_id), coverageStart: String(security.coverage_start),
+      coverageEnd: String(security.coverage_end), rowCount: Number(security.row_count),
+      marketCapCount: Number(security.market_cap_count), marketCapComplete: Boolean(security.market_cap_complete),
+    })),
+  }
+}
+
+export async function getQuantSignalSetDetail(signalSetId: string): Promise<QuantSignalSetDetail> {
+  if (useMock) return {
+    ...mockQuantSignalSet,
+    signalSetId,
+    visibleSignalCount: 3,
+    signals: ['688981', '603986', '002371'].map((securityId, index) => ({
+      signalId: `SIG-${securityId}`, securityId,
+      disclosedAt: '2026-08-20T18:00:00+08:00', generatedAt: '2026-08-20T18:05:00+08:00',
+      direction: index === 2 ? '冲突' : '支持', strength: '高', confidence: .8,
+      confidenceRole: 'ai_judgement_metadata_only', confidenceUsedForAlphaWeight: false,
+      confirmationStatus: '已确认', sourceEvidenceId: `EVD-${securityId}`,
+      sourceRelationId: `REL-${securityId}`, sourceRelationStatus: '已确认',
+      thesisId: 'THS-QUANT', hypothesisId: 'HYP-QUANT',
+      sourceLocator: `DOC-${securityId}#segment-1`, sourceDocumentId: `DOC-${securityId}`,
+      sourceDocumentTitle: `${securityId} 公开披露资料`,
+    })),
+  }
+  const item = await request<Record<string, unknown>>(`/api/quant/signal-sets/${encodeURIComponent(signalSetId)}`)
+  return {
+    ...toQuantSignalSet(item),
+    visibleSignalCount: Number(item.visible_signal_count),
+    signals: ((item.signals ?? []) as Array<Record<string, unknown>>).map((signal) => ({
+      signalId: String(signal.signal_id), securityId: String(signal.security_id),
+      disclosedAt: String(signal.disclosed_at), generatedAt: String(signal.generated_at),
+      direction: String(signal.direction), strength: String(signal.strength),
+      confidence: Number(signal.confidence), confirmationStatus: String(signal.confirmation_status),
+      sourceEvidenceId: String(signal.source_evidence_id), sourceRelationId: String(signal.source_relation_id),
+      sourceRelationStatus: String(signal.source_relation_status), thesisId: String(signal.thesis_id),
+      hypothesisId: String(signal.hypothesis_id), sourceLocator: String(signal.source_locator),
+      sourceDocumentId: signal.source_document_id ? String(signal.source_document_id) : undefined,
+      sourceDocumentTitle: signal.source_document_title ? String(signal.source_document_title) : undefined,
+      confidenceRole: signal.confidence_role ? String(signal.confidence_role) : undefined,
+      confidenceUsedForAlphaWeight: Boolean(signal.confidence_used_for_alpha_weight),
+    })),
   }
 }
 
@@ -1637,6 +1810,7 @@ export async function runPortfolioBacktest(payload: PortfolioBacktestRequest): P
   if (useMock) throw new Error('Mock 模式不运行 Alpha 验证')
   const body = {
     name: payload.name, market_dataset_id: payload.marketDatasetId, signal_set_id: payload.signalSetId,
+    model_template_id: payload.modelTemplateId,
     security_ids: payload.securityIds, start: payload.start, end: payload.end,
     config: {
       initial_capital: payload.config.initialCapital, rolling_window_days: payload.config.rollingWindowDays,
@@ -1656,6 +1830,16 @@ export async function listPortfolioBacktests(): Promise<PortfolioBacktestRun[]> 
   if (useMock) return []
   const body = await request<Array<Record<string, unknown>>>('/api/quant/portfolio-backtests')
   return body.map(toPortfolioRun)
+}
+
+export async function getPortfolioBacktest(runId: string): Promise<PortfolioBacktestRun> {
+  if (useMock) {
+    const run = (await listPortfolioBacktests()).find((item) => item.runId === runId)
+    if (!run) throw new Error('组合回测不存在')
+    return run
+  }
+  const item = await request<Record<string, unknown>>(`/api/quant/portfolio-backtests/${encodeURIComponent(runId)}`)
+  return toPortfolioRun(item)
 }
 
 function mockGoldQuality(): GoldQualityReport {

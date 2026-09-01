@@ -116,3 +116,4 @@ def test_auth_config_exposes_independent_research_feature_flags() -> None:
 
     assert result.global_search_enabled is True
     assert result.knowledge_qa_enabled is False
+    assert result.quant_research_enabled is True

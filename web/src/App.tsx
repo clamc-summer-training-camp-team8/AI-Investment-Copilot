@@ -1,16 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import type { ComponentType, FormEvent } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { changePassword, clearAccessToken, createDraft, createSecurity, getAccessToken, getAuthConfig, getCompanyMetricCenter, getCurrentUser, getJob, listSecurities, listThesisSummaries, login, lookupSecurities, reanalyzeProcessingJob, refreshCompanyMetrics, saveMetricMapping, setAccessToken, updateHypothesis, updateThesisDraft, uploadDocument, useMock } from './api'
 import type { AuthConfig, AuthUser } from './api'
-import { Icon, InlineError, ResearchContextPicker } from './components'
+import { Icon, InlineError, LoadingState, ResearchContextPicker } from './components'
 import { MetricEditorCard } from './metric-editor'
 import type { CompanyMetric, JobAccepted, Security, ThesisDetail, ThesisSummary } from './types'
-import { CompanyResearchPage, CoverageManagementPage, DocumentReaderPage, EvidencePage, LogicChangeImpactPage, MacroStrategyPage, NotFoundPage, OperationalWorkbenchPage, QualityPage, QuantPage, RadarPage, ResearchImpactDetailPage, ResearchUpdatesPage, ReviewsPage, ThesisListPage, ThesisPage, WorkbenchPage } from './pages'
+import { CompanyResearchPage, CoverageManagementPage, DocumentReaderPage, EvidencePage, LogicChangeImpactPage, MacroStrategyPage, NotFoundPage, OperationalWorkbenchPage, QualityPage, RadarPage, ResearchImpactDetailPage, ResearchUpdatesPage, ReviewsPage, ThesisListPage, ThesisPage, WorkbenchPage } from './pages'
 import { GlobalSearch, KnowledgeAssistant, SourceDrawer } from './research-assistant'
-import { DataCenterDocumentDetailPage, DataCenterDocumentsPage, DataCenterLayout, DataCenterMarketDatasetDetailPage, DataCenterMarketDatasetsPage, DataCenterOverviewPage, DataCenterRunsPage } from './data-center'
 import { RetrospectiveCenterPage, RetrospectiveCreatePage, RetrospectiveDetailPage, RetrospectiveEditorPage } from './retrospective'
+
+const DataCenterLayout = lazy<ComponentType<{ onUpload?: () => void }>>(() => import('./data-center').then((module) => ({ default: module.DataCenterLayout })))
+const DataCenterOverviewPage = lazy(() => import('./data-center').then((module) => ({ default: module.DataCenterOverviewPage })))
+const DataCenterDocumentsPage = lazy(() => import('./data-center').then((module) => ({ default: module.DataCenterDocumentsPage })))
+const DataCenterDocumentDetailPage = lazy(() => import('./data-center').then((module) => ({ default: module.DataCenterDocumentDetailPage })))
+const DataCenterMarketDatasetsPage = lazy(() => import('./data-center').then((module) => ({ default: module.DataCenterMarketDatasetsPage })))
+const DataCenterMarketDatasetDetailPage = lazy(() => import('./data-center').then((module) => ({ default: module.DataCenterMarketDatasetDetailPage })))
+const DataCenterRunsPage = lazy(() => import('./data-center').then((module) => ({ default: module.DataCenterRunsPage })))
+const QuantModule = lazy(() => import('./quant'))
 
 function localDateTimeValue(date = new Date()) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
@@ -130,9 +138,9 @@ function ProductApp({ user, onLogout, features }: { user: AuthUser; onLogout?: (
     ['复核与复盘', '/reviews', '04', 'check'],
     ['数据中心', '/assets', '05', 'archive'],
     ['质量中心', '/quality', '06', 'quality'],
-    ['量化实验', '/quant', '07', 'quant'],
+    ...(features.quantResearchEnabled ? [['模型与因子', '/quant', '07', 'quant'] as const] : []),
   ] as const
-  const isNavigationActive = (label: string, path: string) => location.pathname === path || (label === '变化雷达' && location.pathname.startsWith('/radar')) || (label === '投资逻辑' && location.pathname.startsWith('/theses')) || (label === '复核与复盘' && location.pathname.startsWith('/retrospective')) || (label === '数据中心' && location.pathname.startsWith('/assets'))
+  const isNavigationActive = (label: string, path: string) => location.pathname === path || (label === '变化雷达' && location.pathname.startsWith('/radar')) || (label === '投资逻辑' && location.pathname.startsWith('/theses')) || (label === '复核与复盘' && location.pathname.startsWith('/retrospective')) || (label === '数据中心' && location.pathname.startsWith('/assets')) || (label === '模型与因子' && location.pathname.startsWith('/quant'))
   const activeIndex = navigation.findIndex(([label, path]) => isNavigationActive(label, path))
   const isWorkbench = location.pathname === '/workbench'
   const isCompanyResearch = location.pathname.startsWith('/companies/')
@@ -142,16 +150,55 @@ function ProductApp({ user, onLogout, features }: { user: AuthUser; onLogout?: (
   const isRetrospective = location.pathname.startsWith('/retrospective')
   const isLogicChange = location.pathname.startsWith('/logic-changes/')
   const isDocumentReader = location.pathname.startsWith('/documents/')
-  return <div className={`app-shell ${isWorkbench ? 'workbench-shell' : ''} ${isCompanyResearch ? 'company-shell' : ''} ${isCoverageManagement ? 'coverage-shell' : ''} ${isMacroStrategy ? 'macro-shell' : ''} ${isResearchUpdates ? 'updates-shell' : ''} ${isRetrospective ? 'retrospective-shell' : ''} ${isLogicChange ? 'logic-change-shell' : ''} ${isDocumentReader ? 'document-reader-shell' : ''}`}>
+  const isDataCenter = location.pathname.startsWith('/assets')
+  return <div className={`app-shell ${isWorkbench ? 'workbench-shell' : ''} ${isCompanyResearch ? 'company-shell' : ''} ${isCoverageManagement ? 'coverage-shell' : ''} ${isMacroStrategy ? 'macro-shell' : ''} ${isResearchUpdates ? 'updates-shell' : ''} ${isRetrospective ? 'retrospective-shell' : ''} ${isLogicChange ? 'logic-change-shell' : ''} ${isDocumentReader ? 'document-reader-shell' : ''} ${isDataCenter ? 'data-center-shell' : ''}`}>
     <a className="skip-link" href="#main-content">跳到主要内容</a>
     <header className="global-topbar dashboard-topbar">
       <NavLink to="/workbench" className="brand dashboard-brand" aria-label="返回工作台"><span className="brand-mark"><Icon name="graph" size={20} /></span><span className="brand-copy"><strong>投研引擎工作台</strong><small>AI INVESTMENT COPILOT</small></span></NavLink>
       {features.globalSearchEnabled ? <GlobalSearch userId={user.userId} onAsk={features.knowledgeQaEnabled ? (text) => setAssistantDraft({ text, nonce: Date.now() }) : undefined} onOpenSource={setSourceLocator} /> : <label className="global-search"><span aria-hidden>⌕</span><input readOnly aria-label="搜索功能未启用" placeholder="搜索功能未启用" /></label>}
-      <nav className="dashboard-nav" aria-label="顶部主导航"><NavLink to="/workbench">工作台</NavLink><NavLink to="/operations">任务中心</NavLink><NavLink to="/retrospective">复盘中心</NavLink><NavLink to="/assets">数据中心</NavLink><NavLink to="/theses">模型与因子</NavLink></nav>
+      <nav className="dashboard-nav" aria-label="顶部主导航"><NavLink to="/workbench">工作台</NavLink><NavLink to="/operations">任务中心</NavLink><NavLink to="/retrospective">复盘中心</NavLink><NavLink to="/assets">数据中心</NavLink>{features.quantResearchEnabled && <NavLink to="/quant">模型与因子</NavLink>}</nav>
       <div className="dashboard-utilities"><button aria-label="收藏">☆</button><button aria-label="消息">♧<b>8</b></button><span className="dashboard-avatar">{user.userId.slice(0, 1).toUpperCase()}</span><span>{user.userId}</span>{onLogout && <button className="logout-button" onClick={onLogout}>退出</button>}</div>
     </header>
     <aside className="sidebar" aria-label="产品主导航"><div className="rail-heading"><span className="mono">0{Math.max(0, activeIndex) + 1}</span><small>RESEARCH DESK</small></div><nav>{navigation.map(([label, path, index, icon]) => <NavLink key={label} to={path} aria-label={label} className={() => isNavigationActive(label, path) ? 'active' : ''}><Icon name={icon} size={18} /><span className="nav-copy"><b>{label}</b><small className="mono">{index}</small></span></NavLink>)}</nav><div className="sidebar-footer"><span><i className="live-dot" />{useMock ? '受控 Mock 数据' : '真实公开数据'}</span><small>研究辅助 · 人工决策</small></div></aside>
-    <div className="workspace"><header className="workspace-bar"><ResearchContextPicker theses={theses.data ?? []} value={currentThesisId} onChange={(id) => id ? navigate(`/radar?thesisId=${encodeURIComponent(id)}`) : navigate('/workbench')} /><div className="top-actions"><button className="button secondary" onClick={() => openUpload()}><Icon name="upload" size={15} />上传研究资料</button><button className="button primary" onClick={() => openCreate()}><span aria-hidden>＋</span>新建研究主题</button></div></header><main className="main-content" id="main-content" tabIndex={-1}><Routes><Route path="/" element={<Navigate to="/workbench" replace />} /><Route path="/workbench" element={<WorkbenchPage onCreate={() => openCreate()} />} /><Route path="/operations" element={<OperationalWorkbenchPage />} /><Route path="/coverage" element={<CoverageManagementPage onCreate={openCreate} />} /><Route path="/macro-strategy" element={<MacroStrategyPage />} /><Route path="/updates" element={<ResearchUpdatesPage />} /><Route path="/updates/:updateId" element={<ResearchImpactDetailPage />} /><Route path="/logic-changes/:securityId/:thesisId" element={<LogicChangeImpactPage />} /><Route path="/documents/:documentId" element={<DocumentReaderPage />} /><Route path="/companies/:securityId" element={<CompanyResearchPage onCreate={openCreate} onUpload={openUpload} />} /><Route path="/radar" element={<RadarPage />} /><Route path="/radar/:evidenceId" element={<EvidencePage />} /><Route path="/theses" element={<ThesisListPage />} /><Route path="/theses/:thesisId" element={<ThesisPage />} /><Route path="/reviews" element={<ReviewsPage />} /><Route path="/retrospective" element={features.retrospectiveCenterEnabled ? <RetrospectiveCenterPage /> : <NotFoundPage />} /><Route path="/retrospective/new" element={features.retrospectiveCenterEnabled ? <RetrospectiveCreatePage /> : <NotFoundPage />} /><Route path="/retrospective/:retrospectiveId" element={features.retrospectiveCenterEnabled ? <RetrospectiveDetailPage /> : <NotFoundPage />} /><Route path="/retrospective/:retrospectiveId/edit" element={features.retrospectiveCenterEnabled ? <RetrospectiveEditorPage aiEnabled={features.retrospectiveAiDraftEnabled} /> : <NotFoundPage />} /><Route path="/assets" element={<DataCenterLayout />}><Route index element={<DataCenterOverviewPage />} /><Route path="documents" element={<DataCenterDocumentsPage />} /><Route path="documents/:documentId" element={<DataCenterDocumentDetailPage />} /><Route path="market-datasets" element={<DataCenterMarketDatasetsPage />} /><Route path="market-datasets/:datasetId" element={<DataCenterMarketDatasetDetailPage />} /><Route path="runs" element={<DataCenterRunsPage />} /></Route><Route path="/quality" element={<QualityPage />} /><Route path="/quant" element={<QuantPage />} /><Route path="*" element={<NotFoundPage />} /></Routes></main></div>
+    <div className="workspace">
+      <header className="workspace-bar"><ResearchContextPicker theses={theses.data ?? []} value={currentThesisId} onChange={(id) => id ? navigate(`/radar?thesisId=${encodeURIComponent(id)}`) : navigate('/workbench')} /><div className="top-actions"><button className="button secondary" onClick={() => openUpload()}><Icon name="upload" size={15} />上传研究资料</button><button className="button primary" onClick={() => openCreate()}><span aria-hidden>＋</span>新建研究主题</button></div></header>
+      <main className="main-content" id="main-content" tabIndex={-1}>
+        <Suspense fallback={<LoadingState text="正在加载功能模块…" />}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/workbench" replace />} />
+            <Route path="/workbench" element={<WorkbenchPage onCreate={() => openCreate()} retrospectiveEnabled={features.retrospectiveCenterEnabled} quantEnabled={features.quantResearchEnabled} />} />
+            <Route path="/operations" element={<OperationalWorkbenchPage />} />
+            <Route path="/coverage" element={<CoverageManagementPage onCreate={openCreate} />} />
+            <Route path="/macro-strategy" element={<MacroStrategyPage />} />
+            <Route path="/updates" element={<ResearchUpdatesPage />} />
+            <Route path="/updates/:updateId" element={<ResearchImpactDetailPage />} />
+            <Route path="/logic-changes/:securityId/:thesisId" element={<LogicChangeImpactPage />} />
+            <Route path="/documents/:documentId" element={<DocumentReaderPage />} />
+            <Route path="/companies/:securityId" element={<CompanyResearchPage onCreate={openCreate} onUpload={openUpload} />} />
+            <Route path="/radar" element={<RadarPage />} />
+            <Route path="/radar/:evidenceId" element={<EvidencePage />} />
+            <Route path="/theses" element={<ThesisListPage />} />
+            <Route path="/theses/:thesisId" element={<ThesisPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/retrospective" element={features.retrospectiveCenterEnabled ? <RetrospectiveCenterPage /> : <NotFoundPage />} />
+            <Route path="/retrospective/new" element={features.retrospectiveCenterEnabled ? <RetrospectiveCreatePage /> : <NotFoundPage />} />
+            <Route path="/retrospective/:retrospectiveId" element={features.retrospectiveCenterEnabled ? <RetrospectiveDetailPage /> : <NotFoundPage />} />
+            <Route path="/retrospective/:retrospectiveId/edit" element={features.retrospectiveCenterEnabled ? <RetrospectiveEditorPage aiEnabled={features.retrospectiveAiDraftEnabled} /> : <NotFoundPage />} />
+            <Route path="/assets" element={<DataCenterLayout onUpload={() => openUpload()} />}>
+              <Route index element={<DataCenterOverviewPage />} />
+              <Route path="documents" element={<DataCenterDocumentsPage />} />
+              <Route path="documents/:documentId" element={<DataCenterDocumentDetailPage />} />
+              <Route path="market-datasets" element={<DataCenterMarketDatasetsPage />} />
+              <Route path="market-datasets/:datasetId" element={<DataCenterMarketDatasetDetailPage />} />
+              <Route path="runs" element={<DataCenterRunsPage />} />
+            </Route>
+            <Route path="/quality" element={<QualityPage />} />
+            <Route path="/quant/*" element={features.quantResearchEnabled ? <QuantModule /> : <NotFoundPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </main>
+    </div>
     <nav className="mobile-nav" aria-label="移动端主导航">{navigation.map(([label, path, , icon]) => <NavLink key={label} to={path} aria-label={label} className={() => isNavigationActive(label, path) ? 'active' : ''}><Icon name={icon} size={18} /><span>{label}</span></NavLink>)}</nav>
     <footer className="disclaimer">AI 生成内容仅作为研究候选 · 所有证据、关系与状态变更均需人工确认<span className="mono">AUDITABLE / TRACEABLE / HUMAN-GATED</span></footer>
     {features.knowledgeQaEnabled && <KnowledgeAssistant currentThesisId={currentThesisId} theses={theses.data ?? []} prefill={assistantDraft} onOpenSource={setSourceLocator} />}

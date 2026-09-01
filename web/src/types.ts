@@ -14,6 +14,7 @@ export interface ValidationItem {
 export interface EvidenceFeedItem {
   evidenceId: string
   relationId: string
+  sourceDocumentId: string
   securityId: string
   securityName: string
   thesisId: string
@@ -832,6 +833,21 @@ export interface QuantMarketDataset {
   capabilities: Record<string, boolean>
   limitations: string[]
   status: string
+  frozenBy?: string
+  frozenAt?: string
+}
+
+export interface QuantSecurityMetadata {
+  securityId: string
+  market: string
+  currency: string
+  industry: string
+  benchmarkId: string
+  coverageStart: string
+  coverageEnd: string
+  rowCount: number
+  marketCapCount: number
+  marketCapComplete: boolean
 }
 
 export interface QuantMarketDatasetDetail extends QuantMarketDataset {
@@ -844,6 +860,7 @@ export interface QuantMarketDatasetDetail extends QuantMarketDataset {
   adjustmentAnchorDate?: string
   availableSignalSets: QuantSignalSet[]
   backtestCount: number
+  securityMetadata: QuantSecurityMetadata[]
 }
 
 export interface QuantSignalSet {
@@ -855,6 +872,34 @@ export interface QuantSignalSet {
   humanConfirmedOnly: boolean
   evaluationTrack: string
   status: string
+  frozenBy?: string
+  frozenAt?: string
+}
+
+export interface QuantSignalDetail {
+  signalId: string
+  securityId: string
+  disclosedAt: string
+  generatedAt: string
+  direction: string
+  strength: string
+  confidence: number
+  confirmationStatus: string
+  sourceEvidenceId: string
+  sourceRelationId: string
+  sourceRelationStatus: string
+  thesisId: string
+  hypothesisId: string
+  sourceLocator: string
+  sourceDocumentId?: string
+  sourceDocumentTitle?: string
+  confidenceRole?: string
+  confidenceUsedForAlphaWeight: boolean
+}
+
+export interface QuantSignalSetDetail extends QuantSignalSet {
+  visibleSignalCount: number
+  signals: QuantSignalDetail[]
 }
 
 export interface QuantCatalog {
@@ -869,10 +914,52 @@ export interface QuantCatalog {
   }
 }
 
+export interface QuantFactorDefinition {
+  factorId: string
+  name: string
+  category: string
+  description: string
+  formula: string
+  frequency: string
+  coverageScope: string
+  inputFields: string[]
+  status: 'active' | 'gated' | 'planned' | string
+  version: string
+  methodologyVersion: string
+  owner: string
+  publishedAt: string
+  deprecatedAt?: string
+  enabledByDefault: boolean
+  limitations: string[]
+}
+
+export interface QuantModelTemplate {
+  templateId: string
+  name: string
+  version: string
+  status: 'active' | 'gated' | 'planned' | string
+  description: string
+  methodologyVersion: string
+  alphaFactorIds: string[]
+  controlFactorIds: string[]
+  defaultConfig: PortfolioBacktestRequest['config']
+  requiredConfig: Partial<PortfolioBacktestRequest['config']>
+  sampleGate: {
+    minimumUniqueSecurities: number
+    minimumObservations: number
+    minimumActiveTradingDays: number
+  }
+  owner: string
+  publishedAt?: string
+  deprecatedAt?: string
+  limitations: string[]
+}
+
 export interface PortfolioBacktestRequest {
   name: string
   marketDatasetId: string
   signalSetId: string
+  modelTemplateId: string
   securityIds: string[]
   start?: string
   end?: string
@@ -917,6 +1004,16 @@ export interface PortfolioBacktestRun {
       industry: Record<string, number | string>
       factorExposure: Record<string, number | string>
       residual: number | string
+    }
+    validationQuality?: {
+      status: string
+      label: string
+      alphaClaimAllowed: boolean
+      reasons: string[]
+      uniqueSecurityCount: number
+      nonzeroSignalCount: number
+      observationCount: number
+      activeTradingDays: number
     }
     diagnostics: {
       acceptedSignalCount: number

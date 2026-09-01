@@ -7,9 +7,15 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 
 from sqlalchemy import select
 
+from analytics.pipelines.quant_research_universe import (
+    QuantResearchUniverse,
+    QuantSampleProtocol,
+    load_quant_research_governance,
+)
 from app.core.domain import UnitOfWork
 from app.core.timeutil import next_observable_day, to_business
 from app.db.models.core import Evidence, EvidenceRelation
@@ -36,6 +42,9 @@ class ConfirmedSignalSetPlan:
     first_eligible_market_date: str
     version: str
     signals: tuple[FrozenSignalInput, ...]
+    universe_id: str | None = None
+    protocol_id: str | None = None
+    partition_counts: tuple[tuple[str, int], ...] = ()
 
 
 def plan_confirmed_signal_set(
@@ -47,17 +56,28 @@ def plan_confirmed_signal_set(
     as_of: datetime,
     expected_signal_count: int,
     required_relation_ids: frozenset[str],
+    universe: QuantResearchUniverse | None = None,
+    protocol: QuantSampleProtocol | None = None,
 ) -> ConfirmedSignalSetPlan:
     if as_of.tzinfo is None:
         raise ValueError("as-of 必须包含时区")
     if expected_signal_count < 1:
         raise ValueError("expected-signal-count 必须大于零")
+    if (universe is None) != (protocol is None):
+        raise ValueError("P2 研究池与样本协议必须同时提供")
+    if universe is not None and protocol is not None and universe.universe_id != protocol.universe_id:
+        raise ValueError("P2 研究池与样本协议版本不一致")
     dataset = uow.quant.get_market_dataset(market_dataset_id)
     if dataset is None or dataset.status != "frozen":
         raise ValueError("指定行情数据集不存在或尚未冻结")
 
     cutoff = to_business(as_of)
     eligible = [item for item in sources if to_business(item.reviewed_at) <= cutoff]
+    if protocol is not None:
+        prospective_start = to_business(protocol.prospective_start_at)
+        eligible = [
+            item for item in eligible if to_business(item.reviewed_at) >= prospective_start
+        ]
     eligible.sort(key=lambda item: (to_business(item.reviewed_at), item.relation_id))
     present_relations = {item.relation_id for item in eligible}
     missing_relations = sorted(required_relation_ids - present_relations)
@@ -68,8 +88,26 @@ def plan_confirmed_signal_set(
             f"人工确认信号数量不符: expected={expected_signal_count} actual={len(eligible)}"
         )
 
+    allowed_securities = (
+        {company.security_id for company in universe.companies} if universe is not None else None
+    )
+    seen_relations: set[str] = set()
+    seen_evidence: set[tuple[str, str]] = set()
+    partition_counts: dict[str, int] = {}
+
     signals: list[FrozenSignalInput] = []
     for item in eligible:
+        if item.relation_id in seen_relations:
+            raise ValueError(f"独立事件关系重复: {item.relation_id}")
+        seen_relations.add(item.relation_id)
+        deduplication_key = (item.security_id, item.evidence_id)
+        if deduplication_key in seen_evidence:
+            raise ValueError(
+                f"同一证券和证据不能重复计入前瞻样本: {item.security_id}/{item.evidence_id}"
+            )
+        seen_evidence.add(deduplication_key)
+        if allowed_securities is not None and item.security_id not in allowed_securities:
+            raise ValueError(f"{item.relation_id}: 证券不在 P2 前瞻研究池")
         if item.security_id not in dataset.securities:
             raise ValueError(f"{item.relation_id}: 证券不在指定行情数据集中")
         if to_business(item.reviewed_at) < to_business(item.disclosed_at):
@@ -90,6 +128,9 @@ def plan_confirmed_signal_set(
                 source_relation_id=item.relation_id,
             )
         )
+        if protocol is not None:
+            partition = protocol.partition_for(to_business(item.reviewed_at))
+            partition_counts[partition] = partition_counts.get(partition, 0) + 1
 
     first_eligible_market_date = next_observable_day(max(item.generated_at for item in signals))
     if dataset.coverage_end < first_eligible_market_date:
@@ -103,6 +144,9 @@ def plan_confirmed_signal_set(
         first_eligible_market_date=first_eligible_market_date.isoformat(),
         version=version,
         signals=tuple(signals),
+        universe_id=universe.universe_id if universe is not None else None,
+        protocol_id=protocol.protocol_id if protocol is not None else None,
+        partition_counts=tuple(sorted(partition_counts.items())),
     )
 
 
@@ -144,12 +188,22 @@ def main() -> None:
     parser.add_argument("--expected-signal-count", required=True, type=int)
     parser.add_argument("--required-relation-id", action="append", default=[])
     parser.add_argument("--frozen-by", required=True)
+    parser.add_argument("--research-universe", type=Path)
+    parser.add_argument("--sample-protocol", type=Path)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--apply", action="store_true")
     args = parser.parse_args()
 
     as_of = datetime.fromisoformat(args.as_of)
+    if bool(args.research_universe) != bool(args.sample_protocol):
+        raise SystemExit("--research-universe 与 --sample-protocol 必须同时提供")
+    universe = None
+    protocol = None
+    if args.research_universe and args.sample_protocol:
+        universe, protocol = load_quant_research_governance(
+            args.research_universe, args.sample_protocol
+        )
     with session_scope() as session:
         uow = build_uow(session)
         dataset = uow.quant.get_market_dataset(args.market_dataset_id)
@@ -164,6 +218,8 @@ def main() -> None:
                 as_of=as_of,
                 expected_signal_count=args.expected_signal_count,
                 required_relation_ids=frozenset(args.required_relation_id),
+                universe=universe,
+                protocol=protocol,
             )
         except ValueError as exc:
             raise SystemExit(str(exc)) from exc
@@ -183,6 +239,9 @@ def main() -> None:
             "market_coverage_end": plan.market_coverage_end,
             "first_eligible_market_date": plan.first_eligible_market_date,
             "version": plan.version,
+            "universe_id": plan.universe_id,
+            "protocol_id": plan.protocol_id,
+            "partition_counts": dict(plan.partition_counts),
             "signal_count": len(plan.signals),
             "signals": [asdict(item) for item in plan.signals],
             "signal_set_id": record.signal_set_id if record else None,

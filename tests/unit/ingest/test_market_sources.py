@@ -54,6 +54,23 @@ class FakeAkshare:
     def stock_zh_index_daily_tx(self, **kwargs: object) -> FakeFrame:
         return self.stock_zh_a_hist_tx(**kwargs)
 
+    def stock_history_dividend_detail(self, **kwargs: object) -> FakeFrame:
+        assert kwargs == {"symbol": "688981"}
+        return FakeFrame(
+            [
+                {
+                    "announcement": date(2026, 5, 20),
+                    "bonus_per_10": 1,
+                    "transfer_per_10": 2,
+                    "cash_per_10": 3,
+                    "status": "implemented",
+                    "ex_date": date(2026, 5, 27),
+                    "record_date": date(2026, 5, 26),
+                    "listing_date": date(2026, 5, 28),
+                }
+            ]
+        )
+
 
 class FakeAkshareHands(FakeAkshare):
     def stock_zh_a_hist_tx(self, **kwargs: object) -> FakeFrame:
@@ -99,6 +116,18 @@ def test_akshare按成交额量纲识别腾讯手数并转换成股() -> None:
     )
     assert rows[0].volume_shares == Decimal(10000)
     assert rows[0].source_interface.endswith(".volume_x100")
+
+
+def test_akshare结构化分红送转事件只作独立审计() -> None:
+    source = AksharePrimarySource(FakeAkshare())
+    actions = source.a_share_corporate_actions(
+        COMPANY_BY_ID["688981"], start=date(2026, 1, 1), end=date(2026, 8, 31)
+    )
+    assert len(actions) == 1
+    assert actions[0].action_type == "cash_dividend_and_share_distribution"
+    assert actions[0].ratio == Decimal("0.3")
+    assert actions[0].cash_amount == Decimal("0.3")
+    assert actions[0].ex_date == date(2026, 5, 27)
 
 
 class FakePro:

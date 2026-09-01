@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime, timedelta, timezone
 
 import pytest
 
+from analytics.pipelines.quant_research_universe import load_quant_research_governance
 from app.core.domain import QuantMarketDatasetRecord
 from scripts.freeze_confirmed_relation_signal_set import (
     ConfirmedRelationSignalSource,
@@ -96,4 +97,57 @@ def test_signal_set_plan_rejects_missing_required_relation() -> None:
             as_of=datetime(2026, 9, 1, tzinfo=UTC),
             expected_signal_count=2,
             required_relation_ids=frozenset({"REL-3"}),
+        )
+
+
+def test_p2协议不把前瞻起点之前的确认关系算入样本() -> None:
+    universe, protocol = load_quant_research_governance()
+    with pytest.raises(ValueError, match="actual=0"):
+        plan_confirmed_signal_set(
+            _uow(date(2026, 9, 2)),
+            sources=_sources(),
+            market_dataset_id="MDS-v4",
+            version="p2-prospective-v1",
+            as_of=datetime(2026, 9, 2, tzinfo=UTC),
+            expected_signal_count=3,
+            required_relation_ids=frozenset(),
+            universe=universe,
+            protocol=protocol,
+        )
+
+
+def test_p2协议记录预注册分区并阻断重复证据() -> None:
+    universe, protocol = load_quant_research_governance()
+    business_tz = timezone(timedelta(hours=8))
+    sources = [
+        _source("REL-P2-1", "600276", datetime(2026, 9, 1, 10, tzinfo=business_tz)),
+        _source("REL-P2-2", "688981", datetime(2026, 9, 1, 11, tzinfo=business_tz)),
+    ]
+    plan = plan_confirmed_signal_set(
+        _uow(date(2026, 9, 2)),
+        sources=sources,
+        market_dataset_id="MDS-v4",
+        version="p2-prospective-v1",
+        as_of=datetime(2026, 9, 2, tzinfo=UTC),
+        expected_signal_count=2,
+        required_relation_ids=frozenset(),
+        universe=universe,
+        protocol=protocol,
+    )
+    assert plan.universe_id == universe.universe_id
+    assert plan.protocol_id == protocol.protocol_id
+    assert dict(plan.partition_counts) == {"development": 2}
+
+    duplicated = [sources[0], ConfirmedRelationSignalSource(**{**sources[1].__dict__, "evidence_id": sources[0].evidence_id, "security_id": sources[0].security_id})]
+    with pytest.raises(ValueError, match="不能重复计入"):
+        plan_confirmed_signal_set(
+            _uow(date(2026, 9, 2)),
+            sources=duplicated,
+            market_dataset_id="MDS-v4",
+            version="p2-prospective-v1",
+            as_of=datetime(2026, 9, 2, tzinfo=UTC),
+            expected_signal_count=2,
+            required_relation_ids=frozenset(),
+            universe=universe,
+            protocol=protocol,
         )

@@ -11,8 +11,7 @@ from hashlib import sha256
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from analytics.pipelines.universe import COMPANIES
-from app.core.config import PROJECT_ROOT, settings
+from analytics.pipelines.universe import COMPANIES, Company
 from app.ingest.market_source_retry import MarketRetryEvent, call_market_source
 from app.ingest.market_source_secrets import (
     read_tushare_credentials_file,
@@ -23,7 +22,15 @@ from app.ingest.market_sources import MarketSourceError, TushareSupplementSource
 from app.services.market_data import FrozenJsonMarketData
 from scripts.build_akshare_quant_market_assets import load_tushare_permission_profile
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ROOT = PROJECT_ROOT / ".runtime" / "quant-reference-cache"
+DEFAULT_CURRENT_MANIFEST = (
+    PROJECT_ROOT
+    / "real_data"
+    / "quant"
+    / "akshare-qfq-tushare120-20260830-v1"
+    / "manifest.json"
+)
 DEFAULT_PERMISSION_PROFILE = (
     PROJECT_ROOT
     / "real_data"
@@ -196,6 +203,7 @@ def run(
     trade_cal_minimum_interval_seconds: int = 3600,
     max_attempts: int = 3,
     retry_delay_seconds: float = 1.0,
+    companies: tuple[Company, ...] = COMPANIES,
 ) -> dict[str, object]:
     current_time = now or datetime.now(ZoneInfo("Asia/Shanghai"))
     run_id = f"QRC-{sha256(current_time.isoformat().encode()).hexdigest()[:20]}"
@@ -287,7 +295,7 @@ def run(
                     # 低频配额接口失败时不自动重试；下一目标交易日再尝试。
                     snapshot = call_market_source(
                         f"tushare.daily_basic.{target_date}",
-                        lambda: source.daily_basic_snapshot(COMPANIES, trading_date=target_date),
+                        lambda: source.daily_basic_snapshot(companies, trading_date=target_date),
                         max_attempts=1,
                         wait_seconds=retry_delay_seconds,
                         secrets=(token,),
@@ -308,7 +316,7 @@ def run(
                             "permission_profile_probed_at": permission_profile.get("probed_at"),
                             "upstream_row_count": snapshot.upstream_row_count,
                             "coverage": {
-                                "requested": len([item for item in COMPANIES if not item.is_hk]),
+                                "requested": len([item for item in companies if not item.is_hk]),
                                 "observed": len(snapshot.by_security),
                                 "missing_security_ids": snapshot.missing_security_ids,
                             },
@@ -340,7 +348,7 @@ def run(
                         "path": daily_relative,
                         "trading_date": target_date,
                         "coverage": {
-                            "requested": len([item for item in COMPANIES if not item.is_hk]),
+                            "requested": len([item for item in companies if not item.is_hk]),
                             "observed": len(snapshot.by_security),
                             "missing_security_ids": snapshot.missing_security_ids,
                         },
@@ -533,6 +541,7 @@ def backfill_history(
     permission_profile_path: Path = DEFAULT_PERMISSION_PROFILE,
     max_attempts: int = 2,
     retry_delay_seconds: float = 1.0,
+    companies: tuple[Company, ...] = COMPANIES,
 ) -> dict[str, object]:
     """按证券少量区间调用回填市值和涨跌停，写入不可变参考缓存。"""
 
@@ -575,7 +584,7 @@ def backfill_history(
         _bind_source(state, api_origin=source.api_origin)
         _atomic_write(cache_root / "state.json", state)
         security_results: list[dict[str, object]] = []
-        for company in (item for item in COMPANIES if not item.is_hk):
+        for company in (item for item in companies if not item.is_hk):
             relative = (
                 f"reference_history/{company.security_id}-"
                 f"{info.coverage_start}-{info.coverage_end}.json"
@@ -583,10 +592,12 @@ def backfill_history(
             existing = _registered_file(cache_root, state, relative)
             if existing is not None:
                 payload = json.loads(existing.read_text(encoding="utf-8"))
+                cached_status = str(payload.get("status") or "partial")
                 security_results.append(
                     {
                         "security_id": company.security_id,
-                        "status": "reused",
+                        "status": "complete" if cached_status == "complete" else "partial",
+                        "reused": True,
                         "path": relative,
                         "coverage": payload.get("coverage"),
                     }
@@ -762,7 +773,7 @@ def backfill_history(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--current-manifest", type=Path, default=settings.quant_default_market_manifest
+        "--current-manifest", type=Path, default=DEFAULT_CURRENT_MANIFEST
     )
     parser.add_argument("--cache-root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--tushare-token-file", type=Path)

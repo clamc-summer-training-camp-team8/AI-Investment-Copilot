@@ -8,7 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from app.calc.backtest import (
     BacktestConfig,
@@ -33,7 +33,9 @@ from app.core.domain import (
     UnitOfWork,
 )
 from app.core.timeutil import now
+from app.services.errors import NotVisible
 from app.services.market_data import FrozenJsonMarketData, MarketDataError
+from app.services.permission import Actor, can_read_document, ensure_thesis_visible
 
 _DIRECTION_SIGN = {"支持": Decimal(1), "冲突": Decimal(-1), "中性": Decimal(0)}
 _STRENGTH_WEIGHT = {"高": Decimal(1), "中": Decimal("0.7"), "低": Decimal("0.4")}
@@ -79,6 +81,60 @@ class FrozenSignalInput:
     source_relation_id: str
 
 
+@dataclass(frozen=True)
+class QuantFactorDefinition:
+    factor_id: str
+    name: str
+    category: str
+    description: str
+    formula: str
+    frequency: str
+    coverage_scope: str
+    input_fields: tuple[str, ...]
+    status: str
+    version: str
+    methodology_version: str
+    owner: str
+    published_at: date
+    deprecated_at: date | None
+    enabled_by_default: bool
+    limitations: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class QuantModelTemplateDefinition:
+    template_id: str
+    name: str
+    version: str
+    status: str
+    description: str
+    methodology_version: str
+    alpha_factor_ids: tuple[str, ...]
+    control_factor_ids: tuple[str, ...]
+    default_config: dict[str, Any]
+    required_config: dict[str, Any]
+    sample_gate: dict[str, int]
+    owner: str
+    published_at: date | None
+    deprecated_at: date | None
+    limitations: tuple[str, ...]
+
+
+class _FactorDefinitionCommon(TypedDict):
+    version: str
+    methodology_version: str
+    owner: str
+    published_at: date
+    deprecated_at: date | None
+
+
+class _ModelTemplateCommon(TypedDict):
+    methodology_version: str
+    owner: str
+    deprecated_at: date | None
+    sample_gate: dict[str, int]
+
+
 def _signal_score(signal: QuantSignalInput) -> Decimal:
     try:
         sign = _DIRECTION_SIGN[signal.direction]
@@ -86,6 +142,259 @@ def _signal_score(signal: QuantSignalInput) -> Decimal:
     except KeyError as exc:
         raise ValueError(f"未知信号方向或强度: {exc.args[0]}") from exc
     return sign * strength * signal.confidence
+
+
+def governed_signal_score(signal: QuantSignalInput) -> Decimal:
+    """组合研究只使用人工确认方向和强度；AI 置信度仅作诊断元数据。"""
+
+    try:
+        sign = _DIRECTION_SIGN[signal.direction]
+        strength = _STRENGTH_WEIGHT[signal.strength]
+    except KeyError as exc:
+        raise ValueError(f"未知信号方向或强度: {exc.args[0]}") from exc
+    return sign * strength
+
+
+def quant_factor_catalog() -> tuple[QuantFactorDefinition, ...]:
+    """返回受治理因子目录；计划项不会被伪装为当前已启用能力。"""
+
+    common: _FactorDefinitionCommon = {
+        "version": "1.0.0",
+        "methodology_version": "portfolio-research-v3",
+        "owner": "quant-research",
+        "published_at": date(2026, 9, 1),
+        "deprecated_at": None,
+    }
+    return (
+        QuantFactorDefinition(
+            factor_id="confirmed_event_direction_strength",
+            name="人工确认事件方向与强度",
+            category="alpha_input",
+            description="将人工确认的支持/冲突方向与高/中/低强度映射为组合研究分数。",
+            formula="direction_sign × strength_weight",
+            frequency="事件驱动",
+            coverage_scope="已冻结且可追溯的人工确认信号",
+            input_fields=("direction", "strength", "generated_at", "security_id"),
+            status="active",
+            enabled_by_default=True,
+            limitations=(
+                "AI 判断置信度不参与 Alpha 权重",
+                "当前信号覆盖不足以证明稳定 Alpha",
+            ),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="industry_neutralization",
+            name="行业中性约束",
+            category="risk_control",
+            description="在每个有信号行业内去均值，控制行业方向性暴露。",
+            formula="score - mean(score within industry)",
+            frequency="每次再平衡",
+            coverage_scope="所选证券的点时行业截面",
+            input_fields=("industry", "signal_score"),
+            status="gated",
+            enabled_by_default=False,
+            limitations=("每个有信号行业至少需要两只证券；单例行业将硬阻断",),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="point_in_time_market_cap_rank",
+            name="点时市值秩中性",
+            category="risk_control",
+            description="按再平衡时点市值秩残差化信号，避免使用当前市值回填历史。",
+            formula="residual(score ~ centered_rank(point_in_time_market_cap))",
+            frequency="每次再平衡",
+            coverage_scope="点时市值完整的纯 A 股截面",
+            input_fields=("point_in_time_market_cap", "signal_score"),
+            status="gated",
+            enabled_by_default=False,
+            limitations=("截面至少三只证券", "任何点时市值缺口都会硬阻断"),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="adv20_capacity",
+            name="ADV20 容量约束",
+            category="execution_constraint",
+            description="使用过去 20 个可用证券日平均成交额限制目标资金占用。",
+            formula="abs(target_notional) ≤ ADV20 × participation_rate",
+            frequency="每次再平衡",
+            coverage_scope="成交额完整的冻结行情",
+            input_fields=("traded_notional", "initial_capital", "participation_rate"),
+            status="active",
+            enabled_by_default=True,
+            limitations=("是研究容量近似，不等同于真实冲击成本模型",),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="market_beta",
+            name="市场 Beta",
+            category="diagnostic",
+            description="在有效组合暴露日估计组合收益相对冻结基准收益的 Beta。",
+            formula="cov(portfolio_return, benchmark_return) / var(benchmark_return)",
+            frequency="每次运行",
+            coverage_scope="有效暴露期",
+            input_fields=("portfolio_daily_return", "benchmark_daily_return"),
+            status="active",
+            enabled_by_default=True,
+            limitations=("样本不足或基准方差为零时不输出",),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="average_net_exposure",
+            name="平均净暴露",
+            category="diagnostic",
+            description="汇总组合多空权重净额，辅助识别方向性市场暴露。",
+            formula="mean(sum(portfolio_weight by trading day))",
+            frequency="每次运行",
+            coverage_scope="完整回测区间",
+            input_fields=("portfolio_weight", "trading_date"),
+            status="active",
+            enabled_by_default=True,
+            limitations=("当前为全回测区间平均，现金期较长时必须结合有效暴露期解释",),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="momentum_20_60_120",
+            name="20/60/120 日动量",
+            category="alpha_candidate",
+            description="用于检验事件信号与价格趋势是否具有增量解释力。",
+            formula="adjusted_close[t] / adjusted_close[t-window] - 1",
+            frequency="日频",
+            coverage_scope="待扩大至至少 20–30 只证券的事前样本",
+            input_fields=("adjusted_close", "trading_calendar"),
+            status="planned",
+            enabled_by_default=False,
+            limitations=("尚未进入当前组合权重或结果宣称",),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="realized_volatility_20_60",
+            name="20/60 日已实现波动率",
+            category="risk_candidate",
+            description="用于波动缩放、风险分层与事件后不确定性诊断。",
+            formula="std(daily_return, window) × sqrt(252)",
+            frequency="日频",
+            coverage_scope="待扩大后的同币种研究证券池",
+            input_fields=("adjusted_close", "trading_calendar"),
+            status="planned",
+            enabled_by_default=False,
+            limitations=("尚未进入当前组合权重或风险预算",),
+            **common,
+        ),
+        QuantFactorDefinition(
+            factor_id="point_in_time_fundamental_quality",
+            name="点时基本面质量",
+            category="alpha_candidate",
+            description="拟将盈利质量、成长和估值以公告可得时点对齐后用于增量检验。",
+            formula="TBD after point-in-time fundamental data admission",
+            frequency="财报事件/低频",
+            coverage_scope="待准入的点时财务与估值数据",
+            input_fields=("filing_disclosed_at", "fundamental_value", "security_id"),
+            status="planned",
+            enabled_by_default=False,
+            limitations=("当前无合格点时基本面数据，禁止使用最新财务值回填历史",),
+            **common,
+        ),
+    )
+
+
+_DEFAULT_MODEL_TEMPLATE_ID = "confirmed-event-research-v3"
+
+
+def _default_portfolio_config(*, neutralize_industry: bool = False) -> dict[str, Any]:
+    return asdict(PortfolioConfig(neutralize_industry=neutralize_industry))
+
+
+def quant_model_templates() -> tuple[QuantModelTemplateDefinition, ...]:
+    """返回只读模型模板版本；未发布模板不能用于运行。"""
+
+    sample_gate = {
+        "minimum_unique_securities": 20,
+        "minimum_observations": 100,
+        "minimum_active_trading_days": 60,
+    }
+    common: _ModelTemplateCommon = {
+        "methodology_version": "portfolio-research-v3",
+        "owner": "quant-research",
+        "deprecated_at": None,
+        "sample_gate": sample_gate,
+    }
+    return (
+        QuantModelTemplateDefinition(
+            template_id=_DEFAULT_MODEL_TEMPLATE_ID,
+            name="人工确认事件研究",
+            version="3.0.0",
+            status="active",
+            description="以人工确认的事件方向与强度构建组合，并执行滚动样本外、成本、容量和风险诊断。",
+            alpha_factor_ids=("confirmed_event_direction_strength",),
+            control_factor_ids=(
+                "adv20_capacity",
+                "industry_neutralization",
+                "point_in_time_market_cap_rank",
+            ),
+            default_config=_default_portfolio_config(),
+            required_config={},
+            published_at=date(2026, 9, 1),
+            limitations=(
+                "AI 判断置信度不参与 Alpha 权重",
+                "达到样本门槛前只能用于工程验证和研究诊断",
+                "行业与市值中性属于可选控制，启用后仍须通过对应数据门禁",
+            ),
+            **common,
+        ),
+        QuantModelTemplateDefinition(
+            template_id="confirmed-event-industry-neutral-v3",
+            name="人工确认事件研究 · 行业中性",
+            version="3.0.0",
+            status="gated",
+            description="在人工确认事件研究基础上强制行业内去均值，适合具备足够行业截面的信号集。",
+            alpha_factor_ids=("confirmed_event_direction_strength",),
+            control_factor_ids=("industry_neutralization", "adv20_capacity"),
+            default_config=_default_portfolio_config(neutralize_industry=True),
+            required_config={"neutralize_industry": True},
+            published_at=date(2026, 9, 1),
+            limitations=(
+                "每个有非零信号的行业至少需要两只证券",
+                "当前稀疏信号集存在单例行业时会在运行前硬阻断",
+            ),
+            **common,
+        ),
+        QuantModelTemplateDefinition(
+            template_id="event-momentum-overlay-v1",
+            name="事件信号 × 动量增量检验",
+            version="1.0.0-draft",
+            status="planned",
+            description="检验 20/60/120 日动量对人工确认事件信号的增量解释力。",
+            alpha_factor_ids=(
+                "confirmed_event_direction_strength",
+                "momentum_20_60_120",
+            ),
+            control_factor_ids=("adv20_capacity",),
+            default_config=_default_portfolio_config(),
+            required_config={},
+            published_at=None,
+            limitations=(
+                "尚无达到准入要求的事前动量特征资产",
+                "仅展示规划，不可发起运行或用于有效性宣称",
+            ),
+            **common,
+        ),
+    )
+
+
+def resolve_quant_model_template(
+    template_id: str, config: PortfolioConfig
+) -> QuantModelTemplateDefinition:
+    templates = {item.template_id: item for item in quant_model_templates()}
+    template = templates.get(template_id)
+    if template is None:
+        raise ValueError("模型模板不存在或版本已撤回")
+    if template.status == "planned" or template.published_at is None:
+        raise ValueError("模型模板尚未发布，不能用于组合验证")
+    for field, expected in template.required_config.items():
+        if getattr(config, field, None) != expected:
+            raise ValueError(f"模型模板要求参数 {field}={str(expected).lower()}")
+    return template
 
 
 def _run_id(
@@ -325,6 +634,7 @@ def market_dataset_detail(
         for item in uow.quant.list_backtests(requested_by, limit=1000)
         if item.market_dataset_id == dataset_id
     ]
+    market_data = FrozenJsonMarketData(manifest_path)
     return {
         "record": record,
         "is_default": default_dataset_id == dataset_id,
@@ -337,6 +647,7 @@ def market_dataset_detail(
         "adjustment_anchor_date": manifest.get("adjustment_anchor_date"),
         "available_signal_sets": uow.quant.list_signal_sets(),
         "backtest_count": len(runs),
+        "security_metadata": market_data.security_metadata(),
     }
 
 
@@ -429,6 +740,62 @@ def freeze_signal_set(
     return record
 
 
+def signal_set_detail(
+    uow: UnitOfWork,
+    *,
+    signal_set_id: str,
+    actor: Actor,
+) -> dict[str, object]:
+    """返回当前操作者可追溯的冻结信号，不借信号集绕过证据权限。"""
+
+    record = uow.quant.get_signal_set(signal_set_id)
+    if record is None:
+        raise LookupError("研究信号集不存在")
+
+    visible_signals: list[dict[str, object]] = []
+    for raw in record.signals:
+        evidence_id = str(raw.get("source_evidence_id", ""))
+        relation_id = str(raw.get("source_relation_id", ""))
+        evidence = uow.evidence.get(evidence_id)
+        relation = uow.relations.get(relation_id)
+        if evidence is None or relation is None or relation.evidence_id != evidence_id:
+            continue
+        thesis = uow.thesis.get(relation.thesis_id)
+        if thesis is None:
+            continue
+        try:
+            ensure_thesis_visible(
+                actor,
+                thesis_id=thesis.thesis_id,
+                owner=thesis.owner,
+                visibility=thesis.visibility,
+                team=thesis.team,
+            )
+        except NotVisible:
+            continue
+        if not can_read_document(actor, visibility_label=evidence.source_visibility_label):
+            continue
+        visible_signals.append(
+            {
+                **raw,
+                "source_relation_status": relation.status.value,
+                "thesis_id": relation.thesis_id,
+                "hypothesis_id": relation.hypothesis_id,
+                "source_locator": evidence.evidence_locator,
+                "source_document_id": evidence.source_document_id,
+                "source_document_title": evidence.source_document_title,
+            }
+        )
+
+    if record.signals and not visible_signals:
+        raise LookupError("研究信号集不存在或无访问权限")
+    return {
+        "record": record,
+        "visible_signal_count": len(visible_signals),
+        "signals": visible_signals,
+    }
+
+
 def _manifest_path(record: QuantMarketDatasetRecord) -> Path:
     path = (PROJECT_ROOT / record.manifest_path).resolve()
     if PROJECT_ROOT.resolve() not in path.parents:
@@ -466,6 +833,7 @@ def run_versioned_portfolio_backtest(
     end: date | None,
     config: PortfolioConfig,
     requested_by: str,
+    model_template_id: str = _DEFAULT_MODEL_TEMPLATE_ID,
 ) -> QuantBacktestRecord:
     dataset = uow.quant.get_market_dataset(market_dataset_id)
     signal_set = uow.quant.get_signal_set(signal_set_id)
@@ -484,6 +852,13 @@ def run_versioned_portfolio_backtest(
     if not security_ids:
         raise ValueError("至少选择一只证券")
 
+    model_template = resolve_quant_model_template(model_template_id, config)
+    factor_versions = {
+        item.factor_id: item.version
+        for item in quant_factor_catalog()
+        if item.factor_id in {*model_template.alpha_factor_ids, *model_template.control_factor_ids}
+    }
+
     adapter = FrozenJsonMarketData(_manifest_path(dataset))
     bars = adapter.bars(security_ids, start=start, end=end)
     if config.neutralize_market_cap:
@@ -494,7 +869,7 @@ def run_versioned_portfolio_backtest(
             security_id=str(item["security_id"]),
             disclosed_at=datetime.fromisoformat(str(item["disclosed_at"])),
             generated_at=datetime.fromisoformat(str(item["generated_at"])),
-            score=_signal_score(
+            score=governed_signal_score(
                 QuantSignalInput(
                     signal_id=str(item["signal_id"]),
                     disclosed_at=datetime.fromisoformat(str(item["disclosed_at"])),
@@ -517,6 +892,11 @@ def run_versioned_portfolio_backtest(
             "start": start,
             "end": end,
             "config": asdict(config),
+            "model_template_id": model_template.template_id,
+            "model_template_version": model_template.version,
+            "factor_versions": factor_versions,
+            "signal_weight_policy": "human-confirmed-direction-strength-v1",
+            "ai_confidence_used_for_alpha_weight": False,
         }
     )
     run_payload = {
@@ -558,6 +938,8 @@ def run_versioned_portfolio_backtest(
                 "market_dataset_id": market_dataset_id,
                 "signal_set_id": signal_set_id,
                 "methodology_version": record.methodology_version,
+                "model_template_id": model_template.template_id,
+                "model_template_version": model_template.version,
             },
         )
     )

@@ -223,6 +223,58 @@ python -m scripts.refresh_tushare_reference_cache `
   --tushare-permission-profile .runtime/governance/tushare-permission-probe-10000.json
 ```
 
+P2 的 30 只纯 A 股研究池使用独立冻结入口，研究池和前瞻协议随行情一起进入哈希清单：
+
+```powershell
+.\.runtime\market-data-venv\Scripts\python.exe -m scripts.build_quant_p2_market_assets `
+  --start 2023-12-01 `
+  --end 2026-08-31 `
+  --version akshare-qfq-p2a30-YYYYMMDD-v1
+```
+
+未提供 Tushare 凭证时会生成可开始前瞻积累的 AKShare 候选，但点时市值、涨跌停和双源核验保持
+关闭。使用 10k 本地密钥补齐独立缓存后，必须提升数据版本重建，禁止覆盖已有候选：
+
+```powershell
+.\.runtime\market-data-venv\Scripts\python.exe -m scripts.backfill_quant_p2_tushare_reference `
+  --tushare-token-file '<本地密钥文件>' `
+  --tushare-permission-profile .runtime/governance/tushare-permission-probe-10000.json
+
+.\.runtime\market-data-venv\Scripts\python.exe -m scripts.build_quant_p2_market_assets `
+  --version akshare-qfq-p2a30-YYYYMMDD-v2 `
+  --tushare-token-file '<本地密钥文件>' `
+  --tushare-permission-report .runtime/governance/tushare-permission-probe-10000.json `
+  --reference-cache-root .runtime/quant-reference-cache-p2-10000
+```
+
+当 `stk_limit` 存在已排除停牌、上市初期和除权事件的少量供应端缺口时，可使用已冻结的交易所规则推导资产构建新版本。推导值必须通过前收盘、双源收盘/成交额、价格档位和直接观测不覆盖门禁：
+
+```powershell
+.\.runtime\market-data-venv\Scripts\python.exe -m scripts.build_quant_p2_market_assets `
+  --version akshare-qfq-tuaremax10000-p2a30-YYYYMMDD-v3 `
+  --tushare-token-file '<本地密钥文件>' `
+  --tushare-permission-report .runtime/governance/tushare-permission-probe-10000.json `
+  --reference-cache-root .runtime/quant-reference-cache-p2-10000 `
+  --price-limit-derivations analytics/datasets/quant-p2-a-share-v1/price_limit_derivations.json
+```
+
+有效状态完整时 `price_limit_status=true`，但只要存在推导行，
+`price_limit_status_fully_observed=false`。日频状态只能支持收盘封板约束，不能声称精确模拟盘中成交。
+
+P2 信号冻结需要同时传入研究池和协议；只有前瞻起点后的人工确认关系会被计数：
+
+```powershell
+python -m scripts.freeze_confirmed_relation_signal_set `
+  --market-dataset-id '<P2 数据集编号>' `
+  --version '<新信号集版本>' `
+  --as-of '<带时区截面>' `
+  --expected-signal-count '<显式数量>' `
+  --research-universe analytics/datasets/quant-p2-a-share-v1/universe.json `
+  --sample-protocol analytics/datasets/quant-p2-a-share-v1/protocol.json `
+  --frozen-by '<审计用户>' `
+  --dry-run
+```
+
 工作日 CI 使用仓库 Secret `TUSHARE_TOKEN` 和仓库 Variable `TUSHARE_API_URL`。兼容端点必须单独
 登记来源策略，不能标记为 Tushare 官方服务。
 

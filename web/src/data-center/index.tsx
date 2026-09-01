@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { NavLink, Outlet, useParams, useSearchParams } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import {
   deleteDataCenterDocument,
   fetchDataCenterContent,
@@ -17,7 +17,7 @@ import {
   restoreDataCenterDocument,
   updateDataCenterVisibility,
 } from '../api'
-import { EmptyState, ErrorState, InlineError, LoadingState, PageTitle } from '../components'
+import { EmptyState, ErrorState, InlineError, LoadingState } from '../components'
 import type { DataCenterDocument, DataCenterRun } from '../types'
 import './data-center.css'
 
@@ -50,14 +50,21 @@ function Status({ value, tone }: { value: string; tone?: string }) {
   return <span className={`dc-status ${resolved}`}>{value}</span>
 }
 
-export function DataCenterLayout() {
+export function DataCenterLayout({ onUpload }: { onUpload?: () => void }) {
+  const location = useLocation()
+  const fromWorkbench = new URLSearchParams(location.search).get('from') === 'workbench'
+  const origin = fromWorkbench ? '?from=workbench' : ''
   return <section className="data-center">
-    <PageTitle eyebrow="GOVERNED DATA ASSETS" title="数据中心" description="统一查看研究资料、不可变版本、来源授权、处理运行和冻结量化数据。" />
+    <header className="dc-page-header">
+      <div><span className="eyebrow">RESEARCH DATA CENTER</span><h1>数据中心</h1><p>承接工作台使用的研究资料，统一追溯原件、不可变版本、来源授权、处理运行和冻结量化数据。</p></div>
+      <div className="dc-page-actions"><NavLink className="button secondary" to="/workbench">← 返回工作台</NavLink>{onUpload && <button className="button primary" onClick={onUpload}>＋ 上传研究资料</button>}</div>
+    </header>
+    {fromWorkbench && <div className="dc-origin-banner"><span><b>来自工作台</b> 已保留资料范围和运行筛选，可沿原路径返回继续研究。</span><NavLink to="/workbench">返回今日研究视图 ›</NavLink></div>}
     <nav className="dc-tabs" aria-label="数据中心二级导航">
-      <NavLink end to="/assets">数据总览</NavLink>
-      <NavLink to="/assets/documents">研究资料</NavLink>
-      <NavLink to="/assets/market-datasets">量化数据</NavLink>
-      <NavLink to="/assets/runs">数据源与运行</NavLink>
+      <NavLink end to={`/assets${origin}`}>数据总览</NavLink>
+      <NavLink to={`/assets/documents${origin}`}>研究资料</NavLink>
+      <NavLink to={`/assets/market-datasets${origin}`}>量化数据</NavLink>
+      <NavLink to={`/assets/runs${origin}`}>数据源与运行</NavLink>
     </nav>
     <Outlet />
   </section>
@@ -107,6 +114,7 @@ export function DataCenterDocumentsPage() {
   const [searchText, setSearchText] = useState(params.get('q') ?? '')
   const requestParams = useMemo(() => {
     const next = new URLSearchParams(params)
+    next.delete('from')
     next.set('limit', String(pageSize))
     if (!next.has('offset')) next.set('offset', '0')
     return next
@@ -129,22 +137,23 @@ export function DataCenterDocumentsPage() {
         <label>来源<input value={params.get('source_id') ?? ''} onChange={(event) => setParams(setParam(params, 'source_id', event.target.value.trim()))} placeholder="来源编号" /></label>
         <label>排序<select value={params.get('sort') ?? 'published_at'} onChange={(event) => setParams(setParam(params, 'sort', event.target.value))}><option value="published_at">披露时间</option><option value="ingested_at">入库时间</option><option value="latest_run_at">最近运行</option><option value="title">标题</option></select></label>
       </div>
-      <div className="dc-filter-footer"><span>{query.data ? `共 ${query.data.total.toLocaleString()} 份资料` : '正在读取目录'}</span><button className="button secondary" onClick={() => { setSearchText(''); setParams({}) }}>清空筛选</button></div>
+      <div className="dc-filter-footer"><span>{query.data ? `共 ${query.data.total.toLocaleString()} 份资料` : '正在读取目录'}</span><button className="button secondary" onClick={() => { setSearchText(''); setParams(params.get('from') === 'workbench' ? { from: 'workbench' } : {}) }}>清空筛选</button></div>
     </section>
     {query.isLoading && <LoadingState text="正在加载研究资料目录…" />}
     {query.error && <ErrorState error={query.error} />}
-    {query.data && (query.data.items.length ? <section className="dc-panel dc-table-panel"><div className="dc-document-table dc-table-head"><span>资料</span><span>关联对象</span><span>披露/来源</span><span>内容与授权</span><span>处理状态</span><span /></div>{query.data.items.map((item) => <DocumentRow item={item} key={item.documentId} />)}<Pagination offset={offset} total={query.data.total} onChange={(value) => { const next = new URLSearchParams(params); next.set('offset', String(value)); setParams(next) }} /></section> : <EmptyState title="筛选条件下没有匹配资料" description="可以清空部分筛选，或使用更具体的公司、编号和资料标题。" />)}
+    {query.data && (query.data.items.length ? <section className="dc-panel dc-table-panel"><div className="dc-document-table dc-table-head"><span>资料</span><span>关联对象</span><span>披露/来源</span><span>内容与授权</span><span>处理状态</span><span /></div>{query.data.items.map((item) => <DocumentRow item={item} origin={params.get('from') ?? undefined} key={item.documentId} />)}<Pagination offset={offset} total={query.data.total} onChange={(value) => { const next = new URLSearchParams(params); next.set('offset', String(value)); setParams(next) }} /></section> : <EmptyState title="筛选条件下没有匹配资料" description="可以清空部分筛选，或使用更具体的公司、编号和资料标题。" />)}
   </>
 }
 
-function DocumentRow({ item }: { item: DataCenterDocument }) {
+function DocumentRow({ item, origin }: { item: DataCenterDocument; origin?: string }) {
+  const target = `/assets/documents/${encodeURIComponent(item.documentId)}${origin === 'workbench' ? '?from=workbench' : ''}`
   return <article className="dc-document-table dc-document-row">
-    <div><NavLink to={`/assets/documents/${encodeURIComponent(item.documentId)}`}>{item.title}</NavLink><small className="mono">{item.documentId}</small>{item.isIllustrative && <Status value="合成样例" />}</div>
+    <div><NavLink to={target}>{item.title}</NavLink><small className="mono">{item.documentId}</small>{item.isIllustrative && <Status value="合成样例" />}</div>
     <div><strong>{item.securityNames.join('、') || '未关联证券'}</strong><small>{item.securityIds.join('、') || '—'} · {item.industries.join('、') || '未标注行业'}</small></div>
     <div><strong>{dateTime(item.publishedAt)}</strong><small>{item.sourceName}{item.docType ? ` · ${item.docType}` : ''}</small></div>
     <div><span className="dc-status-line"><Status value={item.contentStatus} tone={item.contentStatus === '标题索引' ? 'warn' : undefined} /><Status value={item.authorizationStatus} /></span><small>{item.archived ? '原件已归档' : '缺少对象原件'} · {item.visibilityLabel}</small></div>
     <div><Status value={item.latestRunStatus ?? '尚无运行'} /><small>{item.segmentCount} 片段 · {item.revisionCount} revisions</small></div>
-    <NavLink className="dc-row-link" to={`/assets/documents/${encodeURIComponent(item.documentId)}`}>查看 ›</NavLink>
+    <NavLink className="dc-row-link" to={target}>查看 ›</NavLink>
   </article>
 }
 
@@ -158,6 +167,7 @@ export function DataCenterDocumentDetailPage() {
   const { documentId = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const includeDeleted = params.get('include_deleted') === 'true'
+  const fromWorkbench = params.get('from') === 'workbench'
   const requestedLocator = params.get('locator') ?? ''
   const locatorBelongsToDocument = !requestedLocator || requestedLocator.startsWith(`${documentId}#paragraph-`)
   const [activeLocator, setActiveLocator] = useState(locatorBelongsToDocument ? requestedLocator : '')
@@ -205,7 +215,7 @@ export function DataCenterDocumentDetailPage() {
     } catch (error) { setContentError(error as Error) }
   }
   return <>
-    <NavLink className="dc-back" to="/assets/documents">← 返回研究资料</NavLink>
+    <NavLink className="dc-back" to={fromWorkbench ? '/assets/documents?from=workbench' : '/assets/documents'}>← {fromWorkbench ? '返回工作台资料视图' : '返回研究资料'}</NavLink>
     <section className="dc-detail-hero">
       <div><span className="eyebrow">{data.docType ?? 'RESEARCH DOCUMENT'}</span><h2>{data.title}</h2><p className="mono">{data.documentId}</p><div className="dc-status-line"><Status value={data.contentStatus} tone={data.contentStatus === '标题索引' ? 'warn' : undefined} /><Status value={data.authorizationStatus} /><Status value={data.visibilityLabel} tone="neutral" />{data.archived && <Status value="原件已归档" />}</div></div>
       <div className="dc-detail-actions">{data.allowedActions.includes('view_content') && <><button className="button primary" onClick={() => viewContent(false)}>打开原件</button><button className="button secondary" onClick={() => viewContent(true)}>下载</button></>}</div>
@@ -247,7 +257,7 @@ export function DataCenterMarketDatasetDetailPage() {
   const capabilities = Object.entries(data.capabilities)
   return <>
     <NavLink className="dc-back" to="/assets/market-datasets">← 返回量化数据</NavLink>
-    <section className="dc-detail-hero"><div><span className="eyebrow">FROZEN MARKET DATASET</span><h2>{data.dataVersion}</h2><p className="mono">{data.datasetId}</p><div className="dc-status-line"><Status value={data.status} />{data.isDefault && <Status value="当前默认" tone="primary" />}<Status value={data.manifestVerified ? '清单完整' : '完整性失败'} tone={data.manifestVerified ? 'good' : 'bad'} /></div></div><div className="dc-detail-actions"><NavLink className="button primary" to={`/quant?marketDatasetId=${encodeURIComponent(data.datasetId)}`}>使用此版本进入量化实验</NavLink></div></section>
+    <section className="dc-detail-hero"><div><span className="eyebrow">FROZEN MARKET DATASET</span><h2>{data.dataVersion}</h2><p className="mono">{data.datasetId}</p><div className="dc-status-line"><Status value={data.status} />{data.isDefault && <Status value="当前默认" tone="primary" />}<Status value={data.manifestVerified ? '清单完整' : '完整性失败'} tone={data.manifestVerified ? 'good' : 'bad'} /></div></div><div className="dc-detail-actions"><NavLink className="button primary" to={`/quant/new?marketDatasetId=${encodeURIComponent(data.datasetId)}`}>使用此版本新建验证</NavLink></div></section>
     <section className="dc-panel dc-metadata"><header><div><span className="eyebrow">DATA SCOPE</span><h2>覆盖与授权</h2></div></header><dl><div><dt>覆盖区间</dt><dd>{data.coverageStart} ~ {data.coverageEnd}</dd></div><div><dt>证券数量</dt><dd>{data.securities.length}</dd></div><div><dt>复权口径</dt><dd>{data.adjustment}</dd></div><div><dt>复权锚点</dt><dd>{data.adjustmentAnchorDate ?? '—'}</dd></div><div><dt>时区</dt><dd>{data.timezone}</dd></div><div><dt>历史组合运行</dt><dd>{data.backtestCount}</dd></div></dl>{data.authorizationScope && <p className="dc-note">授权范围：{data.authorizationScope}</p>}</section>
     <div className="dc-two-columns"><section className="dc-panel"><header><div><span className="eyebrow">CAPABILITIES</span><h2>能力矩阵</h2></div></header><div className="dc-capabilities">{capabilities.map(([name, enabled]) => <div key={name}><Status value={enabled ? '可用' : '未准入'} tone={enabled ? 'good' : 'neutral'} /><span>{name}</span></div>)}</div></section><section className="dc-panel"><header><div><span className="eyebrow">LIMITATIONS</span><h2>研究限制</h2></div></header><ul className="dc-limitations">{data.limitations.map((item) => <li key={item}>{item}</li>)}</ul></section></div>
     <section className="dc-panel"><header><div><span className="eyebrow">MANIFEST ASSETS</span><h2>清单子资产</h2></div><span className="mono">{shortHash(data.manifestSha256)}</span></header><div className="dc-asset-files">{data.assets.map((asset) => <article key={asset.name}><Status value={asset.verified ? '哈希通过' : '校验失败'} tone={asset.verified ? 'good' : 'bad'} /><div><strong>{asset.name}</strong><small>{asset.path} · {bytes(asset.byteSize)}</small></div><code title={asset.sha256}>{shortHash(asset.sha256)}</code></article>)}</div></section>
@@ -258,7 +268,7 @@ export function DataCenterMarketDatasetDetailPage() {
 export function DataCenterRunsPage() {
   const [params, setParams] = useSearchParams()
   const qc = useQueryClient()
-  const runParams = useMemo(() => { const next = new URLSearchParams(params); next.set('limit', String(pageSize)); if (!next.has('offset')) next.set('offset', '0'); return next }, [params])
+  const runParams = useMemo(() => { const next = new URLSearchParams(params); next.delete('from'); next.set('limit', String(pageSize)); if (!next.has('offset')) next.set('offset', '0'); return next }, [params])
   const runs = useQuery({ queryKey: ['data-center', 'runs', runParams.toString()], queryFn: () => listDataCenterRuns(runParams), placeholderData: (previous) => previous })
   const sources = useQuery({ queryKey: ['data-center', 'sources'], queryFn: listDataCenterSources })
   const rebuild = useMutation({ mutationFn: rebuildAssetSearchIndex, onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['data-center'] }), qc.invalidateQueries({ queryKey: ['asset-inventory'] })]) } })
