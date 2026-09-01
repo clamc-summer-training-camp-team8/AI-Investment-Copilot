@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import desc, or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.domain import DocumentFactRecord, DocumentRecord, DocumentSegmentRecord
-from app.db.models.assets import DocumentSecurityRelation
 from app.db.models.core import Document, DocumentFact, DocumentSegment
 
 
@@ -38,23 +37,6 @@ class SqlDocumentRepo:
     def get(self, document_id: str) -> DocumentRecord | None:
         row = self._session.get(Document, document_id)
         return None if row is None else _document(row)
-
-    def list_for_security(self, security_id: str, *, limit: int = 100) -> list[DocumentRecord]:
-        relation_exists = select(DocumentSecurityRelation.id).where(
-            DocumentSecurityRelation.document_id == Document.document_id,
-            DocumentSecurityRelation.security_id == security_id,
-            DocumentSecurityRelation.status == "已确认",
-        ).exists()
-        rows = self._session.scalars(
-            select(Document)
-            .where(
-                Document.deleted_at.is_(None),
-                or_(Document.security_id == security_id, relation_exists),
-            )
-            .order_by(desc(Document.published_at))
-            .limit(limit)
-        ).all()
-        return [_document(row) for row in rows]
 
     def find_by_content_hash(self, content_hash: str, parser_version: str) -> DocumentRecord | None:
         row = self._session.scalar(

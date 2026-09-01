@@ -752,11 +752,6 @@ class FakeDocumentRepo:
         record = self.items.get(document_id)
         return None if record is None else replace(record)
 
-    def list_for_security(self, security_id: str, *, limit: int = 100) -> list[DocumentRecord]:
-        rows = [replace(record) for record in self.items.values() if record.security_id == security_id]
-        rows.sort(key=lambda record: record.published_at, reverse=True)
-        return rows[:limit]
-
     def find_by_content_hash(self, content_hash: str, parser_version: str) -> DocumentRecord | None:
         for record in self.items.values():
             if record.content_hash == content_hash and record.parser_version == parser_version:

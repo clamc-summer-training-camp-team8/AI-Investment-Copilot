@@ -10,13 +10,13 @@ import {
   publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
   recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis, updateRelation,
   updateThesisMaintenance,
-  getAssetInventory, listCompanyDocuments, rebuildAssetSearchIndex, searchAssets,
+  getAssetInventory, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
   getGoldQuality, runQuantBacktest,
   getCompanyMetricCenter, getSecurity, getMaintainedCoverage, getCoverageUniverse, refreshCompanyMetrics,
   createCoverageSector, createCoverageCompany, updateCoverageCompany, updateCoverageSector,
 } from './api'
-import type { CompanyDocument, CompanyMetric, Trend } from './types'
+import type { CompanyMetric, Trend } from './types'
 import {
   ConfirmDialog, DirectionBadge, EmptyState, ErrorState, EvidenceEventRow,
   InlineError, LoadingState, PageTitle, PriorityBadge, StatusBadge, ValidationChain,
@@ -358,7 +358,7 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
       <div className="company-actions"><button onClick={() => onUpload?.(activeRecord?.thesisId, securityId)}>添加资料</button><button className="primary" onClick={() => onCreate?.(displaySecurity)}><span aria-hidden>＋</span>新建逻辑</button></div>
     </header>
     <nav className="company-tabs" aria-label="公司研究导航">{['总览', '投资逻辑', '事件与证据', '指标中心', '资料库', '研究记录'].map((item) => <button className={item === companyTab ? 'active' : ''} key={item} onClick={() => { setCompanyTab(item); setCompanyParams(item === '投资逻辑' ? {} : { tab: item }) }}>{item}</button>)}</nav>
-    {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : companyTab === '事件与证据' && activeRecord ? <CompanyEvidencePanel thesisId={activeRecord.thesisId} /> : companyTab === '资料库' ? <CompanyAssetPanel securityId={securityId} onUpload={() => onUpload?.(activeRecord?.thesisId, securityId)} /> : companyTab === '研究记录' && activeRecord ? <CompanyResearchLogPanel thesis={activeRecord} /> : <main className="company-canvas">
+    {companyTab === '指标中心' ? <CompanyMetricCenterPanel securityId={securityId} /> : <main className="company-canvas">
       {!thesis || !research || !selected ? <EmptyState title="尚未建立投资逻辑" description="该证券已建档，但数据库中暂时没有可展示的投资逻辑。" /> : <>
       <section className="thesis-switcher" aria-label="投资逻辑选择">{availableTheses.map((item) => <button key={item.id} className={activeThesis === item.id ? 'active' : ''} onClick={() => chooseThesis(item.id)} aria-pressed={activeThesis === item.id}><strong>{item.title}</strong><span><i className={`dot ${item.health === '证据不足' ? 'warning' : ''}`} />{item.direction} · {item.health} · {item.confidence == null ? '待计算' : `${item.confidence}%`}</span></button>)}</section>
       <section className="active-thesis-summary"><div><div className="summary-meta"><span>{thesis.horizon}</span><b>{thesis.direction}</b><b>{thesis.health}</b></div><h2>{thesis.summary}</h2></div><div className="confidence-block"><span>逻辑置信度 ⓘ</span><strong>{thesis.confidence == null ? '—' : `${thesis.confidence}%`}</strong><i><b style={{ width: `${thesis.confidence ?? 0}%` }} /></i></div><dl><div><dt>逻辑负责人</dt><dd>{thesis.record?.owner || '张明'}</dd></div><div><dt>最后更新</dt><dd>{thesis.record?.establishedOn || '2025-05-20'}</dd></div></dl><button className="edit-thesis" disabled={!activeRecord} onClick={() => setShowEditDialog(true)}>✎ 编辑逻辑</button></section>
@@ -371,37 +371,6 @@ export function CompanyResearchPage({ onUpload, onCreate }: { onUpload?: (thesis
     </main>}
     {showEditDialog && activeRecord && <EditLogicDialog thesis={activeRecord} onClose={() => setShowEditDialog(false)} />}
   </div>
-}
-
-function CompanyEvidencePanel({ thesisId }: { thesisId: string }) {
-  const [status, setStatus] = useState('')
-  const [direction, setDirection] = useState('')
-  const feed = useQuery({ queryKey: ['company-events', thesisId, status, direction], queryFn: () => getRadarEvidence(thesisId, { status: status || undefined, direction: direction || undefined }) })
-  if (feed.isLoading) return <main className="company-canvas"><LoadingState text="正在读取事件与证据…" /></main>
-  if (feed.error || !feed.data) return <main className="company-canvas"><ErrorState error={feed.error} /></main>
-  return <main className="company-canvas"><section className="content-section"><div className="section-heading"><div><span className="eyebrow">EVENTS & EVIDENCE</span><h2>事件与证据</h2><p className="muted">所有内容先作为候选证据进入人工闸门，确认后才影响投资逻辑。</p></div><span className="muted">共 {feed.data.total} 条</span></div><div className="filter-bar"><label>确认状态<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">全部状态</option><option value="待确认">待确认</option><option value="已确认">已确认</option><option value="已驳回">已驳回</option></select></label><label>影响方向<select value={direction} onChange={(event) => setDirection(event.target.value)}><option value="">全部方向</option><option value="支持">支持</option><option value="冲突">冲突</option><option value="中性">中性</option></select></label></div><div className="evidence-list">{feed.data.items.length ? feed.data.items.map((item) => <EvidenceEventRow item={item} key={`${item.evidenceId}-${item.relationId}`} />) : <EmptyState title="没有符合条件的事件" description="清除筛选后查看全部候选证据。" />}</div></section></main>
-}
-
-function CompanyAssetPanel({ securityId, onUpload }: { securityId: string; onUpload: () => void }) {
-  const [query, setQuery] = useState('')
-  const [submittedQuery, setSubmittedQuery] = useState('')
-  const documents = useQuery({ queryKey: ['company-documents', securityId], queryFn: () => listCompanyDocuments(securityId), enabled: Boolean(securityId) })
-  const search = useQuery({ queryKey: ['company-asset-search', securityId, submittedQuery], queryFn: () => searchAssets(submittedQuery, securityId), enabled: Boolean(submittedQuery) })
-  if (documents.isLoading) return <main className="company-canvas"><LoadingState text="正在读取公司资料库…" /></main>
-  if (documents.error || !documents.data) return <main className="company-canvas"><ErrorState error={documents.error} /></main>
-  return <main className="company-canvas"><section className="content-section"><div className="section-heading"><div><span className="eyebrow">COMPANY LIBRARY</span><h2>资料库</h2><p className="muted">仅显示已归属当前公司的资料，正文按需打开并保留原文定位。</p></div><button className="button primary" onClick={onUpload}>＋ 添加资料</button></div><form className="asset-search" onSubmit={(event) => { event.preventDefault(); setSubmittedQuery(query.trim()) }}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索公司公告、研报或正文关键词" /><button className="button secondary" type="submit" disabled={!query.trim()}>搜索资料</button></form>{submittedQuery && (search.isFetching ? <LoadingState /> : search.data?.length ? <div className="review-list">{search.data.map((item) => <article className="review-card" key={`${item.documentId}-${item.locator}`}><div className="review-header"><strong>{item.documentId}</strong><span className="badge neutral-badge">{item.visibilityLabel}</span></div><p>{item.content}</p><small className="muted">定位：{item.locator} · 综合 {item.rank.toFixed(3)}</small></article>)}</div> : <EmptyState title="没有可见命中" description="当前公司资料中没有匹配内容。" />)}<div className="review-list">{documents.data.length ? documents.data.map((document) => <CompanyDocumentRow document={document} key={document.documentId} />) : <EmptyState title="暂无公司资料" description="添加资料后，处理完成的文档会显示在这里。" />}</div></section></main>
-}
-
-function CompanyDocumentRow({ document }: { document: CompanyDocument }) {
-  const counts = document.segmentCount || document.factCount ? ` · ${document.segmentCount} 个切片 · ${document.factCount} 条事实` : ''
-  return <article className="review-card"><div className="review-header"><div><span className="badge neutral-badge">{document.visibilityLabel}</span><h3>{document.title || document.documentId}</h3></div><span className="muted">{formatDate(document.publishedAt)}</span></div><p className="review-detail">{document.docType || '研究资料'} · 来源 {document.sourceId || '未标注'}{counts}</p><small className="muted">文档 ID：{document.documentId}{document.ingestedAt ? ` · 入库 ${formatDate(document.ingestedAt)}` : ''}</small></article>
-}
-
-function CompanyResearchLogPanel({ thesis }: { thesis: ThesisDetail }) {
-  const audit = useQuery({ queryKey: ['company-audit', thesis.thesisId], queryFn: () => getAudit(thesis.thesisId) })
-  if (audit.isLoading) return <main className="company-canvas"><LoadingState text="正在读取研究记录…" /></main>
-  if (audit.error || !audit.data) return <main className="company-canvas"><ErrorState error={audit.error} /></main>
-  return <main className="company-canvas"><section className="content-section"><div className="section-heading"><div><span className="eyebrow">RESEARCH LOG</span><h2>研究记录</h2><p className="muted">记录当前逻辑的创建、修改、发布、证据判断和指标维护。</p></div><span className="badge neutral-badge">V{thesis.version} · {thesis.thesisKind === 'observation' ? '观察逻辑' : '正式逻辑'}</span></div><div className="company-version"><header><h2>当前版本</h2><span>最后建立于 {formatDate(thesis.establishedOn)}</span></header><div><strong>{thesis.title}</strong><span>{thesis.coreView}</span><span>负责人：{thesis.owner}</span><b>{thesis.status}</b></div></div><div className="timeline">{audit.data.length ? audit.data.map((line, index) => <div className="timeline-item" key={`${line.action}-${line.occurredAt}-${index}`}><i /><div><strong>{line.action}</strong><p>{line.actor} · {formatDate(line.occurredAt)}</p>{line.detail && <small>{Object.entries(line.detail).map(([key, value]) => `${key}: ${String(value)}`).join(' · ')}</small>}</div></div>) : <p className="muted">暂无研究记录。</p>}</div></section></main>
 }
 
 const metricCategories = ['全部指标', '价格与成交量', '技术指标', '财务与运营', '估值指标', '宏观及行业']

@@ -62,19 +62,6 @@ class AssetSearchHitOut(Base):
     embedding_version: str | None = None
 
 
-class CompanyDocumentOut(Base):
-    document_id: str
-    title: str | None = None
-    source_id: str | None = None
-    doc_type: str | None = None
-    security_id: str | None = None
-    published_at: datetime
-    ingested_at: datetime | None = None
-    visibility_label: str
-    segment_count: int = 0
-    fact_count: int = 0
-
-
 class DocumentVisibilityIn(Base):
     visibility_label: str = Field(min_length=1, max_length=32)
 
