@@ -91,6 +91,7 @@ def create_app() -> FastAPI:
         assets,
         assistant,
         authentication,
+        coverage,
         demo,
         documents,
         evaluation,
@@ -114,6 +115,7 @@ def create_app() -> FastAPI:
     application.include_router(securities.router, prefix="/api")
     application.include_router(agent.router, prefix="/api")
     application.include_router(assets.router, prefix="/api")
+    application.include_router(coverage.router, prefix="/api")
     application.include_router(metrics.router, prefix="/api")
     application.include_router(evaluation.router, prefix="/api")
     application.include_router(quant.router, prefix="/api")

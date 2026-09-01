@@ -510,6 +510,7 @@ class FakeRankingPriorRepo:
 class FakeSecurityRepo:
     def __init__(self) -> None:
         self.items: dict[str, SecurityRecord] = {}
+        self.market_items: dict[str, SecurityRecord] = {}
 
     def get(self, security_id: str) -> SecurityRecord | None:
         item = self.items.get(security_id)
@@ -531,6 +532,20 @@ class FakeSecurityRepo:
             or any(needle in alias.lower() for alias in item.aliases)
         ]
         return [replace(item) for item in sorted(rows, key=lambda item: item.security_id)[:limit]]
+
+    def search_market(self, keyword: str, *, limit: int = 100) -> list[SecurityRecord]:
+        needle = keyword.lower()
+        rows = [
+            item
+            for item in self.market_items.values()
+            if needle in item.security_id.lower()
+            or needle in item.name.lower()
+            or needle in (item.ticker or "").lower()
+        ]
+        return [replace(item) for item in sorted(rows, key=lambda item: item.security_id)[:limit]]
+
+    def upsert_market(self, record: SecurityRecord) -> None:
+        self.market_items[record.security_id] = replace(record)
 
 
 class FakeEventRepo:
@@ -626,6 +641,9 @@ class FakeThesisRepo:
                 return
         raise LookupError(record.mapping_id)
 
+    def remove_mapping(self, mapping_id: str) -> None:
+        self.mappings = [item for item in self.mappings if item.mapping_id != mapping_id]
+
     def get_by_security(self, security_id: str) -> ThesisRecord | None:
         matching = [
             t for t in self.theses.values() if t.security_id == security_id and t.is_current
@@ -633,6 +651,25 @@ class FakeThesisRepo:
         if len(matching) > 1:
             raise ValueError(f"security {security_id} has multiple theses")
         return replace(matching[0]) if matching else None
+
+    def get_by_securities(
+        self, security_ids: tuple[str, ...], *, include_snapshots: bool = False
+    ) -> dict[str, ThesisRecord]:
+        return {
+            security_id: replace(thesis)
+            for security_id in security_ids
+            if (thesis := self.get_by_security(security_id)) is not None
+            and (include_snapshots or thesis.thesis_kind == "canonical")
+        }
+
+    def counts_for_theses(self, thesis_ids: tuple[str, ...]) -> dict[str, tuple[int, int]]:
+        return {
+            thesis_id: (
+                len(hypotheses := [item for item in self.hypotheses if item.thesis_id == thesis_id]),
+                sum(len(self.list_mappings(item.hypothesis_id)) for item in hypotheses),
+            )
+            for thesis_id in thesis_ids
+        }
 
     def search(self, query: ThesisQuery) -> tuple[list[ThesisRecord], int]:
         """内存版分页查询。
@@ -762,6 +799,9 @@ class FakeObservationRepo:
     def __init__(self) -> None:
         self.items: list[ObservationRecord] = []
 
+    def list_for_security(self, security_id: str) -> list[ObservationRecord]:
+        return [replace(o) for o in self.items if o.security_id == security_id]
+
     def list_for_metric(self, security_id: str, metric_id: str) -> list[ObservationRecord]:
         return [
             replace(o)
@@ -769,8 +809,31 @@ class FakeObservationRepo:
             if o.security_id == security_id and o.metric_id == metric_id
         ]
 
+    def existing_keys(self, security_id: str, data_version: str) -> set[tuple[str, str]]:
+        return {
+            (item.metric_id, item.period)
+            for item in self.items
+            if item.security_id == security_id and item.data_version == data_version
+        }
+
     def add(self, record: ObservationRecord) -> None:
         self.items.append(replace(record))
+
+    def add_if_absent(self, record: ObservationRecord) -> bool:
+        if any(
+            item.security_id == record.security_id
+            and item.metric_id == record.metric_id
+            and item.metric_version == record.metric_version
+            and item.period == record.period
+            and item.data_version == record.data_version
+            for item in self.items
+        ):
+            return False
+        self.items.append(replace(record))
+        return True
+
+    def add_many_if_absent(self, records: list[ObservationRecord]) -> int:
+        return sum(self.add_if_absent(record) for record in records)
 
 
 class FakeSuggestionRepo:

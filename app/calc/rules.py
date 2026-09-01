@@ -175,6 +175,58 @@ def check_invalidation(
     )
 
 
+def check_invalidation_range(
+    hypothesis_id: str,
+    observations: Sequence[Observation],
+    *,
+    thesis_established_on: date,
+    lower: Decimal | None,
+    upper: Decimal | None,
+    thresholds: RuleThresholdsLike,
+    required_consecutive: int | None = None,
+) -> InvalidationCheck:
+    """按允许区间判断越界，只生成需要人工确认的复核信号。"""
+    in_window = [item for item in observations if item.observation_date >= thesis_established_on]
+    excluded = [item.period for item in observations if item.observation_date < thesis_established_on]
+    ordered = sorted(in_window, key=lambda item: item.observation_date)
+    required = thresholds.consecutive_breach_periods if required_consecutive is None else max(1, required_consecutive)
+    consecutive = 0
+    near = False
+    for observation in ordered:
+        actual = _d(observation.actual_value)
+        if actual is None:
+            consecutive = 0
+            continue
+        breach = (lower is not None and actual < lower) or (upper is not None and actual > upper)
+        close_to_lower = False
+        if lower is not None and lower != Decimal(0) and actual >= lower:
+            close_to_lower = (actual - lower) / abs(lower) <= Decimal(
+                str(thresholds.near_invalidation_ratio)
+            )
+        close_to_upper = False
+        if upper is not None and upper != Decimal(0) and actual <= upper:
+            close_to_upper = (upper - actual) / abs(upper) <= Decimal(
+                str(thresholds.near_invalidation_ratio)
+            )
+        consecutive = consecutive + 1 if breach else 0
+        near = bool(close_to_lower or close_to_upper or (0 < consecutive < required))
+    interval = f"[{lower if lower is not None else '-∞'}, {upper if upper is not None else '+∞'}]"
+    note = f"有效区间 {interval}；仅生成复核提醒，不自动改变假设状态"
+    if excluded:
+        note += f"；按逻辑建立日排除 {len(excluded)} 个历史观察期"
+    breached = consecutive >= required
+    return InvalidationCheck(
+        hypothesis_id=hypothesis_id,
+        breached=breached,
+        near_breach=near and not breached,
+        consecutive_breaches=consecutive,
+        required_consecutive=required,
+        evaluated_periods=[item.period for item in ordered],
+        excluded_periods=excluded,
+        note=note,
+    )
+
+
 def evaluate_thesis_invalidation(
     thesis_id: str,
     checks: Sequence[InvalidationCheck],

@@ -80,7 +80,7 @@
           "observation_window": { "type": "string" },
           "expected_direction": {
             "type": ["string", "null"],
-            "enum": ["越高越好", "越低越好", "不低于阈值", "不高于阈值", null]
+            "enum": ["上升", "下降", "波动", "越高越好", "越低越好", "不低于阈值", "不高于阈值", null]
           },
           "metric_suggestions": {
             "type": "array",

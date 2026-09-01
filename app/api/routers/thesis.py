@@ -20,6 +20,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.ai.agents.hypothesis_quality import HypothesisQualityAgent
 from app.ai.gateway import Gateway, ModelUnavailable
 from app.ai.quality.hypothesis_structure import inspect_hypotheses
+from app.ai.retrieval import BM25Retriever, RetrievalDocument, RetrievalQuery
 from app.ai.runtime import InvestmentResearchAgent
 from app.api.deps import ActorDep, SettingsDep, UowDep
 from app.api.feed_presenter import to_feed_item
@@ -62,9 +63,13 @@ from app.schemas.thesis import (
     StatusDecisionIn,
     SuggestionOut,
     ThesisDraftIn,
+    ThesisDraftUpdateIn,
+    ThesisMaintenanceIn,
     ThesisOut,
     ThesisPage,
     ThesisPublishIn,
+    ThesisSummaryOut,
+    ThesisSummaryPage,
     TrendPointOut,
 )
 from app.services import agent_workflow, audit, permission
@@ -84,6 +89,7 @@ from app.services.errors import (
     ThesisAlreadyExists,
     ValidationFailed,
 )
+from app.services.graph_rag import build_graph_rag_corpus, build_graph_retriever_from_corpus
 from app.services.permission import Actor
 
 E = TypeVar("E", ThesisStatus, ImpactDirection, ConfirmationStatus)
@@ -147,6 +153,9 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
         next_review_at=record.next_review_at,
         thesis_kind=record.thesis_kind,
         thesis_series_id=record.thesis_series_id,
+        investment_rating=record.investment_rating or record.direction,
+        target_price=record.target_price,
+        observation_period=record.observation_period,
         hypotheses=[
             HypothesisOut(
                 hypothesis_id=h.hypothesis_id,
@@ -182,7 +191,10 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
                     if isinstance(hypothesis_suggestions.get(h.hypothesis_id), dict)
                     else []
                 ),
-                mappings=[_mapping_out(item) for item in uow.thesis.list_mappings(h.hypothesis_id)],
+                mappings=[
+                    _mapping_out_for_uow(uow, item)
+                    for item in uow.thesis.list_mappings(h.hypothesis_id)
+                ],
             )
             for h in hypotheses
         ],
@@ -197,18 +209,26 @@ def _to_out(uow: UnitOfWork, thesis_id: str) -> ThesisOut:
     )
 
 
-def _mapping_out(record: MetricMappingRecord) -> MetricMappingOut:
+def _mapping_out(record: MetricMappingRecord, *, metric_name: str = "") -> MetricMappingOut:
     return MetricMappingOut(
         mapping_id=record.mapping_id,
         metric_id=record.metric_id,
+        metric_name=metric_name,
         metric_version=record.metric_version,
         expected_direction=record.expected_direction.value,
         expected_value=record.expected_value,
+        expected_lower=record.expected_lower,
+        expected_upper=record.expected_upper,
         invalidation_threshold=record.invalidation_threshold,
         invalidation_consecutive_periods=record.invalidation_consecutive_periods,
         expectation_source=record.expectation_source or "",
         confirmation_status=record.confirmation_status.value,
     )
+
+
+def _mapping_out_for_uow(uow: UnitOfWork, record: MetricMappingRecord) -> MetricMappingOut:
+    metric = uow.metrics.get(record.metric_id, record.metric_version)
+    return _mapping_out(record, metric_name=metric.name if metric else "")
 
 
 @router.post(
@@ -272,9 +292,58 @@ def create_draft(
             )
         except ValidationFailed as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
-        segments = [(hit.locator, hit.content) for hit in hits]
-        if hits:
-            source_document_id = hits[0].document_id
+        # 草稿也走 Graph RAG：先用权限过滤后的混合召回形成候选池，再把可见的
+        # 已确认研究关系投影为图，对候选片段进行图路径重排。新公司尚无既有 Thesis
+        # 时图为空，但仍使用 Graph RAG 的同一检索契约，不虚构关系。
+        if conf.rag_graph_enabled and hits:
+            visible_theses = query_service.list_theses(
+                uow,
+                actor,
+                ThesisQuery(limit=100),
+            )
+            corpus = build_graph_rag_corpus(
+                uow,
+                thesis_ids=[item.thesis_id for item in visible_theses.items],
+                as_of=now(),
+            )
+            graph_retriever = build_graph_retriever_from_corpus(
+                corpus,
+                text_retriever=BM25Retriever(),
+                text_weight=conf.rag_graph_text_weight,
+                graph_weight=conf.rag_graph_relation_weight,
+                max_hops=conf.rag_graph_max_hops,
+                assist_only=conf.rag_graph_assist_only,
+            )
+            graph_documents = [
+                RetrievalDocument(
+                    document_id=hit.document_id,
+                    security_id=security.security_id,
+                    locator=hit.locator,
+                    content=hit.content,
+                    published_at=hit.published_at,
+                    visibility_label=hit.visibility_label,
+                    source=hit.source,
+                )
+                for hit in hits
+                if hit.published_at is not None
+            ]
+            graph_retriever.add(graph_documents)
+            graph_result = graph_retriever.search(
+                RetrievalQuery(
+                    text=payload.view,
+                    security_id=security.security_id,
+                    as_of=now(),
+                    allowed_visibility=frozenset(actor.document_labels),
+                    top_k=8,
+                )
+            )
+            segments = [(item.locator, item.content) for item in graph_result.items]
+            if graph_result.items:
+                source_document_id = graph_result.items[0].document_id
+        else:
+            segments = [(hit.locator, hit.content) for hit in hits]
+            if hits:
+                source_document_id = hits[0].document_id
 
     if not payload.view.strip() and not segments:
         raise HTTPException(
@@ -318,7 +387,11 @@ def create_draft(
     # 用 uuid4 而不是 hash(view)：CPython 的字符串 hash 按进程随机化，同一观点
     # 换个进程就变 ID；同进程内重复建卡又会撞主键，flush 抛 IntegrityError 变 500。
     thesis_id = f"THS-{security.security_id[:24]}-{uuid4().hex[:12]}"
-    runtime = InvestmentResearchAgent.build(gateway, recorder=SqlRuntimeRecorder())
+    runtime = InvestmentResearchAgent.build(
+        gateway,
+        recorder=SqlRuntimeRecorder(),
+        metric_catalog=agent_workflow.build_database_metric_catalog(uow, security.security_id),
+    )
     enriched_draft = agent_workflow.enrich_draft_metric_suggestions(
         uow,
         draft=outcome.payload,
@@ -386,6 +459,38 @@ def list_theses(
     )
     return ThesisPage(
         items=[_to_out(uow, r.thesis_id) for r in page.items],
+        page=PageMeta(total=page.total, limit=page.limit, offset=page.offset),
+    )
+
+
+@router.get("/theses/summaries", response_model=ThesisSummaryPage)
+def list_thesis_summaries(
+    actor: ActorDep,
+    uow: UowDep,
+    limit: Annotated[int, Query(ge=1, le=query_service.MAX_LIMIT)] = 100,
+) -> ThesisSummaryPage:
+    """顶部研究上下文使用的轻量列表，不展开假设、指标和建议。"""
+    # 当前季度观察卡就是该公司的当前投资逻辑入口；只排除 is_current=false 的
+    # 历史季度，不应因 thesis_kind=observation 而从顶部选择器和新建校验中消失。
+    page = query_service.list_theses(
+        uow,
+        actor,
+        ThesisQuery(limit=limit, include_snapshots=True),
+    )
+    return ThesisSummaryPage(
+        items=[
+            ThesisSummaryOut(
+                thesis_id=item.thesis_id,
+                security_id=item.security_id,
+                title=item.title,
+                status=item.status.value,
+                owner=item.owner,
+                direction=item.direction.value if hasattr(item.direction, "value") else str(item.direction),
+                thesis_kind=item.thesis_kind,
+                thesis_series_id=item.thesis_series_id,
+            )
+            for item in page.items
+        ],
         page=PageMeta(total=page.total, limit=page.limit, offset=page.offset),
     )
 
@@ -490,6 +595,66 @@ def update_hypothesis(
     return _to_out(uow, thesis_id)
 
 
+@router.patch("/theses/{thesis_id}", response_model=ThesisOut)
+def update_thesis_draft(
+    thesis_id: str,
+    payload: ThesisDraftUpdateIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> ThesisOut:
+    _require_visible(uow, actor, thesis_id)
+    try:
+        thesis_service.update_draft(
+            uow,
+            thesis_id=thesis_id,
+            title=payload.title,
+            core_view=payload.core_view,
+            actor=actor,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_out(uow, thesis_id)
+
+
+@router.patch("/theses/{thesis_id}/maintenance", response_model=ThesisOut)
+def update_thesis_maintenance(
+    thesis_id: str,
+    payload: ThesisMaintenanceIn,
+    actor: ActorDep,
+    uow: UowDep,
+) -> ThesisOut:
+    """公司看台统一维护入口：一次提交逻辑、假设、指标与研究员字段。"""
+    _require_visible(uow, actor, thesis_id)
+    try:
+        thesis_service.update_maintenance(
+            uow,
+            thesis_id=thesis_id,
+            title=payload.title,
+            core_view=payload.core_view,
+            direction=payload.direction,
+            investment_rating=payload.investment_rating,
+            target_price=payload.target_price,
+            observation_period=payload.observation_period,
+            horizon_end_on=payload.horizon_end_on,
+            next_review_at=payload.next_review_at,
+            hypotheses=[item.model_dump() for item in payload.hypotheses],
+            mappings=[item.model_dump() for item in payload.mappings],
+            reason=payload.reason,
+            actor=actor,
+        )
+    except NotVisible as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HumanGateRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValidationFailed as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_out(uow, thesis_id)
+
+
 @router.post(
     "/theses/{thesis_id}/hypotheses/{hypothesis_id}/mappings",
     response_model=MetricMappingOut,
@@ -518,6 +683,8 @@ def set_hypothesis_mapping(
                 metric_version=payload.metric_version,
                 expected_direction=ExpectationDirection(payload.expected_direction),
                 expected_value=payload.expected_value,
+                expected_lower=payload.expected_lower,
+                expected_upper=payload.expected_upper,
                 invalidation_threshold=payload.invalidation_threshold,
                 invalidation_consecutive_periods=payload.invalidation_consecutive_periods,
                 expectation_source=payload.expectation_source,
@@ -534,7 +701,7 @@ def set_hypothesis_mapping(
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValidationFailed as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return _mapping_out(record)
+    return _mapping_out_for_uow(uow, record)
 
 
 @router.get("/theses/{thesis_id}/evidence", response_model=list[EvidenceOut])
@@ -1046,13 +1213,15 @@ def list_trends(
                 metric_id=item.metric_id,
                 metric_name=item.metric_name,
                 expected_value=item.expected_value,
+                expected_lower=item.expected_lower,
+                expected_upper=item.expected_upper,
                 invalidation_threshold=item.invalidation_threshold,
                 invalidation_consecutive_periods=item.invalidation_consecutive_periods,
                 unit=item.unit,
                 period_type=item.period_type,
                 metric_version=item.metric_version,
                 data_version=item.data_version,
-                direction=result.direction if result else "历史参考（不参与正式判定）",
+                direction=result.direction if result else "—",
                 slope=result.slope if result else None,
                 consecutive_decline=result.consecutive_decline if result else 0,
                 consecutive_below_expectation=(
@@ -1093,11 +1262,7 @@ def list_trends(
                         if row.actual_value is not None
                     ]
                 ),
-                note=(
-                    item.note + "；页面值为历史参考，不参与正式判定"
-                    if not result and item.source_rows
-                    else item.note
-                ),
+                note=item.note,
             )
         )
     return out

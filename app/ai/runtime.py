@@ -41,6 +41,7 @@ from app.ai.observability import (
 )
 from app.ai.retrieval import KeywordRetriever, RetrievalDocument, Retriever
 from app.ai.tools import (
+    MetricCatalogTool,
     ThresholdMethod,
     ThresholdObservation,
     ThresholdReference,
@@ -129,6 +130,7 @@ class InvestmentResearchAgent:
         gateway: Gateway,
         retriever: Retriever | None = None,
         recorder: RuntimeRecorder | None = None,
+        metric_catalog: MetricCatalogTool | None = None,
     ) -> InvestmentResearchAgent:
         """从稳定的 Gateway 与 Retriever 接口构造完整编排器。"""
         active_retriever = retriever or KeywordRetriever()
@@ -138,6 +140,7 @@ class InvestmentResearchAgent:
                 gateway=gateway,
                 retriever=active_retriever,
             ),
+            metric_research=MetricResearchAgent(gateway=gateway, catalog=metric_catalog),
             recorder=recorder,
         )
 

@@ -1,9 +1,9 @@
 """Add database-backed user accounts for shared-environment login."""
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision = "0017_user_accounts"
 down_revision = "0016_quant_productization"

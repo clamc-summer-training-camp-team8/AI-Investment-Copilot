@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.domain import UnitOfWork
 from app.db.repositories.adjudication import SqlAdjudicationDecisionRepo
 from app.db.repositories.assets import SqlAssetRepo
+from app.db.repositories.coverage import SqlCoverageRepo
 from app.db.repositories.document import SqlDocumentRepo
 from app.db.repositories.evidence import (
     SqlAuditRepo,
@@ -34,6 +35,7 @@ __all__ = [
     "SqlAdjudicationDecisionRepo",
     "SqlAssetRepo",
     "SqlAuditRepo",
+    "SqlCoverageRepo",
     "SqlDocumentProcessingJobRepo",
     "SqlDocumentRepo",
     "SqlEventRepo",
@@ -77,4 +79,5 @@ def build_uow(session: Session) -> UnitOfWork:
         ranking=SqlRankingPriorRepo(session),
         quant=SqlQuantRepo(session),
         retrospectives=SqlRetrospectiveRepo(session),
+        coverage=SqlCoverageRepo(session),
     )

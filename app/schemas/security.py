@@ -23,3 +23,7 @@ class SecurityOut(BaseModel):
     ticker: str | None = None
     industry: str | None = None
     aliases: list[str] = Field(default_factory=list)
+
+
+class SecurityLookupOut(SecurityOut):
+    source: str

@@ -23,12 +23,14 @@
 | --- | --- | --- |
 | GET | `/api/workbench` | 工作台：状态概览 + 三类待办 |
 | GET | `/api/theses` | 卡片列表，支持状态/标的/负责人/关键词过滤，强制分页 |
+| GET | `/api/theses/summaries` | 顶部研究上下文使用的轻量逻辑摘要列表 |
 | GET | `/api/theses/{id}` | 卡片详情 |
 | GET | `/api/theses/{id}/trends` | 按假设的趋势（最近 4-8 期，带口径） |
 | GET | `/api/theses/{id}/evidence` | 证据列表 |
 | GET | `/api/theses/{id}/suggestions` | 状态建议列表 |
 | GET | `/api/theses/{id}/audit` | 留痕，倒序分页 |
 | GET | `/api/reviews/adjudications` | 待裁决样本队列 |
+| GET | `/api/coverage` | 行业总览：本地板块、公司与投资逻辑摘要 |
 
 ## 已就绪的写接口与后台任务
 
@@ -36,6 +38,7 @@
 | --- | --- | --- |
 | POST | `/api/theses/drafts` | 创建 AI 候选逻辑草稿 |
 | POST | `/api/theses/{id}/publish` | 人工确认并发布草稿 |
+| PATCH | `/api/theses/{id}/maintenance` | 维护已建立逻辑、假设、指标阈值与研究员字段，并生成新版本与审计记录 |
 | POST | `/api/theses/{id}/status` | 人工确认状态变更 |
 | POST | `/api/evidence/{id}/actions` | 确认、驳回或调整证据 |
 | POST | `/api/jobs/documents` | 上传文档并进入后台抽取队列 |
@@ -47,6 +50,10 @@
 | POST | `/api/agent/theses/{id}/review-drafts` | 基于区间内已确认记录生成复盘候选 |
 | POST | `/api/agent/theses/{id}/revision-drafts` | 重大风险后生成版本化逻辑修订候选 |
 | POST | `/api/reviews/theses/{id}/drafts` | 从复核中心业务入口生成复盘候选 |
+| POST | `/api/coverage/sectors` | 新增本地研究板块 |
+| PATCH | `/api/coverage/sectors/{sector_id}` | 修改当前研究板块名称 |
+| POST | `/api/coverage/sectors/{sector_id}/companies` | 在板块下新增公司档案（投资逻辑默认 0 条） |
+| PATCH | `/api/coverage/companies/{coverage_company_id}` | 更新公司负责人或覆盖状态 |
 
 ## 身份传递
 

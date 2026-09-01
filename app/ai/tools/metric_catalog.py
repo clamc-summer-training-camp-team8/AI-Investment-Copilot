@@ -77,6 +77,19 @@ class MetricCatalogTool:
         tool._replace_seed(content)
         return tool
 
+    @classmethod
+    def from_snapshot(cls, content: dict[str, Any]) -> MetricCatalogTool:
+        """从调用方提供的目录快照创建内存目录。
+
+        生产服务可把 PostgreSQL 中当前证券的指标定义和可用性投影为这个
+        与种子目录相同的契约；``app.ai`` 不需要依赖数据库驱动或 ORM。
+        """
+        connection = sqlite3.connect(":memory:")
+        tool = cls(connection)
+        tool._create_schema()
+        tool._replace_seed(content)
+        return tool
+
     @property
     def catalog_version(self) -> str:
         """返回当前目录版本，便于将推荐结果与目录快照绑定。"""

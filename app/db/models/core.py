@@ -31,7 +31,7 @@ from app.db.base import Base, created_at_column, updated_at_column
 
 
 class Security(Base):
-    """证券主数据。MVP 只覆盖试点公司清单。"""
+    """已进入投资逻辑维护范围的公司。"""
 
     __tablename__ = "security"
 
@@ -47,6 +47,29 @@ class Security(Base):
         comment="虚构演示数据标记，禁止用于真实投资结论",
     )
     created_at: Mapped[datetime] = created_at_column()
+
+
+class MarketSecurity(Base):
+    """市场证券全状态表，仅用于代码、名称和行业的搜索补全。"""
+
+    __tablename__ = "market_security"
+
+    security_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    ticker: Mapped[str | None] = mapped_column(String(32))
+    industry: Mapped[str | None] = mapped_column(String(128))
+    market_sector_id: Mapped[str | None] = mapped_column(
+        ForeignKey("market_sector.market_sector_id"),
+        comment="市场板块目录关联；由市场同步任务补全",
+    )
+    aliases: Mapped[list | None] = mapped_column(JSONB)
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="market")
+    updated_at: Mapped[datetime] = updated_at_column()
+
+    __table_args__ = (
+        Index("ix_market_security_name", "name"),
+        Index("ix_market_security_ticker", "ticker"),
+    )
 
 
 class Document(Base):
@@ -193,6 +216,9 @@ class Thesis(Base):
     is_illustrative: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     thesis_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="canonical")
     thesis_series_id: Mapped[str | None] = mapped_column(String(64))
+    investment_rating: Mapped[str | None] = mapped_column(String(32))
+    target_price: Mapped[Decimal | None] = mapped_column(Numeric(20, 6))
+    observation_period: Mapped[str | None] = mapped_column(String(128))
     created_at: Mapped[datetime] = created_at_column()
     updated_at: Mapped[datetime] = updated_at_column()
 
@@ -304,9 +330,9 @@ class HypothesisMetricMap(Base):
 
     metric_role: Mapped[str | None] = mapped_column(String(16))
     expected_direction: Mapped[str] = mapped_column(String(32), nullable=False)
-    expected_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
-    expected_lower: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
-    expected_upper: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    expected_value: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
+    expected_lower: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
+    expected_upper: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
     expectation_source: Mapped[str | None] = mapped_column(
         String(255), comment="预期来源，预期差计算要求可追溯（GAP-002）"
     )
@@ -314,7 +340,7 @@ class HypothesisMetricMap(Base):
 
     validation_rule: Mapped[str | None] = mapped_column(Text)
     invalidation_rule: Mapped[str | None] = mapped_column(Text)
-    invalidation_threshold: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    invalidation_threshold: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
     observation_frequency: Mapped[str | None] = mapped_column(String(32))
 
     confirmation_status: Mapped[str] = mapped_column(String(16), nullable=False, default="待确认")
@@ -338,11 +364,11 @@ class MetricObservation(Base):
     period_type: Mapped[str] = mapped_column(String(16), nullable=False, default="单季度")
     observation_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    actual_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    actual_value: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
     raw_value: Mapped[str | None] = mapped_column(String(64))
     unit: Mapped[str] = mapped_column(String(32), nullable=False)
-    expected_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
-    benchmark_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    expected_value: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
+    benchmark_value: Mapped[Decimal | None] = mapped_column(Numeric(30, 6))
 
     source_document_id: Mapped[str | None] = mapped_column(String(64))
     data_version: Mapped[str | None] = mapped_column(String(64))

@@ -9,8 +9,15 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import date
 from typing import Any
+from uuid import uuid4
 
-from app.core.enums import Importance, ThesisStatus, Visibility
+from app.core.enums import (
+    ConfirmationStatus,
+    ExpectationDirection,
+    Importance,
+    ThesisStatus,
+    Visibility,
+)
 from app.services import audit, permission, version
 from app.services.errors import (
     EntityAmbiguous,
@@ -191,6 +198,215 @@ def update_hypothesis(
     return updated
 
 
+def update_draft(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    title: str,
+    core_view: str,
+    actor: Actor,
+) -> ThesisRecord:
+    """保存研究员对 AI 生成逻辑草稿的调整。"""
+    thesis = _require_owned_draft(uow, thesis_id=thesis_id, actor=actor)
+    normalized_title = title.strip()
+    normalized_view = core_view.strip()
+    if not normalized_title or not normalized_view:
+        raise ValidationFailed("标题与核心观点不可为空")
+    if len(normalized_title) > TITLE_MAX or len(normalized_view) > CORE_VIEW_MAX:
+        raise ValidationFailed("标题或核心观点超过长度限制")
+    updated = replace(thesis, title=normalized_title, core_view=normalized_view)
+    uow.thesis.update(updated)
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action=audit.EDIT,
+        object_type="thesis",
+        object_id=thesis_id,
+        detail={"title": normalized_title, "core_view": normalized_view},
+    )
+    return updated
+
+
+def update_maintenance(
+    uow: UnitOfWork,
+    *,
+    thesis_id: str,
+    title: str,
+    core_view: str,
+    direction: str,
+    investment_rating: str | None,
+    target_price: Any,
+    observation_period: str | None,
+    horizon_end_on: date | None,
+    next_review_at: date | None,
+    hypotheses: list[dict[str, object]],
+    mappings: list[dict[str, object]],
+    reason: str,
+    actor: Actor,
+) -> ThesisRecord:
+    """保存公司看台的维护编辑，并生成一个可追溯版本。
+
+    公司页编辑的是当前逻辑，不直接改历史快照。一次提交同时更新逻辑、假设和指标
+    配置，随后生成新版本与审计记录；AI 推荐仍然只是候选，只有提交进来的映射才会
+    进入正式维护数据。
+    """
+    thesis = uow.thesis.get(thesis_id)
+    if thesis is None:
+        raise NotVisible("投资逻辑不存在")
+    _ensure_current(thesis)
+    permission.ensure_thesis_visible(
+        actor,
+        thesis_id=thesis_id,
+        owner=thesis.owner,
+        visibility=thesis.visibility,
+        team=thesis.team,
+    )
+    if thesis.owner != actor.user_id:
+        raise HumanGateRequired("只有负责人可以维护逻辑")
+    normalized_title = title.strip()
+    normalized_view = core_view.strip()
+    if not normalized_title or len(normalized_title) > TITLE_MAX:
+        raise ValidationFailed("标题须为 1 至 40 字")
+    if not normalized_view or len(normalized_view) > CORE_VIEW_MAX:
+        raise ValidationFailed("核心观点须为 1 至 200 字")
+    if direction not in {"看多", "看空", "观察"}:
+        raise ValidationFailed("投资方向无效")
+    normalized_rating = (investment_rating or "").strip() or None
+    if normalized_rating and len(normalized_rating) > 32:
+        raise ValidationFailed("投资评级不能超过 32 个字符")
+
+    current_hypotheses = {item.hypothesis_id: item for item in uow.thesis.list_hypotheses(thesis_id)}
+    if {str(item.get("hypothesis_id")) for item in hypotheses} != set(current_hypotheses):
+        raise ValidationFailed("维护提交必须保留全部既有假设")
+    updated_hypotheses: list[HypothesisRecord] = []
+    for raw in hypotheses:
+        hypothesis_id = str(raw.get("hypothesis_id"))
+        current = current_hypotheses[hypothesis_id]
+        statement = str(raw.get("statement", current.statement)).strip()
+        if not statement:
+            raise ValidationFailed("假设内容不能为空")
+        try:
+            importance = Importance(str(raw.get("importance", current.importance.value)))
+        except ValueError as exc:
+            raise ValidationFailed("假设重要性无效") from exc
+        updated_hypotheses.append(
+            replace(
+                current,
+                statement=statement,
+                hypothesis_type=str(raw.get("hypothesis_type", current.hypothesis_type)).strip() or "其他",
+                importance=importance,
+                observation_window=(str(raw.get("observation_window", "")).strip() or None),
+                invalidation_rule=(str(raw.get("invalidation_rule", "")).strip() or None),
+            )
+        )
+
+    existing_mappings = [
+        mapping
+        for hypothesis in current_hypotheses.values()
+        for mapping in uow.thesis.list_mappings(hypothesis.hypothesis_id)
+    ]
+    existing_mapping_by_id = {mapping.mapping_id: mapping for mapping in existing_mappings}
+
+    # 先更新假设，set_expectations 会复用统一的人工校验与审计规则。
+    for hypothesis in updated_hypotheses:
+        uow.thesis.update_hypothesis(hypothesis)
+    saved_mappings: list[MetricMappingRecord] = []
+    for raw in mappings:
+        hypothesis_id = str(raw.get("hypothesis_id"))
+        if hypothesis_id not in current_hypotheses:
+            raise ValidationFailed(f"指标映射所属假设无效: {hypothesis_id}")
+        submitted_mapping_id = str(raw.get("mapping_id") or "")
+        if submitted_mapping_id:
+            existing = existing_mapping_by_id.get(submitted_mapping_id)
+            if existing is None or existing.hypothesis_id != hypothesis_id:
+                raise ValidationFailed("指标映射不存在或不属于当前假设")
+        mapping_id = submitted_mapping_id or f"MAP-{uuid4().hex[:20]}"
+        try:
+            expected_direction = ExpectationDirection(str(raw.get("expected_direction")))
+        except ValueError as exc:
+            raise ValidationFailed("指标预期方向无效") from exc
+        saved_mappings.append(
+            set_expectations(
+                uow,
+                hypothesis_id=hypothesis_id,
+                mapping=MetricMappingRecord(
+                    mapping_id=mapping_id,
+                    hypothesis_id=hypothesis_id,
+                    metric_id=str(raw.get("metric_id")),
+                    metric_version=str(raw.get("metric_version") or "v1.0"),
+                    expected_direction=expected_direction,
+                    expected_value=raw.get("expected_value"),
+                    expected_lower=raw.get("expected_lower"),
+                    expected_upper=raw.get("expected_upper"),
+                    invalidation_threshold=raw.get("invalidation_threshold"),
+                    invalidation_consecutive_periods=raw.get("invalidation_consecutive_periods"),
+                    expectation_source=str(raw.get("expectation_source") or "").strip(),
+                    confirmation_status=ConfirmationStatus.CONFIRMED,
+                ),
+                actor=actor,
+                validate_metric=True,
+                thesis_id=thesis_id,
+                require_draft=False,
+            )
+        )
+    submitted_mapping_ids = {item.mapping_id for item in saved_mappings}
+    for mapping in existing_mappings:
+        if mapping.mapping_id not in submitted_mapping_ids:
+            uow.thesis.remove_mapping(mapping.mapping_id)
+            audit.record(
+                uow.audit,
+                actor=actor.user_id,
+                action=audit.EDIT,
+                object_type="hypothesis_metric_map",
+                object_id=mapping.mapping_id,
+                detail={"removed": True, "reason": reason.strip() or "研究员维护逻辑"},
+            )
+
+    latest = uow.versions.latest(thesis_id)
+    next_version = max(thesis.version, latest.version if latest else thesis.version) + 1
+    updated = replace(
+        thesis,
+        title=normalized_title,
+        core_view=normalized_view,
+        direction=direction,
+        investment_rating=normalized_rating,
+        target_price=target_price,
+        observation_period=(observation_period or "").strip() or None,
+        horizon_end_on=horizon_end_on,
+        next_review_at=next_review_at,
+        version=next_version,
+    )
+    uow.thesis.update(updated)
+    evidence, cutoff, model_versions = version.evidence_snapshot(uow, thesis_id)
+    version.create(
+        uow.versions,
+        thesis=updated,
+        hypotheses=updated_hypotheses,
+        mappings=saved_mappings,
+        evidence=evidence,
+        data_cutoff_at=cutoff,
+        rule_version="maintenance-v1",
+        model_versions=model_versions,
+        triggered_by=version.TRIGGER_FIELD_EDIT,
+        created_by=actor.user_id,
+        change_reason=reason.strip() or "研究员维护逻辑",
+        changed_fields=["title", "core_view", "direction", "investment_rating", "target_price", "observation_period", "hypotheses", "metric_mappings"],
+    )
+    audit.record(
+        uow.audit,
+        actor=actor.user_id,
+        action="维护逻辑",
+        object_type="thesis",
+        object_id=thesis_id,
+        detail={
+            "reason": reason.strip() or "研究员维护逻辑",
+            "changed_fields": ["title", "core_view", "direction", "investment_rating", "target_price", "observation_period", "hypotheses", "metric_mappings"],
+            "version": next_version,
+        },
+    )
+    return updated
+
+
 def set_expectations(
     uow: UnitOfWork,
     *,
@@ -206,7 +422,25 @@ def set_expectations(
     这两项只能由人工填写（PRD 10.1 限制、GAP-002 要求记录来源），因此强制要求
     expectation_source 非空——没有来源的预期无法追溯，预期差也就失去意义。
     """
-    if mapping.expected_value is None and mapping.invalidation_threshold is None:
+    range_direction = mapping.expected_direction in {
+        ExpectationDirection.RISING,
+        ExpectationDirection.FALLING,
+        ExpectationDirection.FLUCTUATING,
+    }
+    if range_direction:
+        if mapping.expected_lower is None and mapping.expected_upper is None:
+            raise ValidationFailed("上限和下限必须至少填写一项")
+        if mapping.expected_direction is ExpectationDirection.RISING and mapping.expected_lower is None:
+            raise ValidationFailed("上升方向需要填写下限")
+        if mapping.expected_direction is ExpectationDirection.FALLING and mapping.expected_upper is None:
+            raise ValidationFailed("下降方向需要填写上限")
+        if (
+            mapping.expected_lower is not None
+            and mapping.expected_upper is not None
+            and mapping.expected_lower > mapping.expected_upper
+        ):
+            raise ValidationFailed("下限不能高于上限")
+    elif mapping.expected_value is None and mapping.invalidation_threshold is None:
         raise ValidationFailed("必须至少给出预期值或失效阈值")
     if not (mapping.expectation_source or "").strip():
         raise ValidationFailed("必须记录预期来源（GAP-002）")
@@ -266,6 +500,8 @@ def set_expectations(
         object_id=mapping.mapping_id,
         detail={
             "expected_value": str(mapping.expected_value),
+            "expected_lower": str(mapping.expected_lower),
+            "expected_upper": str(mapping.expected_upper),
             "invalidation_threshold": str(mapping.invalidation_threshold),
             "expectation_source": mapping.expectation_source,
         },

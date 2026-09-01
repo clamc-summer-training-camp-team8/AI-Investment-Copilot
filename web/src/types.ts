@@ -122,6 +122,60 @@ export interface Security {
   industry?: string
 }
 
+export interface MaintainedCoverageCompany {
+  securityId: string
+  name: string
+  ticker?: string
+  industry?: string
+  thesisId?: string
+  thesisTitle?: string
+  thesisStatus: string
+  hypothesisCount: number
+  configuredMetricCount: number
+  updatedAt?: string
+}
+
+export interface MaintainedCoverageIndustry {
+  name: string
+  companies: MaintainedCoverageCompany[]
+}
+
+export interface CoverageUniverseCompany {
+  coverageCompanyId?: string
+  sectorId?: string
+  securityId: string
+  name: string
+  ticker?: string
+  industry?: string
+  thesisId?: string
+  thesisTitle?: string
+  thesisStatus?: string
+  thesisCount: number
+  owner?: string
+  hypothesisCount: number
+  configuredMetricCount: number
+  updatedAt?: string
+  status?: string
+  market?: string
+}
+
+export interface CoverageUniverseIndustry {
+  sectorId?: string
+  code?: string
+  description?: string
+  status?: string
+  name: string
+  companies: CoverageUniverseCompany[]
+}
+
+export interface CompanyMetricPoint { period: string; date: string; value: string }
+export interface CompanyMetric {
+  metricId: string; name: string; category: string; unit: string; frequency: string
+  definition: string; sourceId: string; latestValue: string; latestPeriod: string; latestDate: string
+  previousValue?: string; changeValue?: string; changeRate?: string; observations: CompanyMetricPoint[]
+}
+export interface CompanyMetricCenter { securityId: string; updatedAt?: string; metrics: CompanyMetric[] }
+
 export interface ThesisDetail extends ThesisSummary {
   direction: string
   coreView: string
@@ -129,6 +183,9 @@ export interface ThesisDetail extends ThesisSummary {
   establishedOn: string
   horizonEndOn?: string
   nextReviewAt?: string
+  investmentRating?: string
+  targetPrice?: string
+  observationPeriod?: string
   hypotheses: Hypothesis[]
   riskSuggestions: Array<Record<string, unknown>>
   invalidationSuggestions: Array<Record<string, unknown>>
@@ -139,6 +196,8 @@ export interface MetricMapping {
   metricId: string
   metricName?: string
   expectedValue?: string
+  expectedLower?: string
+  expectedUpper?: string
   invalidationThreshold?: string
   invalidationConsecutivePeriods?: number
   metricVersion: string
@@ -227,6 +286,11 @@ export interface Trend {
   metricName?: string
   unit: string
   direction: string
+  expectedValue?: string
+  expectedLower?: string
+  expectedUpper?: string
+  invalidationThreshold?: string
+  invalidationConsecutivePeriods?: number
   slope?: string
   verdict?: string
   note?: string

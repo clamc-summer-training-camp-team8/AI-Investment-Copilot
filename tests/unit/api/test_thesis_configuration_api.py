@@ -48,6 +48,32 @@ def _draft_uow():
     return uow
 
 
+def test_thesis_summary_list_does_not_expand_hypotheses() -> None:
+    uow = _draft_uow()
+    application = create_app()
+    application.dependency_overrides[get_uow] = lambda: uow
+
+    with TestClient(application) as client:
+        response = client.get(
+            "/api/theses/summaries?limit=100", headers={"X-User-Id": "analyst-mvp"}
+        )
+
+    assert response.status_code == 200
+    assert response.json()["items"] == [
+        {
+            "thesis_id": "THS-CONFIG-1",
+            "security_id": "DEMO001",
+            "title": "网页发布闭环",
+            "status": "草稿",
+            "owner": "analyst-mvp",
+            "direction": "观察",
+            "thesis_kind": "canonical",
+            "thesis_series_id": None,
+        }
+    ]
+    application.dependency_overrides.clear()
+
+
 def test_researcher_can_configure_draft_and_publish_without_database_scripts() -> None:
     uow = _draft_uow()
     application = create_app()
@@ -60,6 +86,15 @@ def test_researcher_can_configure_draft_and_publish_without_database_scripts() -
             assert detail.json()["hypotheses"][0]["metric_suggestions"][0]["metric_name"] == (
                 "营业收入同比"
             )
+
+            thesis = client.patch(
+                "/api/theses/THS-CONFIG-1",
+                headers=headers,
+                json={"title": "网页可编辑草稿", "core_view": "研究员调整后的核心观点"},
+            )
+            assert thesis.status_code == 200, thesis.text
+            assert thesis.json()["title"] == "网页可编辑草稿"
+            assert thesis.json()["core_view"] == "研究员调整后的核心观点"
 
             metrics = client.get("/api/metrics?keyword=收入", headers=headers)
             assert metrics.status_code == 200

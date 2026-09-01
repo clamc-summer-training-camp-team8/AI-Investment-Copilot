@@ -145,6 +145,9 @@ class MetricRole(StrEnum):
 
 
 class ExpectationDirection(StrEnum):
+    RISING = "上升"
+    FALLING = "下降"
+    FLUCTUATING = "波动"
     HIGHER_BETTER = "越高越好"
     LOWER_BETTER = "越低越好"
     NOT_BELOW_THRESHOLD = "不低于阈值"
