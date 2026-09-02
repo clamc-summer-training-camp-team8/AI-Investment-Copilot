@@ -298,3 +298,32 @@ def test_量化功能开关关闭时统一隐藏路由() -> None:
         response = disabled.get("/api/quant/catalog")
     assert response.status_code == 404
     assert response.json()["detail"] == "模型与因子模块未启用"
+
+
+def test_答辩演示情景由独立开关控制且不依赖数据库写入() -> None:
+    app = create_app()
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        _env_file=None,
+        quant_demo_enabled=True,
+    )
+    with TestClient(app, headers={"X-User-Id": "quant-researcher"}) as enabled:
+        response = enabled.get("/api/quant/demo-scenario")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["evaluation_track"] == "scenario_simulation"
+    assert body["dataset"]["security_count"] == 30
+    assert body["summary"]["assumed_confirmed_count"] == 330
+    assert body["summary"]["neutral_noop_count"] == 66
+    assert body["result"]["validation_quality"]["unique_security_count"] == 30
+    assert body["result"]["validation_quality"]["alpha_claim_allowed"] is False
+
+    app = create_app()
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        _env_file=None,
+        quant_demo_enabled=False,
+    )
+    with TestClient(app, headers={"X-User-Id": "quant-researcher"}) as disabled:
+        hidden = disabled.get("/api/quant/demo-scenario")
+    assert hidden.status_code == 404
+    assert hidden.json()["detail"] == "量化答辩演示情景未启用"

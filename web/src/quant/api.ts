@@ -1,6 +1,7 @@
 export {
   getMarketDatasetDetail,
   getPortfolioBacktest,
+  getQuantDemoScenario,
   getQuantCatalog,
   getQuantFactors,
   getQuantModelTemplates,

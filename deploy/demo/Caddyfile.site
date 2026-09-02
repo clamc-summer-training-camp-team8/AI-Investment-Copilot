@@ -1,0 +1,29 @@
+demo.47.238.244.65.sslip.io {
+	encode zstd gzip
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	@gateway_health path /healthz
+	respond @gateway_health "ok" 200
+
+	route {
+		@root path /
+		redir @root /quant/demo 302
+
+		@api path /api/*
+		reverse_proxy @api demo-api:8000
+
+		reverse_proxy demo-web:80
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

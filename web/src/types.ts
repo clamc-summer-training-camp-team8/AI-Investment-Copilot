@@ -875,6 +875,7 @@ export interface QuantMarketDataset {
 
 export interface QuantSecurityMetadata {
   securityId: string
+  name?: string
   market: string
   currency: string
   industry: string
@@ -1059,6 +1060,59 @@ export interface PortfolioBacktestRun {
       warnings: string[]
     }
   }
+}
+
+export interface QuantDemoScenario {
+  scenarioId: string
+  runId: string
+  title: string
+  evaluationTrack: 'scenario_simulation'
+  scenarioPolicyVersion: string
+  methodologyVersion: string
+  generatedAt: string
+  assumption: string
+  disclaimer: string
+  dataset: {
+    datasetId: string
+    dataVersion: string
+    manifestSha256: string
+    coverageStart: string
+    coverageEnd: string
+    securityCount: number
+    tradingDayCount: number
+  }
+  summary: {
+    candidateCount: number
+    assumedConfirmedCount: number
+    directionalSignalCount: number
+    neutralNoopCount: number
+    checkpointCount: number
+    supportCount: number
+    conflictCount: number
+  }
+  scoreMapping: Array<{
+    direction: '支持' | '冲突' | '中性'
+    strength: '高' | '中' | '低'
+    score: number
+    portfolioEffect: string
+  }>
+  decisionPipeline: Array<{ step: string; title: string; description: string }>
+  latestEvents: Array<{
+    signalId: string
+    securityId: string
+    securityName: string
+    industry: string
+    disclosedAt: string
+    assumedReviewedAt: string
+    direction: '支持' | '冲突' | '中性'
+    strength: '高' | '中' | '低'
+    score: number
+    decisionEffect: string
+    thesisTitle: string
+    hypothesisStatement: string
+    evidenceTitle: string
+  }>
+  result: PortfolioBacktestRun['result']
 }
 
 export interface GoldQualitySummary {

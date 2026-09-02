@@ -11,6 +11,7 @@ class AuthConfigOut(BaseModel):
     retrospective_center_enabled: bool
     retrospective_ai_draft_enabled: bool
     quant_research_enabled: bool
+    quant_demo_enabled: bool
 
 
 class LoginIn(BaseModel):

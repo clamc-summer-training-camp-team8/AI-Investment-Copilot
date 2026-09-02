@@ -152,7 +152,8 @@ function ProductApp({ user, onLogout, features }: { user: AuthUser; onLogout?: (
   const isDocumentReader = location.pathname.startsWith('/documents/')
   const isDataCenter = location.pathname.startsWith('/assets')
   const isEvidenceDetail = /^\/radar\/[^/]+$/u.test(location.pathname)
-  return <div className={`app-shell ${isWorkbench ? 'workbench-shell' : ''} ${isCompanyResearch ? 'company-shell' : ''} ${isCoverageManagement ? 'coverage-shell' : ''} ${isMacroStrategy ? 'macro-shell' : ''} ${isResearchUpdates ? 'updates-shell' : ''} ${isRetrospective ? 'retrospective-shell' : ''} ${isLogicChange ? 'logic-change-shell' : ''} ${isDocumentReader ? 'document-reader-shell' : ''} ${isDataCenter ? 'data-center-shell' : ''} ${isEvidenceDetail ? 'evidence-detail-shell' : ''}`}>
+  const isQuant = location.pathname.startsWith('/quant')
+  return <div className={`app-shell ${isWorkbench ? 'workbench-shell' : ''} ${isCompanyResearch ? 'company-shell' : ''} ${isCoverageManagement ? 'coverage-shell' : ''} ${isMacroStrategy ? 'macro-shell' : ''} ${isResearchUpdates ? 'updates-shell' : ''} ${isRetrospective ? 'retrospective-shell' : ''} ${isLogicChange ? 'logic-change-shell' : ''} ${isDocumentReader ? 'document-reader-shell' : ''} ${isDataCenter ? 'data-center-shell' : ''} ${isEvidenceDetail ? 'evidence-detail-shell' : ''} ${isQuant ? 'quant-shell' : ''}`}>
     <a className="skip-link" href="#main-content">跳到主要内容</a>
     <header className="global-topbar dashboard-topbar">
       <NavLink to="/workbench" className="brand dashboard-brand" aria-label="返回工作台"><span className="brand-mark"><Icon name="graph" size={20} /></span><span className="brand-copy"><strong>投研引擎工作台</strong><small>AI INVESTMENT COPILOT</small></span></NavLink>
@@ -195,7 +196,7 @@ function ProductApp({ user, onLogout, features }: { user: AuthUser; onLogout?: (
               <Route path="runs" element={<DataCenterRunsPage />} />
             </Route>
             <Route path="/quality" element={<QualityPage />} />
-            <Route path="/quant/*" element={features.quantResearchEnabled ? <QuantModule /> : <NotFoundPage />} />
+            <Route path="/quant/*" element={features.quantResearchEnabled ? <QuantModule demoEnabled={features.quantDemoEnabled} /> : <NotFoundPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

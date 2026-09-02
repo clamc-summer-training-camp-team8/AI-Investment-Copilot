@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { createContext, useContext, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { listSecurities } from '../api'
 import { EmptyState, ErrorState, InlineError, LoadingState } from '../components'
 import type {
@@ -9,6 +9,7 @@ import type {
   QuantFactorDefinition,
   QuantMarketDataset,
   QuantMarketDatasetDetail,
+  QuantDemoScenario,
   QuantModelTemplate,
   QuantSecurityMetadata,
   QuantSignalSet,
@@ -17,6 +18,7 @@ import {
   getMarketDatasetDetail,
   getPortfolioBacktest,
   getQuantCatalog,
+  getQuantDemoScenario,
   getQuantFactors,
   getQuantModelTemplates,
   getQuantSignalSetDetail,
@@ -64,44 +66,130 @@ function ResearchBoundary() {
   return <div className="quant-boundary" role="note"><strong>研究验证边界</strong><span>结果不构成投资建议，不生成订单、评级或调仓指令。</span></div>
 }
 
-function QuantLayout({ children }: { children: ReactNode }) {
-  return <section className="quant-product">
+const QuantWorkbenchOrigin = createContext(false)
+
+function appendWorkbenchOrigin(path: string, fromWorkbench: boolean) {
+  if (!fromWorkbench) return path
+  return `${path}${path.includes('?') ? '&' : '?'}from=workbench`
+}
+
+function useQuantHref() {
+  const fromWorkbench = useContext(QuantWorkbenchOrigin)
+  return (path: string) => appendWorkbenchOrigin(path, fromWorkbench)
+}
+
+function QuantLayout({ children, demoEnabled = false }: { children: ReactNode; demoEnabled?: boolean }) {
+  const [params] = useSearchParams()
+  const location = useLocation()
+  const fromWorkbench = params.get('from') === 'workbench'
+  const href = (path: string) => appendWorkbenchOrigin(path, fromWorkbench)
+
+  useEffect(() => {
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [location.pathname])
+
+  return <QuantWorkbenchOrigin.Provider value={fromWorkbench}><section className="quant-product">
+    {fromWorkbench && <div className="quant-origin-bar"><div><span>WORKBENCH / RESEARCH VALIDATION</span><strong>已承接工作台研究上下文</strong><p>可继续选择冻结信号、模型模板和研究证券，运行后仍可返回工作台处理证据与投资逻辑。</p></div><NavLink to="/workbench">← 返回工作台</NavLink></div>}
     <header className="quant-page-header">
-      <div><span className="eyebrow">MODELS &amp; FACTORS · GOVERNED RESEARCH</span><h1>模型与因子</h1><p>用冻结行情与人工确认信号，完成可追溯、可复算的样本外研究验证。</p></div>
-      <NavLink className="button primary" to="/quant/new">＋ 新建组合验证</NavLink>
+      <div><span className="eyebrow">MODELS &amp; FACTORS · GOVERNED RESEARCH</span><h1>模型与因子</h1><p>承接工作台中的投资逻辑与人工确认结果，用冻结行情完成可追溯、可复算的样本外研究验证。</p><div className="quant-header-meta"><span><i />受治理研究环境</span><span>POINT-IN-TIME</span><span>HUMAN-GATED</span></div></div>
+      <div className="quant-page-actions"><NavLink className="button secondary" to="/workbench">返回工作台</NavLink><NavLink className="button primary" to={href('/quant/new')}>＋ 新建组合验证</NavLink></div>
     </header>
     <nav className="quant-tabs" aria-label="模型与因子二级导航">
-      <NavLink end to="/quant">研究概览</NavLink>
-      <NavLink to="/quant/signals">研究信号</NavLink>
-      <NavLink to="/quant/factors">因子目录</NavLink>
-      <NavLink to="/quant/models">模型模板</NavLink>
-      <NavLink to="/quant/new">新建验证</NavLink>
-      <NavLink to="/quant/runs">历史运行</NavLink>
+      <NavLink end to={href('/quant')}>研究概览</NavLink>
+      <NavLink to={href('/quant/signals')}>研究信号</NavLink>
+      <NavLink to={href('/quant/factors')}>因子目录</NavLink>
+      <NavLink to={href('/quant/models')}>模型模板</NavLink>
+      <NavLink to={href('/quant/new')}>新建验证</NavLink>
+      <NavLink to={href('/quant/runs')}>历史运行</NavLink>
+      {demoEnabled && <NavLink className="quant-demo-tab" to={href('/quant/demo')}>答辩演示</NavLink>}
     </nav>
-    <ResearchBoundary />
-    {children}
-  </section>
+    <div className="quant-content"><ResearchBoundary />{children}</div>
+  </section></QuantWorkbenchOrigin.Provider>
+}
+
+function demoRun(data: QuantDemoScenario): PortfolioBacktestRun {
+  return {
+    runId: data.runId,
+    name: data.title,
+    marketDatasetId: data.dataset.datasetId,
+    signalSetId: data.scenarioId,
+    methodologyVersion: data.methodologyVersion,
+    evaluationTrack: data.evaluationTrack,
+    generatedAt: data.generatedAt,
+    parameters: { scenario_policy_version: data.scenarioPolicyVersion },
+    result: data.result,
+  }
+}
+
+export function QuantDemoPage() {
+  const scenario = useQuery({ queryKey: ['quant-demo-scenario'], queryFn: getQuantDemoScenario, staleTime: Infinity })
+  if (scenario.isLoading) return <LoadingState text="正在复算 30 证券全量确认情景…" />
+  if (scenario.error || !scenario.data) return <ErrorState error={scenario.error} />
+  const data = scenario.data
+  const run = demoRun(data)
+  const quality = data.result.validationQuality
+  const metrics = data.result.metrics
+  const mappings = [
+    { direction: '支持', tone: 'good' as const },
+    { direction: '中性', tone: 'neutral' as const },
+    { direction: '冲突', tone: 'bad' as const },
+  ]
+
+  return <div className="quant-demo-page">
+    <section className="quant-demo-hero">
+      <div><span className="eyebrow">CONTROLLED DEFENCE SCENARIO · READ ONLY</span><div className="quant-status-row"><Status tone="primary">受控答辩演示</Status><Status tone="warn">假设数据</Status><Status tone="good">真实冻结行情</Status></div><h2>{data.title}</h2><p>把“AI 发现变化—研究员确认—事件因子化—组合约束—样本外验证”压缩到一条可录制、可复算的产品链路。</p></div>
+      <div className="quant-demo-stamp"><span>SCENARIO</span><strong>30 × {data.summary.checkpointCount}</strong><small>证券 × 信号截面</small><code>{data.scenarioId}</code></div>
+    </section>
+
+    <section className="quant-demo-assumption" role="note"><div><strong>演示前提</strong><p>{data.assumption}</p></div><span>不写数据库</span><span>不调用模型</span><span>不生成订单</span></section>
+
+    <section className="quant-demo-kpis" aria-label="演示样本概览">
+      <article><span>冻结证券</span><strong>{data.dataset.securityCount}</strong><small>完整横截面</small></article>
+      <article><span>假设确认事件</span><strong>{data.summary.assumedConfirmedCount}</strong><small>{data.summary.candidateCount}/{data.summary.candidateCount} 全量通过</small></article>
+      <article><span>方向性信号</span><strong>{data.summary.directionalSignalCount}</strong><small>{data.summary.neutralNoopCount} 条中性仅留痕</small></article>
+      <article><span>有效暴露期</span><strong>{quality?.activeTradingDays ?? '—'}</strong><small>交易日 · 原真实样本为 14 日</small></article>
+      <article><span>前瞻观测</span><strong>{quality?.observationCount ?? '—'}</strong><small>实际引擎计算</small></article>
+    </section>
+
+    <section className="quant-section quant-demo-flow-section"><header><div><span className="eyebrow">RESEARCH TO QUANT</span><h2>分数如何作用到决策</h2><p>分数只决定研究组合的相对暴露，真实投资决策仍由研究员在产品外完成。</p></div></header><div className="quant-demo-flow">{data.decisionPipeline.map((item) => <article key={item.step}><span>{item.step}</span><h3>{item.title}</h3><p>{item.description}</p></article>)}</div></section>
+
+    <div className="quant-demo-method-grid">
+      <section className="quant-section"><header><div><span className="eyebrow">SCORE MAPPING</span><h2>方向 × 强度 → 研究分数</h2><p>score = direction sign × strength weight；AI 置信度不参与 Alpha 权重。</p></div></header><div className="quant-demo-score-groups">{mappings.map((group) => <div key={group.direction}><Status tone={group.tone}>{group.direction}</Status>{data.scoreMapping.filter((item) => item.direction === group.direction).map((item) => <article key={`${item.direction}-${item.strength}`}><span>{item.strength}强度</span><strong className={item.score > 0 ? 'positive' : item.score < 0 ? 'negative' : ''}>{item.score > 0 ? '+' : ''}{item.score.toFixed(1)}</strong></article>)}</div>)}</div></section>
+      <section className="quant-section quant-demo-neutral"><header><div><span className="eyebrow">NEUTRAL SEMANTICS</span><h2>中性 0 分，不等于清仓</h2></div><Status tone="good">本情景已纠偏</Status></header><div className="quant-demo-neutral-compare"><article><span>因子贡献</span><strong>0</strong><p>这条证据没有支持或冲突方向，因此不进入横截面排序。</p></article><article><span>状态动作</span><strong>NO-OP</strong><p>保留上一有效状态；只有明确撤销、失效或风险规则才应归零。</p></article></div><p className="quant-demo-note">这样既保留“中性”的数学含义，也避免把证据判断误当成仓位指令。</p></section>
+    </div>
+
+    <section className="quant-section quant-demo-result"><header><div><span className="eyebrow">ACTUAL ENGINE OUTPUT</span><h2>完整回测验证结果</h2><p>{data.dataset.coverageStart} 至 {data.dataset.coverageEnd} · {data.dataset.tradingDayCount} 个交易日 · T+1 严格执行</p></div><div className="quant-status-row"><Status tone={quality?.status === 'research_candidate' ? 'good' : 'warn'}>{quality?.label ?? '样本分级不可用'}</Status><Status tone="warn">禁止直接宣称 Alpha</Status></div></header><div className="quant-demo-result-metrics"><article><span>组合区间收益</span><strong className={Number(metrics.total_return) >= 0 ? 'positive' : 'negative'}>{percent(metrics.total_return)}</strong></article><article><span>相对基准</span><strong className={Number(metrics.excess_return) >= 0 ? 'positive' : 'negative'}>{percent(metrics.excess_return)}</strong></article><article><span>最大回撤</span><strong>{percent(metrics.max_drawdown)}</strong></article><article><span>信息比率</span><strong>{decimal(metrics.information_ratio, 2)}</strong></article><article><span>再平衡次数</span><strong>{decimal(metrics.rebalance_count, 0)}</strong></article></div><EquityCurve run={run} /><div className="quant-demo-claim"><div><strong>可以说明</strong><p>产品能把投资逻辑的人工确认结果转成可追溯因子，并完成跨期、30 证券、含成本与约束的完整回测链路。</p></div><div><strong>不能说明</strong><p>假设确认事件不是历史真实研究记录；收益高低不能证明策略存在 Alpha，也不能替代独立样本和研究评审。</p></div></div></section>
+
+    <section className="quant-section"><header><div><span className="eyebrow">TRACEABLE EVENTS</span><h2>最近一期演示信号</h2><p>画面展示 15 条；情景内全部 {data.summary.candidateCount} 条均参与统计并可由情景哈希复算。</p></div><Status tone="primary">全量确认 {data.summary.assumedConfirmedCount}/{data.summary.candidateCount}</Status></header><div className="quant-demo-event-list">{data.latestEvents.map((event) => <article key={event.signalId}><div><strong>{event.securityName}</strong><small>{event.securityId} · {event.industry}</small></div><div><span>{event.thesisTitle}</span><small>{event.evidenceTitle}</small></div><Status tone={event.direction === '支持' ? 'good' : event.direction === '冲突' ? 'bad' : 'neutral'}>{event.direction} · {event.strength}</Status><strong className={`quant-demo-event-score ${event.score > 0 ? 'positive' : event.score < 0 ? 'negative' : ''}`}>{event.score > 0 ? '+' : ''}{event.score.toFixed(1)}</strong><small>{event.decisionEffect}</small></article>)}</div></section>
+
+    <section className="quant-demo-provenance"><div><span>行情版本</span><strong>{data.dataset.dataVersion}</strong><code>{shortHash(data.dataset.manifestSha256)}</code></div><div><span>情景策略</span><strong>{data.scenarioPolicyVersion}</strong><code>{data.runId}</code></div><div><span>方法版本</span><strong>{data.methodologyVersion}</strong><code>{dateTime(data.generatedAt)}</code></div></section>
+    <p className="quant-demo-disclaimer">{data.disclaimer}</p>
+  </div>
 }
 
 function DatasetCard({ dataset, defaultId, compact = false }: { dataset: QuantMarketDataset; defaultId: string | null; compact?: boolean }) {
   const isDefault = dataset.datasetId === defaultId
+  const href = useQuantHref()
   return <article className={`quant-dataset-card ${compact ? 'compact' : ''}`}>
     <header><div><span className="mono">{dataset.datasetId}</span><h3>{dataset.dataVersion}</h3></div><div className="quant-status-row"><Status tone="good">已冻结</Status>{isDefault ? <Status tone="primary">当前默认</Status> : <Status tone="warn">已登记候选 · 非默认</Status>}</div></header>
     <dl><div><dt>覆盖区间</dt><dd>{dataset.coverageStart} ~ {dataset.coverageEnd}</dd></div><div><dt>证券范围</dt><dd>{dataset.securities.length} 只</dd></div><div><dt>复权口径</dt><dd>{dataset.adjustment}</dd></div><div><dt>清单哈希</dt><dd className="mono">{shortHash(dataset.manifestSha256)}</dd></div></dl>
     {isV3(dataset) && <p className="quant-v3-fact">V3：5,937 条行情；4,649/4,649 条 A 股证券日具备点时市值。</p>}
-    <footer><NavLink to={`/assets/market-datasets/${encodeURIComponent(dataset.datasetId)}`}>查看冻结资产</NavLink><NavLink to={`/quant/new?marketDatasetId=${encodeURIComponent(dataset.datasetId)}`}>使用此版本验证 →</NavLink></footer>
+    <footer><NavLink to={`/assets/market-datasets/${encodeURIComponent(dataset.datasetId)}`}>查看冻结资产</NavLink><NavLink to={href(`/quant/new?marketDatasetId=${encodeURIComponent(dataset.datasetId)}`)}>使用此版本验证 →</NavLink></footer>
   </article>
 }
 
 function SignalCard({ signal }: { signal: QuantSignalSet }) {
+  const href = useQuantHref()
   return <article className="quant-signal-card">
     <header><div><span className="eyebrow">HUMAN-CONFIRMED SIGNALS</span><h3>{signal.name}</h3></div><Status tone={signal.humanConfirmedOnly ? 'good' : 'bad'}>{signal.humanConfirmedOnly ? '仅人工确认' : '不可用于验证'}</Status></header>
     <dl><div><dt>版本</dt><dd>{signal.version}</dd></div><div><dt>信号数</dt><dd>{signal.signalCount}</dd></div><div><dt>评测轨</dt><dd>{signal.evaluationTrack}</dd></div><div><dt>内容哈希</dt><dd className="mono">{shortHash(signal.contentSha256)}</dd></div></dl>
-    <footer><span>{dateTime(signal.frozenAt)}</span><NavLink to={`/quant/signals/${encodeURIComponent(signal.signalSetId)}`}>查看来源 →</NavLink></footer>
+    <footer><span>{dateTime(signal.frozenAt)}</span><NavLink to={href(`/quant/signals/${encodeURIComponent(signal.signalSetId)}`)}>查看来源 →</NavLink></footer>
   </article>
 }
 
 export function QuantOverviewPage() {
+  const href = useQuantHref()
   const catalog = useQuery({ queryKey: ['quant-catalog'], queryFn: getQuantCatalog })
   const runs = useQuery({ queryKey: ['quant-portfolio-history'], queryFn: listPortfolioBacktests })
   if (catalog.isLoading || runs.isLoading) return <LoadingState text="正在读取模型与因子研究状态…" />
@@ -118,8 +206,8 @@ export function QuantOverviewPage() {
     </section>
     <section className="quant-separation"><div><span className="eyebrow">THREE INDEPENDENT TRACKS</span><h2>语义准确率 · 检索排序 · Alpha 验证</h2><p>{catalog.data.evaluationSeparation.hardRule}</p></div><div><Status tone="good">SEMANTIC 独立</Status><Status tone="good">RETRIEVAL 独立</Status><Status tone="good">ALPHA 独立</Status></div></section>
     <section className="quant-section"><header><div><span className="eyebrow">FROZEN MARKET DATA</span><h2>行情与能力版本</h2></div><NavLink to="/assets/market-datasets">在数据中心查看全部 ›</NavLink></header>{catalog.data.marketDatasets.length ? <div className="quant-card-grid">{catalog.data.marketDatasets.map((dataset) => <DatasetCard key={dataset.datasetId} dataset={dataset} defaultId={catalog.data.defaultMarketDatasetId} />)}</div> : <EmptyState title="尚无已登记冻结行情" description="候选数据需要通过受控发布命令登记；普通研究员不能在页面切换默认版本。" />}</section>
-    <section className="quant-section"><header><div><span className="eyebrow">GOVERNED SIGNALS</span><h2>人工确认研究信号</h2></div><NavLink to="/quant/signals">查看全部 ›</NavLink></header>{catalog.data.signalSets.length ? <div className="quant-card-grid">{catalog.data.signalSets.map((signal) => <SignalCard key={signal.signalSetId} signal={signal} />)}</div> : <EmptyState title="尚无可用于 Alpha 验证的信号" description="只有已人工确认、且生成时间不早于确认时间的信号才能冻结进入这里。" />}</section>
-    {latestRun && <section className="quant-section"><header><div><span className="eyebrow">LATEST RUN</span><h2>最近一次组合验证</h2></div><NavLink to={`/quant/runs/${encodeURIComponent(latestRun.runId)}`}>打开完整结果 ›</NavLink></header><RunSummary run={latestRun} /></section>}
+    <section className="quant-section"><header><div><span className="eyebrow">GOVERNED SIGNALS</span><h2>人工确认研究信号</h2></div><NavLink to={href('/quant/signals')}>查看全部 ›</NavLink></header>{catalog.data.signalSets.length ? <div className="quant-card-grid">{catalog.data.signalSets.map((signal) => <SignalCard key={signal.signalSetId} signal={signal} />)}</div> : <EmptyState title="尚无可用于 Alpha 验证的信号" description="只有已人工确认、且生成时间不早于确认时间的信号才能冻结进入这里。" />}</section>
+    {latestRun && <section className="quant-section"><header><div><span className="eyebrow">LATEST RUN</span><h2>最近一次组合验证</h2></div><NavLink to={href(`/quant/runs/${encodeURIComponent(latestRun.runId)}`)}>打开完整结果 ›</NavLink></header><RunSummary run={latestRun} /></section>}
   </>
 }
 
@@ -131,15 +219,16 @@ export function QuantSignalSetsPage() {
 }
 
 export function QuantSignalSetDetailPage() {
+  const href = useQuantHref()
   const { signalSetId = '' } = useParams()
   const query = useQuery({ queryKey: ['quant-signal-set', signalSetId], queryFn: () => getQuantSignalSetDetail(signalSetId) })
   if (query.isLoading) return <LoadingState text="正在核验信号来源权限…" />
   if (query.error || !query.data) return <ErrorState error={query.error} />
   const data = query.data
   return <>
-    <NavLink className="quant-back" to="/quant/signals">← 返回研究信号</NavLink>
+    <NavLink className="quant-back" to={href('/quant/signals')}>← 返回研究信号</NavLink>
     <section className="quant-detail-hero"><div><span className="eyebrow">FROZEN SIGNAL SET</span><h2>{data.name}</h2><p className="mono">{data.signalSetId}</p></div><div className="quant-status-row"><Status tone="good">{data.status}</Status><Status tone="primary">{data.evaluationTrack}</Status><Status tone="good">{data.visibleSignalCount}/{data.signalCount} 条可追溯</Status></div></section>
-    <section className="quant-section"><header><div><span className="eyebrow">PROVENANCE</span><h2>人工确认来源</h2></div><NavLink className="button primary" to={`/quant/new?signalSetId=${encodeURIComponent(data.signalSetId)}`}>使用此信号集验证</NavLink></header><div className="quant-signal-table" role="table"><div className="quant-signal-head" role="row"><span>证券 / 信号</span><span>方向</span><span>披露 → 生成</span><span>来源关系</span><span>操作</span></div>{data.signals.map((signal) => <article role="row" key={signal.signalId}><div><strong>{signal.securityId}</strong><small className="mono">{signal.signalId}</small></div><div><Status tone={signal.direction === '冲突' ? 'bad' : signal.direction === '支持' ? 'good' : 'neutral'}>{signal.direction} · {signal.strength}</Status><small>AI 判断置信度 {Math.round(signal.confidence * 100)}% · 不参与 Alpha 权重</small></div><div><time>{dateTime(signal.disclosedAt)}</time><small>生成 {dateTime(signal.generatedAt)}</small></div><div><strong>{signal.sourceDocumentTitle ?? signal.sourceLocator}</strong><small className="mono">{signal.sourceRelationId} · {signal.sourceRelationStatus}</small></div><div className="quant-row-actions"><NavLink to={`/radar/${encodeURIComponent(signal.sourceEvidenceId)}?relationId=${encodeURIComponent(signal.sourceRelationId)}`}>查看证据</NavLink><NavLink to={`/theses/${encodeURIComponent(signal.thesisId)}`}>查看逻辑</NavLink>{signal.sourceDocumentId && <NavLink to={`/assets/documents/${encodeURIComponent(signal.sourceDocumentId)}`}>源资料</NavLink>}</div></article>)}</div></section>
+    <section className="quant-section"><header><div><span className="eyebrow">PROVENANCE</span><h2>人工确认来源</h2></div><NavLink className="button primary" to={href(`/quant/new?signalSetId=${encodeURIComponent(data.signalSetId)}`)}>使用此信号集验证</NavLink></header><div className="quant-signal-table" role="table"><div className="quant-signal-head" role="row"><span>证券 / 信号</span><span>方向</span><span>披露 → 生成</span><span>来源关系</span><span>操作</span></div>{data.signals.map((signal) => <article role="row" key={signal.signalId}><div><strong>{signal.securityId}</strong><small className="mono">{signal.signalId}</small></div><div><Status tone={signal.direction === '冲突' ? 'bad' : signal.direction === '支持' ? 'good' : 'neutral'}>{signal.direction} · {signal.strength}</Status><small>AI 判断置信度 {Math.round(signal.confidence * 100)}% · 不参与 Alpha 权重</small></div><div><time>{dateTime(signal.disclosedAt)}</time><small>生成 {dateTime(signal.generatedAt)}</small></div><div><strong>{signal.sourceDocumentTitle ?? signal.sourceLocator}</strong><small className="mono">{signal.sourceRelationId} · {signal.sourceRelationStatus}</small></div><div className="quant-row-actions"><NavLink to={`/radar/${encodeURIComponent(signal.sourceEvidenceId)}?relationId=${encodeURIComponent(signal.sourceRelationId)}`}>查看证据</NavLink><NavLink to={`/theses/${encodeURIComponent(signal.thesisId)}`}>查看逻辑</NavLink>{signal.sourceDocumentId && <NavLink to={`/assets/documents/${encodeURIComponent(signal.sourceDocumentId)}`}>源资料</NavLink>}</div></article>)}</div></section>
   </>
 }
 
@@ -186,6 +275,7 @@ const modelStatus: Record<string, { label: string; tone: 'good' | 'warn' | 'neut
 }
 
 function ModelTemplateCard({ template }: { template: QuantModelTemplate }) {
+  const href = useQuantHref()
   const status = modelStatus[template.status] ?? { label: template.status, tone: 'neutral' as const }
   const runnable = template.status !== 'planned' && Boolean(template.publishedAt)
   return <article className="quant-model-card">
@@ -196,7 +286,7 @@ function ModelTemplateCard({ template }: { template: QuantModelTemplate }) {
     <div className="quant-model-defaults"><strong>参数预设</strong><span>滚动 {template.defaultConfig.rollingWindowDays} 日</span><span>测试 {template.defaultConfig.walkForwardDays} 日</span><span>再平衡 {template.defaultConfig.rebalanceDays} 日</span><span>成本 {template.defaultConfig.transactionCostBps} bps</span><span>滑点 {template.defaultConfig.slippageBps} bps</span><span>个股上限 {(template.defaultConfig.maxSecurityWeight * 100).toFixed(0)}%</span></div>
     <div className="quant-model-gate"><strong>研究候选样本门槛</strong><span>证券 ≥ {template.sampleGate.minimumUniqueSecurities}</span><span>观测 ≥ {template.sampleGate.minimumObservations}</span><span>有效暴露日 ≥ {template.sampleGate.minimumActiveTradingDays}</span></div>
     {template.limitations.length > 0 && <ul>{template.limitations.map((item) => <li key={item}>{item}</li>)}</ul>}
-    <footer><NavLink to="/quant/factors">查看因子定义</NavLink>{runnable ? <NavLink className="button primary" to={`/quant/new?modelTemplateId=${encodeURIComponent(template.templateId)}`}>使用此模板</NavLink> : <span>等待数据与方法准入</span>}</footer>
+    <footer><NavLink to={href('/quant/factors')}>查看因子定义</NavLink>{runnable ? <NavLink className="button primary" to={href(`/quant/new?modelTemplateId=${encodeURIComponent(template.templateId)}`)}>使用此模板</NavLink> : <span>等待数据与方法准入</span>}</footer>
   </article>
 }
 
@@ -238,7 +328,7 @@ const defaultRunForm: RunForm = {
 }
 
 function securityLabel(metadata: QuantSecurityMetadata, names: Map<string, string>) {
-  return `${names.get(metadata.securityId) ?? metadata.securityId} · ${metadata.securityId}`
+  return `${metadata.name ?? names.get(metadata.securityId) ?? metadata.securityId} · ${metadata.securityId}`
 }
 
 function datasetWarnings(dataset: QuantMarketDatasetDetail | undefined, selected: string[], neutralizeIndustry: boolean, neutralizeMarketCap: boolean, nonzeroSignalSecurities: Set<string>) {
@@ -262,6 +352,7 @@ function datasetWarnings(dataset: QuantMarketDatasetDetail | undefined, selected
 
 export function QuantNewRunPage() {
   const navigate = useNavigate()
+  const href = useQuantHref()
   const qc = useQueryClient()
   const [params] = useSearchParams()
   const catalog = useQuery({ queryKey: ['quant-catalog'], queryFn: getQuantCatalog })
@@ -271,6 +362,7 @@ export function QuantNewRunPage() {
   const [signalSetId, setSignalSetId] = useState(params.get('signalSetId') ?? '')
   const [modelTemplateId, setModelTemplateId] = useState(params.get('modelTemplateId') ?? '')
   const [selected, setSelected] = useState<string[]>([])
+  const [securitySearch, setSecuritySearch] = useState('')
   const [form, setForm] = useState<RunForm>(defaultRunForm)
   const researchThesisId = params.get('thesisId')
   const preferredSecurityId = params.get('securityId')
@@ -296,8 +388,19 @@ export function QuantNewRunPage() {
   }, [dataset.data])
   const available = useMemo(() => {
     if (!dataset.data || !signal.data) return []
-    const signalIds = new Set(signal.data.signals.map((item) => item.securityId))
+    const signalIds = new Set(signal.data.signals.filter((item) => item.generatedAt.slice(0, 10) < dataset.data.coverageEnd).map((item) => item.securityId))
     return dataset.data.securityMetadata.filter((item) => signalIds.has(item.securityId))
+  }, [dataset.data, signal.data])
+  const awaitingSignal = useMemo(() => {
+    if (!dataset.data || !signal.data) return []
+    const signalIds = new Set(signal.data.signals.map((item) => item.securityId))
+    return dataset.data.securityMetadata.filter((item) => !signalIds.has(item.securityId))
+  }, [dataset.data, signal.data])
+  const awaitingData = useMemo(() => {
+    if (!dataset.data || !signal.data) return []
+    const metadataIds = new Set(dataset.data.securityMetadata.map((item) => item.securityId))
+    const observableIds = new Set(signal.data.signals.filter((item) => item.generatedAt.slice(0, 10) < dataset.data.coverageEnd).map((item) => item.securityId))
+    return [...new Set(signal.data.signals.map((item) => item.securityId).filter((securityId) => !metadataIds.has(securityId) || !observableIds.has(securityId)))].sort()
   }, [dataset.data, signal.data])
   useEffect(() => {
     if (selected.length || !available.length) return
@@ -311,6 +414,14 @@ export function QuantNewRunPage() {
     setForm((current) => ({ ...current, start: '', end: '' }))
   }, [datasetId, signalSetId])
   const names = useMemo(() => new Map((securities.data ?? []).map((item) => [item.securityId, item.name])), [securities.data])
+  const normalizedSearch = securitySearch.trim().toLocaleLowerCase()
+  const matchesSearch = (securityId: string, name?: string, industry?: string) => !normalizedSearch || [securityId, name, industry].some((item) => item?.toLocaleLowerCase().includes(normalizedSearch))
+  const visibleAvailable = available.filter((item) => matchesSearch(item.securityId, item.name ?? names.get(item.securityId), item.industry))
+  const visibleAwaitingSignal = awaitingSignal.filter((item) => matchesSearch(item.securityId, item.name ?? names.get(item.securityId), item.industry))
+  const visibleAwaitingData = awaitingData.filter((securityId) => matchesSearch(securityId, names.get(securityId)))
+  const preferredSecurityEligible = Boolean(preferredSecurityId && available.some((item) => item.securityId === preferredSecurityId))
+  const preferredSecurityName = preferredSecurityId ? names.get(preferredSecurityId) : undefined
+  const preferredSecurityLabel = preferredSecurityId ? `${preferredSecurityName ? `${preferredSecurityName} · ` : ''}${preferredSecurityId}` : ''
   const nonzeroSignalSecurities = new Set((signal.data?.signals ?? []).filter((item) => item.direction !== '中性').map((item) => item.securityId))
   const warnings = datasetWarnings(dataset.data, selected, form.neutralizeIndustry, form.neutralizeMarketCap, nonzeroSignalSecurities)
   const blockers = warnings.filter((item) => item.includes('行业中性要求') || item.includes('至少需要三只') || item.includes('点时市值缺口'))
@@ -320,8 +431,8 @@ export function QuantNewRunPage() {
   if (selectedTemplate?.requiredConfig.neutralizeMarketCap !== undefined && form.neutralizeMarketCap !== selectedTemplate.requiredConfig.neutralizeMarketCap) blockers.push(`所选模型模板强制${selectedTemplate.requiredConfig.neutralizeMarketCap ? '启用' : '关闭'}市值中性。`)
   if (selectedTemplate?.requiredConfig.enforceCapacity !== undefined && form.enforceCapacity !== selectedTemplate.requiredConfig.enforceCapacity) blockers.push(`所选模型模板强制${selectedTemplate.requiredConfig.enforceCapacity ? '启用' : '关闭'}容量约束。`)
   if (selectedTemplate?.requiredConfig.allowShort !== undefined && form.allowShort !== selectedTemplate.requiredConfig.allowShort) blockers.push(`所选模型模板强制${selectedTemplate.requiredConfig.allowShort ? '启用' : '关闭'}研究型空头。`)
-  const lateSignals = (signal.data?.signals ?? []).filter((item) => item.generatedAt.slice(0, 10) > (dataset.data?.coverageEnd ?? ''))
-  if (lateSignals.length) blockers.push(`${lateSignals.length} 条信号晚于行情截止日 ${dataset.data?.coverageEnd}，必须选择更新的数据版本。`)
+  const lateSignals = (signal.data?.signals ?? []).filter((item) => selected.includes(item.securityId) && item.generatedAt.slice(0, 10) >= (dataset.data?.coverageEnd ?? ''))
+  if (lateSignals.length) blockers.push(`${lateSignals.length} 条已选信号晚于或等于行情截止日 ${dataset.data?.coverageEnd}，必须选择更新的数据版本。`)
   if (form.start && dataset.data && form.start < dataset.data.coverageStart) blockers.push('开始日期早于数据集覆盖范围。')
   if (form.end && dataset.data && form.end > dataset.data.coverageEnd) blockers.push('结束日期晚于数据集覆盖范围。')
   if (form.start && form.end && form.start > form.end) blockers.push('开始日期不得晚于结束日期。')
@@ -353,9 +464,20 @@ export function QuantNewRunPage() {
   if (catalog.isLoading || templates.isLoading || securities.isLoading) return <LoadingState text="正在准备冻结研究环境…" />
   if (catalog.error || templates.error || securities.error || !catalog.data || !templates.data) return <ErrorState error={catalog.error ?? templates.error ?? securities.error} />
   return <form className="quant-run-form" onSubmit={submit}>
-    {researchThesisId && <section className="quant-research-context" role="note"><div><span className="eyebrow">RESEARCH CONTEXT</span><strong>从投资逻辑进入验证</strong><p>逻辑与证券仅用于预填研究范围；实际 Alpha 输入仍以所选冻结信号集为准。</p></div><NavLink to={`/theses/${encodeURIComponent(researchThesisId)}`}>返回投资逻辑 →</NavLink></section>}
-    <section className="quant-section"><header><div><span className="eyebrow">INPUT VERSIONS</span><h2>1. 选择冻结输入与模型模板</h2><p>数据、信号、模板和方法版本一经运行即形成不可变快照。</p></div></header><div className="quant-form-grid three"><label>模型模板<select value={modelTemplateId} onChange={(event) => setModelTemplateId(event.target.value)} required><option value="">请选择</option>{templates.data.map((item) => <option value={item.templateId} key={item.templateId} disabled={item.status === 'planned'}>{item.name} · V{item.version}{item.status === 'gated' ? ' · 受门禁' : item.status === 'planned' ? ' · 规划中' : ''}</option>)}</select></label><label>行情数据集<select value={datasetId} onChange={(event) => setDatasetId(event.target.value)} required><option value="">请选择</option>{catalog.data.marketDatasets.map((item) => <option value={item.datasetId} key={item.datasetId}>{item.dataVersion}{item.datasetId === catalog.data.defaultMarketDatasetId ? ' · 当前默认' : ' · 候选/历史'}</option>)}</select></label><label>人工确认信号集<select value={signalSetId} onChange={(event) => setSignalSetId(event.target.value)} required><option value="">请选择</option>{catalog.data.signalSets.map((item) => <option value={item.signalSetId} key={item.signalSetId}>{item.name} · {item.version}</option>)}</select></label></div>{selectedTemplate && <div className="quant-template-selection"><div><span>当前模板</span><strong>{selectedTemplate.name} · V{selectedTemplate.version}</strong></div><div><span>方法版本</span><strong>{selectedTemplate.methodologyVersion}</strong></div><div><span>Alpha 因子</span><strong>{selectedTemplate.alphaFactorIds.length}</strong></div><NavLink to="/quant/models">查看模板定义 →</NavLink></div>}{dataset.isLoading || signal.isLoading ? <LoadingState text="正在核验版本与来源…" /> : dataset.error || signal.error ? <ErrorState error={dataset.error ?? signal.error} /> : dataset.data && <DatasetCard compact dataset={dataset.data} defaultId={catalog.data.defaultMarketDatasetId} />}</section>
-    <section className="quant-section"><header><div><span className="eyebrow">RESEARCH UNIVERSE</span><h2>2. 选择研究证券</h2><p>只展示数据集与当前可见信号集共同覆盖的证券。</p></div><span>{selected.length}/{available.length} 已选</span></header>{available.length ? <div className="quant-security-picker">{available.map((item) => <label key={item.securityId} className={selected.includes(item.securityId) ? 'selected' : ''}><input type="checkbox" checked={selected.includes(item.securityId)} onChange={() => setSelected((current) => current.includes(item.securityId) ? current.filter((id) => id !== item.securityId) : [...current, item.securityId])} /><span><strong>{securityLabel(item, names)}</strong><small>{item.market} · {item.currency} · {item.industry}</small></span><Status tone={item.marketCapComplete ? 'good' : 'warn'}>{item.marketCapComplete ? '点时市值完整' : '无完整市值'}</Status></label>)}</div> : <EmptyState title="没有共同覆盖的证券" description="请选择包含当前人工确认信号的行情版本。" />}</section>
+    {researchThesisId && <section className="quant-research-context" role="note"><div><span className="eyebrow">RESEARCH CONTEXT</span><strong>从投资逻辑进入验证</strong><p>逻辑与证券仅用于预填研究范围；实际 Alpha 输入仍以所选冻结信号集为准。</p>{preferredSecurityId && dataset.data && signal.data && <p className={`quant-context-status ${preferredSecurityEligible ? 'eligible' : 'unavailable'}`}>{preferredSecurityEligible ? `已预选工作台标的：${preferredSecurityLabel}` : `工作台标的 ${preferredSecurityLabel} 未被当前冻结数据与信号集共同覆盖，未自动勾选。`}</p>}</div><NavLink to={`/theses/${encodeURIComponent(researchThesisId)}`}>返回投资逻辑 →</NavLink></section>}
+    <section className="quant-section"><header><div><span className="eyebrow">INPUT VERSIONS</span><h2>1. 选择冻结输入与模型模板</h2><p>数据、信号、模板和方法版本一经运行即形成不可变快照。</p></div></header><div className="quant-form-grid three"><label>模型模板<select value={modelTemplateId} onChange={(event) => setModelTemplateId(event.target.value)} required><option value="">请选择</option>{templates.data.map((item) => <option value={item.templateId} key={item.templateId} disabled={item.status === 'planned'}>{item.name} · V{item.version}{item.status === 'gated' ? ' · 受门禁' : item.status === 'planned' ? ' · 规划中' : ''}</option>)}</select></label><label>行情数据集<select value={datasetId} onChange={(event) => setDatasetId(event.target.value)} required><option value="">请选择</option>{catalog.data.marketDatasets.map((item) => <option value={item.datasetId} key={item.datasetId}>{item.dataVersion}{item.datasetId === catalog.data.defaultMarketDatasetId ? ' · 当前默认' : ' · 候选/历史'}</option>)}</select></label><label>人工确认信号集<select value={signalSetId} onChange={(event) => setSignalSetId(event.target.value)} required><option value="">请选择</option>{catalog.data.signalSets.map((item) => <option value={item.signalSetId} key={item.signalSetId}>{item.name} · {item.version}</option>)}</select></label></div>{selectedTemplate && <div className="quant-template-selection"><div><span>当前模板</span><strong>{selectedTemplate.name} · V{selectedTemplate.version}</strong></div><div><span>方法版本</span><strong>{selectedTemplate.methodologyVersion}</strong></div><div><span>Alpha 因子</span><strong>{selectedTemplate.alphaFactorIds.length}</strong></div><NavLink to={href('/quant/models')}>查看模板定义 →</NavLink></div>}{dataset.isLoading || signal.isLoading ? <LoadingState text="正在核验版本与来源…" /> : dataset.error || signal.error ? <ErrorState error={dataset.error ?? signal.error} /> : dataset.data && <DatasetCard compact dataset={dataset.data} defaultId={catalog.data.defaultMarketDatasetId} />}</section>
+    <section className="quant-section quant-security-section">
+      <header><div><span className="eyebrow">RESEARCH UNIVERSE</span><h2>2. 选择研究证券</h2><p>完整展示研究池，并按行情与人工确认信号的就绪状态分组；只有“可回测”组可以勾选。</p></div><span>{selected.length}/{available.length} 已选 · 研究池 {dataset.data?.securityMetadata.length ?? 0}</span></header>
+      <div className="quant-security-toolbar">
+        <label>搜索证券<input aria-label="搜索研究证券" type="search" value={securitySearch} onChange={(event) => setSecuritySearch(event.target.value)} placeholder="代码、名称或行业" /></label>
+        <div><Status tone="good">可回测 {available.length}</Status><Status tone="warn">待信号 {awaitingSignal.length}</Status><Status tone="bad">待数据 {awaitingData.length}</Status></div>
+      </div>
+      <div className="quant-security-groups">
+        <section className="quant-security-group ready" aria-labelledby="quant-ready-title"><header><div><h3 id="quant-ready-title">可回测证券</h3><p>行情与当前人工确认信号集共同覆盖，可进入本次组合验证。</p></div><strong>{available.length}</strong></header>{visibleAvailable.length ? <div className="quant-security-picker">{visibleAvailable.map((item) => <label key={item.securityId} className={selected.includes(item.securityId) ? 'selected' : ''}><input type="checkbox" checked={selected.includes(item.securityId)} onChange={() => setSelected((current) => current.includes(item.securityId) ? current.filter((id) => id !== item.securityId) : [...current, item.securityId])} /><span><strong>{securityLabel(item, names)}</strong><small>{item.market} · {item.currency} · {item.industry}</small></span><Status tone={item.marketCapComplete ? 'good' : 'warn'}>{item.marketCapComplete ? '点时市值完整' : '无完整市值'}</Status></label>)}</div> : <p className="quant-security-empty">{available.length ? '当前搜索下没有可回测证券。' : '当前版本没有行情与信号共同覆盖的证券。'}</p>}</section>
+        <section className="quant-security-group waiting" aria-labelledby="quant-signal-waiting-title"><header><div><h3 id="quant-signal-waiting-title">行情就绪 · 待确认信号</h3><p>行情已经进入冻结研究池，完成证据关系人工确认并冻结新信号集后即可回测。</p></div><strong>{awaitingSignal.length}</strong></header>{visibleAwaitingSignal.length ? <div className="quant-security-picker unavailable">{visibleAwaitingSignal.map((item) => <article key={item.securityId}><span aria-hidden="true" className="quant-security-lock">—</span><span><strong>{securityLabel(item, names)}</strong><small>{item.market} · {item.currency} · {item.industry}</small></span><Status tone="warn">等待人工确认</Status></article>)}</div> : <p className="quant-security-empty">{awaitingSignal.length ? '当前搜索下没有待信号证券。' : '研究池中的证券均已有当前信号覆盖。'}</p>}</section>
+        <section className="quant-security-group blocked" aria-labelledby="quant-data-waiting-title"><header><div><h3 id="quant-data-waiting-title">信号就绪 · 待补行情</h3><p>信号已存在，但所选行情版本不覆盖该证券；请选择或冻结更新的行情版本。</p></div><strong>{awaitingData.length}</strong></header>{visibleAwaitingData.length ? <div className="quant-security-picker unavailable">{visibleAwaitingData.map((securityId) => <article key={securityId}><span aria-hidden="true" className="quant-security-lock">—</span><span><strong>{names.get(securityId) ?? securityId} · {securityId}</strong><small>当前行情数据集未覆盖</small></span><Status tone="bad">缺少冻结行情</Status></article>)}</div> : <p className="quant-security-empty">{awaitingData.length ? '当前搜索下没有待行情证券。' : '当前信号集没有额外的行情缺口。'}</p>}</section>
+      </div>
+    </section>
     <section className="quant-section"><header><div><span className="eyebrow">RESEARCH CONFIGURATION</span><h2>3. 配置组合与样本外验证</h2></div></header><div className="quant-form-grid"><label>运行名称<input value={form.name} onChange={(event) => update('name', event.target.value)} required /></label><label>开始日期<input type="date" min={dataset.data?.coverageStart} max={dataset.data?.coverageEnd} value={form.start} onChange={(event) => update('start', event.target.value)} required /></label><label>结束日期<input type="date" min={dataset.data?.coverageStart} max={dataset.data?.coverageEnd} value={form.end} onChange={(event) => update('end', event.target.value)} required /></label><label>初始资金<input type="number" min="1" value={form.initialCapital} onChange={(event) => update('initialCapital', Number(event.target.value))} /></label><label>滚动窗口（日）<input type="number" min="2" max="756" value={form.rollingWindowDays} onChange={(event) => update('rollingWindowDays', Number(event.target.value))} /></label><label>测试窗口（日）<input type="number" min="1" max="252" value={form.walkForwardDays} onChange={(event) => update('walkForwardDays', Number(event.target.value))} /></label><label>再平衡周期（日）<input type="number" min="1" max="252" value={form.rebalanceDays} onChange={(event) => update('rebalanceDays', Number(event.target.value))} /></label><label>交易成本（bps）<input type="number" min="0" max="1000" value={form.transactionCostBps} onChange={(event) => update('transactionCostBps', Number(event.target.value))} /></label></div><details className="quant-advanced"><summary>高级参数与组合约束</summary><div className="quant-form-grid"><label>滑点（bps）<input type="number" min="0" max="1000" value={form.slippageBps} onChange={(event) => update('slippageBps', Number(event.target.value))} /></label><label>个股权重上限<input type="number" min="0.01" max="1" step="0.01" value={form.maxSecurityWeight} onChange={(event) => update('maxSecurityWeight', Number(event.target.value))} /></label><label>行业权重上限<input type="number" min="0.01" max="1" step="0.01" value={form.maxIndustryWeight} onChange={(event) => update('maxIndustryWeight', Number(event.target.value))} /></label><label>容量参与率<input type="number" min="0.01" max="1" step="0.01" value={form.capacityParticipationRate} onChange={(event) => update('capacityParticipationRate', Number(event.target.value))} /></label></div><div className="quant-toggle-grid"><label><input type="checkbox" checked={form.neutralizeIndustry} onChange={(event) => update('neutralizeIndustry', event.target.checked)} />行业中性</label><label><input type="checkbox" checked={form.neutralizeMarketCap} onChange={(event) => update('neutralizeMarketCap', event.target.checked)} />市值中性（仅完整纯 A 股截面）</label><label><input type="checkbox" checked={form.enforceCapacity} onChange={(event) => update('enforceCapacity', event.target.checked)} />执行容量约束</label><label><input type="checkbox" checked={form.allowShort} onChange={(event) => update('allowShort', event.target.checked)} />允许研究型空头信号</label></div></details></section>
     {(warnings.length > 0 || blockers.length > 0) && <section className={`quant-preflight ${blockers.length ? 'blocked' : 'warning'}`} aria-live="polite"><header><strong>{blockers.length ? '运行前门禁未通过' : '研究解释限制'}</strong><span>{blockers.length ? '请修正后再运行' : '可以运行，但必须保留以下限制'}</span></header><ul>{[...new Set([...blockers, ...warnings])].map((item) => <li key={item}>{item}</li>)}</ul></section>}
     <InlineError error={mutation.error} />
@@ -422,6 +544,7 @@ export function QuantRunDetailPage() {
 }
 
 export function QuantRunsPage() {
+  const href = useQuantHref()
   const runs = useQuery({ queryKey: ['quant-portfolio-history'], queryFn: listPortfolioBacktests })
   const catalog = useQuery({ queryKey: ['quant-catalog'], queryFn: getQuantCatalog })
   const [query, setQuery] = useState('')
@@ -431,11 +554,11 @@ export function QuantRunsPage() {
   const signalNames = new Map(catalog.data.signalSets.map((item) => [item.signalSetId, item.name]))
   const needle = query.trim().toLowerCase()
   const visible = runs.data.filter((item) => !needle || [item.runId, item.name, item.marketDatasetId, item.signalSetId, item.methodologyVersion, typeof item.parameters.model_template_id === 'string' ? item.parameters.model_template_id : undefined, datasetNames.get(item.marketDatasetId), signalNames.get(item.signalSetId)].some((value) => value?.toLowerCase().includes(needle)))
-  return <section className="quant-section"><header><div><span className="eyebrow">MY IMMUTABLE RUNS</span><h2>历史运行</h2><p>默认只显示当前用户最近 50 次运行，详情链接可刷新和分享给同一有权账号复看。</p></div><span>{visible.length}/{runs.data.length} 次</span></header><label className="quant-run-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索运行名称、QPF 编号、数据或方法版本" /></label>{visible.length ? <div className="quant-run-list">{visible.map((run) => <NavLink key={run.runId} to={`/quant/runs/${encodeURIComponent(run.runId)}`}><div><span className="mono">{run.runId}</span><h3>{run.name}</h3><small>{datasetNames.get(run.marketDatasetId) ?? run.marketDatasetId}</small></div><div><Status tone="primary">{run.evaluationTrack}</Status><strong>{percent(run.result.metrics.excess_return)}</strong><small>{dateTime(run.generatedAt)}</small></div><span aria-hidden>→</span></NavLink>)}</div> : <EmptyState title={runs.data.length ? '没有符合筛选的运行' : '尚无历史运行'} description={runs.data.length ? '请调整搜索条件。' : '从新建验证选择冻结数据和人工确认信号开始。'} action={!runs.data.length ? <NavLink className="button primary" to="/quant/new">新建组合验证</NavLink> : undefined} />}</section>
+  return <section className="quant-section"><header><div><span className="eyebrow">MY IMMUTABLE RUNS</span><h2>历史运行</h2><p>默认只显示当前用户最近 50 次运行，详情链接可刷新和分享给同一有权账号复看。</p></div><span>{visible.length}/{runs.data.length} 次</span></header><label className="quant-run-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索运行名称、QPF 编号、数据或方法版本" /></label>{visible.length ? <div className="quant-run-list">{visible.map((run) => <NavLink key={run.runId} to={href(`/quant/runs/${encodeURIComponent(run.runId)}`)}><div><span className="mono">{run.runId}</span><h3>{run.name}</h3><small>{datasetNames.get(run.marketDatasetId) ?? run.marketDatasetId}</small></div><div><Status tone="primary">{run.evaluationTrack}</Status><strong>{percent(run.result.metrics.excess_return)}</strong><small>{dateTime(run.generatedAt)}</small></div><span aria-hidden>→</span></NavLink>)}</div> : <EmptyState title={runs.data.length ? '没有符合筛选的运行' : '尚无历史运行'} description={runs.data.length ? '请调整搜索条件。' : '从新建验证选择冻结数据和人工确认信号开始。'} action={!runs.data.length ? <NavLink className="button primary" to={href('/quant/new')}>新建组合验证</NavLink> : undefined} />}</section>
 }
 
-export function QuantModule() {
-  return <QuantLayout><Routes><Route index element={<QuantOverviewPage />} /><Route path="signals" element={<QuantSignalSetsPage />} /><Route path="signals/:signalSetId" element={<QuantSignalSetDetailPage />} /><Route path="factors" element={<QuantFactorsPage />} /><Route path="models" element={<QuantModelsPage />} /><Route path="new" element={<QuantNewRunPage />} /><Route path="runs" element={<QuantRunsPage />} /><Route path="runs/:runId" element={<QuantRunDetailPage />} /><Route path="*" element={<EmptyState title="模型与因子页面不存在" description="请从研究概览重新进入。" action={<NavLink className="button primary" to="/quant">返回研究概览</NavLink>} />} /></Routes></QuantLayout>
+export function QuantModule({ demoEnabled = false }: { demoEnabled?: boolean }) {
+  return <QuantLayout demoEnabled={demoEnabled}><Routes><Route index element={<QuantOverviewPage />} /><Route path="signals" element={<QuantSignalSetsPage />} /><Route path="signals/:signalSetId" element={<QuantSignalSetDetailPage />} /><Route path="factors" element={<QuantFactorsPage />} /><Route path="models" element={<QuantModelsPage />} /><Route path="new" element={<QuantNewRunPage />} /><Route path="runs" element={<QuantRunsPage />} /><Route path="runs/:runId" element={<QuantRunDetailPage />} />{demoEnabled && <Route path="demo" element={<QuantDemoPage />} />}<Route path="*" element={<EmptyState title="模型与因子页面不存在" description="请从研究概览重新进入。" action={<NavLink className="button primary" to="/quant">返回研究概览</NavLink>} />} /></Routes></QuantLayout>
 }
 
 export default QuantModule

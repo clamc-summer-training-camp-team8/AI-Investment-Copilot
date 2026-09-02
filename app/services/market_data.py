@@ -203,6 +203,19 @@ class FrozenJsonMarketData:
     def security_metadata(self) -> list[dict[str, object]]:
         """汇总冻结行情中的证券口径，供产品选择器和能力门禁展示。"""
 
+        assets = cast(dict[str, dict[str, object]], self._manifest["assets"])
+        names: dict[str, str] = {}
+        if "research_universe" in assets:
+            universe = cast(
+                dict[str, object],
+                json.loads(self._asset("research_universe").read_text(encoding="utf-8")),
+            )
+            members = cast(list[dict[str, object]], universe.get("members") or [])
+            names = {
+                str(item["security_id"]): str(item["name"])
+                for item in members
+                if item.get("security_id") and item.get("name")
+            }
         payload = json.loads(self._asset("bars").read_text(encoding="utf-8"))
         rows = cast(list[dict[str, object]], payload["rows"])
         grouped: dict[str, dict[str, object]] = {}
@@ -213,6 +226,7 @@ class FrozenJsonMarketData:
                 security_id,
                 {
                     "security_id": security_id,
+                    "name": names.get(security_id),
                     "market": str(row.get("market") or "未知"),
                     "currency": str(row.get("currency") or "未知"),
                     "industry": str(row.get("industry") or "未分类"),

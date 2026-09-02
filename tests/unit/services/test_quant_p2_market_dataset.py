@@ -101,6 +101,8 @@ def test_p2_v3冻结观测与交易所规则推导的完整涨跌停状态() -> 
     assert info.capabilities["price_limit_status"] is True
     assert info.capabilities["price_limit_status_fully_observed"] is False
     assert info.capabilities["price_limit_status_rule_derived"] is True
+    metadata = {item["security_id"]: item for item in adapter.security_metadata()}
+    assert metadata["002594"]["name"] == "比亚迪"
 
     root = RULE_DERIVED_MANIFEST.parent
     manifest = json.loads(RULE_DERIVED_MANIFEST.read_text(encoding="utf-8"))

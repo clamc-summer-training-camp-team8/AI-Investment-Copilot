@@ -12,6 +12,7 @@ from app.schemas.quant import (
     QuantBacktestIn,
     QuantBacktestOut,
     QuantCatalogOut,
+    QuantDemoScenarioOut,
     QuantFactorDefinitionOut,
     QuantMarketDatasetDetailOut,
     QuantMarketDatasetOut,
@@ -34,6 +35,7 @@ from app.services.quant import (
     run_versioned_portfolio_backtest,
     signal_set_detail,
 )
+from app.services.quant_demo import build_quant_demo_scenario
 
 
 def require_quant_enabled(settings: SettingsDep) -> None:
@@ -46,6 +48,20 @@ router = APIRouter(
     tags=["quant"],
     dependencies=[Depends(require_quant_enabled)],
 )
+
+
+@router.get("/demo-scenario", response_model=QuantDemoScenarioOut)
+def get_demo_scenario(actor: ActorDep, settings: SettingsDep) -> QuantDemoScenarioOut:
+    """Return the deterministic defence scenario without mutating research data."""
+
+    del actor
+    if not settings.quant_demo_enabled:
+        raise HTTPException(status_code=404, detail="量化答辩演示情景未启用")
+    try:
+        scenario = build_quant_demo_scenario(settings.quant_default_market_manifest)
+    except (PortfolioInputError, MarketDataError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return QuantDemoScenarioOut.model_validate(scenario)
 
 
 @router.post("/backtests", response_model=QuantBacktestOut)

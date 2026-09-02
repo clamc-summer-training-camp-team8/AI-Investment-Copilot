@@ -14,7 +14,7 @@ import type {
   ThesisRevision, ThesisRevisionDiff,
   QuantBacktestRequest, QuantBacktestRun,
   PortfolioBacktestRequest, PortfolioBacktestRun, QuantCatalog, QuantFactorDefinition, QuantMarketDataset, QuantMarketDatasetDetail, QuantModelTemplate,
-  QuantSignalSet, QuantSignalSetDetail,
+  QuantSignalSet, QuantSignalSetDetail, QuantDemoScenario,
   CompanyMetricCenter,
   GoldQualityReport,
   GlobalSearchResult, KnowledgeAnswer, KnowledgeAnswerRequest,
@@ -46,6 +46,7 @@ export interface AuthConfig {
   retrospectiveCenterEnabled: boolean
   retrospectiveAiDraftEnabled: boolean
   quantResearchEnabled: boolean
+  quantDemoEnabled: boolean
 }
 
 const accessTokenKey = 'ai-investment-copilot.access-token'
@@ -225,8 +226,8 @@ function toAuthUser(value: { user_id: string; teams: string[]; must_change_passw
 }
 
 export async function getAuthConfig(): Promise<AuthConfig> {
-  if (useMock) return { loginRequired: false, passwordChangeSupported: false, globalSearchEnabled: true, knowledgeQaEnabled: true, retrospectiveCenterEnabled: true, retrospectiveAiDraftEnabled: false, quantResearchEnabled: true }
-  const value = await request<{ login_required: boolean; password_change_supported: boolean; global_search_enabled: boolean; knowledge_qa_enabled: boolean; retrospective_center_enabled: boolean; retrospective_ai_draft_enabled: boolean; quant_research_enabled: boolean }>('/api/auth/config')
+  if (useMock) return { loginRequired: false, passwordChangeSupported: false, globalSearchEnabled: true, knowledgeQaEnabled: true, retrospectiveCenterEnabled: true, retrospectiveAiDraftEnabled: false, quantResearchEnabled: true, quantDemoEnabled: false }
+  const value = await request<{ login_required: boolean; password_change_supported: boolean; global_search_enabled: boolean; knowledge_qa_enabled: boolean; retrospective_center_enabled: boolean; retrospective_ai_draft_enabled: boolean; quant_research_enabled: boolean; quant_demo_enabled: boolean }>('/api/auth/config')
   return {
     loginRequired: value.login_required,
     passwordChangeSupported: value.password_change_supported,
@@ -235,6 +236,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
     retrospectiveCenterEnabled: value.retrospective_center_enabled,
     retrospectiveAiDraftEnabled: value.retrospective_ai_draft_enabled,
     quantResearchEnabled: value.quant_research_enabled,
+    quantDemoEnabled: value.quant_demo_enabled,
   }
 }
 
@@ -1673,6 +1675,57 @@ function toPortfolioRun(item: Record<string, unknown>): PortfolioBacktestRun {
   }
 }
 
+export async function getQuantDemoScenario(): Promise<QuantDemoScenario> {
+  if (useMock) throw new Error('答辩演示情景只在显式启用的真实冻结数据环境中可用')
+  const body = await request<Record<string, unknown>>('/api/quant/demo-scenario')
+  const dataset = body.dataset as Record<string, unknown>
+  const summary = body.summary as Record<string, unknown>
+  const result = toPortfolioRun({
+    run_id: body.run_id,
+    name: body.title,
+    market_dataset_id: dataset.dataset_id,
+    signal_set_id: body.scenario_id,
+    methodology_version: body.methodology_version,
+    evaluation_track: body.evaluation_track,
+    generated_at: body.generated_at,
+    parameters: { scenario_policy_version: body.scenario_policy_version },
+    result: body.result,
+  }).result
+  return {
+    scenarioId: String(body.scenario_id), runId: String(body.run_id), title: String(body.title),
+    evaluationTrack: 'scenario_simulation', scenarioPolicyVersion: String(body.scenario_policy_version),
+    methodologyVersion: String(body.methodology_version), generatedAt: String(body.generated_at),
+    assumption: String(body.assumption), disclaimer: String(body.disclaimer),
+    dataset: {
+      datasetId: String(dataset.dataset_id), dataVersion: String(dataset.data_version),
+      manifestSha256: String(dataset.manifest_sha256), coverageStart: String(dataset.coverage_start),
+      coverageEnd: String(dataset.coverage_end), securityCount: Number(dataset.security_count),
+      tradingDayCount: Number(dataset.trading_day_count),
+    },
+    summary: {
+      candidateCount: Number(summary.candidate_count), assumedConfirmedCount: Number(summary.assumed_confirmed_count),
+      directionalSignalCount: Number(summary.directional_signal_count), neutralNoopCount: Number(summary.neutral_noop_count),
+      checkpointCount: Number(summary.checkpoint_count), supportCount: Number(summary.support_count),
+      conflictCount: Number(summary.conflict_count),
+    },
+    scoreMapping: ((body.score_mapping ?? []) as Array<Record<string, unknown>>).map((item) => ({
+      direction: item.direction as '支持' | '冲突' | '中性', strength: item.strength as '高' | '中' | '低',
+      score: Number(item.score), portfolioEffect: String(item.portfolio_effect),
+    })),
+    decisionPipeline: ((body.decision_pipeline ?? []) as Array<Record<string, unknown>>).map((item) => ({
+      step: String(item.step), title: String(item.title), description: String(item.description),
+    })),
+    latestEvents: ((body.latest_events ?? []) as Array<Record<string, unknown>>).map((item) => ({
+      signalId: String(item.signal_id), securityId: String(item.security_id), securityName: String(item.security_name),
+      industry: String(item.industry), disclosedAt: String(item.disclosed_at), assumedReviewedAt: String(item.assumed_reviewed_at),
+      direction: item.direction as '支持' | '冲突' | '中性', strength: item.strength as '高' | '中' | '低',
+      score: Number(item.score), decisionEffect: String(item.decision_effect), thesisTitle: String(item.thesis_title),
+      hypothesisStatement: String(item.hypothesis_statement), evidenceTitle: String(item.evidence_title),
+    })),
+    result,
+  }
+}
+
 export async function getQuantCatalog(): Promise<QuantCatalog> {
   if (useMock) return {
     defaultMarketDatasetId: mockMarketDataset.datasetId,
@@ -1812,6 +1865,7 @@ export async function getMarketDatasetDetail(datasetId: string): Promise<QuantMa
       adjustmentAnchorDate: '2026-08-28', availableSignalSets: [mockQuantSignalSet], backtestCount: 2,
       securityMetadata: mockMarketDataset.securities.map((securityId) => ({
         securityId,
+        name: ({ '688981': '中芯国际', '603986': '兆易创新', '002371': '北方华创', '600276': '恒瑞医药', '603259': '药明康德', '000538': '云南白药', '002594': '比亚迪', '300750': '宁德时代' } as Record<string, string>)[securityId],
         market: ['00175', '09868'].includes(securityId) ? '港股' : 'A股',
         currency: ['00175', '09868'].includes(securityId) ? 'HKD' : 'CNY',
         industry: ['688981', '603986', '002371'].includes(securityId) ? '芯片半导体' : ['600276', '603259', '000538'].includes(securityId) ? '医药' : '新能源汽车',
@@ -1838,6 +1892,7 @@ export async function getMarketDatasetDetail(datasetId: string): Promise<QuantMa
     backtestCount: Number(item.backtest_count),
     securityMetadata: ((item.security_metadata ?? []) as Array<Record<string, unknown>>).map((security) => ({
       securityId: String(security.security_id), market: String(security.market),
+      name: security.name ? String(security.name) : undefined,
       currency: String(security.currency), industry: String(security.industry),
       benchmarkId: String(security.benchmark_id), coverageStart: String(security.coverage_start),
       coverageEnd: String(security.coverage_end), rowCount: Number(security.row_count),

@@ -12,7 +12,7 @@ from app.services.market_data import FrozenJsonMarketData, MarketDataError
 def test_冻结行情同时提供版本日历公司行动契约和容量字段() -> None:
     adapter = FrozenJsonMarketData()
     info = adapter.info()
-    assert info.data_version == "akshare-qfq-tushare120-20260830-v1"
+    assert info.data_version == "akshare-qfq-tuaremax10000-p2a30-20260902-v4"
     assert info.status == "frozen"
     assert info.authorization_status == "公开行情研究使用已核验"
     assert info.capabilities["trading_calendar"] is True
@@ -20,11 +20,12 @@ def test_冻结行情同时提供版本日历公司行动契约和容量字段()
     assert info.capabilities["point_in_time_market_cap"] is False
     assert info.capabilities["tushare_daily_crosscheck"] is True
     assert info.capabilities["price_limit_status"] is False
+    assert info.capabilities["structured_corporate_action_events"] is True
     bars = adapter.bars(("688981",))
     assert bars[0].traded_notional is not None
     assert adapter.trading_days("A股", start=info.coverage_start, end=info.coverage_start)
     assert adapter.corporate_actions("688981") == ()
-    assert any("结构化公司行动" in item for item in info.limitations)
+    assert any("点时市值" in item for item in info.limitations)
 
 
 def test_冻结资产漂移后拒绝读取(tmp_path: Path) -> None:

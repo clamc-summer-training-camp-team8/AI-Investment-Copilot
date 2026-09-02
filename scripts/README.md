@@ -31,6 +31,7 @@
 | `publish_quant_market_dataset.py` | 按审批编号和 SHA-256 校验或登记候选行情；登记与默认版本切换分离 |
 | `apply_relation_review_receipt.py` | 校验复核包全部附件哈希，并由逻辑负责人受控应用外部研究员回执 |
 | `freeze_confirmed_relation_signal_set.py` | 按显式行情版本、确认时间截面和预期数量冻结人工确认信号集 |
+| `restore_reviewed_relation_candidate.py` | 从同主机隔离恢复库按冻结快照恢复关系候选；不代替专业复核回执应用 |
 | `resolve_database_target.py` | 从在线 `DATABASE_URL` 解析备份用户与数据库名，只输出非敏感目标字段 |
 | `verify_source_archives.py` | 全量核对对象版本存在性，并确定性抽样下载复算内容 SHA-256 |
 | `check_governed_assets.py` | 校验 Graph Snapshot、embedding、词表和金标报告 SHA-256 与保留策略 |

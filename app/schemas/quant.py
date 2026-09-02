@@ -230,6 +230,7 @@ class QuantManifestAssetOut(BaseModel):
 
 class QuantSecurityMetadataOut(BaseModel):
     security_id: str
+    name: str | None = None
     market: str
     currency: str
     industry: str
@@ -308,3 +309,70 @@ class PortfolioBacktestOut(_FromAttributes):
     evaluation_track: str
     requested_by: str
     generated_at: datetime
+
+
+class QuantDemoDatasetOut(BaseModel):
+    dataset_id: str
+    data_version: str
+    manifest_sha256: str
+    coverage_start: date
+    coverage_end: date
+    security_count: int
+    trading_day_count: int
+
+
+class QuantDemoSummaryOut(BaseModel):
+    candidate_count: int
+    assumed_confirmed_count: int
+    directional_signal_count: int
+    neutral_noop_count: int
+    checkpoint_count: int
+    support_count: int
+    conflict_count: int
+
+
+class QuantDemoScoreMappingOut(BaseModel):
+    direction: Literal["支持", "冲突", "中性"]
+    strength: Literal["高", "中", "低"]
+    score: Decimal
+    portfolio_effect: str
+
+
+class QuantDemoDecisionStepOut(BaseModel):
+    step: str
+    title: str
+    description: str
+
+
+class QuantDemoEventOut(BaseModel):
+    signal_id: str
+    security_id: str
+    security_name: str
+    industry: str
+    disclosed_at: datetime
+    assumed_reviewed_at: datetime
+    direction: Literal["支持", "冲突", "中性"]
+    strength: Literal["高", "中", "低"]
+    score: Decimal
+    decision_effect: str
+    thesis_title: str
+    hypothesis_statement: str
+    evidence_title: str
+
+
+class QuantDemoScenarioOut(BaseModel):
+    scenario_id: str
+    run_id: str
+    title: str
+    evaluation_track: Literal["scenario_simulation"]
+    scenario_policy_version: str
+    methodology_version: str
+    generated_at: datetime
+    assumption: str
+    disclaimer: str
+    dataset: QuantDemoDatasetOut
+    summary: QuantDemoSummaryOut
+    score_mapping: list[QuantDemoScoreMappingOut]
+    decision_pipeline: list[QuantDemoDecisionStepOut]
+    latest_events: list[QuantDemoEventOut]
+    result: dict[str, Any]

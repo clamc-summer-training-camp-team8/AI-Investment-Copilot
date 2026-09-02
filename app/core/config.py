@@ -161,12 +161,16 @@ class Settings(BaseSettings):
         PROJECT_ROOT
         / "real_data"
         / "quant"
-        / "akshare-qfq-tushare120-20260830-v1"
+        / "akshare-qfq-tuaremax10000-p2a30-20260902-v4"
         / "manifest.json"
     )
     # 模型与因子模块可以独立灰度。数据集登记是治理动作，默认不通过产品 API
     # 开放；离线发布脚本仍可在审批哈希校验后直接调用服务层。
     quant_research_enabled: bool = True
+    # Read-only, deterministic defence-demo scenario. Keep disabled outside an
+    # explicitly prepared local/demo environment so assumed data is never
+    # mistaken for production research records.
+    quant_demo_enabled: bool = False
     quant_dataset_api_registration_enabled: bool = False
     quant_governance_teams: str = "量化数据治理,quant-governance"
 

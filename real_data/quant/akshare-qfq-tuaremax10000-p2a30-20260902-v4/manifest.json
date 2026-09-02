@@ -1,0 +1,149 @@
+{
+  "adjustment": "前复权",
+  "adjustment_anchor_date": "2026-09-01",
+  "assets": {
+    "bars": {
+      "path": "bars.json",
+      "sha256": "c9e22f18c9df48ec22ec5745a0085980b065e7ced0dc3ae914a7defdc29fee48"
+    },
+    "calendar": {
+      "path": "calendar.json",
+      "sha256": "f685762f086f29de7af5fefef4c043f882f69c40345f19485b9cace8d2722557"
+    },
+    "corporate_actions": {
+      "path": "corporate_actions.json",
+      "sha256": "c6eee3d52d1ef9f5b6d1e2ab069deceabbd25d8bb6a5c519bc1a594010f01ab0"
+    },
+    "cross_source_quality": {
+      "path": "cross_source_quality.json",
+      "sha256": "e74b578b33d31a14e9f827970dfdd22e1e05324d9f694d0b5f3678b6c087e86c"
+    },
+    "cross_source_snapshot": {
+      "path": "cross_source_snapshot.json",
+      "sha256": "3b79d3ade1a047f70130753723dcfd6188c888c4b8779d2509018e81df16d7a7"
+    },
+    "historical_controls": {
+      "path": "historical_controls.json",
+      "sha256": "04e16f8d77ea3deb1274e46928591679b6127d6700d33d101f91be557fdcd7a3"
+    },
+    "price_limit_derivations": {
+      "path": "price_limit_derivations.json",
+      "sha256": "23126d26fe2ef61f8e542c2b2851975aff64c69b5fb57c89e40901260bdc050d"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "4abe04121fd49f36b4a0da2d50b0b35298ff799cfa2ddd99c6b5b2b9a11348ac"
+    },
+    "research_universe": {
+      "path": "research_universe.json",
+      "sha256": "01aadbdd59441891f53af926ad3af7627af6e48d7e2e7238ca6545f7b69fecd1"
+    },
+    "sample_protocol": {
+      "path": "sample_protocol.json",
+      "sha256": "0b7fd3531a292e270eb2ffda78829179bb27efd3d368390eff181a83b3765da2"
+    },
+    "source_snapshot": {
+      "path": "source_snapshot.json",
+      "sha256": "cf454d6c975e2a53a7340550e42a5de4cc786782872d88c9ce58971e8ace91bf"
+    },
+    "tushare_permission_profile": {
+      "path": "tushare_permission_profile.json",
+      "sha256": "dfa1402aef830d41ed0ae0c43df3c672cd9901c8dbea17c699736e3704ac4e58"
+    },
+    "tushare_reference_snapshot": {
+      "path": "tushare_reference_snapshot.json",
+      "sha256": "5ec0c25c1f9e54fd522f481c29a516122b369effc9f0b1b45aa6293daa6c3857"
+    }
+  },
+  "authorization": {
+    "policy_id": "akshare-public-research-v1",
+    "scope": "项目内部研究、复算与审计；禁止对外再分发或用于实盘交易",
+    "status": "公开行情研究使用已核验",
+    "supplement": {
+      "api_origin": "https://tuaremax.top",
+      "credential_status": "用户提供有效访问凭证",
+      "scope": "仅限项目内部研究、交叉核验和字段补充；禁止对外再分发",
+      "source_id": "tushare-compatible-supplement-v1"
+    }
+  },
+  "capabilities": {
+    "a_share_point_in_time_market_cap": false,
+    "adjusted_close": true,
+    "capacity_constraint": true,
+    "daily_traded_notional": true,
+    "historical_universe_and_delisted_samples": true,
+    "point_in_time_market_cap": false,
+    "price_limit_status": false,
+    "price_limit_status_fully_observed": false,
+    "price_limit_status_rule_derived": true,
+    "structured_corporate_action_events": true,
+    "suspension_by_missing_session": true,
+    "trading_calendar": true,
+    "tushare_daily_crosscheck": true,
+    "tushare_market_cap_cache_consumed": true,
+    "tushare_price_limit_cache_consumed": true,
+    "tushare_pro_bar_fallback_authorized": true,
+    "tushare_supplement_configured": true,
+    "tushare_trade_calendar_crosscheck": true,
+    "tushare_trade_calendar_permission_verified": true
+  },
+  "coverage": {
+    "end": "2026-09-01",
+    "start": "2023-12-01"
+  },
+  "data_version": "akshare-qfq-tuaremax10000-p2a30-20260902-v4",
+  "dataset_id": "MDS-akshare-qfq-tuaremax10000-p2a30-20260902-v4",
+  "frozen_at": "2026-09-02T13:56:19.651434+08:00",
+  "limitations": [
+    "AKShare 是研究型聚合接口；上游网页或字段变化时构建必须失败并人工复核，禁止静默切源",
+    "前复权值随锚点可能变化；本版本已固定抓取截止日和源快照，后续只能新增版本",
+    "结构化公司行动当前覆盖分红送转；仍需独立来源复核合并、拆股等其他事件",
+    "退市证券仅作为生存者偏差影子对照，不具备点时行业、基准或人工信号时不得进入收益评价",
+    "点时市值未全量覆盖；市值中性开关保持硬门禁关闭",
+    "Tushare daily_basic 低频缓存当前仅覆盖 19930 条证券日；覆盖完整前不得开启点时市值能力",
+    "A 股涨跌停状态未全量覆盖；不得声称完成涨跌停可成交性模拟",
+    "涨跌停状态中 8 条为交易所规则确定性推导，已保留前收盘、规则、比例、价格和来源谱系；不得冒充 Tushare 直接观测",
+    "当前涨跌停状态只支持收盘是否封板的日频模拟；未引入分钟或逐笔行情前，不得声称完成盘中可成交性模拟",
+    "Tushare 涨跌停历史缓存已提供 19922 条证券日；只有与冻结行情全量对齐时能力才会开启"
+  ],
+  "schema_version": "frozen-market-dataset-v1",
+  "securities": [
+    "688981",
+    "603986",
+    "002371",
+    "603501",
+    "600584",
+    "688012",
+    "688008",
+    "002049",
+    "300782",
+    "688041",
+    "600276",
+    "603259",
+    "000538",
+    "300760",
+    "600436",
+    "000963",
+    "300122",
+    "600196",
+    "600085",
+    "002252",
+    "002594",
+    "300750",
+    "601633",
+    "601238",
+    "600104",
+    "000625",
+    "601127",
+    "002920",
+    "002050",
+    "603596"
+  ],
+  "source_priority": [
+    "akshare",
+    "tushare_optional",
+    "sse_exchange_rule_derived"
+  ],
+  "status": "frozen",
+  "timezone": "Asia/Shanghai"
+}

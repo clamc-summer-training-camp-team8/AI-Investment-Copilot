@@ -256,7 +256,7 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
         return <section className="coverage-group" key={industry.name}><button className="coverage-industry" aria-expanded={expanded} onClick={() => toggle(industry.name)}><span>{expanded ? '⌄' : '›'} ▥ {industry.name}</span><b>{industry.companies.length}</b></button>{expanded && <div className="coverage-companies">{industry.companies.map((company) => <NavLink to={`/companies/${encodeURIComponent(company.securityId)}`} key={company.securityId}><span><strong>▥ {company.name}</strong><small>{company.industry || '行业分类待补充'}</small></span></NavLink>)}</div>}</section>
       })}
       {coverage.data && coverage.data.length === 0 && <div className="coverage-loading">暂无正在维护的公司</div>}
-      <nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets?from=workbench">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink>{quantEnabled && <NavLink to="/quant">▦ 模型与因子</NavLink>}<NavLink to="/updates">♧ 最新动态</NavLink>{retrospectiveEnabled && <NavLink to="/retrospective">↺ 复盘中心</NavLink>}</nav>
+      <nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets?from=workbench">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink>{quantEnabled && <NavLink to="/quant?from=workbench">▦ 模型与因子</NavLink>}<NavLink to="/updates">♧ 最新动态</NavLink>{retrospectiveEnabled && <NavLink to="/retrospective">↺ 复盘中心</NavLink>}</nav>
       <button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button>
     </aside>
     <main className="dashboard-main">
