@@ -1424,8 +1424,10 @@ blockquote { color: var(--text); border-left: 1px solid var(--fact); font-size: 
 .workbench-shell .dashboard-page {
   width: 100%;
   min-height: calc(100vh - 62px);
+  grid-template-columns: 226px minmax(620px, 1fr) minmax(430px, 26vw);
   grid-template-rows: auto;
   align-items: start;
+  padding: 12px 0 12px 12px;
 }
 .workbench-shell .coverage-panel {
   position: sticky;
@@ -1441,10 +1443,11 @@ blockquote { color: var(--text); border-left: 1px solid var(--fact); font-size: 
   position: sticky;
   top: 74px;
   align-self: start;
-  height: calc(100vh - 86px);
+  width: 100%;
+  height: calc(100vh - 74px);
   overflow: hidden;
 }
-.workbench-shell .work-radar-card { height: 100%; }
+.workbench-shell .work-radar-card { width: 100%; height: 100%; }
 .workbench-shell .work-radar-card > .dashboard-card-header {
   min-height: 60px;
   flex-shrink: 0;

@@ -10,7 +10,7 @@ import {
   publishThesis, replayProcessingJob, resolveIngestionReview, resolveReviewTask,
   createHypothesis, recommendHypothesisMetrics, reviewRelation, saveMetricMapping, updateHypothesis,
   updateRelation, updateThesisMaintenance,
-  getAssetInventory, getDataCenterOverview, rebuildAssetSearchIndex, searchAssets,
+  getAssetInventory, rebuildAssetSearchIndex, searchAssets,
   createThesisRevision, getThesisRevisionDiff, publishThesisRevision, updateThesisRevision,
   getGoldQuality, getQuantCatalog, listPortfolioBacktests, registerDefaultMarketDataset, runPortfolioBacktest,
   getCompanyMetricCenter, getSecurity, getMaintainedCoverage, getCoverageUniverse, refreshCompanyMetrics,
@@ -25,7 +25,6 @@ import {
 import { buildCompanyEvidenceCards, getConfirmedHypothesisEvidenceState } from './companyEvidence'
 import type { CompanyEvidenceCard } from './companyEvidence'
 import { MetricEditorCard } from './metric-editor'
-import { getRetrospectiveOverview } from './retrospective/api'
 import type { Adjudication, AuditItem, DataCenterDocument, EvidenceFeedItem, EvidenceRetrievalTrace, GoldQualityGate, Hypothesis, IngestionReview, InvestodayCollectionStatus, LogicChangeDigestDetail, MetricDefinition, ProcessingJob, PortfolioBacktestRun, Relation, ReviewTask, Security, Suggestion, ThesisDetail, ThesisRevision } from './types'
 import { formatDate, strengthText } from './ui'
 
@@ -98,6 +97,7 @@ function ThemeImpactLines({ item }: { item: EvidenceFeedItem }) {
 
 export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEnabled = false }: { onCreate?: () => void; retrospectiveEnabled?: boolean; quantEnabled?: boolean } = {}) {
   const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set())
+  const [coverageInitialized, setCoverageInitialized] = useState(false)
   const currentBusinessDay = new Date().toLocaleDateString('en-CA')
   // 左侧覆盖导航沿用 Phase 2：以覆盖板块/公司为全集，不要求公司已经建立投资逻辑。
   const coverage = useQuery({ queryKey: ['maintained-coverage'], queryFn: getMaintainedCoverage, staleTime: 30_000 })
@@ -108,18 +108,20 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
   // 研究员手动刷新页面才出现。
   const updates = useQuery({ queryKey: ['research-updates', 'today'], queryFn: () => getResearchUpdates({ todayOnly: true }), refetchInterval: 20_000 })
   const collection = useQuery({ queryKey: ['investoday-collection-status'], queryFn: getInvestodayCollectionStatus, refetchInterval: 15_000 })
-  const assets = useQuery({ queryKey: ['data-center', 'overview'], queryFn: getDataCenterOverview, staleTime: 30_000 })
-  const retrospective = useQuery({
-    queryKey: ['retrospectives', 'overview'],
-    queryFn: getRetrospectiveOverview,
-    enabled: retrospectiveEnabled,
-    staleTime: 30_000,
-  })
   const jobs = useQuery({ queryKey: ['processing-jobs', 'workbench'], queryFn: listProcessingJobs, refetchInterval: 15_000 })
   const dailyUpdates = useQuery({ queryKey: ['research-updates', 'business-day', currentBusinessDay], queryFn: () => getResearchUpdates({ businessDay: currentBusinessDay }), refetchInterval: 20_000 })
+  const workbenchCoverage = (coverage.data ?? [])
+    .filter((industry) => industry.name !== '新能源与储能')
+    .slice(0, 3)
+  const workbenchCoverageKey = workbenchCoverage.map((item) => item.name).join('|')
+  useEffect(() => {
+    if (coverageInitialized || !workbenchCoverage.length) return
+    setExpandedIndustries(new Set(workbenchCoverage.map((item) => item.name)))
+    setCoverageInitialized(true)
+  }, [coverageInitialized, workbenchCoverageKey])
   const current = (theses.data ?? []).filter((item) => item.securityId !== '300274')
   const toggle = (industry: string) => setExpandedIndustries((before) => {
-    const next = before.size ? new Set(before) : new Set((coverage.data ?? []).map((item) => item.name))
+    const next = new Set(before)
     if (next.has(industry)) next.delete(industry); else next.add(industry)
     return next
   })
@@ -190,7 +192,7 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
   const skippedSeenToday = ((collection.data?.news.skippedSeen ?? 0) + (collection.data?.reports.skippedSeen ?? 0))
   const closureItems = [
     { label: '资料入库', value: collectedToday || skippedSeenToday || dailyThemeItems.reduce((total, item) => total + item.sourceDocumentCount, 0), note: collectedToday ? '今日新增资料进入分析' : '命中资料多为已处理内容', to: '/updates' },
-    { label: 'AI 归并', value: dailyUpdates.data?.total ?? 0, note: '今日累计主逻辑变化卡', to: '/updates' },
+    { label: 'AI 归并', value: dailyUpdates.data?.total ?? 0, note: '今日累计影响卡', to: '/updates' },
     { label: '待研究员确认', value: pendingTodayCount, note: '需要核验方向和证据链', to: '/updates' },
     { label: '已沉淀证据', value: confirmedTodayCount, note: '可进入假设证据库', to: '/reviews' },
   ]
@@ -251,35 +253,32 @@ export function WorkbenchPage({ onCreate, retrospectiveEnabled = false, quantEna
       <div className="dashboard-panel-title"><h1>我的覆盖</h1><NavLink to="/coverage" aria-label="管理覆盖范围">⚙</NavLink></div>
       {coverage.isLoading && <div className="coverage-loading" role="status">正在加载维护中的公司…</div>}
       {coverage.error && <div className="coverage-loading coverage-loading-error">覆盖数据暂时不可用</div>}
-      {coverage.data?.map((industry) => {
-        const expanded = expandedIndustries.size === 0 || expandedIndustries.has(industry.name)
+      {workbenchCoverage.map((industry) => {
+        const expanded = !coverageInitialized || expandedIndustries.has(industry.name)
         return <section className="coverage-group" key={industry.name}><button className="coverage-industry" aria-expanded={expanded} onClick={() => toggle(industry.name)}><span>{expanded ? '⌄' : '›'} ▥ {industry.name}</span><b>{industry.companies.length}</b></button>{expanded && <div className="coverage-companies">{industry.companies.map((company) => <NavLink to={`/companies/${encodeURIComponent(company.securityId)}`} key={company.securityId}><span><strong>▥ {company.name}</strong><small>{company.industry || '行业分类待补充'}</small></span></NavLink>)}</div>}</section>
       })}
-      {coverage.data && coverage.data.length === 0 && <div className="coverage-loading">暂无正在维护的公司</div>}
-      <nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/macro-strategy">▧ 宏观与策略</NavLink><NavLink to="/assets?from=workbench">▤ 数据中心</NavLink><NavLink to="/theses">◇ 投资逻辑</NavLink>{quantEnabled && <NavLink to="/quant">▦ 模型与因子</NavLink>}<NavLink to="/updates">♧ 最新动态</NavLink>{retrospectiveEnabled && <NavLink to="/retrospective">↺ 复盘中心</NavLink>}</nav>
-      <button className="new-research-button" onClick={onCreate}>＋ 新建研究主题</button>
+      {coverage.data && workbenchCoverage.length === 0 && <div className="coverage-loading">暂无正在维护的公司</div>}
+      <nav className="coverage-links" aria-label="研究功能"><NavLink to="/coverage">⌁ 行业与公司管理</NavLink><NavLink to="/updates">♧ 最新动态</NavLink></nav>
     </aside>
     <main className="dashboard-main">
       <section className="dashboard-card research-feed company-theme-feed" aria-labelledby="research-feed-title">
-        <header className="dashboard-card-header"><div><h2 id="research-feed-title">今日公司变化</h2><span>AI 已将当日资料映射到核心假设，并按主投资逻辑汇总</span></div><NavLink to="/updates">全部逻辑变化 ›</NavLink></header>
+        <header className="dashboard-card-header"><div><h2 id="research-feed-title">今日最新影响</h2><span>AI 已将当日资料映射到核心假设，并按影响路径汇总</span></div><NavLink to="/updates">查看全部今日影响 ›</NavLink></header>
         <div className={`dashboard-collection-state ${collectionStatus.tone}`}><i /><div><strong>{collectionStatus.title}</strong><small>{collectionStatus.detail}</small></div><NavLink to="/assets/runs?from=workbench">查看数据运行 ›</NavLink></div>
         <div className="company-theme-bundles">{companyThemeBundles.slice(0, 4).map((bundle) => <article className="company-theme-bundle" key={bundle.securityId}>
-          <header><div><div className="company-theme-company"><strong>{bundle.securityName}</strong><time>今日 · {compactDate(bundle.date)}</time></div><span><NavLink className="company-theme-source-link" to={`/assets/documents?security_id=${encodeURIComponent(bundle.securityId)}&sort=ingested_at&from=workbench`}>今日 {bundle.sourceCount} 份资料 ↗</NavLink> · 1 条主投资逻辑变化 · 涉及 {bundle.hypothesisCount} 项核心假设</span></div>{bundle.pending && <b className="ai-label">待确认</b>}</header>
+          <header><div><div className="company-theme-company"><strong>{bundle.securityName}</strong><time>今日 · {compactDate(bundle.date)}</time></div><span><NavLink className="company-theme-source-link" to={`/assets/documents?security_id=${encodeURIComponent(bundle.securityId)}&sort=ingested_at&from=workbench`}>今日 {bundle.sourceCount} 份资料 ↗</NavLink> · 1 条今日影响 · 涉及 {bundle.hypothesisCount} 项核心假设</span></div>{bundle.pending && <b className="ai-label">待确认</b>}</header>
           <div className="company-theme-list">{bundle.themes.map((item) => {
             const themeDirection = item.themeDirection ?? item.direction
             const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`
             const sourceHref = item.sourceDocumentId ? `/assets/documents/${encodeURIComponent(item.sourceDocumentId)}?from=workbench` : `/assets/documents?security_id=${encodeURIComponent(item.securityId)}&from=workbench`
-            return <section className="company-theme-row logic-change-row" key={item.thesisId}><i className={themeDirection === 'conflict' ? 'conflict' : themeDirection === 'mixed' ? 'mixed' : ''} /><div><div className="company-theme-meta"><span>主投资逻辑变化</span><strong className={themeDirection}>{updateThemeDirectionLabel(themeDirection)}</strong></div><h3>{item.thesisCoreView}</h3><p className="logic-change-summary">{item.aggregationSummary}</p><ThemeImpactLines item={item} /></div><div className="company-theme-actions"><NavLink to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink><NavLink to={impactHref}>查看影响</NavLink><NavLink className="source-action" to={sourceHref}>源资料</NavLink></div></section>
+            return <section className="company-theme-row logic-change-row" key={item.thesisId}><i className={themeDirection === 'conflict' ? 'conflict' : themeDirection === 'mixed' ? 'mixed' : ''} /><div><div className="company-theme-meta"><span>今日影响</span><strong className={themeDirection}>{updateThemeDirectionLabel(themeDirection)}</strong></div><h3>{item.thesisCoreView}</h3><p className="logic-change-summary">{item.aggregationSummary}</p><ThemeImpactLines item={item} /></div><div className="company-theme-actions"><NavLink to={`/theses/${encodeURIComponent(item.thesisId)}`}>查看逻辑</NavLink><NavLink to={impactHref}>查看影响</NavLink><NavLink className="source-action" to={sourceHref}>源资料</NavLink></div></section>
           })}</div>
-        </article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的主投资逻辑变化。资料可能仍在分析，或尚未触发任何现行假设；可查看数据运行了解详情。</div>}</div>
-        <NavLink className="dashboard-more" to="/updates">查看全部公司变化 ⌄</NavLink>
+        </article>)}{!companyThemeBundles.length && <div className="updates-empty">今日尚未形成可展示的影响。资料可能仍在分析，或尚未触发任何现行假设；可查看数据运行了解详情。</div>}</div>
+        <NavLink className="dashboard-more" to="/updates">查看全部今日影响 ⌄</NavLink>
       </section>
-      <section className="dashboard-card market-brief-card market-brief-main"><header className="dashboard-card-header"><div><h2>最新资讯精选</h2><span>按优先级、证据数量和来源覆盖筛选，放在公司变化下方供快速扫读</span></div><NavLink to="/updates">全部资讯 ›</NavLink></header>{marketBriefs.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const impactHref = `/logic-changes/${encodeURIComponent(item.securityId)}/${encodeURIComponent(item.thesisId)}?business_day=${encodeURIComponent(item.ingestedAt.slice(0, 10))}`; return <NavLink className={`market-brief-row ${themeDirection}`} to={impactHref} key={item.relationId}><div><span>{item.securityName}</span><b>{updatePriorityLabel(item.priority)}关注</b></div><strong>{item.sourceDocumentTitle}</strong><p>{item.factExcerpt || item.aggregationSummary || item.thesisCoreView}</p><footer><small>{item.sourceDocumentCount} 份来源 · {item.atomicEvidenceCount} 条事实</small><em>{updateThemeDirectionLabel(themeDirection)}</em></footer></NavLink> })}{!marketBriefs.length && <div className="side-empty">今日暂无可精选资讯；采集完成后会按关注度自动进入这里。</div>}</section>
+      <section className="dashboard-card market-brief-card market-brief-main"><header className="dashboard-card-header"><div><h2>最新资讯精选</h2><span>按优先级、证据数量和来源覆盖筛选，放在今日影响下方供快速扫读</span></div><NavLink to="/assets/documents?from=workbench">全部资讯 ›</NavLink></header>{marketBriefs.map((item) => { const themeDirection = item.themeDirection ?? item.direction; const sourceHref = item.sourceDocumentId ? `/assets/documents/${encodeURIComponent(item.sourceDocumentId)}?from=workbench` : `/assets/documents?security_id=${encodeURIComponent(item.securityId)}&from=workbench`; return <NavLink className={`market-brief-row ${themeDirection}`} to={sourceHref} key={item.relationId}><div><span>{item.securityName}</span><b>{updatePriorityLabel(item.priority)}关注</b></div><strong>{item.sourceDocumentTitle}</strong><p>{item.factExcerpt || item.aggregationSummary || item.thesisCoreView}</p><footer><small>{item.sourceDocumentCount} 份来源 · {item.atomicEvidenceCount} 条事实</small><em>{updateThemeDirectionLabel(themeDirection)}</em></footer></NavLink> })}{!marketBriefs.length && <div className="side-empty">今日暂无可精选资讯；采集完成后会按关注度自动进入这里。</div>}</section>
     </main>
     <aside className="dashboard-right">
       <section className={`dashboard-card work-radar-card ${pipelineTone}`}><header className="dashboard-card-header"><div><h2>工作雷达监控</h2><span>{collectionStatus.title}</span></div><NavLink to="/updates">详情 ›</NavLink></header><div className="radar-scroll"><div className="radar-hero"><span>当前状态</span><strong>{pipelineSummary}</strong><p>优先看是否有待确认、冲突分歧或失败资料；底部再看今日处理闭环。</p></div><section className="radar-section"><header><span>今日采集轮次</span><small>自动刷新</small></header><div className="radar-rounds">{collectionRounds.map((round) => <article className={`radar-round state-${round.state}`} key={`${round.label}-${round.time}`}><time>{round.time}</time><span>{round.label}</span><b>{round.state}</b></article>)}</div></section><section className="radar-section"><header><span>需要关注</span><small>只保留行动信号</small></header><div className="radar-attention-grid">{radarAttentionItems.map((item) => <article className={`radar-attention-item ${item.tone}`} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.note}</small></article>)}</div></section><div className="radar-next"><span>下一步建议</span>{radarSuggestions.map((suggestion) => <p key={suggestion}>{suggestion}</p>)}{!radarSuggestions.length && <p>{pipelineNextAction}</p>}</div><section className="work-radar-closure" aria-labelledby="closure-title"><header><div><h3 id="closure-title">今日研究闭环</h3><span>从资料进入到研究员确认</span></div><div><NavLink to="/status-simulator">状态沙盘 ›</NavLink><NavLink to="/reviews">研究记录 ›</NavLink></div></header><div className="closure-grid">{closureItems.map((item) => <NavLink className="closure-step" to={item.to} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><p>{item.note}</p></NavLink>)}</div></section></div></section>
-      <section className="dashboard-card data-asset-card" aria-labelledby="data-asset-card-title"><header className="dashboard-card-header"><div><h2 id="data-asset-card-title">数据资产</h2><span>工作台使用的资料均可回查</span></div><NavLink to="/assets?from=workbench">进入数据中心 ›</NavLink></header>{assets.data ? <div className="data-asset-summary"><NavLink to="/assets/documents?from=workbench"><strong>{assets.data.documents.toLocaleString()}</strong><span>可见资料</span></NavLink><NavLink to="/assets/documents?content_status=完整正文&from=workbench"><strong>{assets.data.fullTextDocuments.toLocaleString()}</strong><span>完整正文</span></NavLink><NavLink className={assets.data.recentFailedRuns ? 'has-risk' : ''} to="/assets/runs?status=failed&from=workbench"><strong>{assets.data.recentFailedRuns.toLocaleString()}</strong><span>失败运行</span></NavLink></div> : <p className="data-asset-loading">{assets.error ? '数据资产摘要暂不可用，可进入数据中心查看。' : '正在读取数据资产摘要…'}</p>}</section>
-      {retrospectiveEnabled && <section className="dashboard-card workbench-retrospective-card" aria-labelledby="workbench-retrospective-title"><header className="dashboard-card-header"><h2 id="workbench-retrospective-title">{retrospective.isLoading ? '复盘进度加载中' : '复盘进度'}</h2><NavLink to="/retrospective">进入中心 ›</NavLink></header>{retrospective.isLoading && <p className="muted">正在汇总复盘进度…</p>}{retrospective.error && <div className="workbench-card-error"><strong>复盘进度暂不可用</strong><NavLink to="/retrospective">打开复盘中心</NavLink></div>}{retrospective.data && <><div className="workbench-retrospective-summary"><strong>{retrospective.data.pending_reports}</strong><span>份待完成复盘</span><em>{Math.round(retrospective.data.average_completeness * 100)}% 平均完整度</em></div><div className="workbench-retrospective-states"><NavLink to="/retrospective?state=草稿"><span>草稿</span><strong>{retrospective.data.state_counts['草稿'] ?? 0}</strong></NavLink><NavLink to="/retrospective?state=待评审"><span>待评审</span><strong>{retrospective.data.state_counts['待评审'] ?? 0}</strong></NavLink><NavLink to="/retrospective?state=已发布"><span>已发布</span><strong>{retrospective.data.state_counts['已发布'] ?? 0}</strong></NavLink></div><NavLink className="workbench-retrospective-action" to={current[0] ? `/retrospective/new?thesisId=${encodeURIComponent(current[0].thesisId)}` : '/retrospective/new'}>发起复盘</NavLink></>}</section>}
     </aside>
   </div>
 }
@@ -882,7 +881,7 @@ export function LogicChangeImpactPage() {
   return <div className="logic-change-detail-page">
     <header className="logic-change-detail-header">
       <div>
-        <NavLink to="/updates">← 返回全部逻辑变化</NavLink>
+        <NavLink to="/updates">← 返回全部今日影响</NavLink>
         <span className="eyebrow">LOGIC CHANGE / {item.businessDate}</span>
         <h1>{item.securityName} · 主投资逻辑影响</h1>
         <p>{item.thesisCoreView}</p>

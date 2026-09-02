@@ -13,6 +13,9 @@ from app.services import security as security_service
 from app.services.errors import ValidationFailed
 from app.services.permission import Actor
 
+_EXCLUDED_COVERAGE_SECURITY_IDS = {"300274"}
+_EXCLUDED_COVERAGE_SECTORS = {"新能源与储能"}
+
 
 def research_sector(industry: str | None) -> str:
     """把证券主数据的完整行业分类归并成可维护的研究板块。"""
@@ -74,6 +77,14 @@ def _is_maintained_thesis(thesis: ThesisRecord | None) -> bool:
     )
 
 
+def _is_excluded_from_active_coverage(security_id: str | None, sector_name: str | None = None) -> bool:
+    """Hide retired pilot coverage from active coverage and collection-facing views."""
+    return bool(
+        (security_id and str(security_id) in _EXCLUDED_COVERAGE_SECURITY_IDS)
+        or (sector_name and sector_name in _EXCLUDED_COVERAGE_SECTORS)
+    )
+
+
 def _maintained_theses_by_security(uow: UnitOfWork, security_ids: tuple[str, ...]):
     return {
         security_id: thesis
@@ -96,6 +107,8 @@ def bootstrap_from_securities(uow: UnitOfWork) -> None:
     sectors: dict[str, CoverageSectorRecord] = {}
     for security in securities:
         name = research_sector(security.industry)
+        if _is_excluded_from_active_coverage(security.security_id, name):
+            continue
         sector = sectors.get(name)
         if sector is None:
             sector = CoverageSectorRecord(
@@ -142,6 +155,12 @@ def list_overview(uow: UnitOfWork, *, query: str | None = None) -> list[dict[str
     )
     by_sector: dict[str, list[dict[str, object]]] = {sector.sector_id: [] for sector in sectors}
     for company in companies:
+        sector_name = next(
+            (sector.name for sector in sectors if sector.sector_id == company.sector_id),
+            None,
+        )
+        if _is_excluded_from_active_coverage(company.security_id, sector_name):
+            continue
         thesis = theses_by_security.get(company.security_id)
         hypothesis_count, mapping_count = counts.get(thesis.thesis_id, (0, 0)) if thesis else (0, 0)
         status = "暂停覆盖" if company.status == "暂停覆盖" else "正常覆盖" if thesis else "待建档"
@@ -177,6 +196,7 @@ def list_overview(uow: UnitOfWork, *, query: str | None = None) -> list[dict[str
         }
         for sector in sectors
         if sector.status == "active"
+        and not _is_excluded_from_active_coverage(None, sector.name)
         and (
             not normalized_query
             or normalized_query
@@ -197,6 +217,8 @@ def _read_only_overview(uow: UnitOfWork, *, query: str | None = None) -> list[di
     )
     for security in securities:
         sector_name = research_sector(security.industry)
+        if _is_excluded_from_active_coverage(security.security_id, sector_name):
+            continue
         sector = groups.setdefault(
             sector_name,
             {
@@ -241,15 +263,18 @@ def _read_only_overview(uow: UnitOfWork, *, query: str | None = None) -> list[di
             ),
         }
         for sector in sorted(groups.values(), key=lambda item: str(item["name"]))
-        if not normalized_query
-        or normalized_query
-        in " ".join(
-            (
-                str(sector["name"]),
-                str(sector.get("code") or ""),
-                str(sector.get("description") or ""),
-            )
-        ).casefold()
+        if not _is_excluded_from_active_coverage(None, str(sector["name"]))
+        and (
+            not normalized_query
+            or normalized_query
+            in " ".join(
+                (
+                    str(sector["name"]),
+                    str(sector.get("code") or ""),
+                    str(sector.get("description") or ""),
+                )
+            ).casefold()
+        )
     ]
 
 

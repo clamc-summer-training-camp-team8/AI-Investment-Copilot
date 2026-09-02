@@ -99,7 +99,7 @@ class Settings(BaseSettings):
     investoday_reports_max_items_per_run: int = Field(default=30, ge=1, le=100)
     # 仅影响自动采集，不删除历史逻辑或资料。逗号分隔的证券代码可用于将
     # 暂停覆盖的公司从外部资料拉取范围中移除。
-    investoday_excluded_security_ids: str = ""
+    investoday_excluded_security_ids: str = "300274"
     upload_max_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
     upload_retention_days: int = Field(default=30, ge=1, le=3650)
     failed_upload_retention_days: int = Field(default=90, ge=1, le=3650)

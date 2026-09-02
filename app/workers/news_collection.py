@@ -29,6 +29,7 @@ _SYSTEM_ACTOR = Actor(user_id="analyst-mvp", teams=frozenset({"asset-admin"}))
 _DEDUPE_TTL_SECONDS = 180 * 24 * 60 * 60
 _STATUS_TTL_SECONDS = 3 * 24 * 60 * 60
 _STATUS_KEY_PREFIX = "copilot:collection:investoday:status"
+_DEFAULT_EXCLUDED_SECURITY_IDS = {"300274"}
 
 
 def collection_status_key(kind: str) -> str:
@@ -238,7 +239,7 @@ def _covered_securities(conf: Settings) -> list[Any]:
     with uow_scope() as uow:
         theses, _ = uow.thesis.search(ThesisQuery(limit=1_000, include_snapshots=True))
         covered_ids = {item.security_id for item in theses}
-        excluded_ids = {
+        excluded_ids = _DEFAULT_EXCLUDED_SECURITY_IDS | {
             security_id.strip()
             for security_id in conf.investoday_excluded_security_ids.split(",")
             if security_id.strip()
